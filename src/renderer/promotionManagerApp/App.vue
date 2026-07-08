@@ -70,203 +70,29 @@
     </transition>
 
     <!-- 自定义数据项 Modal -->
-    <Teleport to="body">
-      <transition name="modal-fade">
-        <div v-if="customizeModalVisible" class="pm-modal-overlay" @click.self="cancelCustomize">
-          <div class="pm-modal" style="width: 960px;">
-            <div class="pm-modal-header">
-              <h2 class="pm-modal-title">自定义数据项</h2>
-              <button class="pm-modal-close" @click="cancelCustomize">&times;</button>
-            </div>
-
-            <div class="customize-modal-body">
-              <!-- 左侧：可选数据项 -->
-              <div class="customize-panel is-available">
-                <div class="customize-panel-head">
-                  <h3>可选数据项</h3>
-                  <p>支持按组、按口径快速选择</p>
-                </div>
-
-                <label class="customize-check-row is-master">
-                  <input
-                    type="checkbox"
-                    :checked="isAllColumnsSelected"
-                    :indeterminate.prop="isCustomizeIndeterminate"
-                    @change="toggleSelectAllColumns($event.target.checked)"
-                  />
-                  <span>全选</span>
-                </label>
-
-                <div class="customize-quick-filters">
-                  <p class="customize-quick-title">快速筛选</p>
-                  <div class="customize-quick-list">
-                    <button
-                      v-for="qf in quickFilters"
-                      :key="qf.id"
-                      class="pm-tag-btn"
-                      :class="{ 'is-active': customizeQuickFilter === qf.id }"
-                      @click="customizeQuickFilter = (customizeQuickFilter === qf.id ? '' : qf.id)"
-                    >
-                      {{ qf.label }}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="customize-group-list">
-                  <template v-for="group in filteredColumnGroups" :key="group.id">
-                    <label class="customize-check-row">
-                      <input
-                        type="checkbox"
-                        :checked="isGroupFullyChecked(group)"
-                        :indeterminate.prop="isGroupPartiallyChecked(group)"
-                        @change="toggleGroupColumns(group)"
-                      />
-                      <span>{{ group.label }}</span>
-                    </label>
-                    <template v-if="isGroupExpanded(group)">
-                      <label
-                        v-for="col in getGroupColumns(group)"
-                        :key="col.id"
-                        class="customize-check-row is-child"
-                      >
-                        <input
-                          type="checkbox"
-                          :checked="customizeDraftColumnIds.includes(col.id)"
-                          @change="toggleColumn(col.id)"
-                        />
-                        <span>{{ col.fullLabel || col.shortLabel }}</span>
-                      </label>
-                    </template>
-                  </template>
-                </div>
-              </div>
-
-              <!-- 右侧：已选数据项 -->
-              <div class="customize-panel is-selected">
-                <div class="customize-panel-head">
-                  <div>
-                    <h3>已选择 {{ customizeDraftColumnIds.length }} 项</h3>
-                    <p>当前将应用的分组与子列组合</p>
-                  </div>
-                  <div class="customize-link-actions">
-                    <button class="pm-text-btn" @click="clearAllCustomColumns">全部移除</button>
-                    <button class="pm-text-btn" @click="resetCustomColumns">重置</button>
-                  </div>
-                </div>
-
-                <div class="customize-selected-list">
-                  <div
-                    v-for="colId in customizeDraftColumnIds"
-                    :key="colId"
-                    class="customize-selected-item"
-                  >
-                    <span>{{ getColumnLabel(colId) }}</span>
-                    <button class="pm-close-btn" @click="toggleColumn(colId)">&times;</button>
-                  </div>
-                  <div v-if="customizeDraftColumnIds.length === 0" class="customize-empty">
-                    <p>暂未选择数据项</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="pm-modal-footer">
-              <button class="pm-btn pm-btn-secondary" @click="cancelCustomize">取消</button>
-              <button class="pm-btn pm-btn-primary" @click="applyCustomizeColumns">应用</button>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </Teleport>
+    <CustomizeModal
+      v-model:visible="customizeModalVisible"
+      :selected-column-ids="selectedMonitorColumnIds"
+      @apply="handleCustomizeApply"
+    />
 
     <!-- 店铺监控配置 Modal -->
-    <Teleport to="body">
-      <transition name="modal-fade">
-        <div v-if="shopConfigModalVisible" class="pm-modal-overlay" @click.self="cancelShopConfig">
-          <div class="pm-modal" style="width: 580px;">
-            <div class="pm-modal-header">
-              <h2 class="pm-modal-title">店铺监控配置</h2>
-              <button class="pm-modal-close" @click="cancelShopConfig">&times;</button>
-            </div>
-
-            <div class="shop-config-body">
-              <div v-if="shopConfigFollowsGlobal" class="pm-alert-info">
-                当前店铺默认跟随全局监控配置。
-              </div>
-
-              <div class="shop-config-form">
-                <div class="config-field">
-                  <label>监控间隔（秒）</label>
-                  <input
-                    type="number"
-                    class="pm-config-input-full"
-                    v-model.number="shopConfigDraft.monitorIntervalSeconds"
-                    :min="5"
-                  />
-                </div>
-                <div class="config-field">
-                  <label>每日操作上限</label>
-                  <input
-                    type="number"
-                    class="pm-config-input-full"
-                    v-model.number="shopConfigDraft.dailyOperationLimit"
-                    :min="0"
-                    placeholder="留空不限制"
-                  />
-                </div>
-                <div class="config-field">
-                  <label>总操作上限</label>
-                  <input
-                    type="number"
-                    class="pm-config-input-full"
-                    v-model.number="shopConfigDraft.totalOperationLimit"
-                    :min="0"
-                    placeholder="留空不限制"
-                  />
-                </div>
-                <div class="config-field">
-                  <label>花费暂停阈值</label>
-                  <input
-                    type="number"
-                    class="pm-config-input-full"
-                    v-model.number="shopConfigDraft.autoPauseSpendThreshold"
-                    :min="0"
-                    placeholder="留空不限制"
-                  />
-                </div>
-                <div class="config-field">
-                  <label>ROAS 暂停阈值</label>
-                  <input
-                    type="number"
-                    class="pm-config-input-full"
-                    v-model.number="shopConfigDraft.autoPauseRoasThreshold"
-                    :min="0"
-                    placeholder="留空不限制"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="pm-modal-footer">
-              <button class="pm-btn pm-btn-text" @click="resetShopConfig">恢复全局</button>
-              <button class="pm-btn pm-btn-secondary" @click="cancelShopConfig">取消</button>
-              <button class="pm-btn pm-btn-primary" @click="saveShopConfig">保存店铺配置</button>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </Teleport>
+    <ShopConfigModal
+      v-model:visible="shopConfigModalVisible"
+      :shop-config="shopConfigCurrentKey ? monitorSnapshot.shops[shopConfigCurrentKey]?.config : null"
+      @save="handleShopConfigSave"
+    />
   </main>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted } from 'vue';
 import {
-  MONITOR_FILTERS, CUSTOMIZE_QUICK_FILTERS, MONITOR_COLUMN_GROUPS,
-  DEFAULT_MONITOR_COLUMN_IDS,
   PROMOTION_MASTER_RUNTIME_LOG_EVENT_PREFIXES,
-  ACTIVE_MONITOR_POLL_INTERVAL_MS, ACTIVE_RUNTIME_LOG_POLL_INTERVAL_MS,
-  RUNTIME_LOG_PAGE_SIZE, DEFAULT_MONITOR_INTERVAL_SECONDS
+  ACTIVE_MONITOR_POLL_INTERVAL_MS,
+  ACTIVE_RUNTIME_LOG_POLL_INTERVAL_MS,
+  RUNTIME_LOG_PAGE_SIZE,
+  DEFAULT_MONITOR_COLUMN_IDS
 } from './constants.js';
 import {
   loadPromotionManagerSettings, savePromotionManagerSettings,
@@ -278,6 +104,8 @@ import CreatePanel from './panels/CreatePanel.vue';
 import DetailPanel from './panels/DetailPanel.vue';
 import MonitorPanel from './panels/MonitorPanel.vue';
 import LogsPanel from './panels/LogsPanel.vue';
+import CustomizeModal from './components/CustomizeModal.vue';
+import ShopConfigModal from './components/ShopConfigModal.vue';
 
 // ==================== Tab 状态 ====================
 const tabs = [
@@ -290,7 +118,6 @@ const activeTab = ref('monitor');
 
 // ==================== 监控数据 ====================
 const visibleShops = ref([]);
-const loadError = ref('');
 const monitorSnapshot = reactive({
   updatedAt: '',
   batchMonitoringActive: false,
@@ -302,7 +129,7 @@ let monitorSnapshotPollTimer = 0;
 
 // ==================== 监控配置 ====================
 const monitorConfig = reactive({
-  monitorIntervalSeconds: String(DEFAULT_MONITOR_INTERVAL_SECONDS),
+  monitorIntervalSeconds: '60',
   dailyOperationLimit: '',
   totalOperationLimit: '',
   autoPauseSpendThreshold: '',
@@ -320,167 +147,27 @@ const selectedMonitorColumnIds = ref([...DEFAULT_MONITOR_COLUMN_IDS]);
 
 // ==================== 自定义数据项 Modal ====================
 const customizeModalVisible = ref(false);
-const customizeDraftColumnIds = ref([...DEFAULT_MONITOR_COLUMN_IDS]);
-const customizeQuickFilter = ref('');
-const quickFilters = CUSTOMIZE_QUICK_FILTERS;
-
-const filteredColumnGroups = computed(() => {
-  if (!customizeQuickFilter.value) return MONITOR_COLUMN_GROUPS;
-  const qfId = customizeQuickFilter.value;
-  return MONITOR_COLUMN_GROUPS.filter(g =>
-    g.columns.some(c => c.tags.includes(qfId))
-  );
-});
-
-const allFlatColumnIds = computed(() =>
-  MONITOR_COLUMN_GROUPS.flatMap(g => g.columns.map(c => c.id))
-);
-
-const isAllColumnsSelected = computed(() =>
-  customizeDraftColumnIds.value.length === allFlatColumnIds.value.length
-);
-
-const isCustomizeIndeterminate = computed(() =>
-  customizeDraftColumnIds.value.length > 0 && !isAllColumnsSelected.value
-);
-
-function getGroupColumns(group) {
-  return group.columns;
-}
-
-function isGroupExpanded(group) {
-  return group.columns.some(c => customizeDraftColumnIds.value.includes(c.id)) || customizeQuickFilter.value;
-}
-
-function isGroupFullyChecked(group) {
-  return group.columns.every(c => customizeDraftColumnIds.value.includes(c.id));
-}
-
-function isGroupPartiallyChecked(group) {
-  const someChecked = group.columns.some(c => customizeDraftColumnIds.value.includes(c.id));
-  return someChecked && !isGroupFullyChecked(group);
-}
-
-function toggleSelectAllColumns(checked) {
-  if (checked) {
-    customizeDraftColumnIds.value = [...allFlatColumnIds.value];
-  } else {
-    customizeDraftColumnIds.value = [];
-  }
-}
-
-function toggleGroupColumns(group) {
-  const groupColIds = group.columns.map(c => c.id);
-  const allChecked = groupColIds.every(id => customizeDraftColumnIds.value.includes(id));
-  if (allChecked) {
-    customizeDraftColumnIds.value = customizeDraftColumnIds.value.filter(
-      id => !groupColIds.includes(id)
-    );
-  } else {
-    const newIds = groupColIds.filter(id => !customizeDraftColumnIds.value.includes(id));
-    customizeDraftColumnIds.value = [...customizeDraftColumnIds.value, ...newIds];
-  }
-}
-
-function toggleColumn(colId) {
-  const idx = customizeDraftColumnIds.value.indexOf(colId);
-  if (idx >= 0) {
-    customizeDraftColumnIds.value = customizeDraftColumnIds.value.filter(id => id !== colId);
-  } else {
-    customizeDraftColumnIds.value = [...customizeDraftColumnIds.value, colId];
-  }
-}
-
-function getColumnLabel(colId) {
-  for (const group of MONITOR_COLUMN_GROUPS) {
-    const col = group.columns.find(c => c.id === colId);
-    if (col) return col.fullLabel || col.shortLabel;
-  }
-  return colId;
-}
-
 function openCustomizeModal() {
-  customizeDraftColumnIds.value = [...selectedMonitorColumnIds.value];
-  customizeQuickFilter.value = '';
   customizeModalVisible.value = true;
 }
-
-function applyCustomizeColumns() {
-  selectedMonitorColumnIds.value = [...customizeDraftColumnIds.value];
-  customizeModalVisible.value = false;
+function handleCustomizeApply(newIds) {
+  selectedMonitorColumnIds.value = [...newIds];
   showNotice('数据项已更新并同步到云端。');
   persistSettings();
-}
-
-function cancelCustomize() {
-  customizeDraftColumnIds.value = [...selectedMonitorColumnIds.value];
-  customizeModalVisible.value = false;
-}
-
-function clearAllCustomColumns() {
-  customizeDraftColumnIds.value = [];
-}
-
-function resetCustomColumns() {
-  customizeDraftColumnIds.value = [...DEFAULT_MONITOR_COLUMN_IDS];
 }
 
 // ==================== 店铺配置 Modal ====================
 const shopConfigModalVisible = ref(false);
 const shopConfigCurrentKey = ref('');
-const shopConfigFollowsGlobal = ref(true);
-const shopConfigDraft = reactive({
-  monitorIntervalSeconds: DEFAULT_MONITOR_INTERVAL_SECONDS,
-  dailyOperationLimit: '',
-  totalOperationLimit: '',
-  autoPauseSpendThreshold: '',
-  autoPauseRoasThreshold: ''
-});
 
 function openMonitorShopConfigModal(shopId) {
   shopConfigCurrentKey.value = shopId;
-  const shopConfig = monitorSnapshot.shops[shopId]?.config;
-  if (shopConfig) {
-    shopConfigFollowsGlobal.value = false;
-    Object.assign(shopConfigDraft, {
-      monitorIntervalSeconds: shopConfig.monitorIntervalSeconds || DEFAULT_MONITOR_INTERVAL_SECONDS,
-      dailyOperationLimit: shopConfig.dailyOperationLimit || '',
-      totalOperationLimit: shopConfig.totalOperationLimit || '',
-      autoPauseSpendThreshold: shopConfig.autoPauseSpendThreshold || '',
-      autoPauseRoasThreshold: shopConfig.autoPauseRoasThreshold || ''
-    });
-  } else {
-    shopConfigFollowsGlobal.value = true;
-    Object.assign(shopConfigDraft, {
-      monitorIntervalSeconds: DEFAULT_MONITOR_INTERVAL_SECONDS,
-      dailyOperationLimit: '',
-      totalOperationLimit: '',
-      autoPauseSpendThreshold: '',
-      autoPauseRoasThreshold: ''
-    });
-  }
   shopConfigModalVisible.value = true;
 }
 
-async function saveShopConfig() {
-  shopConfigModalVisible.value = false;
+async function handleShopConfigSave() {
   showNotice('店铺监控配置已保存。');
   await persistSettings();
-}
-
-function cancelShopConfig() {
-  shopConfigModalVisible.value = false;
-}
-
-function resetShopConfig() {
-  shopConfigFollowsGlobal.value = true;
-  Object.assign(shopConfigDraft, {
-    monitorIntervalSeconds: DEFAULT_MONITOR_INTERVAL_SECONDS,
-    dailyOperationLimit: '',
-    totalOperationLimit: '',
-    autoPauseSpendThreshold: '',
-    autoPauseRoasThreshold: ''
-  });
 }
 
 // ==================== 日志 ====================
@@ -542,7 +229,7 @@ async function loadMonitorSnapshot() {
       });
     }
   } catch (e) {
-    loadError.value = '监控数据加载失败：' + (e.message || '');
+    // 静默处理
   } finally {
     monitorSnapshotLoading.value = false;
   }
@@ -1036,213 +723,6 @@ onUnmounted(() => {
   color: #2563eb;
 }
 
-/* ==================== Customize Modal ==================== */
-.customize-modal-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  min-height: 420px;
-  padding: 16px 24px;
-  overflow-y: auto;
-}
-
-.customize-panel {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  overflow-y: auto;
-  max-height: 460px;
-}
-
-.customize-panel.is-selected {
-  background: #ffffff;
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.customize-panel-head h3 {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 4px;
-  color: #132238;
-}
-
-.customize-panel-head p {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 0 0 12px;
-}
-
-.customize-panel.is-selected .customize-panel-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.customize-link-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.customize-check-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.15s;
-  user-select: none;
-}
-
-.customize-check-row:hover {
-  background: rgba(59, 130, 246, 0.06);
-}
-
-.customize-check-row input[type="checkbox"] {
-  margin: 0;
-  width: 16px;
-  height: 16px;
-  accent-color: #3b82f6;
-}
-
-.customize-check-row.is-master {
-  font-weight: 600;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  padding-bottom: 10px;
-  margin-bottom: 4px;
-}
-
-.customize-check-row.is-child {
-  padding-left: 32px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.customize-quick-filters {
-  margin-bottom: 8px;
-}
-
-.customize-quick-title {
-  font-size: 11px;
-  color: #94a3b8;
-  margin: 0 0 6px;
-}
-
-.customize-quick-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.customize-group-list {
-  margin-top: 4px;
-}
-
-.customize-selected-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.customize-selected-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  background: rgba(59, 130, 246, 0.06);
-  border-radius: 6px;
-  font-size: 13px;
-  color: #132238;
-}
-
-.pm-close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 16px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.pm-close-btn:hover {
-  background: rgba(148, 163, 184, 0.16);
-  color: #475569;
-}
-
-.customize-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-/* ==================== Shop Config Modal ==================== */
-.shop-config-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px 24px;
-}
-
-.pm-alert-info {
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(59, 130, 246, 0.08);
-  color: #2563eb;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid rgba(59, 130, 246, 0.14);
-}
-
-.shop-config-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.config-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.config-field label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.pm-config-input-full {
-  width: 100%;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgba(39, 61, 89, 0.14);
-  border-radius: 8px;
-  background: rgba(244, 247, 251, 0.96);
-  color: #18304a;
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.pm-config-input-full:focus {
-  border-color: rgba(33, 96, 173, 0.46);
-  box-shadow: 0 0 0 3px rgba(33, 96, 173, 0.12);
-  background: rgba(255, 255, 255, 0.98);
-}
-
 /* ==================== Notice ==================== */
 .promotion-window-notice {
   position: fixed;
@@ -1400,39 +880,10 @@ body.dark-theme .pm-modal-overlay {
   background: rgba(5, 10, 20, 0.62);
 }
 
-body.dark-theme .customize-panel {
-  background: rgba(15, 23, 42, 0.88);
-  border-color: rgba(148, 163, 184, 0.14);
-}
-
-body.dark-theme .customize-panel.is-selected {
-  background: rgba(20, 30, 48, 0.94);
-  border-color: rgba(59, 130, 246, 0.24);
-}
-
-body.dark-theme .customize-panel-head h3 {
-  color: #e5eefc;
-}
-
-body.dark-theme .customize-selected-item {
-  background: rgba(59, 130, 246, 0.08);
-  color: #e5eefc;
-}
-
-body.dark-theme .customize-check-row.is-child {
-  color: #94a3b8;
-}
-
 body.dark-theme .pm-alert-info {
   background: rgba(59, 130, 246, 0.1);
   color: #93c5fd;
   border-color: rgba(59, 130, 246, 0.18);
-}
-
-body.dark-theme .pm-config-input-full {
-  background: rgba(30, 41, 59, 0.88);
-  border-color: rgba(148, 163, 184, 0.14);
-  color: #e5eefc;
 }
 
 body.dark-theme .pm-btn-secondary {
