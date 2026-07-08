@@ -75,6 +75,14 @@ const TARGETS = Object.freeze({
       'src/renderer/psdSmartSuiteApp/dist/psd-smart-suite-app.js',
       'src/renderer/psdSmartSuiteApp/dist/psd-smart-suite-app.css'
     ]
+  },
+  'global-category-sync': {
+    config: 'vite.global-category-sync.config.mjs',
+    sourceDirs: ['src/renderer/globalCategorySyncApp'],
+    outputFiles: [
+      'src/renderer/globalCategorySyncApp/dist/global-category-sync-app.js',
+      'src/renderer/globalCategorySyncApp/dist/global-category-sync-app.css'
+    ]
   }
 });
 
