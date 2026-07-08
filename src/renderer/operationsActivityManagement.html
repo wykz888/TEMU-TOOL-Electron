@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x8425;&#x9500;&#x6D3B;&#x52A8;</title>
+    <link rel="stylesheet" href="./operationsWorkbench.css" />
+    <link rel="stylesheet" href="./operationsActivityManagement.css" />
+    <link rel="stylesheet" href="./categoryCascadeControl.css" />
+    <link rel="stylesheet" href="./shopMultiSelectControl.css" />
+    <script src="./themeSync.js" defer></script>
+    <script src="./categoryCascadeControl.js" defer></script>
+    <script src="./shopMultiSelectControl.js" defer></script>
+    <script src="./operationsModuleKeepAlive.js" defer></script>
+    <script src="./operationsShopSelectionTemplates.js" defer></script>
+    <script src="./operationsSharedCatalog.js" defer></script>
+    <script src="../utils/operationsProfitMetrics.js" defer></script>
+    <script src="./operationsActivityManagementView.js" defer></script>
+    <script src="./operationsStandaloneWorkbench.js" defer></script>
+  </head>
+  <body
+    class="activity-management-standalone"
+    data-operations-standalone-module="activity"
+    data-operations-standalone-view="operationsActivityManagementView"
+  >
+    <main class="operations-shell">
+      <section class="operations-content-panel" aria-label="Operations Content">
+        <div class="operations-module-panels">
+          <section
+            class="operations-module-panel"
+            data-operations-panel="activity"
+            data-operations-standalone-panel="true"
+          ></section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

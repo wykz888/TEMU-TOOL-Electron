@@ -1,0 +1,66 @@
+{
+  "name": "temu-toolbox-electron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TEMU 工具箱 Electron 应用。",
+  "main": "src/main.js",
+  "scripts": {
+    "build:renderer:main-window": "node scripts/buildRendererBundle.js main-window",
+    "build:renderer:global-config": "node scripts/buildRendererBundle.js global-config",
+    "build:renderer:shop-management": "node scripts/buildRendererBundle.js shop-management",
+    "build:renderer:feature-center": "node scripts/buildRendererBundle.js feature-center",
+    "build:renderer:creation-center": "node scripts/buildRendererBundle.js creation-center",
+    "build:renderer:shop-window": "node scripts/buildRendererBundle.js shop-window",
+    "build:renderer:promotion-manager": "node scripts/buildRendererBundle.js promotion-manager",
+    "build:renderer:psd-smart-suite": "node scripts/buildRendererBundle.js psd-smart-suite",
+    "start": "npm run build:renderer:psd-smart-suite && npm run build:renderer:promotion-manager && npm run build:renderer:main-window && npm run build:renderer:shop-management && npm run build:renderer:global-config && npm run build:renderer:feature-center && npm run build:renderer:creation-center && npm run build:renderer:shop-window && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1",
+    "build:win": "npm run build:renderer:psd-smart-suite && npm run build:renderer:promotion-manager && npm run build:renderer:main-window && npm run build:renderer:shop-management && npm run build:renderer:global-config && npm run build:renderer:feature-center && npm run build:renderer:creation-center && npm run build:renderer:shop-window && electron-builder --win portable",
+    "validate:auth-bridge": "node scripts/validateAuthBridgeRunner.js",
+    "validate:feature-catalog": "node scripts/validateFeatureCatalog.js",
+    "validate:preload-ipc": "node scripts/validatePreloadIpcSurface.js",
+    "validate:operations-pricing": "node scripts/validateOperationsPricingLogic.js",
+    "validate:pod-suite-tool": "node scripts/validatePodSuiteToolService.js",
+    "validate": "npm run validate:feature-catalog && npm run validate:preload-ipc && npm run validate:operations-pricing && npm run validate:pod-suite-tool && npm run validate:auth-bridge"
+  },
+  "devDependencies": {
+    "electron": "^41.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.temu.toolbox.electron",
+    "productName": "TEMU 工具箱",
+    "icon": "src/assets/icons/app-icon.png",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "src/assets/icons/app-icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "TEMU 工具箱.exe"
+    }
+  },
+  "dependencies": {
+    "@arco-design/web-vue": "^2.58.0",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "cos-nodejs-sdk-v5": "^2.15.4",
+    "sharp": "^0.34.5",
+    "vite": "^8.1.3",
+    "vue": "^3.5.39"
+  },
+  "optionalDependencies": {
+    "@img/sharp-libvips-win32-x64": "^1.2.4",
+    "@img/sharp-win32-x64": "^0.34.5"
+  }
+}

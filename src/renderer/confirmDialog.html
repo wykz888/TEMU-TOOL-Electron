@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TEMU &#x5DE5;&#x5177;&#x7BB1;</title>
+    <link rel="stylesheet" href="./confirmDialog.css" />
+    <script src="./confirmDialog.js" defer></script>
+  </head>
+  <body>
+    <main class="confirm-shell">
+      <div class="confirm-backdrop"></div>
+      <section
+        id="confirmDialogCard"
+        class="confirm-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmDialogTitle"
+        aria-describedby="confirmDialogMessage"
+        tabindex="-1"
+      >
+        <header class="confirm-header">
+          <div class="confirm-header-copy">
+            <span id="confirmDialogBadge" class="confirm-badge"></span>
+            <h1 id="confirmDialogTitle" class="confirm-title"></h1>
+          </div>
+          <button
+            id="confirmDialogCloseButton"
+            class="confirm-close-button"
+            type="button"
+            aria-label="Close"
+          >
+            &#x2715;
+          </button>
+        </header>
+
+        <div class="confirm-body">
+          <p id="confirmDialogMessage" class="confirm-message"></p>
+          <div id="confirmDialogDetail" class="confirm-detail" hidden></div>
+        </div>
+
+        <footer class="confirm-footer">
+          <button id="confirmDialogCancelButton" class="confirm-button confirm-button-secondary" type="button"></button>
+          <button id="confirmDialogConfirmButton" class="confirm-button confirm-button-primary" type="button"></button>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

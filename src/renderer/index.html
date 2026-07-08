@@ -1,0 +1,75 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TEMU &#x5DE5;&#x5177;&#x7BB1;</title>
+    <link rel="stylesheet" href="./index.css" />
+    <script src="./themeSync.js" defer></script>
+    <script src="./shopManagementStore.js" defer></script>
+      <script src="./shopManagementView.js" defer></script>
+      <script src="./shopWindowAutoLoginStore.js" defer></script>
+      <script src="./shopWindowDomElements.js" defer></script>
+      <script src="./shopWindowShopListController.js" defer></script>
+      <script src="./shopWindowWorkspaceController.js" defer></script>
+      <script src="./shopWindowStorageSyncViewController.js" defer></script>
+      <script src="./shopWindowUrlModalController.js" defer></script>
+      <script src="./shopWindowView.js" defer></script>
+      <script src="./mainWindowShellView.js" defer></script>
+    <script src="./globalConfigView.js" defer></script>
+    <script src="./featureCenterView.js" defer></script>
+    <script src="./creationCenterView.js" defer></script>
+    <script src="./index.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div id="mainWindowShell" class="main-window-shell-host"></div>
+
+      <main class="content-stage">
+        <article
+          id="shop-management"
+          class="content-panel is-active"
+          data-section-panel
+        >
+          <div id="shopManagementApp" class="shop-management-vue-host"></div>
+        </article>
+
+        <article
+          id="shop-window"
+          class="content-panel"
+          data-section-panel
+          hidden
+        >
+          <div id="shopWindowApp" class="shop-window-vue-host"></div>
+        </article>
+
+        <article
+          id="global-config"
+          class="content-panel"
+          data-section-panel
+          hidden
+        >
+          <div id="globalConfigApp" class="global-config-vue-host"></div>
+        </article>
+
+        <article
+          id="feature-center"
+          class="content-panel"
+          data-section-panel
+          hidden
+        >
+          <div id="featureCenterApp" class="catalog-center-vue-host"></div>
+        </article>
+
+        <article
+          id="creation-center"
+          class="content-panel"
+          data-section-panel
+          hidden
+        >
+          <div id="creationCenterApp" class="catalog-center-vue-host"></div>
+        </article>
+      </main>
+    </div></body>
+</html>
+

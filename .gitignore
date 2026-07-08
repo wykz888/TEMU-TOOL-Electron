@@ -1,0 +1,22 @@
+node_modules/
+*.bak
+*.log
+.DS_Store
+Thumbs.db
+scripts/.electron-dev.pid
+dist/
+out/
+release/
+activity_background_submit_logs/
+
+# 渲染进程构建产物
+src/renderer/*/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# 环境变量
+.env
+.env.local
+.env.*.local

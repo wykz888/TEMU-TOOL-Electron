@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x4E0A;&#x65B0;&#x751F;&#x547D;&#x5468;&#x671F;&#x7BA1;&#x7406;</title>
+    <link rel="stylesheet" href="./operationsWorkbench.css" />
+    <link rel="stylesheet" href="./operationsPriceDeclaration.css" />
+    <link rel="stylesheet" href="./operationsNewProductLifecycle.css" />
+    <link rel="stylesheet" href="./categoryCascadeControl.css" />
+    <link rel="stylesheet" href="./shopMultiSelectControl.css" />
+    <script src="./themeSync.js" defer></script>
+    <script src="./categoryCascadeControl.js" defer></script>
+    <script src="./shopMultiSelectControl.js" defer></script>
+    <script src="./operationsModuleKeepAlive.js" defer></script>
+    <script src="./operationsShopSelectionTemplates.js" defer></script>
+    <script src="./operationsSharedCatalog.js" defer></script>
+    <script src="../utils/operationsProfitMetrics.js" defer></script>
+    <script src="./operationsNewProductLifecycleView.js" defer></script>
+    <script src="./operationsStandaloneWorkbench.js" defer></script>
+  </head>
+  <body
+    class="new-product-lifecycle-standalone"
+    data-operations-standalone-module="new-product-lifecycle"
+    data-operations-standalone-view="operationsNewProductLifecycleView"
+  >
+    <main class="operations-shell">
+      <section class="operations-content-panel" aria-label="Operations Content">
+        <div class="operations-module-panels">
+          <section
+            class="operations-module-panel"
+            data-operations-panel="new-product-lifecycle"
+            data-operations-standalone-panel="true"
+          ></section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

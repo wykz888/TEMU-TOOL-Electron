@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x767B;&#x5F55;&#x4E0E;&#x6CE8;&#x518C;</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <script src="./themeSync.js" defer></script>
+    <script type="module" src="./auth.js"></script>
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-card">
+        <p class="eyebrow">TEMU &#x5DE5;&#x5177;&#x7BB1;</p>
+        <h1>&#x8D26;&#x53F7;&#x9A8C;&#x8BC1;</h1>
+
+        <div class="tab-row">
+          <button id="loginTab" class="tab-button is-active" type="button">
+            &#x767B;&#x5F55;
+          </button>
+          <button id="registerTab" class="tab-button" type="button">
+            &#x6CE8;&#x518C;
+          </button>
+        </div>
+
+        <p id="statusText" class="status-text" aria-live="polite"></p>
+
+        <form id="loginForm" class="auth-form">
+          <label class="field">
+            <span>&#x7528;&#x6237;&#x540D;</span>
+            <input id="loginUsername" name="username" type="text" autocomplete="username" required />
+          </label>
+
+          <label class="field">
+            <span>&#x5BC6;&#x7801;</span>
+            <input
+              id="loginPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+
+          <label class="remember-field" for="rememberLogin">
+            <input id="rememberLogin" name="rememberLogin" type="checkbox" />
+            <span>&#x8BB0;&#x4F4F;&#x767B;&#x5F55;</span>
+          </label>
+
+          <button id="loginSubmit" class="primary-button" type="submit">
+            &#x767B;&#x5F55;&#x5E76;&#x6253;&#x5F00;&#x4E3B;&#x7A97;&#x53E3;
+          </button>
+        </form>
+
+        <form id="registerForm" class="auth-form is-hidden">
+          <label class="field">
+            <span>&#x7528;&#x6237;&#x540D;</span>
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              autocomplete="username"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>&#x5BC6;&#x7801;</span>
+            <input
+              id="registerPassword"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>&#x786E;&#x8BA4;&#x5BC6;&#x7801;</span>
+            <input
+              id="registerConfirmPassword"
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </label>
+
+          <button id="registerSubmit" class="primary-button" type="submit">
+            &#x521B;&#x5EFA;&#x8D26;&#x53F7;
+          </button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

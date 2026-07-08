@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x8425;&#x9500;&#x5DE5;&#x5177;</title>
+    <link rel="stylesheet" href="./operationsWorkbench.css" />
+    <link rel="stylesheet" href="./categoryCascadeControl.css" />
+    <link rel="stylesheet" href="./shopMultiSelectControl.css" />
+    <script src="./themeSync.js" defer></script>
+    <script src="./categoryCascadeControl.js" defer></script>
+    <script src="./shopMultiSelectControl.js" defer></script>
+    <script src="./operationsModuleKeepAlive.js" defer></script>
+    <script src="./operationsShopSelectionTemplates.js" defer></script>
+    <script src="./operationsSharedCatalog.js" defer></script>
+    <script src="../utils/operationsProfitMetrics.js" defer></script>
+    <script src="./marketingToolsView.js" defer></script>
+  </head>
+  <body class="marketing-tools-standalone">
+    <main class="operations-shell">
+      <section class="operations-content-panel" aria-label="Operations Content">
+        <div class="operations-module-panels">
+          <section class="operations-module-panel" data-operations-panel="marketing-tools">
+            <div class="ops-marketing-tools-workbench">
+              <header class="ops-marketing-tools-header">
+                <div class="ops-marketing-tools-header-copy">
+                  <p class="ops-marketing-tools-eyebrow">&#x8425;&#x9500;&#x5DE5;&#x5177;</p>
+                  <h2 class="ops-marketing-tools-title">&#x8425;&#x9500;&#x5DE5;&#x5177;</h2>
+                </div>
+                <div class="ops-marketing-tools-tab-row" role="tablist" aria-label="Marketing Tools Tabs">
+                  <button
+                    class="ops-marketing-tools-tab is-active"
+                    type="button"
+                    data-marketing-tools-tab="single-product-coupon"
+                    aria-selected="true"
+                  >
+                    &#x5355;&#x54C1;&#x4F18;&#x60E0;&#x5238;
+                  </button>
+                  <button
+                    class="ops-marketing-tools-tab"
+                    type="button"
+                    data-marketing-tools-tab="store-full-reduction-coupon"
+                    aria-selected="false"
+                  >
+                    &#x5E97;&#x94FA;&#x6EE1;&#x51CF;&#x5238;
+                  </button>
+                  <button
+                    class="ops-marketing-tools-tab"
+                    type="button"
+                    data-marketing-tools-tab="review-reward"
+                    aria-selected="false"
+                  >
+                    &#x8BC4;&#x4EF7;&#x6709;&#x793C;
+                  </button>
+                  <button
+                    class="ops-marketing-tools-tab"
+                    type="button"
+                    data-marketing-tools-tab="free-shipping-promotion"
+                    aria-selected="false"
+                  >
+                    &#x5305;&#x90AE;&#x4F18;&#x60E0;&#x6D3B;&#x52A8;
+                  </button>
+                </div>
+              </header>
+              <section class="ops-marketing-tools-panels">
+                <section
+                  class="ops-marketing-tools-panel is-active"
+                  data-marketing-tools-panel="single-product-coupon"
+                  role="tabpanel"
+                >
+                  <div class="ops-marketing-tools-placeholder">
+                    <p class="ops-marketing-tools-placeholder-title">&#x5355;&#x54C1;&#x4F18;&#x60E0;&#x5238;</p>
+                    <p class="ops-marketing-tools-placeholder-text">&#x5F53;&#x524D;&#x5148;&#x4F5C;&#x4E3A;&#x5360;&#x4F4D;&#x529F;&#x80FD;&#xFF0C;&#x540E;&#x7EED;&#x53EF;&#x5728;&#x8FD9;&#x91CC;&#x63A5;&#x5165;&#x5355;&#x54C1;&#x4F18;&#x60E0;&#x5238;&#x5DE5;&#x4F5C;&#x53F0;&#x3002;</p>
+                  </div>
+                </section>
+                <section
+                  class="ops-marketing-tools-panel"
+                  data-marketing-tools-panel="store-full-reduction-coupon"
+                  role="tabpanel"
+                  hidden
+                >
+                  <div class="ops-marketing-tools-placeholder">
+                    <p class="ops-marketing-tools-placeholder-title">&#x5E97;&#x94FA;&#x6EE1;&#x51CF;&#x5238;</p>
+                    <p class="ops-marketing-tools-placeholder-text">&#x5F53;&#x524D;&#x5148;&#x4F5C;&#x4E3A;&#x5360;&#x4F4D;&#x529F;&#x80FD;&#xFF0C;&#x540E;&#x7EED;&#x53EF;&#x5728;&#x8FD9;&#x91CC;&#x63A5;&#x5165;&#x5E97;&#x94FA;&#x6EE1;&#x51CF;&#x5238;&#x5DE5;&#x4F5C;&#x53F0;&#x3002;</p>
+                  </div>
+                </section>
+                <section
+                  class="ops-marketing-tools-panel"
+                  data-marketing-tools-panel="review-reward"
+                  role="tabpanel"
+                  hidden
+                >
+                  <div class="ops-marketing-tools-placeholder">
+                    <p class="ops-marketing-tools-placeholder-title">&#x8BC4;&#x4EF7;&#x6709;&#x793C;</p>
+                    <p class="ops-marketing-tools-placeholder-text">&#x5F53;&#x524D;&#x5148;&#x4F5C;&#x4E3A;&#x5360;&#x4F4D;&#x529F;&#x80FD;&#xFF0C;&#x540E;&#x7EED;&#x53EF;&#x5728;&#x8FD9;&#x91CC;&#x63A5;&#x5165;&#x8BC4;&#x4EF7;&#x6709;&#x793C;&#x5DE5;&#x4F5C;&#x53F0;&#x3002;</p>
+                  </div>
+                </section>
+                <section
+                  class="ops-marketing-tools-panel"
+                  data-marketing-tools-panel="free-shipping-promotion"
+                  role="tabpanel"
+                  hidden
+                >
+                  <div class="ops-marketing-tools-placeholder">
+                    <p class="ops-marketing-tools-placeholder-title">&#x5305;&#x90AE;&#x4F18;&#x60E0;&#x6D3B;&#x52A8;</p>
+                    <p class="ops-marketing-tools-placeholder-text">&#x5F53;&#x524D;&#x5148;&#x4F5C;&#x4E3A;&#x5360;&#x4F4D;&#x529F;&#x80FD;&#xFF0C;&#x540E;&#x7EED;&#x53EF;&#x5728;&#x8FD9;&#x91CC;&#x63A5;&#x5165;&#x5305;&#x90AE;&#x4F18;&#x60E0;&#x6D3B;&#x52A8;&#x5DE5;&#x4F5C;&#x53F0;&#x3002;</p>
+                  </div>
+                </section>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

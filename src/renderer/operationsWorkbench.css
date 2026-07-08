@@ -1,0 +1,1873 @@
+:root {
+  color-scheme: light;
+  font-family: "Bahnschrift", "Aptos", "Microsoft YaHei UI", sans-serif;
+  background: #eef2f7;
+  color: #132238;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(54, 91, 141, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(204, 145, 48, 0.12), transparent 24%),
+    linear-gradient(180deg, #f4f7fb 0%, #e8eef6 100%);
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+body.operations-default-layout [data-operations-module="marketing-tools"],
+body.operations-default-layout [data-operations-panel="marketing-tools"],
+body.operations-default-layout [data-operations-module="activity"],
+body.operations-default-layout [data-operations-panel="activity"],
+body.operations-default-layout [data-operations-module="traffic"],
+body.operations-default-layout [data-operations-panel="traffic"],
+body.operations-default-layout [data-operations-module="price-declaration"],
+body.operations-default-layout [data-operations-panel="price-declaration"],
+body.operations-default-layout [data-operations-module="new-product-lifecycle"],
+body.operations-default-layout [data-operations-panel="new-product-lifecycle"] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+}
+
+.operations-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 18px;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+body.marketing-tools-standalone .operations-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.marketing-tools-standalone .operations-switch-panel {
+  display: none;
+}
+
+body.marketing-tools-standalone .operations-content-panel {
+  height: calc(100vh - 36px);
+}
+
+body.activity-management-standalone .operations-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.activity-management-standalone .operations-switch-panel {
+  display: none;
+}
+
+body.activity-management-standalone .operations-content-panel {
+  height: calc(100vh - 36px);
+}
+
+body.traffic-boost-standalone .operations-shell,
+body.price-declaration-standalone .operations-shell,
+body.new-product-lifecycle-standalone .operations-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.traffic-boost-standalone .operations-switch-panel,
+body.price-declaration-standalone .operations-switch-panel,
+body.new-product-lifecycle-standalone .operations-switch-panel {
+  display: none;
+}
+
+body.traffic-boost-standalone .operations-content-panel,
+body.price-declaration-standalone .operations-content-panel,
+body.new-product-lifecycle-standalone .operations-content-panel {
+  height: calc(100vh - 36px);
+}
+
+.operations-switch-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 28px;
+  border: 1px solid rgba(19, 34, 56, 0.1);
+  background: rgba(248, 251, 255, 0.9);
+  box-shadow: 0 22px 56px rgba(18, 34, 57, 0.1);
+}
+
+.operations-switch-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(30, 53, 84, 0.12);
+  border-radius: 18px;
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #30465f;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.operations-switch-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(174, 113, 43, 0.34);
+  box-shadow: 0 14px 30px rgba(18, 34, 57, 0.1);
+}
+
+.operations-switch-button.is-active {
+  border-color: rgba(150, 96, 30, 0.34);
+  background: linear-gradient(135deg, #c98a32, #915b16);
+  color: #ffffff;
+  box-shadow: 0 18px 36px rgba(145, 91, 22, 0.24);
+}
+
+.operations-content-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid rgba(19, 34, 56, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 252, 0.98)),
+    rgba(255, 255, 255, 0.92);
+  box-shadow: 0 22px 56px rgba(18, 34, 57, 0.1);
+}
+
+.operations-module-panels {
+  width: 100%;
+  height: 100%;
+}
+
+.operations-module-panel {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.operations-module-workspace {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 247, 251, 0.92)),
+    rgba(255, 255, 255, 0.78);
+}
+
+.ops-marketing-tools-workbench {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+  scrollbar-gutter: stable both-edges;
+  color: #243548;
+}
+
+.ops-marketing-tools-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ops-marketing-tools-header-copy {
+  min-width: 0;
+}
+
+.ops-marketing-tools-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8b6a24;
+}
+
+.ops-marketing-tools-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.ops-marketing-tools-tab-row {
+  display: inline-flex;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(237, 242, 247, 0.9);
+  border: 1px solid rgba(147, 161, 179, 0.26);
+}
+
+.ops-marketing-tools-tab {
+  min-width: 110px;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  background: transparent;
+  color: #516173;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.ops-marketing-tools-tab:hover {
+  transform: translateY(-1px);
+  color: #30465f;
+}
+
+.ops-marketing-tools-tab.is-active {
+  background: linear-gradient(135deg, #c98a32, #915b16);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(145, 91, 22, 0.22);
+}
+
+.ops-marketing-tools-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 0;
+  flex: 1;
+}
+
+.ops-marketing-tools-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 18px;
+  box-sizing: border-box;
+  border-radius: 22px;
+  border: 1px solid rgba(147, 161, 179, 0.22);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.ops-marketing-tools-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.ops-marketing-tools-subtab-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.ops-marketing-tools-subtab-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ops-marketing-tools-subtab {
+  min-width: 104px;
+  height: 34px;
+  border: 1px solid rgba(147, 161, 179, 0.3);
+  border-radius: 9px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #516173;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.ops-marketing-tools-subtab.is-active {
+  border-color: rgba(49, 93, 155, 0.5);
+  background: linear-gradient(135deg, #315d9b, #21426f);
+  color: #ffffff;
+}
+
+.ops-marketing-tools-combined-card {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(147, 161, 179, 0.22);
+  background: rgba(248, 250, 253, 0.78);
+}
+
+.ops-marketing-tools-subtab-shell.is-create {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ops-marketing-tools-signup-card {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ops-marketing-tools-row .ops-marketing-tools-signup-card {
+  flex: 0 1 270px;
+}
+
+.ops-marketing-tools-signup-card-head {
+  display: none;
+}
+
+.ops-marketing-tools-signup-card-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.ops-marketing-tools-signup-card-body {
+  flex: 0 1 220px;
+  min-width: 220px;
+}
+
+.ops-marketing-tools-signup-card .shop-multi-select {
+  width: min(220px, 100%);
+}
+
+.ops-marketing-tools-signup-error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.ops-marketing-tools-query-card {
+  flex: 1 1 520px;
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ops-marketing-tools-query-card-head {
+  display: none;
+}
+
+.ops-marketing-tools-query-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-width: 0;
+}
+
+.ops-marketing-tools-query-field {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.ops-marketing-tools-query-field-label {
+  min-width: 0;
+  color: #516173;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ops-marketing-tools-query-field-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ops-marketing-tools-query-field-category .ops-marketing-tools-query-field-content {
+  width: 170px;
+}
+
+.ops-marketing-tools-query-field-product-id .ops-marketing-tools-query-field-content {
+  width: 252px;
+}
+
+.ops-marketing-tools-query-field-daily-price .ops-marketing-tools-query-field-content {
+  width: 220px;
+}
+
+.ops-marketing-tools-query-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.ops-marketing-tools-action-button {
+  height: 34px;
+  min-width: 74px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 120ms ease, border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.ops-marketing-tools-action-button.is-primary {
+  background: linear-gradient(135deg, #315d9b, #21426f);
+  color: #ffffff;
+}
+
+.ops-marketing-tools-action-button.is-danger {
+  background: linear-gradient(135deg, #d34a3a, #b42318);
+  color: #ffffff;
+}
+
+.ops-marketing-tools-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ops-marketing-tools-control {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #243548;
+  padding: 0 10px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.ops-marketing-tools-control:focus {
+  outline: none;
+  border-color: rgba(40, 93, 168, 0.68);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.ops-marketing-tools-combo-control {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.ops-marketing-tools-range-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.ops-marketing-tools-range-separator {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ops-marketing-tools-placeholder {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 240px;
+  border-radius: 18px;
+  border: 1px dashed rgba(147, 161, 179, 0.36);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(244, 247, 251, 0.72));
+  text-align: center;
+}
+
+.ops-marketing-tools-placeholder-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ops-marketing-tools-placeholder-text {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.ops-marketing-tools-results-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(147, 161, 179, 0.22);
+  background: rgba(248, 250, 253, 0.78);
+  min-height: 0;
+}
+
+.ops-marketing-tools-results-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ops-marketing-tools-quick-cost-entry-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(147, 161, 179, 0.22);
+  background: rgba(248, 250, 253, 0.78);
+}
+
+.ops-marketing-tools-quick-cost-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-batch-action-button {
+  min-width: 132px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.ops-marketing-tools-quick-cost-entry-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  flex: 1 1 360px;
+}
+
+.ops-marketing-tools-quick-cost-entry-copy strong {
+  font-size: 14px;
+  line-height: 1.2;
+  color: #203246;
+}
+
+.ops-marketing-tools-quick-cost-entry-copy span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ops-marketing-tools-batch-coupon-dialog {
+  width: min(900px, calc(100vw - 40px));
+  max-height: min(92vh, calc(100vh - 40px));
+}
+
+.ops-marketing-tools-batch-coupon-card {
+  display: grid;
+  gap: 12px;
+}
+
+.ops-marketing-tools-batch-coupon-inline-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.08fr) minmax(0, 1.2fr) minmax(180px, 0.72fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.ops-marketing-tools-batch-coupon-field {
+  display: grid;
+  gap: 8px;
+}
+
+.ops-marketing-tools-batch-coupon-type-field {
+  min-width: 0;
+}
+
+.ops-marketing-tools-batch-coupon-type-field .ops-activity-filter-label-row {
+  width: 100%;
+}
+
+.ops-marketing-tools-batch-coupon-type-field .ops-activity-filter-help {
+  position: static;
+}
+
+.ops-marketing-tools-batch-coupon-type-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  max-height: none;
+  overflow: visible;
+}
+
+.ops-marketing-tools-batch-coupon-time-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ops-marketing-tools-batch-coupon-time-field {
+  display: grid;
+  gap: 6px;
+}
+
+.ops-marketing-tools-batch-coupon-amount-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: auto;
+  max-width: 100%;
+}
+
+.ops-marketing-tools-batch-coupon-profit-floor-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ops-marketing-tools-batch-coupon-profit-floor-inline.is-logic {
+  min-width: 0;
+}
+
+.ops-marketing-tools-batch-coupon-profit-floor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: auto;
+  max-width: 100%;
+}
+
+.ops-marketing-tools-batch-coupon-inline-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ops-marketing-tools-batch-coupon-amount-input-wrap {
+  width: auto;
+  min-width: 132px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ops-marketing-tools-batch-coupon-amount-input {
+  min-width: 0;
+  width: 132px;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-amount-select {
+  width: 210px !important;
+  min-width: 210px !important;
+  max-width: 210px !important;
+  flex: 0 0 210px !important;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-amount-inline > .ops-marketing-tools-batch-coupon-amount-input-wrap {
+  width: auto !important;
+  min-width: 124px !important;
+  flex: 0 0 auto !important;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-amount-input {
+  width: 124px !important;
+  min-width: 124px !important;
+  max-width: 124px !important;
+  flex: 0 0 124px !important;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-row {
+  gap: 6px;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-inline {
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-inline.is-logic .ops-activity-filter-input {
+  width: 84px !important;
+  min-width: 84px !important;
+  max-width: 84px !important;
+  flex: 0 0 84px !important;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-inline:not(.is-logic) .ops-marketing-tools-batch-coupon-amount-input-wrap {
+  width: auto !important;
+  min-width: 124px !important;
+  flex: 0 0 auto !important;
+}
+
+.ops-marketing-tools-batch-coupon-time-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ops-marketing-tools-batch-coupon-time-summary {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-activity-filter-help-bubble {
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  z-index: 48;
+  width: min(760px, calc(100vw - 120px));
+  max-width: calc(100vw - 120px);
+  max-height: min(320px, calc(100vh - 180px));
+  overflow-y: auto;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-activity-quick-cost-header,
+.ops-marketing-tools-batch-coupon-dialog .ops-activity-quick-cost-footer {
+  flex: 0 0 auto;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-activity-quick-cost-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  z-index: 2;
+  padding: 18px 18px 22px;
+  overflow-y: auto;
+}
+
+.ops-marketing-tools-batch-coupon-dialog .ops-activity-quick-cost-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.ops-marketing-tools-results-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-results-head-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ops-marketing-tools-results-head-title {
+  font-size: 14px;
+  line-height: 1.2;
+  color: #203246;
+}
+
+.ops-marketing-tools-results-head-subtitle {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ops-marketing-tools-results-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-results-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.86);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ops-marketing-tools-results-feedback {
+  display: grid;
+  gap: 8px;
+}
+
+.ops-marketing-tools-results-alert {
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ops-marketing-tools-results-alert.is-active {
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(239, 246, 255, 0.92);
+  color: #1d4ed8;
+}
+
+.ops-marketing-tools-results-alert.is-warning {
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: rgba(255, 251, 235, 0.94);
+  color: #92400e;
+}
+
+.ops-marketing-tools-results-alert.is-error {
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  background: rgba(254, 242, 242, 0.92);
+  color: #b91c1c;
+}
+
+.ops-marketing-tools-result-shop-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ops-marketing-tools-result-shop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.3;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.ops-marketing-tools-result-shop-badge.is-success {
+  border-color: rgba(22, 163, 74, 0.24);
+  background: rgba(240, 253, 244, 0.92);
+}
+
+.ops-marketing-tools-result-shop-badge.is-failed {
+  border-color: rgba(220, 38, 38, 0.2);
+  background: rgba(254, 242, 242, 0.92);
+}
+
+.ops-marketing-tools-result-shop-badge-name {
+  font-weight: 700;
+  color: #22364d;
+}
+
+.ops-marketing-tools-result-shop-badge-meta {
+  color: #607188;
+}
+
+.ops-marketing-tools-result-empty {
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 220px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  padding: 18px;
+}
+
+.ops-marketing-tools-result-empty strong {
+  font-size: 16px;
+  line-height: 1.3;
+  color: #243548;
+}
+
+.ops-marketing-tools-result-empty span {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ops-marketing-tools-results-table-shell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.ops-marketing-tools-results-viewport {
+  flex: 1;
+  min-height: 320px;
+  overflow: auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+.ops-marketing-tools-results-table {
+  min-width: 0;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ops-marketing-tools-results-virtual-body {
+  position: relative;
+  min-height: 0;
+}
+
+.ops-marketing-tools-results-virtual-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.ops-marketing-tools-results-empty-shell {
+  flex: 1;
+  min-width: 0;
+  min-height: 100%;
+  padding: 18px;
+  display: flex;
+  box-sizing: border-box;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ops-marketing-tools-results-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(164px, 0.82fr)
+    minmax(250px, 1.02fr)
+    minmax(332px, 1.16fr)
+    minmax(306px, 1.1fr)
+    minmax(176px, 0.82fr);
+  min-width: 0;
+  width: 100%;
+}
+
+.ops-marketing-tools-results-grid-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(241, 245, 249, 0.98);
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
+}
+
+.ops-marketing-tools-results-head-cell {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  border-right: 1px solid rgba(226, 232, 240, 0.82);
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.ops-marketing-tools-results-head-cell.is-center {
+  text-align: center;
+}
+
+.ops-marketing-tools-results-head-cell:last-child {
+  border-right: 0;
+}
+
+.ops-marketing-tools-results-row {
+  height: 232px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.ops-marketing-tools-results-row.ops-marketing-tools-results-row-single-sku {
+  height: 160px;
+}
+
+.ops-marketing-tools-results-row:hover {
+  background: rgba(248, 250, 252, 0.98);
+}
+
+.ops-marketing-tools-result-cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  border-right: 1px solid rgba(226, 232, 240, 0.82);
+  color: #243548;
+  line-height: 1.45;
+  overflow: hidden;
+}
+
+.ops-marketing-tools-results-row > .ops-marketing-tools-result-cell:last-child {
+  border-right: 0;
+}
+
+.ops-marketing-tools-result-cell.is-product,
+.ops-marketing-tools-result-cell.is-sku,
+.ops-marketing-tools-result-cell.is-status {
+  justify-content: flex-start;
+}
+
+.ops-marketing-tools-result-cell.is-product {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.ops-marketing-tools-result-cell.is-price {
+  justify-content: center;
+  align-items: stretch;
+  text-align: center;
+}
+
+.ops-marketing-tools-result-cell.is-sku {
+  align-self: stretch;
+  min-height: 0;
+}
+
+.ops-marketing-tools-results-row.ops-marketing-tools-results-row-single-sku .ops-marketing-tools-result-cell {
+  gap: 4px;
+  padding: 8px 10px;
+}
+
+.ops-marketing-tools-results-row.ops-marketing-tools-results-row-single-sku .ops-marketing-tools-result-sku-list {
+  gap: 4px;
+}
+
+.ops-marketing-tools-results-row.ops-marketing-tools-results-row-single-sku .ops-marketing-tools-result-sku-card {
+  gap: 4px;
+  padding: 6px 8px;
+}
+
+.ops-marketing-tools-result-primary-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-result-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.ops-marketing-tools-result-subline {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ops-marketing-tools-result-subline.is-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.ops-marketing-tools-result-product {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  width: min(100%, 284px);
+  margin: 0 auto;
+}
+
+.ops-marketing-tools-result-product-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+.ops-marketing-tools-result-thumb {
+  width: 62px;
+  height: 82px;
+  border-radius: 12px;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(226, 232, 240, 0.9);
+  align-self: start;
+}
+
+.ops-marketing-tools-result-thumb.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ops-marketing-tools-result-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(241, 245, 249, 0.9);
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ops-marketing-tools-result-badge.is-accent {
+  border-color: rgba(59, 130, 246, 0.22);
+  background: rgba(219, 234, 254, 0.92);
+  color: #1d4ed8;
+}
+
+.ops-marketing-tools-result-badge.is-success {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(220, 252, 231, 0.92);
+  color: #166534;
+}
+
+.ops-marketing-tools-result-badge.is-warning {
+  border-color: rgba(249, 115, 22, 0.22);
+  background: rgba(255, 237, 213, 0.94);
+  color: #c2410c;
+}
+
+.ops-marketing-tools-result-badge-list {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-result-metric-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.ops-marketing-tools-result-metric-item {
+  display: grid;
+  gap: 3px;
+  padding: 8px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(248, 250, 252, 0.88);
+  justify-items: center;
+  min-width: 0;
+}
+
+.ops-marketing-tools-result-metric-item.is-primary {
+  background: rgba(248, 250, 252, 0.94);
+}
+
+.ops-marketing-tools-result-metric-item.is-accent {
+  border-color: rgba(59, 130, 246, 0.16);
+  background: rgba(239, 246, 255, 0.92);
+}
+
+.ops-marketing-tools-result-metric-item.is-muted {
+  background: rgba(241, 245, 249, 0.82);
+}
+
+.ops-marketing-tools-result-metric-label {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.25;
+  text-align: center;
+  word-break: break-word;
+}
+
+.ops-marketing-tools-result-metric-value {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  word-break: break-word;
+}
+
+.ops-marketing-tools-result-sku-empty {
+  display: grid;
+  gap: 4px;
+}
+
+.ops-marketing-tools-result-sku-list {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  align-content: start;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ops-marketing-tools-result-sku-card {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  padding: 7px 9px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.ops-marketing-tools-result-status-stack {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.ops-marketing-tools-result-subline.is-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.ops-marketing-tools-result-sku-card.is-more {
+  background: rgba(241, 245, 249, 0.72);
+}
+
+.ops-marketing-tools-result-sku-card-head {
+  display: grid;
+  gap: 1px;
+}
+
+.ops-marketing-tools-result-sku-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.ops-marketing-tools-result-sku-chip-list {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ops-marketing-tools-result-sku-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(226, 232, 240, 0.78);
+  color: #334155;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ops-marketing-tools-result-sku-chip.is-price {
+  background: rgba(219, 234, 254, 0.92);
+  color: #1d4ed8;
+}
+
+.ops-marketing-tools-result-sku-chip.is-stock {
+  background: rgba(220, 252, 231, 0.92);
+  color: #166534;
+}
+
+body.dark-theme {
+  background:
+    radial-gradient(circle at top left, rgba(47, 76, 122, 0.28), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(159, 112, 43, 0.2), transparent 22%),
+    linear-gradient(180deg, #0b1220 0%, #111a2b 100%);
+  color: #e7eef8;
+}
+
+body.dark-theme .operations-switch-panel {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow: 0 24px 60px rgba(2, 8, 23, 0.42);
+}
+
+body.dark-theme .operations-switch-button {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.82);
+  color: #d6e2f3;
+}
+
+body.dark-theme .operations-switch-button:hover {
+  border-color: rgba(201, 138, 50, 0.42);
+  box-shadow: 0 16px 34px rgba(2, 8, 23, 0.34);
+}
+
+body.dark-theme .operations-switch-button.is-active {
+  border-color: rgba(201, 138, 50, 0.36);
+  background: linear-gradient(135deg, #b97724, #7a4d14);
+  color: #ffffff;
+}
+
+body.dark-theme .operations-content-panel {
+  border-color: rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.98)),
+    rgba(15, 23, 42, 0.92);
+  box-shadow: 0 24px 60px rgba(2, 8, 23, 0.42);
+}
+
+body.dark-theme .operations-module-panel {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+body.dark-theme .operations-module-workspace {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(17, 24, 39, 0.9)),
+    rgba(15, 23, 42, 0.76);
+}
+
+body.dark-theme .ops-marketing-tools-workbench {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-eyebrow {
+  color: #d6a35d;
+}
+
+body.dark-theme .ops-marketing-tools-tab-row {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+body.dark-theme .ops-marketing-tools-tab {
+  color: #c7d4e5;
+}
+
+body.dark-theme .ops-marketing-tools-tab:hover {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-tab.is-active {
+  background: linear-gradient(135deg, #b97724, #7a4d14);
+  color: #ffffff;
+}
+
+body.dark-theme .ops-marketing-tools-panel {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.52);
+}
+
+body.dark-theme .ops-marketing-tools-signup-card {
+  background: transparent;
+}
+
+body.dark-theme .ops-marketing-tools-subtab {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.72);
+  color: #c7d4e5;
+}
+
+body.dark-theme .ops-marketing-tools-subtab.is-active {
+  border-color: rgba(73, 127, 201, 0.54);
+  background: linear-gradient(135deg, #3c6aad, #244671);
+  color: #ffffff;
+}
+
+body.dark-theme .ops-marketing-tools-action-button.is-primary {
+  background: linear-gradient(135deg, #3c6aad, #244671);
+}
+
+body.dark-theme .ops-marketing-tools-action-button.is-danger {
+  background: linear-gradient(135deg, #d65a4b, #b42318);
+}
+
+body.dark-theme .ops-marketing-tools-query-card {
+  background: transparent;
+}
+
+body.dark-theme .ops-marketing-tools-combined-card {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.46);
+}
+
+body.dark-theme .ops-marketing-tools-query-field-label {
+  color: #c7d4e5;
+}
+
+body.dark-theme .ops-marketing-tools-signup-error {
+  color: #fca5a5;
+}
+
+body.dark-theme .ops-marketing-tools-control {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.88);
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-control:focus {
+  border-color: rgba(96, 165, 250, 0.72);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+body.dark-theme .ops-marketing-tools-placeholder {
+  border-color: rgba(148, 163, 184, 0.26);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(17, 24, 39, 0.74));
+}
+
+body.dark-theme .ops-marketing-tools-placeholder-text {
+  color: #aab8ca;
+}
+
+body.dark-theme .ops-marketing-tools-batch-coupon-amount-inline,
+body.dark-theme .ops-marketing-tools-batch-coupon-inline-label {
+  color: #dbe7f5;
+}
+
+body.dark-theme .ops-marketing-tools-results-card {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.52);
+}
+
+body.dark-theme .ops-marketing-tools-quick-cost-entry-card {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.52);
+}
+
+body.dark-theme .ops-marketing-tools-results-head-title {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-results-head-subtitle {
+  color: #aab8ca;
+}
+
+body.dark-theme .ops-marketing-tools-quick-cost-entry-copy strong {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-quick-cost-entry-copy span {
+  color: #aab8ca;
+}
+
+body.dark-theme .ops-marketing-tools-batch-coupon-dialog .ops-activity-filter-help-bubble {
+  background: rgba(69, 26, 3, 0.92);
+}
+
+body.dark-theme .ops-marketing-tools-batch-coupon-time-label,
+body.dark-theme .ops-marketing-tools-batch-coupon-time-summary {
+  color: #aab8ca;
+}
+
+body.dark-theme .ops-marketing-tools-results-summary-chip {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.72);
+  color: #c7d4e5;
+}
+
+body.dark-theme .ops-marketing-tools-results-alert.is-active {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(30, 64, 175, 0.18);
+  color: #93c5fd;
+}
+
+body.dark-theme .ops-marketing-tools-results-alert.is-warning {
+  border-color: rgba(245, 158, 11, 0.22);
+  background: rgba(120, 53, 15, 0.28);
+  color: #f6c98e;
+}
+
+body.dark-theme .ops-marketing-tools-results-alert.is-error {
+  border-color: rgba(252, 165, 165, 0.22);
+  background: rgba(127, 29, 29, 0.3);
+  color: #fca5a5;
+}
+
+body.dark-theme .ops-marketing-tools-result-shop-badge {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+body.dark-theme .ops-marketing-tools-result-shop-badge.is-success {
+  border-color: rgba(74, 222, 128, 0.22);
+  background: rgba(20, 83, 45, 0.34);
+}
+
+body.dark-theme .ops-marketing-tools-result-shop-badge.is-failed {
+  border-color: rgba(252, 165, 165, 0.22);
+  background: rgba(127, 29, 29, 0.32);
+}
+
+body.dark-theme .ops-marketing-tools-result-shop-badge-name {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-result-shop-badge-meta {
+  color: #c7d4e5;
+}
+
+body.dark-theme .ops-marketing-tools-result-empty {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.54);
+}
+
+body.dark-theme .ops-marketing-tools-result-empty strong {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-result-empty span {
+  color: #aab8ca;
+}
+
+body.dark-theme .ops-marketing-tools-results-table-shell {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+body.dark-theme .ops-marketing-tools-results-grid-head {
+  background: rgba(30, 41, 59, 0.98);
+  box-shadow: 0 1px 0 rgba(51, 65, 85, 0.9);
+}
+
+body.dark-theme .ops-marketing-tools-results-head-cell {
+  border-bottom-color: rgba(51, 65, 85, 0.92);
+  border-right-color: rgba(51, 65, 85, 0.82);
+  color: #b8c6d8;
+}
+
+body.dark-theme .ops-marketing-tools-results-row {
+  background: rgba(15, 23, 42, 0.94);
+}
+
+body.dark-theme .ops-marketing-tools-results-row:hover {
+  background: rgba(30, 41, 59, 0.96);
+}
+
+body.dark-theme .ops-marketing-tools-result-cell {
+  border-bottom-color: rgba(51, 65, 85, 0.9);
+  border-right-color: rgba(51, 65, 85, 0.82);
+  color: #dce7f5;
+}
+
+body.dark-theme .ops-marketing-tools-result-title,
+body.dark-theme .ops-marketing-tools-result-metric-value,
+body.dark-theme .ops-marketing-tools-result-sku-card-title {
+  color: #e7eef8;
+}
+
+body.dark-theme .ops-marketing-tools-result-subline {
+  color: #b8c6d8;
+}
+
+body.dark-theme .ops-marketing-tools-result-thumb {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(30, 41, 59, 0.72);
+}
+
+body.dark-theme .ops-marketing-tools-result-thumb.is-empty {
+  color: #b8c6d8;
+}
+
+body.dark-theme .ops-marketing-tools-result-badge {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.78);
+  color: #dce7f5;
+}
+
+body.dark-theme .ops-marketing-tools-result-badge.is-accent {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(30, 64, 175, 0.22);
+  color: #bfdbfe;
+}
+
+body.dark-theme .ops-marketing-tools-result-badge.is-success {
+  border-color: rgba(34, 197, 94, 0.24);
+  background: rgba(20, 83, 45, 0.34);
+  color: #86efac;
+}
+
+body.dark-theme .ops-marketing-tools-result-badge.is-warning {
+  border-color: rgba(249, 115, 22, 0.24);
+  background: rgba(124, 45, 18, 0.34);
+  color: #fdba74;
+}
+
+body.dark-theme .ops-marketing-tools-result-metric-item,
+body.dark-theme .ops-marketing-tools-result-sku-card {
+  border-color: rgba(148, 163, 184, 0.12);
+  background: rgba(30, 41, 59, 0.62);
+}
+
+body.dark-theme .ops-marketing-tools-result-metric-item.is-accent {
+  border-color: rgba(96, 165, 250, 0.18);
+  background: rgba(30, 64, 175, 0.18);
+}
+
+body.dark-theme .ops-marketing-tools-result-metric-label {
+  color: #b8c6d8;
+}
+
+body.dark-theme .ops-marketing-tools-result-sku-chip {
+  background: rgba(51, 65, 85, 0.78);
+  color: #dce7f5;
+}
+
+body.dark-theme .ops-marketing-tools-result-sku-chip.is-price {
+  background: rgba(30, 64, 175, 0.24);
+  color: #bfdbfe;
+}
+
+body.dark-theme .ops-marketing-tools-result-sku-chip.is-stock {
+  background: rgba(20, 83, 45, 0.34);
+  color: #bbf7d0;
+}
+
+body.dark-theme .operations-module-placeholder {
+  color: #b2c0d1;
+}
+
+body.dark-theme .operations-module-placeholder strong {
+  color: #f2f6fb;
+}
+
+@media (max-width: 900px) {
+  .operations-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .operations-switch-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .operations-switch-button {
+    width: auto;
+    min-width: 160px;
+  }
+
+  .ops-marketing-tools-results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-marketing-tools-result-metric-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ops-marketing-tools-batch-coupon-inline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ops-marketing-tools-batch-coupon-type-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .ops-marketing-tools-batch-coupon-inline-grid,
+  .ops-marketing-tools-batch-coupon-time-range,
+  .ops-marketing-tools-batch-coupon-profit-floor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-marketing-tools-batch-coupon-amount-inline,
+  .ops-marketing-tools-batch-coupon-profit-floor-row {
+    align-items: stretch;
+  }
+
+  .ops-marketing-tools-batch-coupon-amount-select {
+    width: 100%;
+  }
+
+  .ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-amount-select {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex-basis: 100% !important;
+  }
+
+  .ops-marketing-tools-batch-coupon-profit-floor-inline {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ops-marketing-tools-batch-coupon-amount-input-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-inline.is-logic .ops-activity-filter-input,
+  .ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-profit-floor-inline:not(.is-logic) .ops-marketing-tools-batch-coupon-amount-input-wrap,
+  .ops-marketing-tools-batch-coupon-dialog .ops-marketing-tools-batch-coupon-field .ops-marketing-tools-batch-coupon-amount-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .ops-marketing-tools-result-metric-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-table-shell {
+  border: 0;
+  background: transparent;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-viewport {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-table {
+  width: 100%;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-grid-head {
+  display: none;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-virtual-body,
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-virtual-window {
+  position: static;
+  height: auto !important;
+  transform: none !important;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-grid.ops-marketing-tools-results-row {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  height: auto !important;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell {
+  border-right: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-row > .ops-marketing-tools-result-cell:last-child {
+  border-bottom: 0;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell::before {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-shop::before {
+  content: '\5E97\94FA / \7AD9\70B9';
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-product::before {
+  content: '\5546\54C1\4FE1\606F';
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-price::before {
+  content: '\4F18\60E0\5EFA\8BAE';
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-sku::before {
+  content: 'SKC / SKU \4FE1\606F';
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-status::before {
+  content: '\72B6\6001';
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-product {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-thumb {
+  width: 72px;
+  height: 96px;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-product,
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell.is-price {
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-product-copy,
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-metric-item {
+  justify-items: start;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-product,
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-metric-list {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-sku-list {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+body.dark-theme .ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-results-grid.ops-marketing-tools-results-row {
+  border-color: rgba(51, 65, 85, 0.9);
+  background: rgba(15, 23, 42, 0.48);
+}
+
+body.dark-theme .ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell {
+  border-bottom-color: rgba(51, 65, 85, 0.9);
+}
+
+body.dark-theme .ops-marketing-tools-workbench.ops-marketing-tools-results-collapsed .ops-marketing-tools-result-cell::before {
+  color: #94a3b8;
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TEMU &#x5DE5;&#x5177;&#x7BB1;</title>
+    <link rel="stylesheet" href="./exitProgress.css" />
+    <script src="./exitProgress.js" defer></script>
+  </head>
+  <body>
+    <main class="exit-shell">
+      <section
+        id="exitProgressCard"
+        class="exit-card"
+        role="status"
+        aria-live="polite"
+        tabindex="-1"
+      >
+        <div class="exit-card-topline">
+          <span id="exitProgressBadge" class="exit-badge"></span>
+          <span id="exitProgressPercent" class="exit-percent"></span>
+        </div>
+        <h1 id="exitProgressTitle" class="exit-title"></h1>
+        <p id="exitProgressMessage" class="exit-message"></p>
+        <div class="exit-progress-track" aria-hidden="true">
+          <div id="exitProgressBar" class="exit-progress-bar"></div>
+        </div>
+        <div class="exit-meta">
+          <span id="exitProgressDetail" class="exit-detail"></span>
+        </div>
+        <p id="exitProgressHint" class="exit-hint"></p>
+      </section>
+    </main>
+  </body>
+</html>
