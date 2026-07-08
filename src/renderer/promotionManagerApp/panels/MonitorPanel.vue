@@ -138,172 +138,21 @@
     </div>
 
     <!-- 监控配置面板 -->
-    <div class="pm-monitor-config-card">
-      <div class="pm-config-toggle-bar">
-        <button
-          class="pm-config-toggle-btn"
-          :class="{ 'is-open': configOpen }"
-          @click="configOpen = !configOpen"
-        >
-          <span>监控配置</span>
-          <svg class="pm-config-toggle-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
-      </div>
-
-      <div v-show="configOpen" class="pm-config-body">
-        <div class="pm-config-grid">
-          <div class="pm-config-item">
-            <label class="pm-config-label">监控间隔（秒，最小 {{ minInterval }}）</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.monitorIntervalSeconds"
-              :min="minInterval"
-              @change="handleConfigFieldChange('monitorIntervalSeconds', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">每日操作上限</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.dailyOperationLimit || ''"
-              :min="0"
-              placeholder="留空不限"
-              @change="handleConfigFieldChange('dailyOperationLimit', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">总操作上限</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.totalOperationLimit || ''"
-              :min="0"
-              placeholder="留空不限"
-              @change="handleConfigFieldChange('totalOperationLimit', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">花费暂停阈值</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.autoPauseSpendThreshold || ''"
-              :min="0"
-              placeholder="留空不限"
-              @change="handleConfigFieldChange('autoPauseSpendThreshold', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">ROAS 暂停阈值</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.autoPauseRoasThreshold || ''"
-              :min="0"
-              placeholder="留空不限"
-              @change="handleConfigFieldChange('autoPauseRoasThreshold', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">最小订单数</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.minOrderCount || '1'"
-              :min="0"
-              @change="handleConfigFieldChange('minOrderCount', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">条件最大ROAS</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.conditionMaxRoas || ''"
-              :min="0"
-              placeholder="留空不限"
-              @change="handleConfigFieldChange('conditionMaxRoas', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">恢复间隔（分钟）</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.resumeIntervalMinutes || ''"
-              :min="0"
-              placeholder="留空默认"
-              @change="handleConfigFieldChange('resumeIntervalMinutes', $event.target.value)"
-            />
-          </div>
-
-          <div class="pm-config-item">
-            <label class="pm-config-label">目标 ROAS</label>
-            <input
-              type="number"
-              class="pm-config-input"
-              :value="config.targetRoas || ''"
-              :min="0"
-              placeholder="修改/增加时需"
-              @change="handleConfigFieldChange('targetRoas', $event.target.value)"
-            />
-          </div>
-        </div>
-
-        <!-- 区域选择 -->
-        <div class="pm-config-subcard is-guard">
-          <span class="pm-config-subcard-title">监控区域</span>
-          <div class="pm-config-choice-list">
-            <label v-for="site in siteVariants" :key="site.id" class="pm-config-choice">
-              <input
-                type="checkbox"
-                :checked="config.regionIds?.includes(site.id)"
-                @change="(e) => $emit('region-change', site.id, e.target.checked)"
-              />
-              {{ site.label }}
-            </label>
-          </div>
-        </div>
-
-        <!-- 操作类型 -->
-        <div class="pm-config-subcard is-action">
-          <span class="pm-config-subcard-title">操作类型</span>
-          <div class="pm-config-choice-list">
-            <label v-for="act in actionOptions" :key="act.id" class="pm-config-choice">
-              <input
-                type="radio"
-                name="monitorActionType"
-                :value="act.id"
-                :checked="config.actionType === act.id"
-                @change="() => $emit('action-change', act.id)"
-              />
-              {{ act.label }}
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
+    <MonitorConfigCard
+      :config="config"
+      @config-change="(field, value) => $emit('config-change', field, value)"
+      @region-change="(regionId, checked) => $emit('region-change', regionId, checked)"
+      @action-change="(actionType) => $emit('action-change', actionType)"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import {
-  MONITOR_FILTERS, MONITOR_COLUMN_GROUPS, MONITOR_BASE_COLUMNS,
-  MONITOR_SITE_VARIANTS, MONITOR_CONFIG_ACTIONS,
-  MIN_MONITOR_INTERVAL_SECONDS
+  MONITOR_FILTERS, MONITOR_COLUMN_GROUPS, MONITOR_BASE_COLUMNS
 } from '../constants.js';
+import MonitorConfigCard from '../components/MonitorConfigCard.vue';
 
 const props = defineProps({
   snapshot: { type: Object, default: () => ({ updatedAt: '', batchMonitoringActive: false, enabledShopIds: [], shops: {} }) },
@@ -320,10 +169,6 @@ const emit = defineEmits([
 ]);
 
 const filterOptions = MONITOR_FILTERS;
-const siteVariants = MONITOR_SITE_VARIANTS;
-const actionOptions = MONITOR_CONFIG_ACTIONS;
-const minInterval = MIN_MONITOR_INTERVAL_SECONDS;
-const configOpen = ref(false);
 
 // 所有可见的列（带分组theme信息）
 const allVisibleColumns = computed(() => {
@@ -376,10 +221,6 @@ function formatCellValue(val) {
     return val.toFixed(2);
   }
   return String(val);
-}
-
-function handleConfigFieldChange(field, value) {
-  emit('config-change', field, value);
 }
 </script>
 
