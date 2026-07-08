@@ -338,9 +338,284 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-/* 样式由外部 operationsGlobalCategorySync.css 提供，组件中不重复定义 */
+<style>
+/* ==================== 容器变量 ==================== */
 .ops-gcs-view {
-  display: contents;
+  --gcs-bg: #ffffff;
+  --gcs-bg-soft: #f8fbff;
+  --gcs-border: #dbe5f1;
+  --gcs-border-strong: #c8d5e6;
+  --gcs-text: #203146;
+  --gcs-text-soft: #607286;
+  --gcs-primary: #2f5f9f;
+  --gcs-primary-strong: #22497c;
+  --gcs-gold: #c48b21;
+  --gcs-green: #15803d;
+  --gcs-warn: #b45309;
+  --gcs-red: #c2410c;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  padding: 18px;
+  color: var(--gcs-text);
+}
+
+.ops-gcs-hero-card,
+.ops-gcs-metric-card,
+.ops-gcs-detail-card,
+.ops-gcs-banner {
+  border: 1px solid var(--gcs-border);
+  border-radius: 22px;
+  background: var(--gcs-bg);
+}
+
+.ops-gcs-hero-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(47, 95, 159, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
+  box-shadow: 0 18px 40px rgba(18, 34, 57, 0.08);
+}
+
+.ops-gcs-hero-copy {
+  min-width: 0;
+}
+
+.ops-gcs-eyebrow {
+  margin: 0 0 10px;
+  color: var(--gcs-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ops-gcs-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.ops-gcs-text,
+.ops-gcs-hint {
+  margin: 10px 0 0;
+  max-width: 720px;
+  color: var(--gcs-text-soft);
+  line-height: 1.6;
+}
+
+.ops-gcs-hint {
+  color: var(--gcs-primary);
+}
+
+.ops-gcs-hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.ops-gcs-button {
+  min-width: 0;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ops-gcs-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ops-gcs-button.is-primary {
+  background: linear-gradient(135deg, var(--gcs-primary), var(--gcs-primary-strong));
+  color: #ffffff;
+}
+
+.ops-gcs-button.is-light {
+  border-color: rgba(47, 95, 159, 0.2);
+  background: rgba(47, 95, 159, 0.08);
+  color: var(--gcs-primary);
+}
+
+.ops-gcs-banner {
+  padding: 12px 14px;
+  color: var(--gcs-text);
+}
+
+.ops-gcs-banner.is-info {
+  background: rgba(47, 95, 159, 0.08);
+  border-color: rgba(47, 95, 159, 0.18);
+  color: var(--gcs-primary);
+}
+
+.ops-gcs-banner.is-success {
+  background: rgba(21, 128, 61, 0.08);
+  border-color: rgba(21, 128, 61, 0.18);
+  color: var(--gcs-green);
+}
+
+.ops-gcs-banner.is-warn {
+  background: rgba(180, 83, 9, 0.08);
+  border-color: rgba(180, 83, 9, 0.18);
+  color: var(--gcs-warn);
+}
+
+.ops-gcs-banner.is-error {
+  background: rgba(194, 65, 12, 0.08);
+  border-color: rgba(194, 65, 12, 0.18);
+  color: var(--gcs-red);
+}
+
+.ops-gcs-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ops-gcs-metric-card {
+  padding: 16px 18px;
+}
+
+.ops-gcs-metric-card.is-blue {
+  background: rgba(47, 95, 159, 0.06);
+}
+
+.ops-gcs-metric-card.is-gold {
+  background: rgba(196, 139, 33, 0.08);
+}
+
+.ops-gcs-metric-card.is-slate {
+  background: rgba(96, 114, 134, 0.08);
+}
+
+.ops-gcs-metric-card.is-green {
+  background: rgba(21, 128, 61, 0.08);
+}
+
+.ops-gcs-metric-label {
+  margin: 0;
+  color: var(--gcs-text-soft);
+  font-size: 13px;
+}
+
+.ops-gcs-metric-value {
+  margin: 10px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.ops-gcs-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
+}
+
+.ops-gcs-detail-card {
+  min-height: 0;
+  padding: 18px;
+}
+
+.ops-gcs-detail-card h3 {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.ops-gcs-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.ops-gcs-detail-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.ops-gcs-detail-row dt {
+  color: var(--gcs-text-soft);
+  font-size: 13px;
+}
+
+.ops-gcs-detail-row dd {
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+body.dark-theme .ops-gcs-view {
+  --gcs-bg: rgba(15, 23, 42, 0.96);
+  --gcs-bg-soft: rgba(30, 41, 59, 0.96);
+  --gcs-border: rgba(148, 163, 184, 0.18);
+  --gcs-border-strong: rgba(148, 163, 184, 0.26);
+  --gcs-text: #e2e8f0;
+  --gcs-text-soft: #94a3b8;
+  --gcs-primary: #93c5fd;
+  --gcs-primary-strong: #60a5fa;
+  --gcs-gold: var(--theme-primary-color, #c89a35);
+  --gcs-green: #86efac;
+  --gcs-warn: #fdba74;
+  --gcs-red: #fca5a5;
+}
+
+body.dark-theme .ops-gcs-hero-card {
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.98));
+  box-shadow: none;
+}
+
+body.dark-theme .ops-gcs-button.is-light {
+  border-color: rgba(96, 165, 250, 0.22);
+  background: rgba(96, 165, 250, 0.1);
+  color: var(--gcs-primary);
+}
+
+@media (max-width: 1120px) {
+  .ops-gcs-hero-card,
+  .ops-gcs-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-gcs-hero-card {
+    flex-direction: column;
+  }
+
+  .ops-gcs-hero-actions {
+    min-width: 0;
+  }
+
+  .ops-gcs-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .ops-gcs-metric-grid,
+  .ops-gcs-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-gcs-detail-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 }
 </style>
