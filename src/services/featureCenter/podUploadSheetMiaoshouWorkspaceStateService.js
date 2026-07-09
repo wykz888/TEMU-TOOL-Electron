@@ -47,6 +47,18 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
     const featureEntry = getFeatureEntry();
 
     return path.join(
+      featureEntry.storageProfile.localRootDir,
+      'users',
+      owner.userKey,
+      'state',
+      STATE_FILE_NAME
+    );
+  }
+
+  function getLegacyLocalStateFilePath(owner) {
+    const featureEntry = getFeatureEntry();
+
+    return path.join(
       featureEntry.storageProfile.localStateDir,
       'users',
       owner.userKey,
@@ -94,6 +106,36 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
     await fs.promises.mkdir(directoryPath, { recursive: true });
     await fs.promises.writeFile(tempFilePath, JSON.stringify(payload, null, 2), 'utf8');
     await fs.promises.rename(tempFilePath, filePath);
+  }
+
+  async function ensureLocalStatePathMigrated(owner) {
+    const nextFilePath = getLocalStateFilePath(owner);
+    const legacyFilePath = getLegacyLocalStateFilePath(owner);
+
+    if (nextFilePath === legacyFilePath) {
+      return nextFilePath;
+    }
+
+    try {
+      await fs.promises.access(nextFilePath, fs.constants.F_OK);
+      return nextFilePath;
+    } catch (_error) {
+      // continue with legacy migration check
+    }
+
+    try {
+      await fs.promises.access(legacyFilePath, fs.constants.F_OK);
+    } catch (_error) {
+      return nextFilePath;
+    }
+
+    const legacyPayload = await readJsonFile(legacyFilePath);
+
+    if (legacyPayload) {
+      await writeJsonFile(nextFilePath, legacyPayload);
+    }
+
+    return nextFilePath;
   }
 
   function cloneJsonValue(value, fallback) {
@@ -207,7 +249,7 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
       return cachedSnapshot;
     }
 
-    const stateFilePath = getLocalStateFilePath(owner);
+    const stateFilePath = await ensureLocalStatePathMigrated(owner);
     const statePayload = await readJsonFile(stateFilePath);
 
     cachedOwnerKey = owner.userKey;
@@ -253,7 +295,9 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         workspace: normalizeWorkspacePayload(payload)
       };
 
-      await writeJsonFile(getLocalStateFilePath(owner), nextSnapshot);
+      const stateFilePath = await ensureLocalStatePathMigrated(owner);
+
+      await writeJsonFile(stateFilePath, nextSnapshot);
       cachedOwnerKey = owner.userKey;
       cachedSnapshot = nextSnapshot;
 

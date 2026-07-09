@@ -1245,6 +1245,8 @@ function createPromotionMonitorService({
   function getStoragePaths(owner) {
     const moduleEntry = getModuleEntry();
 
+    // Promotion monitor config and runtime state are account-scoped because
+    // shop enablement, limits, and task state must not bleed across logins.
     return {
       configFilePath: path.join(
         moduleEntry.storageProfile.localRootDir,

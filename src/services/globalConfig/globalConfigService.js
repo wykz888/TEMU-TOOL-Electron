@@ -38,6 +38,8 @@ function createGlobalConfigService({
   }
 
   function getLocalConfigFilePath(owner, fileName) {
+    // Global config is still scoped by software account; "global" here means
+    // cross-feature inside one login, not shared by every login.
     return path.join(getStorageProfile().localRootDir, 'users', owner.userKey, 'config', fileName);
   }
 

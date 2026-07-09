@@ -361,6 +361,8 @@ function createPromotionMasterSessionService({
     const featureEntry = getFeatureEntry();
     const shopKey = buildSafeShopKeySegment(shopId);
 
+    // Region cookie caches are account-scoped and shop-scoped so backend
+    // requests stay bound to the correct login session boundary.
     return {
       localCacheFilePath: path.join(
         featureEntry.storageProfile.localRootDir,

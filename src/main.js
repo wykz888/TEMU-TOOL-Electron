@@ -1836,6 +1836,7 @@ app.whenReady().then(() => {
     runtimeLogger
   });
   podUploadSheetMiaoshouTemplateService = createPodUploadSheetMiaoshouTemplateService({
+    sessionStore,
     featureCenterProfileService,
     runtimeLogger
   });
@@ -1932,6 +1933,7 @@ app.whenReady().then(() => {
     });
   });
   podUploadSheetMiaoshouUniversalTemplateService = createPodUploadSheetMiaoshouTemplateService({
+    sessionStore,
     featureCenterProfileService,
     runtimeLogger,
     featureId: 'pod-upload-sheet-miaoshou-universal',
@@ -2032,6 +2034,7 @@ app.whenReady().then(() => {
       createPodSuitePsdTemplateStore
     } = require('./services/creationCenter/podSuitePsdTemplateStore');
     const whiteMockupTemplateStore = createPodSuiteWhiteMockupTemplateStore({
+      sessionStore,
       creationCenterProfileService
     });
     const psdTemplateStore = createPodSuitePsdTemplateStore({

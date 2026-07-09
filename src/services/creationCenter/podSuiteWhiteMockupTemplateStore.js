@@ -2,6 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { TABLECLOTH_FLAT_TEMPLATE, normalizeWhiteMockupTemplate } = require('./whiteMockupTemplateRenderer');
+const {
+  buildOwnerDescriptor
+} = require('../shopManagement/common');
 
 const ENTRY_ID = 'pod-suite-tool';
 const TEMPLATE_FILE_NAME = 'white-mockup-templates.json';
@@ -40,9 +43,46 @@ function createDefaultTemplate(mockupPath) {
 }
 
 function createPodSuiteWhiteMockupTemplateStore({
+  sessionStore,
   creationCenterProfileService
 } = {}) {
-  function getTemplateFilePath() {
+  function getOwner() {
+    if (!sessionStore || typeof sessionStore.getSession !== 'function') {
+      return null;
+    }
+
+    try {
+      return buildOwnerDescriptor(sessionStore.getSession());
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resolveOwnerKey(owner) {
+    return owner && owner.userKey ? owner.userKey : 'local';
+  }
+
+  function getTemplateFilePath(owner) {
+    const entry = creationCenterProfileService
+      && typeof creationCenterProfileService.getEntryById === 'function'
+      ? creationCenterProfileService.getEntryById(ENTRY_ID)
+      : null;
+    const localRootDir = entry && entry.storageProfile && entry.storageProfile.localRootDir;
+
+    if (!localRootDir) {
+      throw new Error('\u767d\u819c\u6a21\u677f\u5b58\u50a8\u672a\u5c31\u7eea\u3002');
+    }
+
+    return path.join(
+      localRootDir,
+      'users',
+      resolveOwnerKey(owner),
+      'state',
+      TEMPLATE_FILE_NAME
+    );
+  }
+
+  function getLegacyTemplateFilePath() {
     const entry = creationCenterProfileService
       && typeof creationCenterProfileService.getEntryById === 'function'
       ? creationCenterProfileService.getEntryById(ENTRY_ID)
@@ -56,8 +96,37 @@ function createPodSuiteWhiteMockupTemplateStore({
     return path.join(stateDir, TEMPLATE_FILE_NAME);
   }
 
-  async function readStore() {
-    const filePath = getTemplateFilePath();
+  async function ensureLocalTemplateFilePathMigrated(owner) {
+    const nextFilePath = getTemplateFilePath(owner);
+    const legacyFilePath = getLegacyTemplateFilePath();
+
+    try {
+      await fs.promises.access(nextFilePath, fs.constants.F_OK);
+      return nextFilePath;
+    } catch (_error) {
+      // continue with legacy migration check
+    }
+
+    try {
+      await fs.promises.access(legacyFilePath, fs.constants.F_OK);
+    } catch (_error) {
+      return nextFilePath;
+    }
+
+    const legacyText = await fs.promises.readFile(legacyFilePath, 'utf8').catch(() => '');
+
+    if (legacyText.trim()) {
+      await fs.promises.mkdir(path.dirname(nextFilePath), {
+        recursive: true
+      });
+      await fs.promises.writeFile(nextFilePath, legacyText, 'utf8');
+    }
+
+    return nextFilePath;
+  }
+
+  async function readStore(owner) {
+    const filePath = await ensureLocalTemplateFilePathMigrated(owner);
     const text = await fs.promises.readFile(filePath, 'utf8').catch((error) => {
       if (error && error.code === 'ENOENT') {
         return '';
@@ -83,8 +152,8 @@ function createPodSuiteWhiteMockupTemplateStore({
     };
   }
 
-  async function writeStore(store) {
-    const filePath = getTemplateFilePath();
+  async function writeStore(owner, store) {
+    const filePath = getTemplateFilePath(owner);
     await fs.promises.mkdir(path.dirname(filePath), {
       recursive: true
     });
@@ -92,6 +161,7 @@ function createPodSuiteWhiteMockupTemplateStore({
   }
 
   async function getTemplate(payload = {}) {
+    const owner = getOwner();
     const mockupPath = normalizeText(payload.mockupPath);
 
     if (!mockupPath) {
@@ -99,7 +169,7 @@ function createPodSuiteWhiteMockupTemplateStore({
     }
 
     const key = createTemplateKey(mockupPath);
-    const store = await readStore();
+    const store = await readStore(owner);
     const savedTemplate = store.templates[key];
     const template = savedTemplate
       ? normalizeWhiteMockupTemplate(savedTemplate)
@@ -118,6 +188,7 @@ function createPodSuiteWhiteMockupTemplateStore({
   }
 
   async function saveTemplate(payload = {}) {
+    const owner = getOwner();
     const mockupPath = normalizeText(payload.mockupPath);
 
     if (!mockupPath) {
@@ -125,7 +196,7 @@ function createPodSuiteWhiteMockupTemplateStore({
     }
 
     const key = createTemplateKey(mockupPath);
-    const store = await readStore();
+    const store = await readStore(owner);
     const previous = store.templates[key] || {};
     const now = getIsoTimestamp();
     const template = normalizeWhiteMockupTemplate({
@@ -138,7 +209,7 @@ function createPodSuiteWhiteMockupTemplateStore({
     });
 
     store.templates[key] = template;
-    await writeStore(store);
+    await writeStore(owner, store);
 
     return {
       success: true,

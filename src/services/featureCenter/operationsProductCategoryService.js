@@ -99,6 +99,8 @@ function createOperationsProductCategoryService({
   function getGlobalCategoryTreeStoragePaths() {
     const featureEntry = getGlobalSyncFeatureEntry();
 
+    // The full category tree is intentionally shared across accounts so one
+    // successful sync can warm the whole app.
     return {
       primaryLocalCacheFilePath: path.join(
         featureEntry.storageProfile.localCacheDir,

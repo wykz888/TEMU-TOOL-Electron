@@ -132,6 +132,18 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const featureEntry = getFeatureEntry();
 
     return path.join(
+      featureEntry.storageProfile.localRootDir,
+      'users',
+      owner.userKey,
+      'cache',
+      CACHE_FILE_NAME
+    );
+  }
+
+  function getLegacyCacheFilePath(owner) {
+    const featureEntry = getFeatureEntry();
+
+    return path.join(
       featureEntry.storageProfile.localCacheDir,
       'users',
       owner.userKey,
@@ -260,6 +272,19 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const ownerKey = owner && owner.userKey ? owner.userKey : 'anonymous';
 
     return path.join(
+      featureEntry.storageProfile.localRootDir,
+      'users',
+      ownerKey,
+      'cache',
+      PREPARED_UPLOAD_CACHE_DIR_NAME
+    );
+  }
+
+  function getLegacyPreparedCacheRoot(owner) {
+    const featureEntry = getFeatureEntry();
+    const ownerKey = owner && owner.userKey ? owner.userKey : 'anonymous';
+
+    return path.join(
       featureEntry.storageProfile.localCacheDir,
       'users',
       ownerKey,
@@ -303,6 +328,42 @@ function createPodUploadSheetMiaoshouCosUploadService({
         throw error;
       }
     }
+  }
+
+  async function pathExists(filePath) {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  async function ensureLocalCachePathsMigrated(owner) {
+    const nextCacheFilePath = getCacheFilePath(owner);
+    const legacyCacheFilePath = getLegacyCacheFilePath(owner);
+
+    if (!(await pathExists(nextCacheFilePath)) && (await pathExists(legacyCacheFilePath))) {
+      const legacyPayload = await readJsonFile(legacyCacheFilePath);
+
+      if (legacyPayload) {
+        await writeJsonFile(nextCacheFilePath, legacyPayload);
+      }
+    }
+
+    const nextPreparedCacheRoot = getPreparedCacheRoot(owner);
+    const legacyPreparedCacheRoot = getLegacyPreparedCacheRoot(owner);
+
+    if (
+      legacyPreparedCacheRoot !== nextPreparedCacheRoot
+      && !(await pathExists(nextPreparedCacheRoot))
+      && (await pathExists(legacyPreparedCacheRoot))
+    ) {
+      await fs.promises.mkdir(path.dirname(nextPreparedCacheRoot), { recursive: true });
+      await fs.promises.rename(legacyPreparedCacheRoot, nextPreparedCacheRoot).catch(() => {});
+    }
+
+    return nextCacheFilePath;
   }
 
   function normalizeCacheSnapshot(record, owner) {
@@ -356,8 +417,9 @@ function createPodUploadSheetMiaoshouCosUploadService({
       return cachedCacheSnapshot;
     }
 
+    const cacheFilePath = await ensureLocalCachePathsMigrated(owner);
     const cacheSnapshot = normalizeCacheSnapshot(
-      await readJsonFile(getCacheFilePath(owner)),
+      await readJsonFile(cacheFilePath),
       owner
     );
 
@@ -378,7 +440,9 @@ function createPodUploadSheetMiaoshouCosUploadService({
       updatedAt: nowIso()
     };
 
-    await writeJsonFile(getCacheFilePath(owner), nextSnapshot);
+    const cacheFilePath = await ensureLocalCachePathsMigrated(owner);
+
+    await writeJsonFile(cacheFilePath, nextSnapshot);
     cachedOwnerKey = owner.userKey;
     cachedCacheSnapshot = nextSnapshot;
     return nextSnapshot;

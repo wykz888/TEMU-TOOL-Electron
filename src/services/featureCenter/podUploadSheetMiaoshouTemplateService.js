@@ -1,5 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const {
+  buildOwnerDescriptor
+} = require('../shopManagement/common');
 
 const SERVICE_VERSION = 1;
 const STATE_FILE_NAME = 'template-sync-state.json';
@@ -22,6 +25,7 @@ const DEFAULT_TEMPLATE_DEFINITIONS = Object.freeze([
 ]);
 
 function createPodUploadSheetMiaoshouTemplateService({
+  sessionStore,
   featureCenterProfileService,
   runtimeLogger,
   featureId = DEFAULT_FEATURE_ID,
@@ -56,10 +60,26 @@ function createPodUploadSheetMiaoshouTemplateService({
       errorMessage: ''
     }))
   };
+  let cachedOwnerKey = '';
   let syncPromise = null;
+  let syncPromiseOwnerKey = '';
 
   function normalizeText(value) {
     return String(value || '').trim();
+  }
+
+  function getOwner() {
+    try {
+      return sessionStore && typeof sessionStore.getSession === 'function'
+        ? buildOwnerDescriptor(sessionStore.getSession())
+        : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resolveOwnerKey(owner) {
+    return owner && owner.userKey ? owner.userKey : 'local';
   }
 
   function log(eventName, payload) {
@@ -88,13 +108,39 @@ function createPodUploadSheetMiaoshouTemplateService({
     return featureEntry;
   }
 
-  function getTemplateCacheDirectoryPath() {
+  function getTemplateCacheDirectoryPath(owner) {
+    const featureEntry = getFeatureEntry();
+    const ownerKey = resolveOwnerKey(owner);
+
+    return path.join(
+      featureEntry.storageProfile.localRootDir,
+      'users',
+      ownerKey,
+      'cache',
+      TEMPLATE_CACHE_DIRECTORY
+    );
+  }
+
+  function getLegacyTemplateCacheDirectoryPath() {
     const featureEntry = getFeatureEntry();
 
     return path.join(featureEntry.storageProfile.localCacheDir, TEMPLATE_CACHE_DIRECTORY);
   }
 
-  function getStateFilePath() {
+  function getStateFilePath(owner) {
+    const featureEntry = getFeatureEntry();
+    const ownerKey = resolveOwnerKey(owner);
+
+    return path.join(
+      featureEntry.storageProfile.localRootDir,
+      'users',
+      ownerKey,
+      'state',
+      STATE_FILE_NAME
+    );
+  }
+
+  function getLegacyStateFilePath() {
     const featureEntry = getFeatureEntry();
 
     return path.join(featureEntry.storageProfile.localStateDir, STATE_FILE_NAME);
@@ -104,7 +150,7 @@ function createPodUploadSheetMiaoshouTemplateService({
     return normalizedTemplateDefinitions.find((entry) => entry.id === normalizeText(templateId)) || null;
   }
 
-  function getTemplateLocalFilePath(templateId) {
+  function getTemplateLocalFilePathForOwner(owner, templateId) {
     const templateEntry = getTemplateDefinitionById(templateId);
 
     if (!templateEntry) {
@@ -112,9 +158,18 @@ function createPodUploadSheetMiaoshouTemplateService({
     }
 
     return path.join(
-      getTemplateCacheDirectoryPath(),
+      getTemplateCacheDirectoryPath(owner),
       `${templateEntry.id}${path.extname(templateEntry.fileName) || '.xlsx'}`
     );
+  }
+
+  async function pathExists(filePath) {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return true;
+    } catch (_error) {
+      return false;
+    }
   }
 
   async function readJsonFile(filePath) {
@@ -146,6 +201,49 @@ function createPodUploadSheetMiaoshouTemplateService({
     await fs.promises.mkdir(directoryPath, { recursive: true });
     await fs.promises.writeFile(tempFilePath, buffer);
     await fs.promises.rename(tempFilePath, filePath);
+  }
+
+  async function migrateLegacyTemplateFiles(owner) {
+    const legacyDirectoryPath = getLegacyTemplateCacheDirectoryPath();
+    const nextDirectoryPath = getTemplateCacheDirectoryPath(owner);
+
+    if (legacyDirectoryPath === nextDirectoryPath) {
+      return;
+    }
+
+    if (!(await pathExists(legacyDirectoryPath))) {
+      return;
+    }
+
+    await fs.promises.mkdir(nextDirectoryPath, { recursive: true });
+
+    for (const templateEntry of normalizedTemplateDefinitions) {
+      const fileName = `${templateEntry.id}${path.extname(templateEntry.fileName) || '.xlsx'}`;
+      const legacyFilePath = path.join(legacyDirectoryPath, fileName);
+      const nextFilePath = path.join(nextDirectoryPath, fileName);
+
+      if (!(await pathExists(legacyFilePath)) || (await pathExists(nextFilePath))) {
+        continue;
+      }
+
+      await fs.promises.copyFile(legacyFilePath, nextFilePath).catch(() => {});
+    }
+  }
+
+  async function ensureLocalStoragePathMigrated(owner) {
+    const nextStateFilePath = getStateFilePath(owner);
+    const legacyStateFilePath = getLegacyStateFilePath();
+
+    if (!(await pathExists(nextStateFilePath)) && (await pathExists(legacyStateFilePath))) {
+      const legacyPayload = await readJsonFile(legacyStateFilePath);
+
+      if (legacyPayload) {
+        await writeJsonFile(nextStateFilePath, legacyPayload);
+      }
+    }
+
+    await migrateLegacyTemplateFiles(owner);
+    return nextStateFilePath;
   }
 
   async function fileExists(filePath) {
@@ -180,7 +278,7 @@ function createPodUploadSheetMiaoshouTemplateService({
     };
   }
 
-  async function buildSnapshot(statePayload = null) {
+  async function buildSnapshot(statePayload = null, owner = null) {
     const normalizedStatePayload =
       statePayload && typeof statePayload === 'object' && !Array.isArray(statePayload)
         ? statePayload
@@ -194,7 +292,7 @@ function createPodUploadSheetMiaoshouTemplateService({
 
     const templates = await Promise.all(
       normalizedTemplateDefinitions.map(async (templateEntry) => {
-        const localFilePath = getTemplateLocalFilePath(templateEntry.id);
+        const localFilePath = getTemplateLocalFilePathForOwner(owner, templateEntry.id);
         const stateEntry =
           stateTemplates[templateEntry.id]
           && typeof stateTemplates[templateEntry.id] === 'object'
@@ -224,13 +322,19 @@ function createPodUploadSheetMiaoshouTemplateService({
   }
 
   async function hydrateSnapshotFromDisk() {
-    const statePayload = await readJsonFile(getStateFilePath()).catch(() => null);
-    cachedSnapshot = await buildSnapshot(statePayload);
+    const owner = getOwner();
+    const ownerKey = resolveOwnerKey(owner);
+    const stateFilePath = await ensureLocalStoragePathMigrated(owner);
+    const statePayload = await readJsonFile(stateFilePath).catch(() => null);
+
+    cachedOwnerKey = ownerKey;
+    cachedSnapshot = await buildSnapshot(statePayload, owner);
     return cachedSnapshot;
   }
 
-  async function syncTemplates() {
-    const stateFilePath = getStateFilePath();
+  async function syncTemplates(owner = null) {
+    const resolvedOwner = owner || getOwner();
+    const stateFilePath = await ensureLocalStoragePathMigrated(resolvedOwner);
     const previousStatePayload = await readJsonFile(stateFilePath).catch(() => null);
     const previousTemplates =
       previousStatePayload
@@ -250,7 +354,7 @@ function createPodUploadSheetMiaoshouTemplateService({
     });
 
     for (const templateEntry of normalizedTemplateDefinitions) {
-      const localFilePath = getTemplateLocalFilePath(templateEntry.id);
+      const localFilePath = getTemplateLocalFilePathForOwner(resolvedOwner, templateEntry.id);
       const previousEntry =
         previousTemplates[templateEntry.id]
         && typeof previousTemplates[templateEntry.id] === 'object'
@@ -300,18 +404,28 @@ function createPodUploadSheetMiaoshouTemplateService({
     }
 
     await writeJsonFile(stateFilePath, nextStatePayload);
-    cachedSnapshot = await buildSnapshot(nextStatePayload);
+    cachedOwnerKey = resolveOwnerKey(resolvedOwner);
+    cachedSnapshot = await buildSnapshot(nextStatePayload, resolvedOwner);
     return cachedSnapshot;
   }
 
-  function runSync() {
-    if (syncPromise) {
+  function runSync(owner = null) {
+    const resolvedOwner = owner || getOwner();
+    const ownerKey = resolveOwnerKey(resolvedOwner);
+
+    if (syncPromise && syncPromiseOwnerKey === ownerKey) {
       return syncPromise;
     }
 
-    syncPromise = syncTemplates().finally(() => {
-      syncPromise = null;
+    const currentPromise = syncTemplates(resolvedOwner).finally(() => {
+      if (syncPromise === currentPromise) {
+        syncPromise = null;
+        syncPromiseOwnerKey = '';
+      }
     });
+
+    syncPromise = currentPromise;
+    syncPromiseOwnerKey = ownerKey;
 
     return syncPromise;
   }
@@ -319,20 +433,28 @@ function createPodUploadSheetMiaoshouTemplateService({
   return {
     async init() {
       await hydrateSnapshotFromDisk().catch(() => {});
-      return runSync();
+      return runSync(getOwner());
     },
     async syncNow() {
       await hydrateSnapshotFromDisk().catch(() => {});
-      return runSync();
+      return runSync(getOwner());
     },
     async getSnapshot() {
-      if (!cachedSnapshot || !Array.isArray(cachedSnapshot.templates)) {
+      const ownerKey = resolveOwnerKey(getOwner());
+
+      if (
+        !cachedSnapshot
+        || !Array.isArray(cachedSnapshot.templates)
+        || cachedOwnerKey !== ownerKey
+      ) {
         await hydrateSnapshotFromDisk();
       }
 
       return cachedSnapshot;
     },
-    getTemplateLocalFilePath,
+    getTemplateLocalFilePath(templateId) {
+      return getTemplateLocalFilePathForOwner(getOwner(), templateId);
+    },
     getTemplateDefinitions() {
       return normalizedTemplateDefinitions.slice();
     }
