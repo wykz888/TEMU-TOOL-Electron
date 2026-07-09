@@ -22,7 +22,6 @@
       <section class="pod-panel pod-compact-panel pod-form-template-panel">
         <div class="pod-panel-head">
           <div class="pod-form-template-heading">
-            <p class="pod-panel-tag">填写模板</p>
             <h2 class="pod-panel-title">基础信息模板</h2>
           </div>
         </div>
@@ -77,8 +76,9 @@
               </div>
             </div>
 
-            <div class="pod-form-grid pod-form-grid-compact">
-              <label class="pod-field">
+            <div class="pod-form-grid pod-form-grid-compact pod-basic-form-grid">
+              <div class="pod-basic-form-row pod-basic-form-row-primary">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-template">
                 <span class="pod-field-label pod-field-label-placeholder" aria-hidden="true">&#x8868;&#x683C;&#x6A21;&#x677F;</span>
                 <select
                   id="podTemplateSelect"
@@ -88,12 +88,15 @@
                 ></select>
               </label>
 
-              <label class="pod-field">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-category">
                 <span class="pod-field-label">固定类目</span>
                 <select id="podCategorySelect" class="pod-field-control" data-global-product-field="category"></select>
               </label>
 
-              <label class="pod-field">
+              </div>
+
+              <div class="pod-basic-form-row pod-basic-form-row-secondary">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-delivery">
                 <span class="pod-field-label">承诺发货时效</span>
                 <select id="podDeliverySelect" class="pod-field-control" data-global-product-field="delivery">
                   <option value="1">1</option>
@@ -102,12 +105,12 @@
                 </select>
               </label>
 
-              <label class="pod-field">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-origin">
                 <span class="pod-field-label">产地</span>
                 <input id="podOriginInput" class="pod-field-control" type="text" data-global-product-field="origin" />
               </label>
 
-              <label class="pod-field">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-custom">
                 <span class="pod-field-label">定制品</span>
                 <select id="podCustomSelect" class="pod-field-control" data-global-product-field="isCustom">
                   <option value="是">是</option>
@@ -115,10 +118,12 @@
                 </select>
               </label>
 
-              <label class="pod-field pod-field-span-2 pod-spec-value-field">
+              <label class="pod-field pod-basic-form-field pod-basic-form-field-source-link">
                 <span class="pod-field-label">货源链接</span>
                 <input id="podSourceLinkInput" class="pod-field-control" type="url" data-global-product-field="sourceLink" />
               </label>
+
+              </div>
 
               <label class="pod-field pod-field-wide">
                 <span class="pod-field-label">产品描述</span>
@@ -136,39 +141,43 @@
             </div>
 
             <div class="pod-form-grid pod-form-grid-compact pod-spec-form-grid">
-              <label class="pod-field">
-                <span class="pod-field-label">规格名称1</span>
-                <input id="podSpecNameOneInput" class="pod-field-control" type="text" data-global-product-field="specNameOne" />
-              </label>
+              <section class="pod-spec-group">
+                <label class="pod-field pod-spec-name-field">
+                  <span class="pod-field-label">规格名称1</span>
+                  <input id="podSpecNameOneInput" class="pod-field-control" type="text" data-global-product-field="specNameOne" />
+                </label>
 
-              <label class="pod-field">
-                <span class="pod-field-label">规格名称2</span>
-                <input id="podSpecNameTwoInput" class="pod-field-control" type="text" data-global-product-field="specNameTwo" />
-              </label>
+                <label class="pod-field pod-spec-value-field">
+                  <span class="pod-field-label">规格属性值1</span>
+                  <textarea
+                    id="podSpecValueOneInput"
+                    class="pod-field-control pod-textarea pod-sku-textarea"
+                    rows="3"
+                    data-global-product-field="specValueOne"
+                    placeholder="一行一个规格值，例如：白色&#10;黑色&#10;蓝色"
+                  ></textarea>
+                  <span class="pod-field-hint">支持多 SKU，一行一个规格值，后续导出会按行展开。</span>
+                </label>
+              </section>
 
-              <label class="pod-field pod-field-span-2 pod-spec-value-field">
-                <span class="pod-field-label">规格属性值1</span>
-                <textarea
-                  id="podSpecValueOneInput"
-                  class="pod-field-control pod-textarea pod-sku-textarea"
-                  rows="3"
-                  data-global-product-field="specValueOne"
-                  placeholder="一行一个规格值，例如：白色&#10;黑色&#10;蓝色"
-                ></textarea>
-                <span class="pod-field-hint">支持多 SKU，一行一个规格值，后续导出会按行展开。</span>
-              </label>
+              <section class="pod-spec-group">
+                <label class="pod-field pod-spec-name-field">
+                  <span class="pod-field-label">规格名称2</span>
+                  <input id="podSpecNameTwoInput" class="pod-field-control" type="text" data-global-product-field="specNameTwo" />
+                </label>
 
-              <label class="pod-field pod-field-span-2 pod-spec-value-field">
-                <span class="pod-field-label">规格属性值2</span>
-                <textarea
-                  id="podSpecValueTwoInput"
-                  class="pod-field-control pod-textarea pod-sku-textarea"
-                  rows="3"
-                  data-global-product-field="specValueTwo"
-                  placeholder="一行一个规格值，例如：S&#10;M&#10;L"
-                ></textarea>
-                <span class="pod-field-hint">支持多 SKU，一行一个规格值，后续导出会按行展开。</span>
-              </label>
+                <label class="pod-field pod-spec-value-field">
+                  <span class="pod-field-label">规格属性值2</span>
+                  <textarea
+                    id="podSpecValueTwoInput"
+                    class="pod-field-control pod-textarea pod-sku-textarea"
+                    rows="3"
+                    data-global-product-field="specValueTwo"
+                    placeholder="一行一个规格值，例如：S&#10;M&#10;L"
+                  ></textarea>
+                  <span class="pod-field-hint">支持多 SKU，一行一个规格值，后续导出会按行展开。</span>
+                </label>
+              </section>
 
               <div class="pod-field pod-field-wide pod-sku-editor">
                 <div class="pod-sku-editor-head">
@@ -274,13 +283,16 @@
           </div>
           <div class="pod-inline-actions pod-list-toolbar-actions">
             <div class="pod-toolbar-block pod-toolbar-block-actions">
-            <button id="podImportProductsButton" class="pod-secondary-button" type="button">
+            <button id="podImportProductsButton" class="pod-secondary-button pod-list-action-button pod-list-action-import" type="button">
               导入本地商品
             </button>
-            <button id="podBatchPresetCarouselButton" class="pod-secondary-button" type="button">
+            <button id="podBatchPresetCarouselButton" class="pod-secondary-button pod-list-action-button pod-list-action-preset" type="button">
               批量预设轮播图
             </button>
-            <button id="podBatchPresetDescriptionButton" class="pod-secondary-button" type="button">
+            <button id="podBatchRandomCarouselButton" class="pod-secondary-button pod-list-action-button pod-list-action-random" type="button">
+              &#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;
+            </button>
+            <button id="podBatchPresetDescriptionButton" class="pod-secondary-button pod-list-action-button pod-list-action-preset" type="button">
               批量预设产品描述
             </button>
             </div>
@@ -294,7 +306,7 @@
                   <option value="webp">转WebP</option>
                 </select>
               </label>
-              <button id="podBatchUploadCosButton" class="pod-secondary-button is-danger" type="button">
+              <button id="podBatchUploadCosButton" class="pod-secondary-button is-danger pod-list-action-button pod-list-action-upload" type="button">
                 批量上传图片
               </button>
             </div>
@@ -346,22 +358,38 @@
               </div>
               <div class="pod-ai-title-actions">
                 <span id="podAiTitleProgressText" class="pod-ai-title-progress" hidden aria-live="polite"></span>
-                <button id="podAiTitleConfigButton" class="pod-secondary-button" type="button">
+                <button id="podAiTitleConfigButton" class="pod-secondary-button pod-list-action-button pod-list-action-config" type="button">
                   AI&#x914D;&#x7F6E;
                 </button>
-                <button id="podBatchAiTitleButton" class="pod-primary-button" type="button">
+                <button id="podBatchAiTitleButton" class="pod-primary-button pod-list-action-button pod-list-action-ai" type="button">
                   批量AI生成标题
                 </button>
-                <button id="podRetryFailedAiTitleButton" class="pod-secondary-button" type="button">
+                <button id="podRetryFailedAiTitleButton" class="pod-secondary-button pod-list-action-button pod-list-action-retry" type="button">
                   重试失败
                 </button>
               </div>
             </div>
+            <div class="pod-toolbar-block pod-toolbar-block-run">
+            <button id="podToolbarBatchUploadButton" class="pod-secondary-button is-danger pod-list-action-button pod-list-action-upload" type="button">
+              &#x6279;&#x91CF;&#x4E0A;&#x4F20;&#x56FE;&#x7247;
+            </button>
+            <span id="podToolbarCosUploadProgressText" class="pod-ai-title-progress" hidden aria-live="polite"></span>
+            <button id="podToolbarBatchAiTitleButton" class="pod-primary-button pod-list-action-button pod-list-action-ai" type="button">
+              &#x6279;&#x91CF;AI&#x751F;&#x6210;&#x6807;&#x9898;
+            </button>
+            <button id="podToolbarRetryFailedAiTitleButton" class="pod-secondary-button pod-list-action-button pod-list-action-retry" type="button">
+              &#x91CD;&#x8BD5;&#x5931;&#x8D25;
+            </button>
+            <span id="podToolbarAiTitleProgressText" class="pod-ai-title-progress" hidden aria-live="polite"></span>
+            </div>
             <div class="pod-toolbar-block pod-toolbar-block-tail">
-            <button id="podExportTableButton" class="pod-secondary-button pod-list-toolbar-tail" type="button">
+            <button id="podOpenListSettingsButton" class="pod-primary-button pod-list-action-button pod-list-action-save" type="button">
+              &#x4FDD;&#x5B58;&#x914D;&#x7F6E;
+            </button>
+            <button id="podExportTableButton" class="pod-secondary-button pod-list-toolbar-tail pod-list-action-button pod-list-action-export" type="button">
               导出表格
             </button>
-            <button id="podClearProductsButton" class="pod-secondary-button is-danger" type="button">
+            <button id="podClearProductsButton" class="pod-secondary-button is-danger pod-list-action-button pod-list-action-clear" type="button">
               清空列表
             </button>
             </div>
@@ -370,16 +398,12 @@
 
         <div class="pod-product-table-shell">
           <div class="pod-product-table-head">
-            <span data-product-table-column="local">本地商品</span>
-            <span data-product-table-column="title">产品标题</span>
-            <span data-product-table-column="englishTitle">英文标题</span>
-            <span data-product-table-column="image">轮播图</span>
-            <span data-product-table-column="description">产品描述</span>
-            <span data-product-table-column="template">模板</span>
-            <span data-product-table-column="category">类目</span>
-            <span data-product-table-column="mainNumber">主编号</span>
-            <span data-product-table-column="masterSku">主货号</span>
-            <span data-product-table-column="status">状态</span>
+            <span data-product-table-column="local">&#x672C;&#x5730;&#x5546;&#x54C1;</span>
+            <span data-product-table-column="title">&#x4EA7;&#x54C1;&#x6807;&#x9898;</span>
+            <span data-product-table-column="englishTitle">&#x82F1;&#x6587;&#x6807;&#x9898;</span>
+            <span data-product-table-column="image">&#x8F6E;&#x64AD;&#x56FE;</span>
+            <span data-product-table-column="description">&#x4EA7;&#x54C1;&#x63CF;&#x8FF0;</span>
+            <span data-product-table-column="status">&#x72B6;&#x6001;</span>
           </div>
           <div id="podProductTableBody" class="pod-product-table-body"></div>
         </div>
@@ -396,7 +420,6 @@
       >
         <div class="pod-modal-head">
           <div>
-            <p class="pod-panel-tag">填写模板</p>
             <h2 id="podFormTemplateModalTitle" class="pod-panel-title">选择已保存模板</h2>
             <p id="podFormTemplateModalSummary" class="pod-panel-description"></p>
           </div>
@@ -405,6 +428,7 @@
         <div id="podFormTemplateModalList" class="pod-form-template-modal-list"></div>
 
         <div class="pod-inline-actions pod-form-template-modal-footer">
+          <span id="podFormTemplateModalCount" class="pod-summary-pill">0</span>
           <button
             id="podFormTemplateModalCloseButton"
             class="pod-secondary-button"
@@ -477,6 +501,106 @@
       </div>
     </div>
 
+    <div id="podListSettingsModal" class="pod-modal" hidden>
+      <div class="pod-modal-backdrop"></div>
+      <div
+        class="pod-modal-dialog pod-list-settings-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="podListSettingsTitle"
+      >
+        <div class="pod-modal-head">
+          <div>
+            <p class="pod-panel-tag">&#x5217;&#x8868;&#x914D;&#x7F6E;</p>
+            <h2 id="podListSettingsTitle" class="pod-panel-title">&#x6279;&#x91CF;&#x64CD;&#x4F5C;&#x914D;&#x7F6E;</h2>
+            <p class="pod-panel-description">&#x628A;&#x56FE;&#x7247;&#x4E0A;&#x4F20;&#x548C; AI &#x6807;&#x9898;&#x53C2;&#x6570;&#x6536;&#x8D77;&#x6765;&#xFF0C;&#x5217;&#x8868;&#x9876;&#x90E8;&#x53EA;&#x4FDD;&#x7559;&#x5E38;&#x7528;&#x6309;&#x94AE;&#x3002;</p>
+          </div>
+        </div>
+        <div class="pod-list-settings-form">
+          <section class="pod-list-settings-panel">
+            <div class="pod-list-settings-panel-head">
+              <div>
+                <h3 class="pod-description-preset-panel-title">&#x56FE;&#x7247;&#x4E0A;&#x4F20;</h3>
+                <p class="pod-description-preset-panel-text">&#x914D;&#x7F6E;&#x6279;&#x91CF;&#x4E0A;&#x4F20;&#x56FE;&#x7247;&#x65F6;&#x7684;&#x8F93;&#x51FA;&#x65B9;&#x5F0F;&#x3002;</p>
+              </div>
+            </div>
+            <div class="pod-list-settings-grid">
+              <label class="pod-field">
+                <span class="pod-field-label">&#x56FE;&#x7247;&#x4E0A;&#x4F20;&#x65B9;&#x5F0F;</span>
+                <select id="podListSettingsImageUploadModeInput" class="pod-field-control">
+                  <option value="original">&#x539F;&#x6587;&#x4EF6;</option>
+                  <option value="jpg">&#x8F6C; JPG</option>
+                  <option value="webp">&#x8F6C; WebP</option>
+                </select>
+              </label>
+            </div>
+          </section>
+          <section class="pod-list-settings-panel">
+            <div class="pod-list-settings-panel-head">
+              <div>
+                <h3 class="pod-description-preset-panel-title">AI &#x6807;&#x9898;</h3>
+                <p class="pod-description-preset-panel-text">&#x8BBE;&#x7F6E;&#x6279;&#x91CF;&#x751F;&#x6210;&#x6807;&#x9898;&#x65F6;&#x7684;&#x524D;&#x540E;&#x7F00;&#x548C;&#x63D0;&#x793A;&#x8BCD;&#x3002;</p>
+              </div>
+              <button id="podListSettingsAiTitleConfigButton" class="pod-secondary-button" type="button">
+                AI&#x914D;&#x7F6E;
+              </button>
+            </div>
+            <div class="pod-list-settings-grid pod-list-settings-grid--wide">
+              <label class="pod-field">
+                <span class="pod-field-label">&#x524D;&#x6BB5;&#x6807;&#x9898;</span>
+                <input
+                  id="podListSettingsAiTitlePrefixInput"
+                  class="pod-field-control"
+                  type="text"
+                  maxlength="120"
+                  placeholder="&#x4F8B;&#x5982;&#xFF1A;Custom Printed"
+                />
+              </label>
+              <label class="pod-field">
+                <span class="pod-field-label">&#x540E;&#x6BB5;&#x6807;&#x9898;</span>
+                <input
+                  id="podListSettingsAiTitleSuffixInput"
+                  class="pod-field-control"
+                  type="text"
+                  maxlength="120"
+                  placeholder="&#x4F8B;&#x5982;&#xFF1A;Bath Towel"
+                />
+              </label>
+              <label class="pod-field pod-field-span-2">
+                <span class="pod-field-label">&#x9644;&#x52A0;&#x63D0;&#x793A;&#x8BCD;</span>
+                <input
+                  id="podListSettingsAiTitleExtraPromptInput"
+                  class="pod-field-control"
+                  type="text"
+                  maxlength="500"
+                  placeholder="&#x81EA;&#x5B9A;&#x4E49;&#x8FFD;&#x52A0;&#x63D0;&#x793A;&#xFF0C;&#x4F8B;&#x5982;&#xFF1A;&#x5F3A;&#x8C03;&#x6750;&#x8D28;&#x4E3A;&#x7EAF;&#x68C9;&#x3001;&#x9002;&#x5408;&#x9001;&#x793C;"
+                />
+              </label>
+              <label class="pod-field">
+                <span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6; (EN)</span>
+                <input
+                  id="podListSettingsAiTitleMaxLengthInput"
+                  class="pod-field-control"
+                  type="number"
+                  min="50"
+                  max="500"
+                  placeholder="250"
+                />
+              </label>
+            </div>
+          </section>
+        </div>
+        <div class="pod-inline-actions pod-description-preset-footer pod-carousel-preset-footer">
+          <button id="podListSettingsCancelButton" class="pod-secondary-button" type="button">
+            &#x53D6;&#x6D88;
+          </button>
+          <button id="podListSettingsSaveButton" class="pod-primary-button" type="button">
+            &#x4FDD;&#x5B58;&#x5E76;&#x5E94;&#x7528;
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="podDescriptionPresetModal" class="pod-modal" hidden>
       <div class="pod-modal-backdrop" data-pod-description-preset-close></div>
       <div
@@ -493,38 +617,39 @@
           </div>
         </div>
 
-        <div class="pod-description-preset-layout">
-          <section class="pod-description-preset-panel">
+        <div class="pod-description-preset-layout pod-carousel-preset-layout">
+          <section class="pod-description-preset-panel pod-carousel-preset-panel">
             <div class="pod-description-preset-panel-head">
               <div>
                 <h3 class="pod-description-preset-panel-title">候选图片</h3>
                 <p class="pod-description-preset-panel-text">从已导入的轮播图文件名中选择。</p>
               </div>
-              <div class="pod-inline-actions">
+              <div class="pod-inline-actions pod-carousel-preset-panel-actions">
                 <button id="podDescriptionPresetSelectAllButton" class="pod-secondary-button" type="button">
                   全部勾选
                 </button>
                 <button id="podDescriptionPresetClearButton" class="pod-secondary-button" type="button">
                   清空选择
                 </button>
+                <span id="podDescriptionPresetCandidateCount" class="pod-summary-pill pod-carousel-preset-panel-count">0</span>
               </div>
             </div>
             <div id="podDescriptionPresetCandidateList" class="pod-description-preset-candidate-list"></div>
           </section>
 
-          <section class="pod-description-preset-panel">
+          <section class="pod-description-preset-panel pod-carousel-preset-panel">
             <div class="pod-description-preset-panel-head">
               <div>
                 <h3 class="pod-description-preset-panel-title">已选顺序</h3>
                 <p class="pod-description-preset-panel-text">勾选左侧图片名后，可在这里调整顺序。</p>
               </div>
-              <span id="podDescriptionPresetSelectedCount" class="pod-summary-pill">0</span>
+              <span id="podDescriptionPresetSelectedCount" class="pod-summary-pill pod-carousel-preset-panel-count">0</span>
             </div>
             <div id="podDescriptionPresetSelectedList" class="pod-description-preset-selected-list"></div>
           </section>
         </div>
 
-        <div class="pod-inline-actions pod-description-preset-footer">
+        <div class="pod-inline-actions pod-description-preset-footer pod-carousel-preset-footer">
           <button id="podDescriptionPresetCancelButton" class="pod-secondary-button" type="button">
             取消
           </button>
@@ -596,32 +721,33 @@
           </div>
         </div>
 
-        <div id="podCarouselPresetImageNameLayout" class="pod-description-preset-layout">
-          <section class="pod-description-preset-panel">
+        <div id="podCarouselPresetImageNameLayout" class="pod-description-preset-layout pod-carousel-preset-layout">
+          <section class="pod-description-preset-panel pod-carousel-preset-panel">
             <div class="pod-description-preset-panel-head">
               <div>
                 <h3 class="pod-description-preset-panel-title">候选图片</h3>
                 <p class="pod-description-preset-panel-text">从已导入的全部图片名中选择。</p>
               </div>
-              <div class="pod-inline-actions">
+              <div class="pod-inline-actions pod-carousel-preset-panel-actions">
                 <button id="podCarouselPresetSelectAllButton" class="pod-secondary-button" type="button">
                   全部勾选
                 </button>
                 <button id="podCarouselPresetClearButton" class="pod-secondary-button" type="button">
                   清空选择
                 </button>
+                <span id="podCarouselPresetCandidateCount" class="pod-summary-pill pod-carousel-preset-panel-count">0</span>
               </div>
             </div>
             <div id="podCarouselPresetCandidateList" class="pod-description-preset-candidate-list"></div>
           </section>
 
-          <section class="pod-description-preset-panel">
+          <section class="pod-description-preset-panel pod-carousel-preset-panel">
             <div class="pod-description-preset-panel-head">
               <div>
                 <h3 class="pod-description-preset-panel-title">已选顺序</h3>
                 <p class="pod-description-preset-panel-text">保存后会批量把这些图片移动到各商品轮播图前面。</p>
               </div>
-              <span id="podCarouselPresetSelectedCount" class="pod-summary-pill">0</span>
+              <span id="podCarouselPresetSelectedCount" class="pod-summary-pill pod-carousel-preset-panel-count">0</span>
             </div>
             <div id="podCarouselPresetSelectedList" class="pod-description-preset-selected-list"></div>
           </section>
@@ -633,6 +759,60 @@
           </button>
           <button id="podCarouselPresetSaveButton" class="pod-primary-button" type="button">
             保存预设
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="podCarouselRandomPresetModal" class="pod-modal" hidden>
+      <div class="pod-modal-backdrop" data-pod-carousel-random-close></div>
+      <div
+        class="pod-modal-dialog pod-description-preset-dialog pod-carousel-random-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="podCarouselRandomPresetTitle"
+      >
+        <div class="pod-modal-head">
+          <div>
+            <p class="pod-panel-tag">&#x8F6E;&#x64AD;&#x56FE;</p>
+            <h2 id="podCarouselRandomPresetTitle" class="pod-panel-title">&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</h2>
+            <p id="podCarouselRandomPresetSummary" class="pod-panel-description"></p>
+          </div>
+        </div>
+
+        <label class="pod-carousel-random-first-toggle">
+          <input id="podCarouselRandomPresetFirstOnlyInput" type="checkbox" />
+          <span>&#x53EA;&#x6539;&#x9996;&#x56FE;</span>
+        </label>
+
+        <div class="pod-description-preset-layout pod-carousel-random-layout">
+          <section class="pod-description-preset-panel pod-carousel-random-panel">
+            <div class="pod-description-preset-panel-head">
+              <div>
+                <h3 class="pod-description-preset-panel-title">&#x53EF;&#x9009;&#x5E8F;&#x53F7;</h3>
+                <p class="pod-description-preset-panel-text">&#x4E3A;&#x5DF2;&#x52FE;&#x9009;&#x7684;&#x8F6E;&#x64AD;&#x56FE;&#x5E8F;&#x53F7;&#x968F;&#x673A;&#x4E92;&#x6362;&#x56FE;&#x7247;&#x3002;</p>
+              </div>
+              <div class="pod-inline-actions pod-carousel-random-panel-actions">
+                <button id="podCarouselRandomPresetSelectAllButton" class="pod-secondary-button" type="button">
+                  &#x5168;&#x9009;
+                </button>
+                <button id="podCarouselRandomPresetClearButton" class="pod-secondary-button" type="button">
+                  &#x6E05;&#x7A7A;&#x9009;&#x62E9;
+                </button>
+                <span id="podCarouselRandomPresetSelectedCount" class="pod-summary-pill">0</span>
+              </div>
+            </div>
+            <div id="podCarouselRandomPresetCandidateList" class="pod-carousel-preset-random-candidate-list"></div>
+            <div id="podCarouselRandomPresetOrderList" class="pod-carousel-preset-random-order-list" hidden></div>
+          </section>
+        </div>
+
+        <div class="pod-inline-actions pod-description-preset-footer pod-carousel-random-footer">
+          <button id="podCarouselRandomPresetCancelButton" class="pod-secondary-button" type="button">
+            &#x53D6;&#x6D88;
+          </button>
+          <button id="podCarouselRandomPresetSaveButton" class="pod-primary-button" type="button">
+            &#x5E94;&#x7528;&#x968F;&#x673A;
           </button>
         </div>
       </div>

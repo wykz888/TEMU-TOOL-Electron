@@ -210,12 +210,8 @@
     '',
     'title',
     'englishTitle',
-    'descriptionImageOrders',
-    '',
-    'category',
-    'mainNumber',
-    'masterSku',
     'carousel',
+    'descriptionImageOrders',
     ''
   ]);
 
@@ -277,15 +273,18 @@
       productListImageLabel: '\u8f6e\u64ad\u56fe',
       descriptionOrderPlaceholder: '\u8f6e\u64ad\u56fe\u5e8f\u53f7\uff0c\u5982 1,2,3',
       carouselButtonLabel: '\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u56fe',
+      carouselRandomButtonLabel: '\u6279\u91cf\u968f\u673a\u8f6e\u64ad\u56fe',
       carouselOrderName: '\u8f6e\u64ad\u56fe',
       activeTemplateSummary: '\u5f53\u524d\u6a21\u677f\uff1a\u975e\u670d\u9970\u7c7b\u6a21\u677f\uff1b\u5bfc\u51fa\u4f1a\u4f7f\u7528\u4ea7\u54c1\u8f6e\u64ad\u56fe\u3001\u9884\u89c8\u56fe\u548c\u4e3b\u8d27\u53f7\uff08SPU\u7ea7\uff09\u5b57\u6bb5\u3002',
       carouselPresetTitle: '\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u56fe',
+      carouselRandomPresetTitle: '\u6279\u91cf\u968f\u673a\u8f6e\u64ad\u56fe',
       carouselPresetTag: '\u8f6e\u64ad\u56fe',
       carouselPresetCandidateText: '\u4ece\u5df2\u5bfc\u5165\u7684\u5168\u90e8\u56fe\u7247\u540d\u4e2d\u9009\u62e9\u3002',
       carouselPresetSelectedText: '\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u628a\u8fd9\u4e9b\u56fe\u7247\u79fb\u52a8\u5230\u5404\u5546\u54c1\u8f6e\u64ad\u56fe\u524d\u9762\u3002',
       carouselPresetSummary: '\u5171 {count} \u4e2a\u5546\u54c1\uff0c\u53ef\u4ece\u5df2\u5bfc\u5165\u7684\u5168\u90e8\u56fe\u7247\u540d\u91cc\u9009\u62e9\uff1b\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u8c03\u6574\u5404\u5546\u54c1\u7684\u8f6e\u64ad\u56fe\u987a\u5e8f\u3002',
       carouselPresetEmptySelection: '\u52fe\u9009\u5de6\u4fa7\u56fe\u7247\u540d\u540e\uff0c\u53ef\u5728\u8fd9\u91cc\u8c03\u6574\u8f6e\u64ad\u56fe\u987a\u5e8f\u3002',
       carouselPresetSaved: '\u5df2\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u56fe',
+      carouselRandomPresetSaved: '\u5df2\u6279\u91cf\u968f\u673a\u8c03\u6574\u8f6e\u64ad\u56fe',
       descriptionPresetSourceName: '\u8f6e\u64ad\u56fe',
       descriptionPresetSummary: '\u5171 {count} \u4e2a\u5546\u54c1\uff0c\u53ef\u4ece\u5df2\u5bfc\u5165\u7684\u8f6e\u64ad\u56fe\u6587\u4ef6\u540d\u91cc\u9009\u62e9\uff1b\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u5199\u5165\u4ea7\u54c1\u63cf\u8ff0\u3002',
       descriptionPresetEmptyCandidates: '\u5f53\u524d\u6ca1\u6709\u53ef\u7528\u4e8e\u9884\u8bbe\u7684\u8f6e\u64ad\u56fe\u6587\u4ef6\u540d\u3002',
@@ -295,15 +294,18 @@
       productListImageLabel: '\u672c\u5730\u8f6e\u64ad\u7d20\u6750',
       descriptionOrderPlaceholder: '\u8f6e\u64ad\u7d20\u6750\u5e8f\u53f7\uff0c\u5982 1,2,3',
       carouselButtonLabel: '\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u7d20\u6750',
+      carouselRandomButtonLabel: '\u6279\u91cf\u968f\u673a\u8f6e\u64ad\u7d20\u6750',
       carouselOrderName: '\u8f6e\u64ad\u7d20\u6750',
       activeTemplateSummary: '\u5f53\u524d\u6a21\u677f\uff1a\u670d\u9970\u7c7b\u6a21\u677f\uff1b\u5bfc\u51fa\u4f1a\u4f7f\u7528\u4ea7\u54c1\u7d20\u6750\u56fe\u3001\u989c\u8272\u56fe\u548c\u4e3b\u8d27\u53f7\uff08SKC\u7ea7\uff09\u5b57\u6bb5\uff0c\u989c\u8272\u56fe\u76f4\u63a5\u53d6\u8f6e\u64ad\u56fe\u5e76\u6309 SKU \u56fe\u524d\u7f6e\u53bb\u91cd\u3002',
       carouselPresetTitle: '\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u7d20\u6750',
+      carouselRandomPresetTitle: '\u6279\u91cf\u968f\u673a\u8f6e\u64ad\u7d20\u6750',
       carouselPresetTag: '\u8f6e\u64ad\u7d20\u6750',
       carouselPresetCandidateText: '\u4ece\u5df2\u5bfc\u5165\u7684\u5168\u90e8\u56fe\u7247\u540d\u4e2d\u9009\u62e9\u3002',
       carouselPresetSelectedText: '\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u628a\u8fd9\u4e9b\u56fe\u7247\u79fb\u52a8\u5230\u5404\u5546\u54c1\u8f6e\u64ad\u7d20\u6750\u524d\u9762\u3002',
       carouselPresetSummary: '\u5171 {count} \u4e2a\u5546\u54c1\uff0c\u53ef\u4ece\u5df2\u5bfc\u5165\u7684\u5168\u90e8\u56fe\u7247\u540d\u91cc\u9009\u62e9\uff1b\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u8c03\u6574\u5404\u5546\u54c1\u7684\u8f6e\u64ad\u7d20\u6750\u987a\u5e8f\u3002',
       carouselPresetEmptySelection: '\u52fe\u9009\u5de6\u4fa7\u56fe\u7247\u540d\u540e\uff0c\u53ef\u5728\u8fd9\u91cc\u8c03\u6574\u8f6e\u64ad\u7d20\u6750\u987a\u5e8f\u3002',
       carouselPresetSaved: '\u5df2\u6279\u91cf\u9884\u8bbe\u8f6e\u64ad\u7d20\u6750',
+      carouselRandomPresetSaved: '\u5df2\u6279\u91cf\u968f\u673a\u8c03\u6574\u8f6e\u64ad\u7d20\u6750',
       descriptionPresetSourceName: '\u8f6e\u64ad\u7d20\u6750',
       descriptionPresetSummary: '\u5171 {count} \u4e2a\u5546\u54c1\uff0c\u53ef\u4ece\u5df2\u5bfc\u5165\u7684\u8f6e\u64ad\u7d20\u6750\u6587\u4ef6\u540d\u91cc\u9009\u62e9\uff1b\u4fdd\u5b58\u540e\u4f1a\u6279\u91cf\u5199\u5165\u4ea7\u54c1\u63cf\u8ff0\u3002',
       descriptionPresetEmptyCandidates: '\u5f53\u524d\u6ca1\u6709\u53ef\u7528\u4e8e\u9884\u8bbe\u7684\u8f6e\u64ad\u7d20\u6750\u6587\u4ef6\u540d\u3002',
@@ -393,9 +395,11 @@
     products: [],
     activeProductId: '',
     carouselPresetModalOpen: false,
+    carouselRandomPresetModalOpen: false,
     carouselPresetMode: 'selected',
     carouselPresetSelectionDraft: [],
     carouselPresetRandomOrdersDraft: '',
+    carouselRandomPresetFirstOnly: false,
     carouselPresetCachedMode: 'selected',
     carouselPresetCachedSelection: [],
     carouselPresetCachedRandomOrders: '',
@@ -640,7 +644,7 @@
   }
 
   function buildCurrentFormTemplateBatchPreset() {
-    if (state.carouselPresetModalOpen) {
+    if (state.carouselPresetModalOpen || state.carouselRandomPresetModalOpen) {
       return {
         carouselPresetMode: normalizeCachedCarouselPresetMode(state.carouselPresetMode),
         carouselPresetRandomOrders: normalizeSequenceSelection(state.carouselPresetRandomOrdersDraft),
@@ -1152,6 +1156,10 @@
     return element;
   }
 
+  function getOptionalElement(id) {
+    return document.getElementById(id);
+  }
+
   function getActiveProduct() {
     return state.products.find((product) => product.id === state.activeProductId) || null;
   }
@@ -1427,7 +1435,7 @@
     };
   }
 
-  function applyRandomFirstCarouselPresetToProduct(product, selectedOrders) {
+  function applyRandomFirstCarouselPresetToProduct(product, selectedOrders, options = {}) {
     if (!product || typeof product !== 'object') {
       return {
         matched: false,
@@ -1445,7 +1453,9 @@
           && indexes.indexOf(index) === itemIndex;
       });
 
-    if (validIndexes.length < 2) {
+    const onlyFirst = Boolean(options.onlyFirst);
+
+    if ((!onlyFirst && validIndexes.length < 2) || (onlyFirst && !validIndexes.length)) {
       return {
         matched: false,
         updated: false
@@ -1474,25 +1484,39 @@
       codeValue: normalizeText(product.codeValue)
     });
     const nextCarousel = carouselItems.slice();
-    const shuffledItems = validIndexes.map((index) => carouselItems[index]);
 
-    for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      const item = shuffledItems[index];
-      shuffledItems[index] = shuffledItems[swapIndex];
-      shuffledItems[swapIndex] = item;
+    if (onlyFirst) {
+      const candidateIndexes = validIndexes.some((index) => index > 0)
+        ? validIndexes.filter((index) => index > 0)
+        : validIndexes;
+      const selectedIndex = candidateIndexes[Math.floor(Math.random() * candidateIndexes.length)];
+
+      if (selectedIndex > 0) {
+        const firstItem = nextCarousel[0];
+        nextCarousel[0] = nextCarousel[selectedIndex];
+        nextCarousel[selectedIndex] = firstItem;
+      }
+    } else {
+      const shuffledItems = validIndexes.map((index) => carouselItems[index]);
+
+      for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        const item = shuffledItems[index];
+        shuffledItems[index] = shuffledItems[swapIndex];
+        shuffledItems[swapIndex] = item;
+      }
+
+      if (
+        shuffledItems.length > 1
+        && shuffledItems.every((itemName, index) => itemName === carouselItems[validIndexes[index]])
+      ) {
+        shuffledItems.push(shuffledItems.shift());
+      }
+
+      validIndexes.forEach((carouselIndex, selectedIndex) => {
+        nextCarousel[carouselIndex] = shuffledItems[selectedIndex];
+      });
     }
-
-    if (
-      shuffledItems.length > 1
-      && shuffledItems.every((itemName, index) => itemName === carouselItems[validIndexes[index]])
-    ) {
-      shuffledItems.push(shuffledItems.shift());
-    }
-
-    validIndexes.forEach((carouselIndex, selectedIndex) => {
-      nextCarousel[carouselIndex] = shuffledItems[selectedIndex];
-    });
 
     product.materials = product.materials && typeof product.materials === 'object' ? product.materials : {};
     product.materials.carousel = nextCarousel;
@@ -1755,8 +1779,11 @@
     const templateCopy = getCurrentTemplateUiCopy();
     const productTableImageHeader = document.querySelector('[data-product-table-column="image"]');
     const carouselButton = getElement('podBatchPresetCarouselButton');
+    const carouselRandomButton = getOptionalElement('podBatchRandomCarouselButton');
     const carouselPresetTitle = getElement('podCarouselPresetTitle');
+    const carouselRandomPresetTitle = getOptionalElement('podCarouselRandomPresetTitle');
     const carouselPresetTag = document.querySelector('#podCarouselPresetModal .pod-panel-tag');
+    const carouselRandomPresetTag = document.querySelector('#podCarouselRandomPresetModal .pod-panel-tag');
     const carouselPresetPanelTexts = document.querySelectorAll('#podCarouselPresetModal .pod-description-preset-panel-text');
     const descriptionPresetPanelTexts = document.querySelectorAll('#podDescriptionPresetModal .pod-description-preset-panel-text');
 
@@ -1776,12 +1803,24 @@
       }
     }
 
+    if (carouselRandomButton instanceof HTMLButtonElement) {
+      carouselRandomButton.textContent = templateCopy.carouselRandomButtonLabel;
+    }
+
     if (carouselPresetTitle instanceof HTMLElement) {
       carouselPresetTitle.textContent = templateCopy.carouselPresetTitle;
     }
 
+    if (carouselRandomPresetTitle instanceof HTMLElement) {
+      carouselRandomPresetTitle.textContent = templateCopy.carouselRandomPresetTitle;
+    }
+
     if (carouselPresetTag instanceof HTMLElement) {
       carouselPresetTag.textContent = templateCopy.carouselPresetTag;
+    }
+
+    if (carouselRandomPresetTag instanceof HTMLElement) {
+      carouselRandomPresetTag.textContent = templateCopy.carouselPresetTag;
     }
 
     if (carouselPresetPanelTexts[0] instanceof HTMLElement) {
@@ -2631,6 +2670,21 @@
     return '\u5171 0 \u5f20';
   }
 
+  function getCarouselPreviewChipItems(product) {
+    return getCarouselItems(product).map((itemName) => {
+      return getCarouselItemDisplayName(product, itemName) || normalizeText(itemName);
+    });
+  }
+
+  function getDescriptionPreviewChipItems(product) {
+    const selectedItems = getSelectedCarouselItemsByOrders(product, product && product.descriptionImageOrders);
+
+    return selectedItems.map((item) => {
+      const itemLabel = item.displayName || item.name;
+      return item.order ? `${item.order}. ${itemLabel}` : itemLabel;
+    });
+  }
+
   function getCarouselPreviewText(product) {
     const carouselItems = getCarouselItems(product);
 
@@ -2809,6 +2863,82 @@
     progressText.textContent = getAiTitleProgressText();
     progressText.hidden = !progressText.textContent;
     progressText.title = state.aiTitleProgress.label || '';
+
+    const proxyGenerateButton = getOptionalElement('podToolbarBatchAiTitleButton');
+    const proxyRetryButton = getOptionalElement('podToolbarRetryFailedAiTitleButton');
+    const proxyProgressText = getOptionalElement('podToolbarAiTitleProgressText');
+
+    if (proxyGenerateButton) {
+      proxyGenerateButton.textContent = generateButton.textContent;
+      proxyGenerateButton.disabled = generateButton.disabled;
+    }
+
+    if (proxyRetryButton) {
+      proxyRetryButton.textContent = retryButton.textContent;
+      proxyRetryButton.disabled = retryButton.disabled;
+    }
+
+    if (proxyProgressText) {
+      proxyProgressText.textContent = progressText.textContent;
+      proxyProgressText.hidden = progressText.hidden;
+      proxyProgressText.title = progressText.title;
+    }
+  }
+
+  function syncListSettingsDraftFromSource() {
+    const draftUploadModeInput = getElement('podListSettingsImageUploadModeInput');
+    const draftPrefixInput = getElement('podListSettingsAiTitlePrefixInput');
+    const draftSuffixInput = getElement('podListSettingsAiTitleSuffixInput');
+    const draftExtraPromptInput = getElement('podListSettingsAiTitleExtraPromptInput');
+    const draftMaxLengthInput = getElement('podListSettingsAiTitleMaxLengthInput');
+
+    draftUploadModeInput.value = getElement('podImageUploadModeSelect').value;
+    draftPrefixInput.value = getElement('podAiTitlePrefixInput').value;
+    draftSuffixInput.value = getElement('podAiTitleSuffixInput').value;
+    draftExtraPromptInput.value = getElement('podAiTitleExtraPromptInput').value;
+    draftMaxLengthInput.value = getElement('podAiTitleMaxLengthInput').value;
+  }
+
+  function closeListSettingsModal() {
+    getElement('podListSettingsModal').hidden = true;
+  }
+
+  function openListSettingsModal() {
+    syncListSettingsDraftFromSource();
+    getElement('podListSettingsModal').hidden = false;
+  }
+
+  function dispatchBubbledInputEvent(element, type) {
+    element.dispatchEvent(new Event(type, {
+      bubbles: true
+    }));
+  }
+
+  async function applyListSettingsModal() {
+    const sourceUploadModeInput = getElement('podImageUploadModeSelect');
+    const sourcePrefixInput = getElement('podAiTitlePrefixInput');
+    const sourceSuffixInput = getElement('podAiTitleSuffixInput');
+    const sourceExtraPromptInput = getElement('podAiTitleExtraPromptInput');
+    const sourceMaxLengthInput = getElement('podAiTitleMaxLengthInput');
+
+    sourceUploadModeInput.value = getElement('podListSettingsImageUploadModeInput').value;
+    sourcePrefixInput.value = getElement('podListSettingsAiTitlePrefixInput').value;
+    sourceSuffixInput.value = getElement('podListSettingsAiTitleSuffixInput').value;
+    sourceExtraPromptInput.value = getElement('podListSettingsAiTitleExtraPromptInput').value;
+    sourceMaxLengthInput.value = getElement('podListSettingsAiTitleMaxLengthInput').value;
+
+    dispatchBubbledInputEvent(sourceUploadModeInput, 'change');
+    dispatchBubbledInputEvent(sourcePrefixInput, 'input');
+    dispatchBubbledInputEvent(sourceSuffixInput, 'input');
+    dispatchBubbledInputEvent(sourceExtraPromptInput, 'input');
+    dispatchBubbledInputEvent(sourceMaxLengthInput, 'input');
+
+    await saveWorkspaceState({
+      showErrorNotice: true
+    });
+
+    closeListSettingsModal();
+    showWindowNotice('\u5217\u8868\u914d\u7f6e\u5df2\u4fdd\u5b58\u3002', 'success');
   }
 
   async function handleStopAiTitles() {
@@ -2959,11 +3089,17 @@
     const importButton = getElement('podImportProductsButton');
     const uploadModeSelect = getElement('podImageUploadModeSelect');
     const uploadButton = getElement('podBatchUploadCosButton');
+    const proxyUploadButton = getOptionalElement('podToolbarBatchUploadButton');
+    const proxyUploadProgressText = getOptionalElement('podToolbarCosUploadProgressText');
+    const sourceUploadProgressText = getOptionalElement('podCosUploadProgressText');
+    const openListSettingsButton = getOptionalElement('podOpenListSettingsButton');
     const exportButton = getElement('podExportTableButton');
     const batchPresetCarouselButton = getElement('podBatchPresetCarouselButton');
+    const batchRandomCarouselButton = getOptionalElement('podBatchRandomCarouselButton');
     const batchPresetDescriptionButton = getElement('podBatchPresetDescriptionButton');
     const clearButton = getElement('podClearProductsButton');
     const carouselPresetCandidates = getCarouselPresetCandidates();
+    const carouselRandomCandidates = getCarouselPresetRandomOrderCandidates();
     const descriptionPresetCandidates = getDescriptionPresetCandidates();
     const stopGuardActive = isCosUploadStopGuardActive();
     const uploadDefaultLabel = '\u6279\u91cf\u4e0a\u4f20\u56fe\u7247';
@@ -2989,8 +3125,30 @@
     importButton.disabled = state.uploadingCosImages || state.stoppingCosImages;
     clearButton.disabled = state.uploadingCosImages || state.stoppingCosImages || !state.products.length;
     batchPresetCarouselButton.disabled = state.uploadingCosImages || state.stoppingCosImages || !state.products.length || !carouselPresetCandidates.length;
+    if (batchRandomCarouselButton) {
+      batchRandomCarouselButton.disabled =
+        state.uploadingCosImages
+        || state.stoppingCosImages
+        || !state.products.length
+        || carouselRandomCandidates.length < 2;
+    }
     batchPresetDescriptionButton.disabled = state.uploadingCosImages || state.stoppingCosImages || !state.products.length || !descriptionPresetCandidates.length;
     renderCosUploadProgressText();
+
+    if (proxyUploadButton) {
+      proxyUploadButton.textContent = uploadButton.textContent;
+      proxyUploadButton.disabled = uploadButton.disabled;
+    }
+
+    if (proxyUploadProgressText && sourceUploadProgressText) {
+      proxyUploadProgressText.textContent = sourceUploadProgressText.textContent;
+      proxyUploadProgressText.hidden = sourceUploadProgressText.hidden;
+      proxyUploadProgressText.title = sourceUploadProgressText.title;
+    }
+
+    if (openListSettingsButton) {
+      openListSettingsButton.disabled = state.loadingWorkspaceState || state.exportingTable;
+    }
   }
 
   async function handleStopCosImageUpload() {
@@ -3239,6 +3397,7 @@
       }, 0);
       const imageNames = getCarouselPresetRandomOrderImageNames(order);
       const isSelected = selectedSet.has(order);
+      const displayName = normalizeText(imageNames[0]) || `\u7b2c ${order} \u5f20`;
 
       return `
         <label
@@ -3250,8 +3409,9 @@
             data-pod-carousel-random-order="${escapeHtml(String(order))}"
             ${isSelected ? 'checked' : ''}
           />
-          <span>\u7b2c ${escapeHtml(String(order))} \u5f20</span>
-          <small>${escapeHtml(String(matchedCount))}/${escapeHtml(String(state.products.length))}</small>
+          <span class="pod-carousel-random-order-badge">${escapeHtml(String(order))}</span>
+          <span class="pod-carousel-random-order-name">${escapeHtml(displayName)}</span>
+          <small>${escapeHtml(String(matchedCount))} \u4e2a\u5546\u54c1</small>
         </label>
       `;
     }).join('');
@@ -3278,20 +3438,19 @@
     state.carouselPresetRandomOrdersDraft = selectedOrders.sort((left, right) => left - right).join(',');
     persistCachedCarouselPresetState();
     renderCarouselPresetDialog();
+    renderCarouselRandomPresetDialog();
   }
 
   function renderCarouselPresetDialog() {
     const modal = getElement('podCarouselPresetModal');
     const summaryElement = getElement('podCarouselPresetSummary');
-    const selectedModeInput = getElement('podCarouselPresetModeSelected');
-    const randomFirstModeInput = getElement('podCarouselPresetModeRandomFirst');
-    const randomOrdersField = getElement('podCarouselPresetRandomOrdersField');
-    const randomOrdersInput = getElement('podCarouselPresetRandomOrdersInput');
-    const randomCandidateListElement = getElement('podCarouselPresetRandomCandidateList');
-    const randomOrderListElement = getElement('podCarouselPresetRandomOrderList');
+    const modePanelElement = getOptionalElement('podCarouselPresetModeSelected')
+      ? getElement('podCarouselPresetModeSelected').closest('.pod-carousel-preset-mode-panel')
+      : null;
     const imageNameLayoutElement = getElement('podCarouselPresetImageNameLayout');
     const candidateListElement = getElement('podCarouselPresetCandidateList');
     const selectedListElement = getElement('podCarouselPresetSelectedList');
+    const candidateCountElement = getElement('podCarouselPresetCandidateCount');
     const selectedCountElement = getElement('podCarouselPresetSelectedCount');
     const selectAllButton = getElement('podCarouselPresetSelectAllButton');
     const clearButton = getElement('podCarouselPresetClearButton');
@@ -3299,20 +3458,14 @@
     const candidates = getCarouselPresetCandidates();
     const candidateMap = getCarouselPresetCandidateMap(candidates);
     const templateCopy = getCurrentTemplateUiCopy();
-    const mode = state.carouselPresetMode === 'random-first' ? 'random-first' : 'selected';
 
     if (!state.carouselPresetModalOpen) {
       modal.hidden = true;
       summaryElement.textContent = '';
-      selectedModeInput.checked = mode === 'selected';
-      randomFirstModeInput.checked = mode === 'random-first';
-      randomOrdersField.hidden = true;
-      randomOrdersInput.value = '';
-      randomCandidateListElement.innerHTML = '';
-      randomOrderListElement.innerHTML = '';
       imageNameLayoutElement.hidden = false;
       candidateListElement.innerHTML = '';
       selectedListElement.innerHTML = '';
+      candidateCountElement.textContent = '0';
       selectedCountElement.textContent = '0';
       selectAllButton.disabled = true;
       clearButton.disabled = true;
@@ -3325,26 +3478,18 @@
 
     state.carouselPresetSelectionDraft = selectedKeys;
     modal.hidden = false;
-    selectedModeInput.checked = mode === 'selected';
-    randomFirstModeInput.checked = mode === 'random-first';
-    randomOrdersField.hidden = mode !== 'random-first';
-    imageNameLayoutElement.hidden = mode === 'random-first';
-
-    const normalizedOrdersValue = normalizeSequenceSelection(state.carouselPresetRandomOrdersDraft);
-    const selectedOrders = parseSequenceSelectionNumbers(normalizedOrdersValue);
-
-    randomOrdersInput.value = state.carouselPresetRandomOrdersDraft;
-    randomCandidateListElement.innerHTML = renderCarouselPresetRandomCandidateList(selectedOrders);
-    randomOrderListElement.innerHTML = renderCarouselPresetRandomOrderList(selectedOrders);
-    summaryElement.textContent = mode === 'random-first'
-      ? `\u5c06\u5728\u5df2\u52fe\u9009\u7684\u8f6e\u64ad\u56fe\u5e8f\u53f7\u4e4b\u95f4\uff0c\u4e3a ${state.products.length} \u4e2a\u5546\u54c1\u968f\u673a\u4e92\u6362\u56fe\u7247\uff0c\u672a\u52fe\u9009\u5e8f\u53f7\u4fdd\u6301\u539f\u4f4d\u3002`
-      : formatTemplateCopy(templateCopy.carouselPresetSummary, {
-        count: state.products.length
-      });
+    state.carouselPresetMode = 'selected';
+    imageNameLayoutElement.hidden = false;
+    summaryElement.textContent = '';
+    candidateCountElement.textContent = String(candidates.length);
     selectedCountElement.textContent = String(selectedKeys.length);
-    selectAllButton.disabled = mode !== 'selected';
-    clearButton.disabled = mode === 'random-first' ? !selectedOrders.length : !selectedKeys.length;
-    saveButton.disabled = !state.products.length || (mode === 'random-first' ? !selectedOrders.length : !selectedKeys.length);
+    selectAllButton.disabled = false;
+    clearButton.disabled = !selectedKeys.length;
+    saveButton.disabled = !state.products.length || !selectedKeys.length;
+
+    if (modePanelElement instanceof HTMLElement) {
+      modePanelElement.hidden = true;
+    }
 
     if (!candidates.length) {
       candidateListElement.innerHTML = '<div class="pod-empty-state">\u5f53\u524d\u6ca1\u6709\u53ef\u7528\u4e8e\u9884\u8bbe\u7684\u56fe\u7247\u6587\u4ef6\u540d\u3002</div>';
@@ -3358,19 +3503,18 @@
 
         return `
           <article class="pod-description-preset-candidate-item ${isSelected ? 'is-selected' : ''}" title="${escapeHtml(displayNames.join('\n'))}">
-            <label class="pod-description-preset-candidate-toggle">
+            <label class="pod-description-preset-candidate-toggle pod-carousel-preset-candidate-toggle">
+              <input
+                class="pod-description-preset-checkbox pod-carousel-preset-checkbox"
+                type="checkbox"
+                data-pod-carousel-preset-candidate="${escapeHtml(candidate.key)}"
+                ${isSelected ? 'checked' : ''}
+              />
               <span class="pod-description-preset-candidate-copy">
                 <span class="pod-description-preset-candidate-title">${escapeHtml(candidate.label)}</span>
-                <span class="pod-product-note">\u5339\u914d ${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
               </span>
-              <span class="pod-description-preset-candidate-meta">
-                ${isSelected ? `<span class="pod-carousel-order-index">\u7b2c ${escapeHtml(String(selectedIndex + 1))} \u4f4d</span>` : ''}
-                <input
-                  class="pod-description-preset-checkbox"
-                  type="checkbox"
-                  data-pod-carousel-preset-candidate="${escapeHtml(candidate.key)}"
-                  ${isSelected ? 'checked' : ''}
-                />
+              <span class="pod-description-preset-candidate-meta pod-carousel-preset-candidate-meta">
+                <span class="pod-carousel-preset-candidate-badge">${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
               </span>
             </label>
           </article>
@@ -3397,31 +3541,36 @@
       return `
         <article class="pod-carousel-order-item pod-description-preset-selected-item" title="${escapeHtml(displayNames.join('\n'))}">
           <span class="pod-carousel-order-index">${escapeHtml(String(index + 1))}</span>
-          <span class="pod-description-preset-candidate-copy">
+          <span class="pod-description-preset-candidate-copy pod-carousel-preset-selected-copy">
             <span class="pod-carousel-order-name">${escapeHtml(candidate.label)}</span>
-            <span class="pod-product-note">\u5339\u914d ${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
           </span>
-          <div class="pod-inline-actions">
+          <div class="pod-inline-actions pod-carousel-order-actions">
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-up"
               type="button"
               data-pod-carousel-preset-action="up"
               data-pod-carousel-preset-index="${escapeHtml(String(index))}"
               ${index === 0 ? 'disabled' : ''}
-            >\u4e0a\u79fb</button>
+              title="\u4e0a\u79fb"
+              aria-label="\u4e0a\u79fb"
+            ></button>
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-down"
               type="button"
               data-pod-carousel-preset-action="down"
               data-pod-carousel-preset-index="${escapeHtml(String(index))}"
               ${index === selectedKeys.length - 1 ? 'disabled' : ''}
-            >\u4e0b\u79fb</button>
+              title="\u4e0b\u79fb"
+              aria-label="\u4e0b\u79fb"
+            ></button>
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-danger is-remove"
               type="button"
               data-pod-carousel-preset-action="remove"
               data-pod-carousel-preset-index="${escapeHtml(String(index))}"
-            >\u79fb\u9664</button>
+              title="\u79fb\u9664"
+              aria-label="\u79fb\u9664"
+            ></button>
           </div>
         </article>
       `;
@@ -3432,7 +3581,6 @@
     state.carouselPresetModalOpen = false;
     state.carouselPresetMode = 'selected';
     state.carouselPresetSelectionDraft = [];
-    state.carouselPresetRandomOrdersDraft = '';
     renderCarouselPresetDialog();
   }
 
@@ -3451,14 +3599,15 @@
     }
 
     state.carouselPresetModalOpen = true;
-    state.carouselPresetMode = normalizeCachedCarouselPresetMode(state.carouselPresetCachedMode);
+    state.carouselRandomPresetModalOpen = false;
+    state.carouselPresetMode = 'selected';
     state.carouselPresetSelectionDraft = getPreferredPresetSelection(
       candidates,
       state.carouselPresetCachedSelection,
       getCarouselPresetSeedKeys(candidates)
     );
-    state.carouselPresetRandomOrdersDraft = normalizeSequenceSelection(state.carouselPresetCachedRandomOrders);
     renderCarouselPresetDialog();
+    renderCarouselRandomPresetDialog();
   }
 
   function setCarouselPresetMode(mode) {
@@ -3524,54 +3673,12 @@
   }
 
   function clearCarouselPresetSelection() {
-    if (state.carouselPresetMode === 'random-first') {
-      state.carouselPresetRandomOrdersDraft = '';
-    } else {
-      state.carouselPresetSelectionDraft = [];
-    }
-
+    state.carouselPresetSelectionDraft = [];
     persistCachedCarouselPresetState();
     renderCarouselPresetDialog();
   }
 
   function saveCarouselPresetDialog() {
-    if (state.carouselPresetMode === 'random-first') {
-      const selectedOrders = parseSequenceSelectionNumbers(state.carouselPresetRandomOrdersDraft);
-
-      if (selectedOrders.length < 2) {
-        showWindowNotice('\u8bf7\u81f3\u5c11\u8f93\u5165 2 \u4e2a\u9700\u8981\u968f\u673a\u4e92\u6362\u7684\u8f6e\u64ad\u56fe\u5e8f\u53f7\u3002', 'warning');
-        return;
-      }
-
-      state.carouselPresetRandomOrdersDraft = selectedOrders.join(',');
-      persistCachedCarouselPresetState({
-        immediate: true
-      });
-
-      let matchedCount = 0;
-      let updatedCount = 0;
-
-      state.products.forEach((product) => {
-        const applyResult = applyRandomFirstCarouselPresetToProduct(product, selectedOrders);
-
-        if (applyResult.matched) {
-          matchedCount += 1;
-        }
-
-        if (applyResult.updated) {
-          updatedCount += 1;
-        }
-      });
-
-      closeCarouselPresetDialog();
-      renderAll();
-      showWindowNotice(
-        `\u5df2\u6309\u5e8f\u53f7\u968f\u673a\u4e92\u6362\u8f6e\u64ad\u56fe\uff0c\u5339\u914d ${matchedCount}/${state.products.length} \u4e2a\u5546\u54c1\uff0c\u66f4\u65b0 ${updatedCount} \u4e2a\u5546\u54c1\u3002`,
-        matchedCount === state.products.length ? 'success' : 'warning'
-      );
-      return;
-    }
-
     const selectedKeys = Array.isArray(state.carouselPresetSelectionDraft)
       ? state.carouselPresetSelectionDraft.slice()
       : [];
@@ -3609,12 +3716,160 @@
     );
   }
 
+  function renderCarouselRandomPresetDialog() {
+    const modal = getOptionalElement('podCarouselRandomPresetModal');
+    const summaryElement = getOptionalElement('podCarouselRandomPresetSummary');
+    const candidateListElement = getOptionalElement('podCarouselRandomPresetCandidateList');
+    const orderListElement = getOptionalElement('podCarouselRandomPresetOrderList');
+    const selectedCountElement = getOptionalElement('podCarouselRandomPresetSelectedCount');
+    const firstOnlyInput = getOptionalElement('podCarouselRandomPresetFirstOnlyInput');
+    const selectAllButton = getOptionalElement('podCarouselRandomPresetSelectAllButton');
+    const clearButton = getOptionalElement('podCarouselRandomPresetClearButton');
+    const saveButton = getOptionalElement('podCarouselRandomPresetSaveButton');
+
+    if (
+      !(modal instanceof HTMLElement)
+      || !(summaryElement instanceof HTMLElement)
+      || !(candidateListElement instanceof HTMLElement)
+      || !(orderListElement instanceof HTMLElement)
+      || !(selectedCountElement instanceof HTMLElement)
+      || !(firstOnlyInput instanceof HTMLInputElement)
+      || !(selectAllButton instanceof HTMLButtonElement)
+      || !(clearButton instanceof HTMLButtonElement)
+      || !(saveButton instanceof HTMLButtonElement)
+    ) {
+      return;
+    }
+
+    const availableOrders = getCarouselPresetRandomOrderCandidates();
+    const selectedOrders = parseSequenceSelectionNumbers(state.carouselPresetRandomOrdersDraft);
+    const templateCopy = getCurrentTemplateUiCopy();
+
+    if (!state.carouselRandomPresetModalOpen) {
+      modal.hidden = true;
+      summaryElement.textContent = '';
+      candidateListElement.innerHTML = '';
+      orderListElement.innerHTML = '';
+      selectedCountElement.textContent = '0';
+      firstOnlyInput.checked = false;
+      selectAllButton.disabled = true;
+      clearButton.disabled = true;
+      saveButton.disabled = true;
+      return;
+    }
+
+    state.carouselPresetMode = 'random-first';
+    modal.hidden = false;
+    void templateCopy;
+    summaryElement.textContent = '';
+    firstOnlyInput.checked = Boolean(state.carouselRandomPresetFirstOnly);
+    candidateListElement.innerHTML = availableOrders.length
+      ? renderCarouselPresetRandomCandidateList(selectedOrders)
+      : '<div class="pod-empty-state">\u5f53\u524d\u6ca1\u6709\u53ef\u7528\u4e8e\u968f\u673a\u8c03\u6574\u7684\u8f6e\u64ad\u56fe\u5e8f\u53f7\u3002</div>';
+    orderListElement.innerHTML = '';
+    selectedCountElement.textContent = String(selectedOrders.length);
+    selectAllButton.disabled = !availableOrders.length;
+    clearButton.disabled = !selectedOrders.length;
+    saveButton.disabled = !state.products.length
+      || (state.carouselRandomPresetFirstOnly ? selectedOrders.length < 1 : selectedOrders.length < 2);
+  }
+
+  function closeCarouselRandomPresetDialog() {
+    state.carouselRandomPresetModalOpen = false;
+    state.carouselPresetRandomOrdersDraft = '';
+    renderCarouselRandomPresetDialog();
+  }
+
+  function openCarouselRandomPresetDialog() {
+    const availableOrders = getCarouselPresetRandomOrderCandidates();
+    const templateCopy = getCurrentTemplateUiCopy();
+
+    if (!state.products.length) {
+      showWindowNotice(`\u8bf7\u5148\u5bfc\u5165\u672c\u5730\u5546\u54c1\uff0c\u518d\u6279\u91cf\u968f\u673a\u8c03\u6574${templateCopy.carouselOrderName}\u3002`, 'warning');
+      return;
+    }
+
+    if (availableOrders.length < 2) {
+      showWindowNotice(`\u81f3\u5c11\u9700\u8981 2 \u4e2a\u53ef\u7528\u7684${templateCopy.carouselOrderName}\u5e8f\u53f7\uff0c\u624d\u80fd\u968f\u673a\u4e92\u6362\u3002`, 'warning');
+      return;
+    }
+
+    state.carouselPresetModalOpen = false;
+    state.carouselRandomPresetModalOpen = true;
+    state.carouselPresetMode = 'random-first';
+    state.carouselPresetRandomOrdersDraft = normalizeSequenceSelection(state.carouselPresetCachedRandomOrders);
+    renderCarouselPresetDialog();
+    renderCarouselRandomPresetDialog();
+  }
+
+  function selectAllCarouselRandomPresetOrders() {
+    state.carouselPresetMode = 'random-first';
+    state.carouselPresetRandomOrdersDraft = getCarouselPresetRandomOrderCandidates().join(',');
+    persistCachedCarouselPresetState();
+    renderCarouselRandomPresetDialog();
+  }
+
+  function clearCarouselRandomPresetSelection() {
+    state.carouselPresetMode = 'random-first';
+    state.carouselPresetRandomOrdersDraft = '';
+    persistCachedCarouselPresetState();
+    renderCarouselRandomPresetDialog();
+  }
+
+  function saveCarouselRandomPresetDialog() {
+    const selectedOrders = parseSequenceSelectionNumbers(state.carouselPresetRandomOrdersDraft);
+    const templateCopy = getCurrentTemplateUiCopy();
+    const firstOnly = Boolean(state.carouselRandomPresetFirstOnly);
+
+    if (selectedOrders.length < (firstOnly ? 1 : 2)) {
+      showWindowNotice(
+        firstOnly
+          ? `\u8bf7\u81f3\u5c11\u9009\u62e9 1 \u4e2a\u9700\u8981\u968f\u673a\u7528\u4e8e\u9996\u56fe\u7684${templateCopy.carouselOrderName}\u5e8f\u53f7\u3002`
+          : `\u8bf7\u81f3\u5c11\u9009\u62e9 2 \u4e2a\u9700\u8981\u968f\u673a\u4e92\u6362\u7684${templateCopy.carouselOrderName}\u5e8f\u53f7\u3002`,
+        'warning'
+      );
+      return;
+    }
+
+    state.carouselPresetMode = 'random-first';
+    state.carouselPresetRandomOrdersDraft = selectedOrders.join(',');
+    persistCachedCarouselPresetState({
+      immediate: true
+    });
+
+    let matchedCount = 0;
+    let updatedCount = 0;
+
+    state.products.forEach((product) => {
+      const applyResult = applyRandomFirstCarouselPresetToProduct(product, selectedOrders, {
+        onlyFirst: firstOnly
+      });
+
+      if (applyResult.matched) {
+        matchedCount += 1;
+      }
+
+      if (applyResult.updated) {
+        updatedCount += 1;
+      }
+    });
+
+    closeCarouselRandomPresetDialog();
+    renderAll();
+    showWindowNotice(
+      `${templateCopy.carouselRandomPresetSaved}\uff0c\u5339\u914d ${matchedCount}/${state.products.length} \u4e2a\u5546\u54c1\uff0c\u66f4\u65b0 ${updatedCount} \u4e2a\u5546\u54c1\u3002`,
+      matchedCount === state.products.length ? 'success' : 'warning'
+    );
+  }
+
   function renderDescriptionPresetDialog() {
     const modal = getElement('podDescriptionPresetModal');
     const summaryElement = getElement('podDescriptionPresetSummary');
     const candidateListElement = getElement('podDescriptionPresetCandidateList');
     const selectedListElement = getElement('podDescriptionPresetSelectedList');
+    const candidateCountElement = getElement('podDescriptionPresetCandidateCount');
     const selectedCountElement = getElement('podDescriptionPresetSelectedCount');
+    const selectAllButton = getElement('podDescriptionPresetSelectAllButton');
     const clearButton = getElement('podDescriptionPresetClearButton');
     const saveButton = getElement('podDescriptionPresetSaveButton');
     const candidates = getDescriptionPresetCandidates();
@@ -3626,7 +3881,9 @@
       summaryElement.textContent = '';
       candidateListElement.innerHTML = '';
       selectedListElement.innerHTML = '';
+      candidateCountElement.textContent = '0';
       selectedCountElement.textContent = '0';
+      selectAllButton.disabled = true;
       clearButton.disabled = true;
       saveButton.disabled = false;
       return;
@@ -3640,7 +3897,9 @@
     summaryElement.textContent = formatTemplateCopy(templateCopy.descriptionPresetSummary, {
       count: state.products.length
     });
+    candidateCountElement.textContent = String(candidates.length);
     selectedCountElement.textContent = String(selectedKeys.length);
+    selectAllButton.disabled = false;
     clearButton.disabled = !selectedKeys.length;
     saveButton.disabled = !state.products.length;
 
@@ -3656,19 +3915,19 @@
 
         return `
           <article class="pod-description-preset-candidate-item ${isSelected ? 'is-selected' : ''}" title="${escapeHtml(displayNames.join('\n'))}">
-            <label class="pod-description-preset-candidate-toggle">
+            <label class="pod-description-preset-candidate-toggle pod-carousel-preset-candidate-toggle">
+              <input
+                class="pod-description-preset-checkbox pod-carousel-preset-checkbox"
+                type="checkbox"
+                data-pod-description-preset-candidate="${escapeHtml(candidate.key)}"
+                ${isSelected ? 'checked' : ''}
+              />
               <span class="pod-description-preset-candidate-copy">
                 <span class="pod-description-preset-candidate-title">${escapeHtml(candidate.label)}</span>
-                <span class="pod-product-note">\u5339\u914d ${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
               </span>
-              <span class="pod-description-preset-candidate-meta">
+              <span class="pod-description-preset-candidate-meta pod-carousel-preset-candidate-meta">
                 ${isSelected ? `<span class="pod-carousel-order-index">\u7b2c ${escapeHtml(String(selectedIndex + 1))} \u4f4d</span>` : ''}
-                <input
-                  class="pod-description-preset-checkbox"
-                  type="checkbox"
-                  data-pod-description-preset-candidate="${escapeHtml(candidate.key)}"
-                  ${isSelected ? 'checked' : ''}
-                />
+                <span class="pod-carousel-preset-candidate-badge">${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
               </span>
             </label>
           </article>
@@ -3695,31 +3954,36 @@
       return `
         <article class="pod-carousel-order-item pod-description-preset-selected-item" title="${escapeHtml(displayNames.join('\n'))}">
           <span class="pod-carousel-order-index">${escapeHtml(String(index + 1))}</span>
-          <span class="pod-description-preset-candidate-copy">
+          <span class="pod-description-preset-candidate-copy pod-carousel-preset-selected-copy">
             <span class="pod-carousel-order-name">${escapeHtml(candidate.label)}</span>
-            <span class="pod-product-note">\u5339\u914d ${escapeHtml(String(candidate.productCount))} \u4e2a\u5546\u54c1</span>
           </span>
-          <div class="pod-inline-actions">
+          <div class="pod-inline-actions pod-carousel-order-actions">
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-up"
               type="button"
               data-pod-description-preset-action="up"
               data-pod-description-preset-index="${escapeHtml(String(index))}"
               ${index === 0 ? 'disabled' : ''}
-            >\u4e0a\u79fb</button>
+              title="\u4e0a\u79fb"
+              aria-label="\u4e0a\u79fb"
+            ></button>
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-down"
               type="button"
               data-pod-description-preset-action="down"
               data-pod-description-preset-index="${escapeHtml(String(index))}"
               ${index === selectedKeys.length - 1 ? 'disabled' : ''}
-            >\u4e0b\u79fb</button>
+              title="\u4e0b\u79fb"
+              aria-label="\u4e0b\u79fb"
+            ></button>
             <button
-              class="pod-material-action"
+              class="pod-material-action pod-carousel-order-icon-button is-danger is-remove"
               type="button"
               data-pod-description-preset-action="remove"
               data-pod-description-preset-index="${escapeHtml(String(index))}"
-            >\u79fb\u9664</button>
+              title="\u79fb\u9664"
+              aria-label="\u79fb\u9664"
+            ></button>
           </div>
         </article>
       `;
@@ -3969,13 +4233,24 @@
 
   function showWindowNotice(message, tone) {
     const notice = getElement('podWindowNotice');
+    const payload = message && typeof message === 'object' && !Array.isArray(message)
+      ? message
+      : null;
+    const titleText = payload ? normalizeText(payload.title) : normalizeText(message);
+    const detailText = payload ? normalizeText(payload.detail) : '';
+    const resolvedTone = payload ? normalizeText(payload.tone) : normalizeText(tone);
 
     window.clearTimeout(state.windowNoticeTimer);
-    notice.textContent = normalizeText(message) || '\u64cd\u4f5c\u5b8c\u6210';
+    notice.innerHTML = detailText
+      ? `
+        <span class="pod-window-notice__title">${escapeHtml(titleText || '\u64cd\u4f5c\u5b8c\u6210')}</span>
+        <span class="pod-window-notice__detail">${escapeHtml(detailText)}</span>
+      `
+      : escapeHtml(titleText || '\u64cd\u4f5c\u5b8c\u6210');
     notice.className = 'pod-window-notice is-visible';
 
-    if (tone) {
-      notice.classList.add(`is-${tone}`);
+    if (resolvedTone) {
+      notice.classList.add(`is-${resolvedTone}`);
     }
 
     notice.hidden = false;
@@ -4096,7 +4371,11 @@
     getElement('podFormTemplateNameInput').value = selectedTemplate.name;
 
     if (showNotice) {
-      showWindowNotice(`\u5df2\u81ea\u52a8\u5957\u7528\u586b\u5199\u6a21\u677f\uff1a${selectedTemplate.name}`, 'success');
+      showWindowNotice({
+        title: '\u5df2\u5957\u7528\u586b\u5199\u6a21\u677f',
+        detail: `${selectedTemplate.name} \u5df2\u540c\u6b65\u5230\u5f53\u524d\u8868\u5355\u4e0e SKU \u914d\u7f6e`,
+        tone: 'success'
+      });
     }
 
     return true;
@@ -4144,6 +4423,7 @@
   function renderFormTemplatePickerModal() {
     const modal = getElement('podFormTemplateModal');
     const summaryElement = getElement('podFormTemplateModalSummary');
+    const countElement = getElement('podFormTemplateModalCount');
     const listElement = getElement('podFormTemplateModalList');
     const templates = Array.isArray(state.formTemplateSnapshot.templates)
       ? state.formTemplateSnapshot.templates
@@ -4152,6 +4432,7 @@
     if (!state.formTemplateDropdownOpen) {
       modal.hidden = true;
       summaryElement.textContent = '';
+      countElement.textContent = '';
       listElement.innerHTML = '';
       return;
     }
@@ -4159,17 +4440,31 @@
     modal.hidden = false;
 
     if (state.loadingFormTemplateSnapshot) {
-      summaryElement.textContent = '\u6b63\u5728\u8bfb\u53d6\u6a21\u677f...';
-      listElement.innerHTML = '<div class="pod-empty-state">\u6b63\u5728\u8bfb\u53d6\u5df2\u4fdd\u5b58\u6a21\u677f...</div>';
+      summaryElement.textContent = '\u6b63\u5728\u8bfb\u53d6\u5df2\u4fdd\u5b58\u6a21\u677f...';
+      countElement.textContent = '\u8bfb\u53d6\u4e2d';
+      listElement.innerHTML = `
+        <div class="pod-empty-state pod-form-template-empty-state">
+          <strong>\u6b63\u5728\u8bfb\u53d6\u6a21\u677f</strong>
+          <span>\u8bf7\u7a0d\u5019\uff0c\u9a6c\u4e0a\u4e3a\u4f60\u5217\u51fa\u53ef\u5957\u7528\u7684\u5185\u5bb9\u3002</span>
+        </div>
+      `;
       return;
     }
 
+    countElement.textContent = templates.length
+      ? `\u5171 ${templates.length} \u4e2a\u6a21\u677f`
+      : '\u6682\u65e0\u6a21\u677f';
     summaryElement.textContent = templates.length
-      ? `\u5df2\u4fdd\u5b58 ${templates.length} \u4e2a\u586b\u5199\u6a21\u677f`
+      ? ''
       : '\u6682\u65e0\u5df2\u4fdd\u5b58\u6a21\u677f';
 
     if (!templates.length) {
-      listElement.innerHTML = '<div class="pod-empty-state">\u8fd8\u6ca1\u6709\u5df2\u4fdd\u5b58\u7684\u586b\u5199\u6a21\u677f</div>';
+      listElement.innerHTML = `
+        <div class="pod-empty-state pod-form-template-empty-state">
+          <strong>\u8fd8\u6ca1\u6709\u5df2\u4fdd\u5b58\u6a21\u677f</strong>
+          <span>\u53ef\u4ee5\u5148\u5728\u5f53\u524d\u8868\u5355\u5b8c\u6210\u914d\u7f6e\u540e\u4fdd\u5b58\uff0c\u540e\u7eed\u5c31\u80fd\u76f4\u63a5\u5957\u7528\u3002</span>
+        </div>
+      `;
       return;
     }
 
@@ -4189,8 +4484,14 @@
           role="option"
           aria-selected="${isActive ? 'true' : 'false'}"
         >
-          <span class="pod-form-template-option-name">${escapeHtml(templateName)}</span>
+          <span class="pod-form-template-option-head">
+            <span class="pod-form-template-option-name">${escapeHtml(templateName)}</span>
+            <span class="pod-form-template-option-badge${isActive ? '' : ' is-muted'}">
+              ${isActive ? '\u5f53\u524d\u4f7f\u7528' : '\u70b9\u51fb\u5957\u7528'}
+            </span>
+          </span>
           <span class="pod-form-template-option-meta">${escapeHtml(updatedText)}</span>
+          <span class="pod-form-template-option-tip">\u5957\u7528\u540e\u4f1a\u540c\u6b65\u66f4\u65b0\u6a21\u677f\u5b57\u6bb5\u3001SKU \u914d\u7f6e\u4e0e AI \u6807\u9898\u53c2\u6570</span>
         </button>
       `;
     }).join('');
@@ -4233,6 +4534,30 @@
 
   function renderProductStatusBadge(status) {
     return `<span class="pod-product-status is-${escapeHtml(status.tone)}" data-product-row-status>${escapeHtml(status.label)}</span>`;
+  }
+
+  function renderProductPreviewChips(itemNames, options = {}) {
+    const normalizedNames = (Array.isArray(itemNames) ? itemNames : [])
+      .map((itemName) => normalizeText(itemName))
+      .filter(Boolean);
+    const maxVisible = Math.max(1, Number(options.maxVisible) || 3);
+    const emptyText = normalizeText(options.emptyText) || '\u6682\u65e0';
+
+    if (!normalizedNames.length) {
+      return `<span class="pod-product-chip pod-product-chip-empty">${escapeHtml(emptyText)}</span>`;
+    }
+
+    const visibleNames = normalizedNames.slice(0, maxVisible);
+    const remainingCount = Math.max(0, normalizedNames.length - visibleNames.length);
+
+    return [
+      ...visibleNames.map((itemName) => {
+        return `<span class="pod-product-chip" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</span>`;
+      }),
+      remainingCount > 0
+        ? `<span class="pod-product-chip pod-product-chip-more">+${escapeHtml(String(remainingCount))}</span>`
+        : ''
+    ].join('');
   }
 
   function syncProductListActiveState() {
@@ -4310,13 +4635,15 @@
     container.innerHTML = filteredProducts.map((product) => {
       const status = getProductStatus(product);
       const sourceText = normalizeText(product.sourceFolder) || '\u624b\u52a8\u65b0\u5efa';
-      const mainNumberText = getProductMainNumberValue(product) || '-';
-      const masterSkuText = getProductMasterSkuValue(product) || '-';
-      const categoryText = getCategoryDisplayText(product.category);
       const descriptionImageOrders = normalizeSequenceSelection(product.descriptionImageOrders);
       const descriptionPreviewText = getDescriptionImagePreviewText(product);
       const carouselPreviewText = getCarouselPreviewText(product);
-      const aiDetailText = normalizeText(product.aiTitleError) || normalizeText(product.aiTitlePatternSummary);
+      const carouselPreviewItems = getCarouselPreviewChipItems(product);
+      const descriptionPreviewItems = getDescriptionPreviewChipItems(product);
+      const descriptionEmptyText = getSectionMaterialCount(product, 'carousel') > 0
+        ? '\u672a\u9009\u63cf\u8ff0\u56fe'
+        : '\u6682\u65e0\u63cf\u8ff0\u56fe';
+
       return `
         <article
           class="pod-product-table-row ${product.id === state.activeProductId ? 'is-active' : ''}"
@@ -4346,10 +4673,17 @@
               data-product-list-row-id="${escapeHtml(product.id)}"
             >${escapeHtml(product.englishTitle)}</textarea>
           </label>
-          <span class="pod-product-cell">
-            <span class="pod-product-note pod-product-preview-note">${escapeHtml(carouselPreviewText)}</span>
+          <span class="pod-product-cell pod-product-cell-preview">
+            <span class="pod-product-note pod-product-preview-note" title="${escapeHtml(carouselPreviewText)}">
+              <span class="pod-product-preview-chip-list">
+                ${renderProductPreviewChips(carouselPreviewItems, {
+                  maxVisible: 3,
+                  emptyText: '\u6682\u65e0\u8f6e\u64ad\u56fe'
+                })}
+              </span>
+            </span>
           </span>
-          <label class="pod-product-cell pod-product-cell-editor">
+          <label class="pod-product-cell pod-product-cell-editor pod-product-cell-preview">
             <textarea
               class="pod-product-inline-input"
               rows="3"
@@ -4357,21 +4691,20 @@
               data-product-list-field="descriptionImageOrders"
               data-product-list-row-id="${escapeHtml(product.id)}"
             >${escapeHtml(descriptionImageOrders)}</textarea>
-            <span class="pod-product-note pod-product-preview-note" data-product-description-preview>${escapeHtml(descriptionPreviewText)}</span>
+            <span
+              class="pod-product-note pod-product-preview-note"
+              data-product-description-preview
+              title="${escapeHtml(descriptionPreviewText)}"
+            >
+              <span class="pod-product-preview-chip-list">
+                ${renderProductPreviewChips(descriptionPreviewItems, {
+                  maxVisible: 3,
+                  emptyText: descriptionEmptyText
+                })}
+              </span>
+            </span>
           </label>
-          <span class="pod-product-cell">
-            <span class="pod-product-count">${escapeHtml(getTemplateLabel(product.templateId))}</span>
-          </span>
-          <span class="pod-product-cell">
-            <span class="pod-product-note">${escapeHtml(categoryText)}</span>
-          </span>
-          <span class="pod-product-cell">
-            <span class="pod-product-count">${escapeHtml(mainNumberText)}</span>
-          </span>
-          <span class="pod-product-cell">
-            <span class="pod-product-count">${escapeHtml(masterSkuText)}</span>
-          </span>
-          <span class="pod-product-cell">
+          <span class="pod-product-cell pod-product-cell-pill">
             ${renderProductStatusBadge(status)}
           </span>
         </article>
@@ -4455,6 +4788,7 @@
     renderActionButtonStates();
     renderAiTitleControls();
     renderCarouselPresetDialog();
+    renderCarouselRandomPresetDialog();
     renderDescriptionPresetDialog();
     renderFieldHelpBadges();
   }
@@ -5178,6 +5512,34 @@
       void exportTable(event.currentTarget);
     });
 
+    getElement('podOpenListSettingsButton').addEventListener('click', () => {
+      openListSettingsModal();
+    });
+
+    getElement('podListSettingsCancelButton').addEventListener('click', () => {
+      closeListSettingsModal();
+    });
+
+    getElement('podListSettingsSaveButton').addEventListener('click', () => {
+      void applyListSettingsModal();
+    });
+
+    getElement('podListSettingsAiTitleConfigButton').addEventListener('click', () => {
+      getElement('podAiTitleConfigButton').click();
+    });
+
+    getElement('podToolbarBatchUploadButton').addEventListener('click', () => {
+      getElement('podBatchUploadCosButton').click();
+    });
+
+    getElement('podToolbarBatchAiTitleButton').addEventListener('click', () => {
+      getElement('podBatchAiTitleButton').click();
+    });
+
+    getElement('podToolbarRetryFailedAiTitleButton').addEventListener('click', () => {
+      getElement('podRetryFailedAiTitleButton').click();
+    });
+
     getElement('podBatchUploadCosButton').addEventListener('click', (event) => {
       if (isDuplicateButtonEvent('lastCosUploadButtonEventStamp', event)) {
         return;
@@ -5247,6 +5609,10 @@
 
     getElement('podBatchPresetCarouselButton').addEventListener('click', () => {
       openCarouselPresetDialog();
+    });
+
+    getOptionalElement('podBatchRandomCarouselButton')?.addEventListener('click', () => {
+      openCarouselRandomPresetDialog();
     });
 
     getElement('podBatchPresetDescriptionButton').addEventListener('click', () => {
@@ -5320,6 +5686,14 @@
       saveCarouselPresetDialog();
     });
 
+    getOptionalElement('podCarouselRandomPresetCancelButton')?.addEventListener('click', () => {
+      closeCarouselRandomPresetDialog();
+    });
+
+    getOptionalElement('podCarouselRandomPresetSaveButton')?.addEventListener('click', () => {
+      saveCarouselRandomPresetDialog();
+    });
+
     document.querySelectorAll('input[name="podCarouselPresetMode"]').forEach((input) => {
       input.addEventListener('change', (event) => {
         const field = event.currentTarget;
@@ -5386,12 +5760,61 @@
       );
     });
 
+    getOptionalElement('podCarouselRandomPresetCandidateList')?.addEventListener('change', (event) => {
+      const checkbox = event.target instanceof Element
+        ? event.target.closest('[data-pod-carousel-random-order]')
+        : null;
+
+      if (!(checkbox instanceof HTMLInputElement)) {
+        return;
+      }
+
+      setCarouselPresetRandomOrder(
+        checkbox.getAttribute('data-pod-carousel-random-order'),
+        checkbox.checked
+      );
+    });
+
+    getOptionalElement('podCarouselRandomPresetFirstOnlyInput')?.addEventListener('change', (event) => {
+      const checkbox = event.currentTarget;
+
+      if (!(checkbox instanceof HTMLInputElement)) {
+        return;
+      }
+
+      state.carouselRandomPresetFirstOnly = checkbox.checked;
+      renderCarouselRandomPresetDialog();
+    });
+
+    getOptionalElement('podCarouselRandomPresetOrderList')?.addEventListener('click', (event) => {
+      const removeButton = event.target instanceof Element
+        ? event.target.closest('[data-pod-carousel-random-order-remove]')
+        : null;
+
+      if (!(removeButton instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      setCarouselPresetRandomOrder(
+        removeButton.getAttribute('data-pod-carousel-random-order-remove'),
+        false
+      );
+    });
+
     getElement('podCarouselPresetSelectAllButton').addEventListener('click', () => {
       selectAllCarouselPresetCandidates();
     });
 
     getElement('podCarouselPresetClearButton').addEventListener('click', () => {
       clearCarouselPresetSelection();
+    });
+
+    getOptionalElement('podCarouselRandomPresetSelectAllButton')?.addEventListener('click', () => {
+      selectAllCarouselRandomPresetOrders();
+    });
+
+    getOptionalElement('podCarouselRandomPresetClearButton')?.addEventListener('click', () => {
+      clearCarouselRandomPresetSelection();
     });
 
     getElement('podDescriptionPresetModal').addEventListener('click', (event) => {
@@ -5411,6 +5834,16 @@
 
       if (closeTrigger) {
         closeCarouselPresetDialog();
+      }
+    });
+
+    getOptionalElement('podCarouselRandomPresetModal')?.addEventListener('click', (event) => {
+      const closeTrigger = event.target instanceof Element
+        ? event.target.closest('[data-pod-carousel-random-close]')
+        : null;
+
+      if (closeTrigger) {
+        closeCarouselRandomPresetDialog();
       }
     });
 
@@ -5483,6 +5916,11 @@
 
       if (event.key === 'Escape' && state.carouselPresetModalOpen) {
         closeCarouselPresetDialog();
+        return;
+      }
+
+      if (event.key === 'Escape' && state.carouselRandomPresetModalOpen) {
+        closeCarouselRandomPresetDialog();
         return;
       }
 
@@ -5576,7 +6014,17 @@
         field.value = product.descriptionImageOrders;
 
         if (previewElement instanceof HTMLElement) {
-          previewElement.textContent = getDescriptionImagePreviewText(product);
+          previewElement.title = getDescriptionImagePreviewText(product);
+          previewElement.innerHTML = `
+            <span class="pod-product-preview-chip-list">
+              ${renderProductPreviewChips(getDescriptionPreviewChipItems(product), {
+                maxVisible: 3,
+                emptyText: getSectionMaterialCount(product, 'carousel') > 0
+                  ? '\u672a\u9009\u63cf\u8ff0\u56fe'
+                  : '\u6682\u65e0\u63cf\u8ff0\u56fe'
+              })}
+            </span>
+          `;
         }
         return;
       }
