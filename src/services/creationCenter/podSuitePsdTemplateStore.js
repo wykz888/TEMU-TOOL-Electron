@@ -9,6 +9,7 @@ const {
 const ENTRY_ID = 'pod-suite-tool';
 const PROFILE_FILE_NAME = 'psd-smart-object-templates.json';
 const MAX_TEMPLATE_COUNT = 60;
+const MAX_ENGINE_CONCURRENCY = 24;
 
 function normalizeText(value) {
   return String(value == null ? '' : value).trim();
@@ -47,7 +48,7 @@ function normalizeImageQuality(value) {
 
 function normalizeEngineConcurrency(value) {
   const count = Math.round(Number(value) || 2);
-  return Math.max(1, Math.min(6, count));
+  return Math.max(1, Math.min(MAX_ENGINE_CONCURRENCY, count));
 }
 
 function normalizeMockupConfig(value, index = 0, defaults = {}) {
@@ -144,6 +145,22 @@ function normalizeProfile(value) {
         });
       })
       .slice(0, MAX_TEMPLATE_COUNT)
+  };
+}
+
+function extractTemplatePayload(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  const nestedTemplate = source.template && typeof source.template === 'object'
+    ? source.template
+    : null;
+
+  if (!nestedTemplate) {
+    return source;
+  }
+
+  return {
+    ...source,
+    ...nestedTemplate
   };
 }
 
@@ -285,7 +302,7 @@ function createPodSuitePsdTemplateStore({
     let localProfile = normalizeProfile(await readJsonFile(localFilePath));
     let source = localProfile.templates.length ? 'local' : 'empty';
 
-    if (payload && payload.preferCloud && owner) {
+    if (owner && (payload && payload.preferCloud || localProfile.templates.length === 0)) {
       const cloudProfile = await readCloudProfile(owner);
       if (cloudProfile && cloudProfile.templates.length) {
         localProfile = cloudProfile;
@@ -309,8 +326,9 @@ function createPodSuitePsdTemplateStore({
     const localFilePath = getLocalProfileFilePath(owner);
     const profile = normalizeProfile(await readJsonFile(localFilePath));
     const now = getIsoTimestamp();
+    const templatePayload = extractTemplatePayload(payload);
     const template = normalizeTemplate({
-      ...(payload.template && typeof payload.template === 'object' ? payload.template : {}),
+      ...templatePayload,
       updatedAt: now
     });
     const previous = profile.templates.find((item) => item.id === template.id);
@@ -342,7 +360,9 @@ function createPodSuitePsdTemplateStore({
 
   async function deleteTemplate(payload = {}) {
     const owner = getOwner();
-    const templateId = normalizeText(payload && payload.templateId);
+    const templateId = normalizeText(
+      payload && (payload.templateId || payload.id)
+    );
     const localFilePath = getLocalProfileFilePath(owner);
     const profile = normalizeProfile(await readJsonFile(localFilePath));
     const now = getIsoTimestamp();

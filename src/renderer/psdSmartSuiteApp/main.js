@@ -1,4 +1,6 @@
 import { createApp, h } from 'vue';
+import ArcoVue from '@arco-design/web-vue';
+import '@arco-design/web-vue/dist/arco.css';
 import App from './App.vue';
 
 let controllerInstance = null;
@@ -34,6 +36,8 @@ export function mountPsdSmartSuiteApp(target = '#psd-smart-suite-root') {
       return h(App);
     }
   });
+
+  app.use(ArcoVue);
 
   const vm = app.mount(mountTarget);
   controllerInstance = createController(app, vm);
