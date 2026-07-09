@@ -5,7 +5,7 @@
         <span class="pod-miaoshou-app-header__eyebrow">MIAOSHOU TEMU</span>
         <div class="pod-miaoshou-app-header__title-row">
           <h1>POD&#x4E0A;&#x8D27;&#x8868;&#x683C;</h1>
-          <a-tag color="gold" bordered size="small">
+          <a-tag class="pod-miaoshou-theme-tag" bordered size="small">
             &#x5999;&#x624B; TEMU &#x7248;
           </a-tag>
         </div>
@@ -39,17 +39,127 @@
         class="pod-miaoshou-app-legacy-host"
       />
     </section>
+
+    <a-modal
+      :visible="aiTitleConfigDialog.visible"
+      :mask-closable="false"
+      :esc-to-close="!aiTitleConfigDialog.saving"
+      :closable="!aiTitleConfigDialog.saving"
+      :footer="false"
+      modal-class="pod-miaoshou-ai-config-modal"
+      unmount-on-close
+      @cancel="aiTitleConfigDialog.closeDialog"
+    >
+      <template #title>
+        <div class="pod-miaoshou-ai-config-modal__title">
+          <div class="pod-miaoshou-ai-config-modal__title-copy">
+            <span class="pod-miaoshou-ai-config-modal__eyebrow">AI CONFIG</span>
+            <strong>AI&#x914D;&#x7F6E;</strong>
+          </div>
+          <a-tag class="pod-miaoshou-theme-tag" bordered size="small">
+            &#x4E91;&#x7AEF;&#x540C;&#x6B65;
+          </a-tag>
+        </div>
+      </template>
+
+      <div class="pod-miaoshou-ai-config-modal__body">
+        <div class="pod-miaoshou-ai-config-modal__intro">
+          <p>
+            &#x4E24;&#x4E2A; POD &#x4E0A;&#x8D27;&#x8868;&#x683C;&#x5171;&#x7528;&#x540C;&#x4E00;&#x5957; AI &#x914D;&#x7F6E;&#x3002;
+          </p>
+          <span>
+            &#x4FDD;&#x5B58;&#x540E;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x4E91;&#x7AEF;&#xFF0C;&#x767B;&#x5F55;&#x540C;&#x8D26;&#x53F7;&#x53EF;&#x76F4;&#x63A5;&#x590D;&#x7528;&#x3002;
+          </span>
+        </div>
+
+        <div class="pod-miaoshou-ai-config-modal__grid">
+          <label class="pod-miaoshou-ai-config-field">
+            <span class="pod-miaoshou-ai-config-field__label">&#x6A21;&#x578B;&#x540D;&#x79F0;</span>
+            <a-select
+              v-model="aiTitleConfigDialog.form.model"
+              allow-create
+              allow-search
+              :disabled="aiTitleConfigDialog.busy"
+              :options="aiTitleConfigDialog.modelOptions"
+              placeholder="&#x9009;&#x62E9;&#x6216;&#x8F93;&#x5165;&#x6A21;&#x578B;"
+            />
+          </label>
+
+          <label class="pod-miaoshou-ai-config-field">
+            <span class="pod-miaoshou-ai-config-field__label">API Base URL</span>
+            <a-select
+              v-model="aiTitleConfigDialog.form.apiBaseUrl"
+              allow-create
+              allow-search
+              :disabled="aiTitleConfigDialog.busy"
+              :options="aiTitleConfigDialog.apiBaseOptions"
+              placeholder="&#x9009;&#x62E9;&#x6216;&#x8F93;&#x5165; API Base URL"
+            />
+          </label>
+
+          <label class="pod-miaoshou-ai-config-field pod-miaoshou-ai-config-field--compact">
+            <span class="pod-miaoshou-ai-config-field__label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;&#x6570;</span>
+            <a-input-number
+              v-model="aiTitleConfigDialog.form.concurrency"
+              :disabled="aiTitleConfigDialog.busy"
+              :min="aiTitleConfigDialog.minConcurrency"
+              :max="aiTitleConfigDialog.maxConcurrency"
+              mode="button"
+            />
+          </label>
+        </div>
+
+        <label class="pod-miaoshou-ai-config-field pod-miaoshou-ai-config-field--textarea">
+          <span class="pod-miaoshou-ai-config-field__label">API KEY</span>
+          <a-textarea
+            v-model="aiTitleConfigDialog.form.apiKeysText"
+            :disabled="aiTitleConfigDialog.busy"
+            :auto-size="{ minRows: 8, maxRows: 12 }"
+            placeholder="&#x4E00;&#x884C;&#x4E00;&#x4E2A; KEY"
+          />
+          <span class="pod-miaoshou-ai-config-field__hint">
+            KEY &#x4F1A;&#x6309;&#x987A;&#x5E8F;&#x5FAA;&#x73AF;&#x4F7F;&#x7528;&#xFF0C;&#x5EFA;&#x8BAE;&#x4E00;&#x884C;&#x4E00;&#x4E2A;&#x3002;
+          </span>
+        </label>
+
+        <a-alert
+          v-if="aiTitleConfigDialog.status.message"
+          :type="resolveAiStatusType(aiTitleConfigDialog.status.tone)"
+          :show-icon="true"
+          class="pod-miaoshou-ai-config-modal__status"
+        >
+          {{ aiTitleConfigDialog.status.message }}
+        </a-alert>
+      </div>
+
+      <div class="pod-miaoshou-ai-config-modal__footer">
+        <a-button :disabled="aiTitleConfigDialog.saving" @click="aiTitleConfigDialog.closeDialog">
+          &#x53D6;&#x6D88;
+        </a-button>
+        <a-button
+          class="pod-miaoshou-ai-config-save"
+          type="primary"
+          :loading="aiTitleConfigDialog.saving"
+          @click="aiTitleConfigDialog.saveDialog"
+        >
+          {{ getAiSaveButtonLabel() }}
+        </a-button>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useAiTitleConfigDialog } from './useAiTitleConfigDialog.js';
 
 const LEGACY_ROOT_ID = 'pod-upload-sheet-miaoshou-legacy-root';
 const BODY_READY_CLASS = 'pod-miaoshou-vue-mounted';
 
 const legacyHostRef = ref(null);
 const attachError = ref('');
+const aiTitleConfigDialog = useAiTitleConfigDialog();
+let cleanupAiTitleConfigBridge = null;
 
 function attachLegacyRoot() {
   if (!legacyHostRef.value) {
@@ -73,9 +183,33 @@ function attachLegacyRoot() {
   return true;
 }
 
+function resolveAiStatusType(tone) {
+  if (tone === 'danger') {
+    return 'error';
+  }
+
+  if (tone === 'warning') {
+    return 'warning';
+  }
+
+  return 'info';
+}
+
+function getAiSaveButtonLabel() {
+  return aiTitleConfigDialog.saving ? '\u4fdd\u5b58\u4e2d' : '\u4fdd\u5b58';
+}
+
 onMounted(async () => {
   await nextTick();
   attachLegacyRoot();
+  cleanupAiTitleConfigBridge = aiTitleConfigDialog.installGlobalBridge();
+});
+
+onBeforeUnmount(() => {
+  if (typeof cleanupAiTitleConfigBridge === 'function') {
+    cleanupAiTitleConfigBridge();
+    cleanupAiTitleConfigBridge = null;
+  }
 });
 
 defineExpose({
@@ -94,7 +228,7 @@ defineExpose({
   min-height: 100vh;
   padding: 14px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 252, 246, 0.98));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.42));
   color: #162030;
 }
 
@@ -113,7 +247,7 @@ body.dark-theme .pod-miaoshou-app-shell {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 243, 0.96));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.38));
   box-shadow:
     0 14px 28px rgba(15, 23, 42, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.96);
@@ -177,6 +311,18 @@ body.dark-theme .pod-miaoshou-app-header__copy p {
   flex-wrap: wrap;
 }
 
+.pod-miaoshou-theme-tag.arco-tag {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  color: var(--theme-primary-ink, #7a4a00);
+}
+
+body.dark-theme .pod-miaoshou-theme-tag.arco-tag {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.32);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16);
+  color: #fff0c7;
+}
+
 .pod-miaoshou-app-header__meta-pill {
   display: inline-flex;
   align-items: center;
@@ -237,6 +383,170 @@ body.dark-theme .pod-miaoshou-app-surface {
 
 .pod-miaoshou-app-legacy-host > #pod-upload-sheet-miaoshou-legacy-root {
   display: block;
+}
+
+.pod-miaoshou-ai-config-modal .arco-modal {
+  width: min(720px, calc(100vw - 32px));
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.pod-miaoshou-ai-config-modal .arco-modal-header {
+  padding: 18px 20px 0;
+  border-bottom: 0;
+}
+
+.pod-miaoshou-ai-config-modal .arco-modal-body {
+  padding: 14px 20px 20px;
+}
+
+.pod-miaoshou-ai-config-modal__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.pod-miaoshou-ai-config-modal__title-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.pod-miaoshou-ai-config-modal__title-copy strong {
+  color: #162030;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+body.dark-theme .pod-miaoshou-ai-config-modal__title-copy strong {
+  color: #f8fafc;
+}
+
+.pod-miaoshou-ai-config-modal__eyebrow {
+  color: var(--theme-primary-ink, #8f5a0e);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.pod-miaoshou-ai-config-modal__body {
+  display: grid;
+  gap: 14px;
+}
+
+.pod-miaoshou-ai-config-modal__intro {
+  display: grid;
+  gap: 4px;
+  padding: 14px 15px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.6), rgba(255, 255, 255, 0.98));
+}
+
+.pod-miaoshou-ai-config-modal__intro p,
+.pod-miaoshou-ai-config-modal__intro span {
+  margin: 0;
+  color: #5b6b80;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pod-miaoshou-ai-config-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pod-miaoshou-ai-config-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pod-miaoshou-ai-config-field--compact {
+  max-width: 220px;
+}
+
+.pod-miaoshou-ai-config-field--textarea {
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  background: rgba(250, 251, 252, 0.86);
+}
+
+.pod-miaoshou-ai-config-field__label {
+  color: #5f6f83;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.pod-miaoshou-ai-config-field__hint {
+  color: #7a8899;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.pod-miaoshou-ai-config-modal__status {
+  border-radius: 14px;
+}
+
+.pod-miaoshou-ai-config-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pod-miaoshou-ai-config-save.arco-btn-primary {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.72);
+  background: linear-gradient(180deg, var(--theme-primary-color, #d4a038), var(--theme-primary-color-deep, #b97d11));
+  color: var(--theme-primary-contrast, #ffffff);
+  box-shadow: 0 10px 22px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.18);
+}
+
+.pod-miaoshou-ai-config-save.arco-btn-primary:hover,
+.pod-miaoshou-ai-config-save.arco-btn-primary:focus {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.82);
+  background: linear-gradient(180deg, var(--theme-primary-color, #d4a038), var(--theme-primary-color-deep, #b97d11));
+  color: var(--theme-primary-contrast, #ffffff);
+  box-shadow: 0 14px 26px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.22);
+}
+
+.pod-miaoshou-ai-config-modal .arco-input-wrapper,
+.pod-miaoshou-ai-config-modal .arco-select-view,
+.pod-miaoshou-ai-config-modal .arco-textarea-wrapper,
+.pod-miaoshou-ai-config-modal .arco-input-number {
+  border-radius: 12px;
+}
+
+body.dark-theme .pod-miaoshou-ai-config-modal .arco-modal {
+  background: #101826;
+}
+
+body.dark-theme .pod-miaoshou-ai-config-modal .arco-modal-header {
+  background: transparent;
+}
+
+body.dark-theme .pod-miaoshou-ai-config-modal__intro {
+  border-color: rgba(71, 85, 105, 0.42);
+  background: linear-gradient(180deg, rgba(21, 31, 47, 0.96), rgba(16, 24, 38, 0.98));
+}
+
+body.dark-theme .pod-miaoshou-ai-config-modal__intro p,
+body.dark-theme .pod-miaoshou-ai-config-modal__intro span,
+body.dark-theme .pod-miaoshou-ai-config-field__label {
+  color: #a8b6ca;
+}
+
+body.dark-theme .pod-miaoshou-ai-config-field--textarea {
+  border-color: rgba(71, 85, 105, 0.42);
+  background: rgba(18, 26, 42, 0.88);
+}
+
+body.dark-theme .pod-miaoshou-ai-config-field__hint {
+  color: #8fa2b9;
 }
 
 body.pod-miaoshou-vue-mounted {
@@ -389,15 +699,18 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-form-t
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-list-toolbar-actions {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  grid-template-areas:
+    "actions upload tail"
+    "ai ai ai";
   align-items: start;
   gap: 8px 10px;
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  position: relative;
+  display: grid;
+  align-content: start;
   gap: 8px;
   min-width: 0;
 }
@@ -405,11 +718,33 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolba
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-actions,
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-upload,
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail {
-  padding: 8px 10px;
+  padding: 10px 10px 10px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 12px;
   background: rgba(250, 251, 252, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-upload {
+  grid-area: upload;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail {
+  grid-area: tail;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  justify-self: end;
 }
 
 body.dark-theme.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-actions,
@@ -420,7 +755,32 @@ body.dark-theme.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root 
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail {
-  justify-content: flex-end;
+  min-width: max-content;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-actions::before,
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-upload::before,
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail::before,
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-toolbar::before {
+  display: block;
+  color: var(--theme-primary-ink, #8f5a0e);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  flex-basis: 100%;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-actions::before {
+  content: "\6279\91cf\64cd\4f5c";
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-upload::before {
+  content: "\56fe\7247\4e0a\4f20";
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail::before {
+  content: "\5bfc\51fa\7ba1\7406";
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-upload {
@@ -436,7 +796,7 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolba
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-upload-action-group {
-  padding: 6px 8px;
+  padding: 0;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -447,7 +807,9 @@ body.dark-theme.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root 
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-toolbar {
+  position: relative;
   display: grid;
+  grid-area: ai;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 10px 12px;
@@ -455,8 +817,12 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-tit
   border-radius: 14px;
   border-color: rgba(148, 163, 184, 0.18);
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(250, 250, 251, 0.96));
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.52), rgba(250, 250, 251, 0.96));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-toolbar::before {
+  content: "AI \6807\9898";
 }
 
 body.dark-theme.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-toolbar {
@@ -480,6 +846,18 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-tit
   min-width: fit-content;
   align-self: end;
   justify-content: flex-end;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-list-panel {
+  gap: 12px;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-list-panel-head {
+  gap: 12px;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-product-table-shell {
+  margin-top: 2px;
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-config-dialog {
@@ -593,7 +971,7 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-sku-ta
   top: 0;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(246, 248, 251, 0.98));
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.56), rgba(246, 248, 251, 0.98));
   color: #627286;
 }
 
@@ -622,7 +1000,7 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-produc
   top: 0;
   z-index: 2;
   background:
-    linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(248, 250, 252, 0.98));
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.56), rgba(248, 250, 252, 0.98));
   color: #5e6d82;
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -723,6 +1101,28 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-field-
   body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-fields,
   body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-config-grid {
     grid-template-columns: 1fr;
+  }
+
+  body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-list-toolbar-actions {
+    grid-template-areas:
+      "actions"
+      "upload"
+      "tail"
+      "ai";
+  }
+
+  body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-toolbar-block-tail {
+    justify-self: stretch;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .pod-miaoshou-ai-config-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pod-miaoshou-ai-config-field--compact {
+    max-width: none;
   }
 
   body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-legacy-root .pod-ai-title-config-grid > :last-child {
