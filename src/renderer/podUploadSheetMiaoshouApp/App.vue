@@ -27,7 +27,7 @@
           </div>
           <a-tag class="pod-miaoshou-theme-tag" bordered>{{ products.length }} &#x4E2A;&#x5546;&#x54C1;</a-tag>
         </div>
-        <div class="pod-template-grid">
+        <div class="pod-template-save-row">
           <label class="pod-field">
             <span class="pod-field-label">&#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;</span>
             <a-select
@@ -42,11 +42,13 @@
             <span class="pod-field-label">&#x6A21;&#x677F;&#x540D;&#x79F0;</span>
             <a-input v-model="templateName" allow-clear />
           </label>
-          <label class="pod-field">
+        </div>
+        <div class="pod-template-main-row">
+          <label class="pod-field pod-template-select-field">
             <span class="pod-field-label">&#x8868;&#x683C;&#x6A21;&#x677F;</span>
             <a-select v-model="globalForm.templateId" :options="templateTypeOptions" @change="syncGlobalToProducts" />
           </label>
-          <label class="pod-field pod-field-wide">
+          <label class="pod-field pod-category-field">
             <span class="pod-field-label">&#x56FA;&#x5B9A;&#x7C7B;&#x76EE;</span>
             <a-select
               v-model="globalForm.category"
@@ -57,6 +59,8 @@
               @change="syncGlobalToProducts"
             />
           </label>
+        </div>
+        <div class="pod-template-meta-row">
           <label class="pod-field">
             <span class="pod-field-label">&#x627F;&#x8BFA;&#x53D1;&#x8D27;&#x65F6;&#x6548;</span>
             <a-select v-model="globalForm.delivery" :options="deliveryOptions" @change="syncGlobalToProducts" />
@@ -69,7 +73,7 @@
             <span class="pod-field-label">&#x5B9A;&#x5236;&#x54C1;</span>
             <a-select v-model="globalForm.isCustom" :options="customOptions" @change="syncGlobalToProducts" />
           </label>
-          <label class="pod-field">
+          <label class="pod-field pod-source-link-field">
             <span class="pod-field-label">&#x8D27;&#x6E90;&#x94FE;&#x63A5;</span>
             <a-input v-model="globalForm.sourceLink" allow-clear @change="syncGlobalToProducts" />
           </label>
@@ -90,7 +94,7 @@
           </label>
           <label class="pod-field">
             <span class="pod-field-label">&#x89C4;&#x683C;&#x503C;1</span>
-            <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 3, maxRows: 5 }" @change="syncGlobalToProducts" />
+            <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="syncGlobalToProducts" />
           </label>
           <label class="pod-field">
             <span class="pod-field-label">&#x89C4;&#x683C;&#x540D;&#x79F0;2</span>
@@ -98,7 +102,7 @@
           </label>
           <label class="pod-field">
             <span class="pod-field-label">&#x89C4;&#x683C;&#x503C;2</span>
-            <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 3, maxRows: 5 }" @change="syncGlobalToProducts" />
+            <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="syncGlobalToProducts" />
           </label>
         </div>
         <div class="pod-sku-defaults">
@@ -144,7 +148,7 @@
           row-key="id"
           :data="products"
           :pagination="false"
-          :scroll="{ x: 1280, y: 520 }"
+          :scroll="productTableScroll"
           :row-class="getProductRowClass"
           @row-click="selectProduct"
         >
@@ -357,6 +361,7 @@ const selectedTemplateId = ref('');
 const templateName = ref('');
 const imageUploadMode = ref('original');
 const lastImportDirectoryPath = ref('');
+const viewportHeight = ref(typeof window === 'undefined' ? 760 : window.innerHeight);
 const importingProducts = ref(false);
 const loadingCategories = ref(false);
 const loadingTemplates = ref(false);
@@ -438,6 +443,7 @@ const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ 
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
 const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
 const aiTitleRetryCount = computed(() => products.value.filter((item) => item.aiTitleStatus === 'failed' && getPrimaryProductImage(item)).length);
+const productTableScroll = computed(() => ({ x: 1280, y: Math.max(300, viewportHeight.value - 360) }));
 const uploadProgressText = computed(() => {
   if (!uploadProgress.total) return '';
   return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgress.success}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
@@ -937,8 +943,14 @@ function installVueBridge() {
   };
 }
 
+function updateViewportHeight() {
+  viewportHeight.value = window.innerHeight || viewportHeight.value;
+}
+
 onMounted(() => {
   document.body.classList.add('pod-miaoshou-vue-mounted');
+  updateViewportHeight();
+  window.addEventListener('resize', updateViewportHeight);
   cleanupAiTitleConfigBridge = aiTitleConfigDialog.installGlobalBridge();
   cleanupBatchAiTitleBridge = batchAiTitleDialog.installGlobalBridge();
   const cleanupVueBridge = installVueBridge();
@@ -962,6 +974,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (saveTimer) window.clearTimeout(saveTimer);
+  window.removeEventListener('resize', updateViewportHeight);
   if (typeof cleanupBatchAiTitleBridge === 'function') cleanupBatchAiTitleBridge();
   if (typeof cleanupAiTitleConfigBridge === 'function') cleanupAiTitleConfigBridge();
   if (typeof removeAiTitleProgressListener === 'function') removeAiTitleProgressListener();
@@ -976,9 +989,10 @@ defineExpose({
 
 <style>
 .pod-miaoshou-app-shell {
-  min-height: 100vh;
-  padding: 14px;
-  background: #ffffff;
+  height: 100vh;
+  overflow: hidden;
+  padding: 12px;
+  background: #f6f8fb;
   color: #172033;
 }
 
@@ -989,10 +1003,10 @@ body.dark-theme .pod-miaoshou-app-shell {
 
 .pod-miaoshou-app-header,
 .pod-panel {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.055);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
 }
 
 body.dark-theme .pod-miaoshou-app-header,
@@ -1006,9 +1020,10 @@ body.dark-theme .pod-panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
+  gap: 12px;
+  min-height: 58px;
+  padding: 8px 14px;
+  margin-bottom: 10px;
 }
 
 .pod-miaoshou-app-header__copy,
@@ -1022,9 +1037,9 @@ body.dark-theme .pod-panel {
 .pod-modal-title span {
   margin: 0;
   color: var(--theme-primary-ink, #8f5a0e);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 .pod-miaoshou-app-header__title-row,
@@ -1046,12 +1061,18 @@ body.dark-theme .pod-panel {
   justify-content: space-between;
 }
 
+.pod-list-head {
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(0, 1fr);
+  align-items: start;
+}
+
 .pod-miaoshou-app-header h1,
 .pod-panel-title,
 .pod-modal-title strong {
   margin: 0;
   color: #172033;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
@@ -1063,22 +1084,69 @@ body.dark-theme .pod-modal-title strong {
 
 .pod-workbench {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(520px, 1.06fr) minmax(440px, 0.94fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "template sku"
+    "list list";
+  gap: 9px;
+  height: calc(100vh - 80px);
+  min-height: 0;
 }
 
 .pod-panel {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 9px;
+  min-height: 0;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.pod-template-panel {
+  grid-area: template;
+  max-height: 248px;
+  align-content: start;
+  overflow: auto;
+}
+
+.pod-sku-panel {
+  grid-area: sku;
+  max-height: 248px;
+  align-content: start;
+  overflow: auto;
+}
+
+.pod-list-panel {
+  grid-area: list;
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .pod-template-grid,
+.pod-template-save-row,
+.pod-template-main-row,
+.pod-template-meta-row,
 .pod-sku-layout,
 .pod-sku-defaults,
 .pod-modal-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+}
+
+.pod-template-panel .pod-template-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pod-template-save-row {
+  grid-template-columns: minmax(180px, 0.9fr) minmax(180px, 1fr);
+}
+
+.pod-template-main-row {
+  grid-template-columns: 190px minmax(360px, 1fr);
+}
+
+.pod-template-meta-row {
+  grid-template-columns: 122px 132px 112px minmax(260px, 1fr);
 }
 
 .pod-sku-layout {
@@ -1086,12 +1154,12 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-sku-defaults {
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .pod-field {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -1101,7 +1169,7 @@ body.dark-theme .pod-modal-title strong {
 
 .pod-field-label {
   color: #5f6f83;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1115,29 +1183,75 @@ body.dark-theme .pod-field-label {
 
 .pod-actions {
   justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
 }
 
 .pod-upload-mode {
-  width: 112px;
+  width: 106px;
+}
+
+.pod-actions .arco-btn,
+.pod-miaoshou-app-header__meta .arco-btn {
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pod-actions .arco-btn {
+  min-width: 92px;
+}
+
+.pod-miaoshou-app-header__meta .arco-btn {
+  height: 34px;
+}
+
+.pod-actions .arco-btn:hover,
+.pod-miaoshou-app-header__meta .arco-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+.pod-field :deep(.arco-input-wrapper),
+.pod-field :deep(.arco-select-view-single),
+.pod-field :deep(.arco-textarea-wrapper),
+.pod-upload-mode :deep(.arco-select-view-single) {
+  min-height: 32px;
+  border-color: #dbe3ee;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.pod-field :deep(.arco-textarea-wrapper) {
+  min-height: 54px;
+}
+
+.pod-field :deep(.arco-input-wrapper:hover),
+.pod-field :deep(.arco-select-view-single:hover),
+.pod-field :deep(.arco-textarea-wrapper:hover) {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.5);
 }
 
 .pod-theme-button.arco-btn-primary,
 .pod-theme-button.arco-btn {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
-  background: linear-gradient(135deg, var(--theme-primary-color, #d4a038), var(--theme-primary-color-deep, #b97d11));
-  color: var(--theme-primary-contrast, #ffffff);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.45);
+  background: var(--theme-primary-color, #f4bf22);
+  color: var(--theme-primary-contrast, #2f2400);
 }
 
 .pod-blue-button.arco-btn {
-  border-color: rgba(37, 99, 235, 0.36);
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-color: #1d4ed8;
+  background: #1d4ed8;
   color: #ffffff;
 }
 
 .pod-red-button.arco-btn,
 .pod-danger-button.arco-btn {
-  border-color: rgba(220, 38, 38, 0.32);
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #dc2626;
+  background: #dc2626;
   color: #ffffff;
 }
 
@@ -1150,8 +1264,26 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-product-table {
-  border-radius: 14px;
+  min-height: 0;
+  border: 1px solid #e5ebf3;
+  border-radius: 8px;
   overflow: hidden;
+}
+
+.pod-product-table :deep(.arco-table-th) {
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pod-product-table :deep(.arco-table-td) {
+  padding: 7px 10px;
+  color: #243247;
+}
+
+.pod-product-table :deep(.arco-table-tr:hover .arco-table-td) {
+  background: #fffaf0;
 }
 
 .pod-product-name {
@@ -1162,13 +1294,22 @@ body.dark-theme .pod-field-label {
 .pod-product-name span,
 .pod-muted {
   color: #7a8899;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .pod-chip-list {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: wrap;
+  max-height: 52px;
+  overflow: hidden;
+}
+
+.pod-chip-list .arco-tag {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pod-product-table :deep(.arco-table-tr.is-active) .arco-table-td {
@@ -1177,7 +1318,7 @@ body.dark-theme .pod-field-label {
 
 .pod-modal-body {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .pod-modal-footer {
@@ -1196,14 +1337,27 @@ body.dark-theme .pod-field-label {
 .pod-miaoshou-batch-ai-title-modal .arco-modal,
 .pod-miaoshou-operation-modal .arco-modal {
   width: min(760px, calc(100vw - 32px));
-  border-radius: 18px;
+  border-radius: 8px;
 }
 
 @media (max-width: 1100px) {
   .pod-template-grid,
+  .pod-template-save-row,
+  .pod-template-main-row,
+  .pod-template-meta-row,
   .pod-sku-defaults,
   .pod-modal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pod-workbench {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "template"
+      "sku"
+      "list";
+    overflow: auto;
   }
 }
 
@@ -1215,6 +1369,9 @@ body.dark-theme .pod-field-label {
   }
 
   .pod-template-grid,
+  .pod-template-save-row,
+  .pod-template-main-row,
+  .pod-template-meta-row,
   .pod-sku-layout,
   .pod-sku-defaults,
   .pod-modal-grid {
