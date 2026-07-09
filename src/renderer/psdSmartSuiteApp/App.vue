@@ -1882,17 +1882,17 @@ body {
   min-width: 196px;
   width: auto;
   padding: 0 18px !important;
-  background: linear-gradient(135deg, #ffd84d, #ffb21f) !important;
-  border: 1px solid rgba(255, 184, 0, 0.22) !important;
-  color: #4b2a00 !important;
-  box-shadow: 0 10px 22px rgba(255, 184, 0, 0.22);
+  background: linear-gradient(180deg, var(--psd-primary), var(--psd-primary-deep)) !important;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.72) !important;
+  color: var(--theme-primary-contrast, #ffffff) !important;
+  box-shadow: 0 10px 22px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.18);
 }
 
 .psd-smart-suite-run-button:hover {
-  background: linear-gradient(135deg, #ffe066, #ffbe33) !important;
-  border-color: rgba(255, 184, 0, 0.3) !important;
-  color: #442500 !important;
-  box-shadow: 0 14px 26px rgba(255, 184, 0, 0.26);
+  background: linear-gradient(180deg, var(--psd-primary), var(--psd-primary-deep)) !important;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.82) !important;
+  color: var(--theme-primary-contrast, #ffffff) !important;
+  box-shadow: 0 14px 26px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.22);
 }
 
 .psd-smart-suite-run-button.arco-btn-status-danger {
@@ -1917,8 +1917,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(75, 42, 0, 0.12);
-  color: #4b2a00;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--theme-primary-contrast, #ffffff);
 }
 
 .psd-smart-suite-run-button.arco-btn-status-danger:deep(.arco-icon) {
@@ -2222,24 +2222,24 @@ body {
 
 .psd-smart-suite-shell :deep(.arco-btn-secondary:hover) {
   transform: translateY(-1px);
-  border-color: rgba(255, 184, 0, 0.3);
-  background: rgba(255, 249, 239, 0.98);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.3);
+  background: rgba(var(--theme-primary-rgb-1, 252, 244, 214), 0.82);
   color: var(--psd-ink-strong);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .psd-smart-suite-shell :deep(.arco-btn-primary) {
-  border-color: rgba(255, 184, 0, 0.22);
-  background: linear-gradient(135deg, #ffd84d, #ffb21f);
-  color: #4b2a00;
-  box-shadow: 0 10px 22px rgba(255, 184, 0, 0.22);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.72);
+  background: linear-gradient(180deg, var(--psd-primary), var(--psd-primary-deep));
+  color: var(--theme-primary-contrast, #ffffff);
+  box-shadow: 0 10px 22px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.18);
 }
 
 .psd-smart-suite-shell :deep(.arco-btn-primary:hover) {
   transform: translateY(-1px);
-  border-color: rgba(255, 184, 0, 0.3);
-  background: linear-gradient(135deg, #ffe066, #ffbe33);
-  color: #442500;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.82);
+  background: linear-gradient(180deg, var(--psd-primary), var(--psd-primary-deep));
+  color: var(--theme-primary-contrast, #ffffff);
 }
 
 .psd-smart-suite-shell :deep(.arco-btn-status-danger.arco-btn-secondary),
