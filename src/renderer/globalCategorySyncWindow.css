@@ -9,9 +9,7 @@
   min-height: calc(100vh - 36px);
   border-radius: 30px;
   border: 1px solid rgba(19, 34, 56, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 252, 0.98)),
-    rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   box-shadow: 0 22px 56px rgba(18, 34, 57, 0.1);
   overflow: hidden;
 }

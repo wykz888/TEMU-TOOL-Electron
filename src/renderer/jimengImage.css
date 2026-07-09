@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: "Bahnschrift", "Aptos", "Microsoft YaHei UI", sans-serif;
-  --jimeng-bg: #eef4fb;
+  --jimeng-bg: #ffffff;
   --jimeng-ink: #102033;
   --jimeng-soft: #5b6c7f;
   --jimeng-line: rgba(23, 40, 64, 0.12);
@@ -27,10 +27,7 @@ body {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 26%),
-    linear-gradient(180deg, #f6fbff 0%, #edf3fa 56%, #e3ebf4 100%);
+  background: #ffffff;
   color: var(--jimeng-ink);
 }
 
@@ -40,10 +37,7 @@ body {
 }
 
 body.light-frame-theme {
-  background:
-    radial-gradient(circle at top left, rgba(45, 212, 191, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 24%),
-    linear-gradient(180deg, #fbfdff 0%, #f5f8fc 58%, #eef3f8 100%);
+  background: #ffffff;
 }
 
 body.dark-theme {

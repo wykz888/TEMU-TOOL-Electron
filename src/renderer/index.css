@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: "Bahnschrift", "Aptos", "Microsoft YaHei UI", sans-serif;
-  background: #eef2f7;
+  background: #ffffff;
   color: #142033;
   --app-max-width: 100%;
   --app-gap: 14px;
@@ -32,10 +32,7 @@ body {
   margin: 0;
   height: 100%;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(var(--theme-primary-rgb-3, 251, 223, 122), 0.045), transparent 28%),
-    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.03), transparent 22%),
-    linear-gradient(180deg, #f6f8fb 0%, #eef3f7 52%, #e7edf4 100%);
+  background: #ffffff;
 }
 
 body {
@@ -44,10 +41,7 @@ body {
 }
 
 body.light-frame-theme {
-  background:
-    radial-gradient(circle at top left, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08), transparent 24%),
-    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb-3, 251, 223, 122), 0.04), transparent 18%),
-    linear-gradient(180deg, #fbfcfe 0%, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.05) 54%, #eef3f7 100%);
+  background: #ffffff;
 }
 
 body.dark-theme {
