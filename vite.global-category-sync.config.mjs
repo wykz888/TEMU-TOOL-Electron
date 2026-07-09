@@ -25,7 +25,8 @@ export default defineConfig({
     codeSplitting: false,
     lib: {
       entry: path.resolve(__dirname, 'src/renderer/globalCategorySyncApp/main.js'),
-      formats: ['es'],
+      formats: ['iife'],
+      name: 'GlobalCategorySyncApp',
       fileName: () => 'global-category-sync-app.js',
       cssFileName: 'global-category-sync-app'
     }
