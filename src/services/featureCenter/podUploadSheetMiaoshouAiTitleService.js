@@ -373,6 +373,28 @@ function createPodUploadSheetMiaoshouAiTitleService({
     };
   }
 
+  function normalizeRuntimeBoolean(value, fallback) {
+    return value === undefined ? fallback : value === true;
+  }
+
+  function normalizeImageQuality(value) {
+    return Math.max(48, Math.min(95, normalizeInteger(value, 84, 1)));
+  }
+
+  function applyPayloadRuntimeSettings(settings, payload) {
+    const source = payload && typeof payload === 'object' ? payload : {};
+    const hasImageQuality = Object.prototype.hasOwnProperty.call(source, 'imageQuality');
+
+    return {
+      ...settings,
+      concurrency: normalizeInteger(source.concurrency, settings.concurrency, 1),
+      ...(hasImageQuality ? { imageQuality: normalizeImageQuality(source.imageQuality) } : {}),
+      imageCompression: normalizeText(source.imageCompression) || 'smart-jpeg',
+      storageProvider: normalizeText(source.storageProvider),
+      useCache: normalizeRuntimeBoolean(source.useCache, true)
+    };
+  }
+
   function normalizeIncomingProductRecord(record) {
     const source = record && typeof record === 'object' && !Array.isArray(record) ? record : {};
     const id = normalizeText(source.id);
@@ -442,9 +464,29 @@ function createPodUploadSheetMiaoshouAiTitleService({
     });
   }
 
+  function getImageJpegQualities(settings) {
+    const requestedQuality = normalizeImageQuality(settings && settings.imageQuality);
+
+    if (!settings || !settings.imageQuality) {
+      return IMAGE_JPEG_QUALITIES;
+    }
+
+    return [
+      requestedQuality,
+      requestedQuality - 6,
+      requestedQuality - 12,
+      requestedQuality - 18,
+      requestedQuality - 24,
+      requestedQuality - 30
+    ]
+      .map((quality) => Math.max(42, Math.min(95, quality)))
+      .filter((quality, index, values) => values.indexOf(quality) === index);
+  }
+
   function selectCompressedImageCandidate(image, settings) {
     const minBytes = Math.min(settings.minImageBytes, settings.maxImageBytes);
     const maxBytes = Math.max(settings.maxImageBytes, settings.minImageBytes);
+    const qualityOptions = getImageJpegQualities(settings);
     let smallestWithinRange = null;
     let largestUnderRange = null;
     let smallestOverRange = null;
@@ -452,7 +494,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     IMAGE_MAX_DIMENSIONS.forEach((dimension) => {
       const resizedImage = resizeImageToContain(image, dimension);
 
-      IMAGE_JPEG_QUALITIES.forEach((quality) => {
+      qualityOptions.forEach((quality) => {
         const buffer = Buffer.from(resizedImage.toJPEG(quality));
         const candidate = {
           buffer,
@@ -505,6 +547,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
   async function selectCompressedImageCandidateWithSharp(imagePath, settings) {
     const minBytes = Math.min(settings.minImageBytes, settings.maxImageBytes);
     const maxBytes = Math.max(settings.maxImageBytes, settings.minImageBytes);
+    const qualityOptions = getImageJpegQualities(settings);
     const metadata = await sharp(imagePath, {
       failOnError: false,
       animated: false,
@@ -517,7 +560,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     for (const dimension of IMAGE_MAX_DIMENSIONS) {
       const resizeOptions = getSharpResizeOptions(metadata, dimension);
 
-      for (const quality of IMAGE_JPEG_QUALITIES) {
+      for (const quality of qualityOptions) {
         let pipeline = sharp(imagePath, {
           failOnError: false,
           animated: false,
@@ -650,7 +693,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return `${AI_INPUT_IMAGE_ROOT}/${appFolder}/${ownerFolder}/${dateFolder}/${productFolder}/${fileSlug}-${uniqueHash}${AI_INPUT_IMAGE_EXTENSION}`;
   }
 
-  async function uploadCompressedImageForAi(owner, entryId, product, compressedImage, job) {
+  async function uploadCompressedImageForAi(owner, entryId, product, compressedImage, settings, job) {
     throwIfJobCanceled(job);
 
     const objectKey = buildAiInputImageObjectKey(owner, entryId, product, compressedImage);
@@ -660,7 +703,11 @@ function createPodUploadSheetMiaoshouAiTitleService({
     ].join('|');
     const cachedAsset = uploadedAiInputImageCache.get(cacheKey);
 
-    if (cachedAsset && normalizeText(cachedAsset.url) && normalizeText(cachedAsset.key)) {
+    if (settings && settings.useCache === false) {
+      uploadedAiInputImageCache.delete(cacheKey);
+    }
+
+    if (settings && settings.useCache !== false && cachedAsset && normalizeText(cachedAsset.url) && normalizeText(cachedAsset.key)) {
       return cachedAsset;
     }
 
@@ -682,7 +729,9 @@ function createPodUploadSheetMiaoshouAiTitleService({
       byteLength: Number(compressedImage && compressedImage.byteLength) || 0
     };
 
-    uploadedAiInputImageCache.set(cacheKey, uploadedAsset);
+    if (!settings || settings.useCache !== false) {
+      uploadedAiInputImageCache.set(cacheKey, uploadedAsset);
+    }
 
     if (runtimeLogger && typeof runtimeLogger.log === 'function') {
       runtimeLogger.log('pod_upload_sheet_ai_title_input_image_uploaded', {
@@ -1349,7 +1398,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     throwIfJobCanceled(job);
     const compressedImage = await compressImageForArk(product.imagePath, settings);
     throwIfJobCanceled(job);
-    const uploadedImage = await uploadCompressedImageForAi(owner, entryId, product, compressedImage, job);
+    const uploadedImage = await uploadCompressedImageForAi(owner, entryId, product, compressedImage, settings, job);
     throwIfJobCanceled(job);
     const prompt = buildStructuredPrompt(
       entryId,
@@ -1425,7 +1474,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
         throw new Error('当前未登录，无法调用 AI 标题生成。');
       }
 
-      const settings = await loadRuntimeSettings(owner);
+      const settings = applyPayloadRuntimeSettings(await loadRuntimeSettings(owner), payload);
       const { requestedModel, resolvedModel } = resolveModelName(settings.model);
       const products = normalizeIncomingProducts(payload && payload.products);
       const entryId = getResolvedEntryId(payload && payload.entryId);
