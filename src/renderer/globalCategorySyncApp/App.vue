@@ -330,6 +330,9 @@ function handleSync() {
 }
 
 onMounted(() => {
+  // 临时标记：用于确认新版 Vue 渲染是否生效
+  // eslint-disable-next-line no-console
+  console.log('[Vue3] 全量同步类目 已挂载', new Date().toISOString());
   loadSnapshot();
 });
 
