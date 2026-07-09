@@ -13,20 +13,6 @@
               <p>&#x7EDF;&#x4E00;&#x7BA1;&#x7406;&#x7D20;&#x6750;&#x76EE;&#x5F55;&#x3001;PSD&#x6837;&#x673A;&#x548C;&#x5BFC;&#x51FA;&#x89C4;&#x5219;&#xFF0C;&#x6309;&#x5F53;&#x524D;&#x5F15;&#x64CE;&#x914D;&#x7F6E;&#x6279;&#x91CF;&#x6267;&#x884C;&#x5957;&#x56FE;&#x3002;</p>
             </div>
           </div>
-          <div class="psd-smart-suite-panel-tags">
-            <a-tag :color="statusTagColor" bordered>
-              {{ statusLabel }}
-            </a-tag>
-            <a-tag color="arcoblue" bordered>
-              &#x6837;&#x673A; {{ mockups.length }}
-            </a-tag>
-            <a-tag color="gold" bordered>
-              &#x7D20;&#x6750; {{ psdImageFiles.length }}
-            </a-tag>
-            <a-tag v-if="psdProgressSummary" color="green" bordered>
-              {{ psdProgressSummary }}
-            </a-tag>
-          </div>
         </div>
 
         <div class="psd-smart-suite-panel-divider"></div>
@@ -342,18 +328,12 @@
             </div>
 
             <div class="psd-smart-suite-mockup-foot">
-              <a-tag color="gold" bordered>
-                {{ exportModeLabelMap[mockup.exportMode] }}
-              </a-tag>
-              <a-tag color="arcoblue" bordered>
-                {{ rotationLabelMap[mockup.sourceRotation] }}
-              </a-tag>
-              <a-tag color="purple" bordered>
-                {{ replacementModeLabelMap[mockup.replacementMode] }}
-              </a-tag>
-              <a-tag color="green" bordered>
-                {{ String(mockup.outputFormat || '').toUpperCase() }} / {{ mockup.imageQuality }}
-              </a-tag>
+              <span class="psd-smart-suite-mockup-meta">
+                {{ exportModeLabelMap[mockup.exportMode] }} / {{ replacementModeLabelMap[mockup.replacementMode] }}
+              </span>
+              <span class="psd-smart-suite-mockup-meta">
+                {{ rotationLabelMap[mockup.sourceRotation] }} / {{ String(mockup.outputFormat || '').toUpperCase() }} {{ mockup.imageQuality }}
+              </span>
             </div>
           </a-card>
         </div>
@@ -379,38 +359,6 @@
           </div>
 
           <div class="psd-smart-suite-run-toolbar">
-            <div class="psd-smart-suite-run-action">
-              <a-button
-                type="primary"
-                size="large"
-                class="psd-smart-suite-run-button"
-                :status="psdRunning ? 'danger' : undefined"
-                :disabled="busy && !psdRunning"
-                @click="psdRunning ? cancelRun() : startRun()"
-              >
-                <template #icon>
-                  <icon-stop v-if="psdRunning" />
-                  <icon-play-arrow v-else />
-                </template>
-                {{ psdRunning ? '\u53D6\u6D88\u5957\u56FE' : '\u5F00\u59CB PSD \u5957\u56FE' }}
-              </a-button>
-            </div>
-
-            <div class="psd-smart-suite-run-tip">
-              <span class="psd-smart-suite-run-tip-label">&#x603B;&#x8FDB;&#x5EA6;</span>
-              <strong>{{ psdProgressSummary || currentProgressLabel }}</strong>
-            </div>
-
-            <div class="psd-smart-suite-run-control psd-smart-suite-run-control--switch">
-              <div class="psd-smart-suite-run-control-head">
-                <label>&#x5DF2;&#x5B58;&#x5728;&#x8DF3;&#x8FC7;</label>
-              </div>
-              <label class="psd-smart-suite-switch-row">
-                <span>{{ config.psdSkipExistingOutputs ? '\u5DF2\u542F\u7528' : '\u672A\u542F\u7528' }}</span>
-                <a-switch v-model="config.psdSkipExistingOutputs" :disabled="busy" />
-              </label>
-            </div>
-
             <div class="psd-smart-suite-run-control">
               <div class="psd-smart-suite-run-control-head">
                 <label>&#x5F15;&#x64CE;&#x7A97;&#x53E3;</label>
@@ -441,12 +389,42 @@
                 </a-option>
               </a-select>
             </div>
+
+            <div class="psd-smart-suite-run-control psd-smart-suite-run-control--switch">
+              <div class="psd-smart-suite-run-control-head">
+                <label>&#x5DF2;&#x5B58;&#x5728;&#x8DF3;&#x8FC7;</label>
+              </div>
+              <label class="psd-smart-suite-switch-row">
+                <span>{{ config.psdSkipExistingOutputs ? '\u5DF2\u542F\u7528' : '\u672A\u542F\u7528' }}</span>
+                <a-switch v-model="config.psdSkipExistingOutputs" :disabled="busy" />
+              </label>
+            </div>
+
+            <div class="psd-smart-suite-run-action">
+              <a-button
+                type="primary"
+                size="large"
+                class="psd-smart-suite-run-button"
+                :status="psdRunning ? 'danger' : undefined"
+                :disabled="busy && !psdRunning"
+                @click="psdRunning ? cancelRun() : startRun()"
+              >
+                <template #icon>
+                  <icon-stop v-if="psdRunning" />
+                  <icon-play-arrow v-else />
+                </template>
+                {{ psdRunning ? '\u53D6\u6D88\u5957\u56FE' : '\u5F00\u59CB PSD \u5957\u56FE' }}
+              </a-button>
+            </div>
           </div>
 
           <div class="psd-smart-suite-run-progress">
             <div class="psd-smart-suite-run-progress-head">
               <span>&#x4EFB;&#x52A1;&#x8FDB;&#x5EA6;</span>
               <strong>{{ progressPercentLabel }}</strong>
+            </div>
+            <div class="psd-smart-suite-run-progress-summary">
+              {{ psdProgressSummary || currentProgressLabel }}
             </div>
             <div class="psd-smart-suite-run-progress-track">
               <span :style="{ width: `${progressPercent}%` }"></span>
@@ -587,30 +565,6 @@ const metadataSourceSummary = computed(() => {
   }
 
   return '未设置';
-});
-
-const statusLabel = computed(() => {
-  if (psdCanceling.value) {
-    return '正在取消';
-  }
-
-  if (psdRunning.value) {
-    return psdProgressSummary.value || '套图执行中';
-  }
-
-  return '待执行';
-});
-
-const statusTagColor = computed(() => {
-  if (psdCanceling.value) {
-    return 'orangered';
-  }
-
-  if (psdRunning.value) {
-    return 'arcoblue';
-  }
-
-  return 'gray';
 });
 
 function createEntityId(prefix) {
@@ -1386,12 +1340,14 @@ body {
   padding: 14px;
   --psd-surface: rgba(255, 255, 255, 0.98);
   --psd-surface-soft: rgba(255, 255, 255, 0.98);
-  --psd-surface-muted: rgba(248, 250, 252, 0.96);
+  --psd-surface-muted: rgba(255, 255, 255, 0.94);
   --psd-surface-warm: rgba(255, 255, 255, 0.98);
   --psd-border: rgba(148, 163, 184, 0.18);
   --psd-border-soft: rgba(148, 163, 184, 0.12);
   --psd-border-strong: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
   --psd-border-stronger: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  --psd-control-bg: #ffffff;
+  --psd-control-bg-soft: rgba(255, 252, 246, 0.72);
   --psd-ink-strong: #132238;
   --psd-ink: #334155;
   --psd-ink-soft: #64748b;
@@ -1507,17 +1463,6 @@ body {
   line-height: 1.5;
 }
 
-.psd-smart-suite-panel-tags {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-  max-width: 420px;
-  justify-self: end;
-}
-
 .psd-smart-suite-section-head {
   display: flex;
   align-items: flex-start;
@@ -1562,8 +1507,9 @@ body {
   min-height: 100%;
   padding: 14px;
   border-radius: 12px;
-  background: rgba(248, 250, 252, 0.72);
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--psd-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94);
 }
 
 .psd-smart-suite-toolbar-block--template {
@@ -1689,7 +1635,7 @@ body {
   min-height: 30px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(248, 250, 252, 0.92);
+  background: var(--psd-control-bg-soft);
   border: 1px solid var(--psd-border-soft);
   color: var(--psd-ink-soft);
   font-size: 12px;
@@ -1711,7 +1657,7 @@ body {
 .psd-smart-suite-mockup-card :deep(.arco-card-header) {
   border-bottom: 1px solid var(--psd-border-soft);
   padding-bottom: 12px;
-  background: rgba(248, 250, 252, 0.42);
+  background: rgba(255, 252, 246, 0.38);
 }
 
 .psd-smart-suite-mockup-card :deep(.arco-card-body) {
@@ -1818,15 +1764,31 @@ body {
   border-top: 1px dashed rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18);
 }
 
+.psd-smart-suite-mockup-meta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--psd-control-bg-soft);
+  border: 1px solid var(--psd-border-soft);
+  color: var(--psd-ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .psd-smart-suite-run-strip {
   display: grid;
   gap: 10px;
   margin-top: 14px;
   padding: 12px;
   border-radius: 14px;
-  background: rgba(248, 250, 252, 0.68);
+  background: rgba(255, 255, 255, 0.97);
   border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 8px 18px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
 .psd-smart-suite-run-overview {
@@ -1867,17 +1829,18 @@ body {
 
 .psd-smart-suite-run-toolbar {
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) minmax(180px, 220px) minmax(180px, 220px) minmax(180px, 220px);
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 200px)) auto;
+  justify-content: space-between;
+  gap: 8px;
   align-items: end;
 }
 
 .psd-smart-suite-run-action {
   display: grid;
   align-items: center;
+  justify-content: end;
 }
 
-.psd-smart-suite-run-toolbar > .psd-smart-suite-run-tip,
 .psd-smart-suite-run-toolbar > .psd-smart-suite-run-control {
   min-width: 0;
 }
@@ -1907,7 +1870,7 @@ body {
 
 .psd-smart-suite-run-control-head label {
   color: var(--psd-ink);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1916,23 +1879,51 @@ body {
   border-radius: 12px !important;
   font-weight: 800;
   font-size: 14px;
-  min-width: 220px;
+  min-width: 196px;
   width: auto;
-  padding: 0 22px !important;
-  background: linear-gradient(180deg, var(--psd-primary), var(--psd-primary-deep)) !important;
-  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.72) !important;
-  color: var(--theme-primary-contrast, #ffffff) !important;
-  box-shadow: 0 10px 20px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.14);
+  padding: 0 18px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.4) !important;
+  color: var(--theme-primary-ink, #445468) !important;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.psd-smart-suite-run-button:hover {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06) !important;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.62) !important;
+  color: var(--theme-primary-ink, #445468) !important;
+  box-shadow: 0 10px 20px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.12);
 }
 
 .psd-smart-suite-run-button.arco-btn-status-danger {
-  background: linear-gradient(180deg, #ef4444, #dc2626) !important;
-  border-color: rgba(239, 68, 68, 0.32) !important;
-  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.2);
+  background: rgba(254, 242, 242, 0.98) !important;
+  border-color: rgba(239, 68, 68, 0.24) !important;
+  color: #b42318 !important;
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.1);
+}
+
+.psd-smart-suite-run-button.arco-btn-status-danger:hover {
+  background: rgba(254, 226, 226, 0.98) !important;
+  border-color: rgba(239, 68, 68, 0.34) !important;
+  color: #9f1239 !important;
 }
 
 .psd-smart-suite-run-button:deep(.arco-icon) {
   font-size: 16px;
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+  color: var(--theme-primary-ink, #445468);
+}
+
+.psd-smart-suite-run-button.arco-btn-status-danger:deep(.arco-icon) {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b42318;
 }
 
 .psd-smart-suite-switch-row {
@@ -1950,34 +1941,10 @@ body {
   font-weight: 700;
 }
 
-.psd-smart-suite-run-tip {
-  display: grid;
-  gap: 4px;
-  min-height: 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid var(--psd-border-soft);
-}
-
-.psd-smart-suite-run-tip-label,
-.psd-smart-suite-run-tip span {
-  color: var(--psd-ink-soft);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.psd-smart-suite-run-tip strong {
-  color: var(--psd-ink-strong);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
 .psd-smart-suite-run-progress {
   display: grid;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -2005,6 +1972,13 @@ body {
   font-weight: 800;
 }
 
+.psd-smart-suite-run-progress-summary {
+  color: var(--psd-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .psd-smart-suite-run-progress-track {
   position: relative;
   height: 8px;
@@ -2023,7 +1997,7 @@ body {
 }
 
 .psd-smart-suite-run-control :deep(.arco-select-view) {
-  background: rgba(248, 250, 252, 0.92);
+  background: var(--psd-control-bg);
   min-height: 40px;
 }
 
@@ -2086,7 +2060,7 @@ body {
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(248, 250, 252, 0.92);
+  background: var(--psd-control-bg-soft);
   border: 1px solid var(--psd-border-soft);
   color: var(--psd-ink-soft);
   font-size: 12px;
@@ -2117,7 +2091,7 @@ body {
   min-height: 180px;
   padding: 20px;
   border-radius: 12px;
-  background: rgba(248, 250, 252, 0.52);
+  background: rgba(255, 252, 246, 0.56);
   color: var(--psd-ink-soft);
   font-size: 13px;
   text-align: center;
@@ -2195,9 +2169,34 @@ body {
 .psd-smart-suite-shell :deep(.arco-select-view),
 .psd-smart-suite-shell :deep(.arco-input-number) {
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--psd-control-bg) !important;
   border-color: var(--psd-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.psd-smart-suite-shell :deep(.arco-input),
+.psd-smart-suite-shell :deep(.arco-input-number-input),
+.psd-smart-suite-shell :deep(.arco-select-view-single),
+.psd-smart-suite-shell :deep(.arco-select-view-multiple) {
+  background: transparent !important;
+  color: var(--psd-ink-strong);
+}
+
+.psd-smart-suite-shell :deep(.arco-input::placeholder),
+.psd-smart-suite-shell :deep(.arco-input-number-input::placeholder),
+.psd-smart-suite-shell :deep(.arco-select-view-placeholder),
+.psd-smart-suite-shell :deep(.arco-select-view-value) {
+  color: var(--psd-ink-soft);
+}
+
+.psd-smart-suite-shell :deep(.arco-input-wrapper.arco-input-disabled),
+.psd-smart-suite-shell :deep(.arco-select-view.arco-select-view-disabled),
+.psd-smart-suite-shell :deep(.arco-input-number.arco-input-number-disabled) {
+  background: var(--psd-control-bg-soft) !important;
+  color: var(--psd-ink-soft);
 }
 
 .psd-smart-suite-shell :deep(.arco-btn) {
@@ -2247,6 +2246,7 @@ body {
 .psd-smart-suite-shell :deep(.arco-select-view:hover),
 .psd-smart-suite-shell :deep(.arco-input-number:hover) {
   border-color: var(--psd-border-strong);
+  background: #ffffff !important;
 }
 
 .psd-smart-suite-shell :deep(.arco-input-wrapper-focus),
@@ -2263,7 +2263,12 @@ body {
 
   .psd-smart-suite-run-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
     align-items: start;
+  }
+
+  .psd-smart-suite-run-action {
+    justify-content: start;
   }
 }
 
@@ -2344,12 +2349,6 @@ body {
 
   .psd-smart-suite-panel-title {
     align-items: flex-start;
-  }
-
-  .psd-smart-suite-panel-tags {
-    justify-content: flex-start;
-    justify-self: start;
-    max-width: none;
   }
 
   .psd-smart-suite-run-overview {
