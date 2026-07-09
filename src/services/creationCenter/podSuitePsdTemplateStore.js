@@ -198,6 +198,13 @@ function createPodSuitePsdTemplateStore({
     const entry = getFeatureEntry();
     const ownerKey = owner && owner.userKey ? owner.userKey : 'local';
 
+    return path.join(entry.storageProfile.localRootDir, 'users', ownerKey, 'config', PROFILE_FILE_NAME);
+  }
+
+  function getLegacyLocalProfileFilePath(owner) {
+    const entry = getFeatureEntry();
+    const ownerKey = owner && owner.userKey ? owner.userKey : 'local';
+
     return path.join(entry.storageProfile.localConfigDir, 'users', ownerKey, PROFILE_FILE_NAME);
   }
 
@@ -225,6 +232,44 @@ function createPodSuitePsdTemplateStore({
       recursive: true
     });
     await fs.promises.writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  }
+
+  async function ensureLocalProfilePathMigrated(owner) {
+    const nextFilePath = getLocalProfileFilePath(owner);
+    const legacyFilePath = getLegacyLocalProfileFilePath(owner);
+
+    if (nextFilePath === legacyFilePath) {
+      return nextFilePath;
+    }
+
+    try {
+      await fs.promises.access(nextFilePath, fs.constants.F_OK);
+      return nextFilePath;
+    } catch (_error) {
+      // continue with legacy migration check
+    }
+
+    try {
+      await fs.promises.access(legacyFilePath, fs.constants.F_OK);
+    } catch (_error) {
+      return nextFilePath;
+    }
+
+    await fs.promises.mkdir(path.dirname(nextFilePath), {
+      recursive: true
+    });
+
+    try {
+      await fs.promises.rename(legacyFilePath, nextFilePath);
+    } catch (_error) {
+      const legacyPayload = await readJsonFile(legacyFilePath);
+
+      if (legacyPayload) {
+        await writeJsonFile(nextFilePath, legacyPayload);
+      }
+    }
+
+    return nextFilePath;
   }
 
   function logError(eventName, error) {
@@ -298,7 +343,7 @@ function createPodSuitePsdTemplateStore({
 
   async function getTemplates(payload = {}) {
     const owner = getOwner();
-    const localFilePath = getLocalProfileFilePath(owner);
+    const localFilePath = await ensureLocalProfilePathMigrated(owner);
     let localProfile = normalizeProfile(await readJsonFile(localFilePath));
     let source = localProfile.templates.length ? 'local' : 'empty';
 
@@ -323,7 +368,7 @@ function createPodSuitePsdTemplateStore({
 
   async function saveTemplate(payload = {}) {
     const owner = getOwner();
-    const localFilePath = getLocalProfileFilePath(owner);
+    const localFilePath = await ensureLocalProfilePathMigrated(owner);
     const profile = normalizeProfile(await readJsonFile(localFilePath));
     const now = getIsoTimestamp();
     const templatePayload = extractTemplatePayload(payload);
@@ -363,7 +408,7 @@ function createPodSuitePsdTemplateStore({
     const templateId = normalizeText(
       payload && (payload.templateId || payload.id)
     );
-    const localFilePath = getLocalProfileFilePath(owner);
+    const localFilePath = await ensureLocalProfilePathMigrated(owner);
     const profile = normalizeProfile(await readJsonFile(localFilePath));
     const now = getIsoTimestamp();
     const nextProfile = normalizeProfile({

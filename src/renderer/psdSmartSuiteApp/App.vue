@@ -652,14 +652,19 @@ async function collectDirectoryFiles(directoryPath) {
   return result && Array.isArray(result.files) ? result.files : [];
 }
 
-async function loadTemplates() {
+async function loadTemplates(options = {}) {
   try {
-    const result = await bridge.getPsdSmartObjectTemplates({});
+    const result = await bridge.getPsdSmartObjectTemplates({
+      preferCloud: options.preferCloud === true
+    });
     psdTemplates.value = result && Array.isArray(result.templates)
       ? result.templates
       : [];
+
+    return result || null;
   } catch (error) {
     addLog(String(error && error.message ? error.message : error), 'error');
+    return null;
   }
 }
 
@@ -752,9 +757,21 @@ async function syncCloudTemplates() {
   busy.value = true;
 
   try {
-    await loadTemplates();
-    addLog('模板已从云端同步。', 'success');
-    Message.success('模板已同步');
+    const result = await loadTemplates({
+      preferCloud: true
+    });
+    const templateCount = result && Array.isArray(result.templates)
+      ? result.templates.length
+      : 0;
+    const source = result && result.source ? result.source : '';
+    const successMessage = source === 'cloud'
+      ? `已从云端同步 ${templateCount} 个模板。`
+      : templateCount > 0
+        ? `云端没有返回新模板，当前显示 ${templateCount} 个本地模板。`
+        : '云端和本地都没有模板数据。';
+
+    addLog(successMessage, source === 'cloud' ? 'success' : '');
+    Message.success(successMessage);
   } catch (error) {
     const message = String(error && error.message ? error.message : error);
     addLog(message, 'error');
