@@ -76,6 +76,14 @@ const TARGETS = Object.freeze({
       'src/renderer/psdSmartSuiteApp/dist/psd-smart-suite-app.css'
     ]
   },
+  'pod-upload-sheet-miaoshou': {
+    config: 'vite.pod-upload-sheet-miaoshou.config.mjs',
+    sourceDirs: ['src/renderer/podUploadSheetMiaoshouApp'],
+    outputFiles: [
+      'src/renderer/podUploadSheetMiaoshouApp/dist/pod-upload-sheet-miaoshou-app.js',
+      'src/renderer/podUploadSheetMiaoshouApp/dist/pod-upload-sheet-miaoshou-app.css'
+    ]
+  },
   'global-category-sync': {
     config: 'vite.global-category-sync.config.mjs',
     sourceDirs: ['src/renderer/globalCategorySyncApp'],

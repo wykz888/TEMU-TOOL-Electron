@@ -9,8 +9,11 @@
     <script src="./podUploadSheetMiaoshouImageName.js" defer></script>
     <script src="./podUploadSheetMiaoshouAiTitleConfigDialog.js" defer></script>
     <script src="./podUploadSheetMiaoshou.js" defer></script>
+    <script src="./podUploadSheetMiaoshouView.js" defer></script>
   </head>
   <body>
+    <div id="pod-upload-sheet-miaoshou-root"></div>
+    <div id="pod-upload-sheet-miaoshou-legacy-root" hidden>
     <main class="pod-shell">
       <section class="pod-template-strip" hidden>
         <div id="podTemplateCards" class="pod-template-card-grid"></div>
@@ -270,6 +273,7 @@
             <h2 class="pod-panel-title">商品数据列表</h2>
           </div>
           <div class="pod-inline-actions pod-list-toolbar-actions">
+            <div class="pod-toolbar-block pod-toolbar-block-actions">
             <button id="podImportProductsButton" class="pod-secondary-button" type="button">
               导入本地商品
             </button>
@@ -279,6 +283,8 @@
             <button id="podBatchPresetDescriptionButton" class="pod-secondary-button" type="button">
               批量预设产品描述
             </button>
+            </div>
+            <div class="pod-toolbar-block pod-toolbar-block-upload">
             <div class="pod-upload-action-group">
               <label class="pod-upload-mode-field">
                 <span class="pod-field-label">图片压缩上传</span>
@@ -293,7 +299,9 @@
               </button>
             </div>
             <span id="podCosUploadProgressText" class="pod-ai-title-progress" hidden aria-live="polite"></span>
+            </div>
             <div class="pod-ai-title-toolbar">
+              <div class="pod-ai-title-fields">
               <label class="pod-field pod-ai-title-field">
                 <span class="pod-field-label">前段标题</span>
                 <input
@@ -335,6 +343,7 @@
                   placeholder="250"
                 />
               </label>
+              </div>
               <div class="pod-ai-title-actions">
                 <span id="podAiTitleProgressText" class="pod-ai-title-progress" hidden aria-live="polite"></span>
                 <button id="podAiTitleConfigButton" class="pod-secondary-button" type="button">
@@ -348,12 +357,14 @@
                 </button>
               </div>
             </div>
+            <div class="pod-toolbar-block pod-toolbar-block-tail">
             <button id="podExportTableButton" class="pod-secondary-button pod-list-toolbar-tail" type="button">
               导出表格
             </button>
             <button id="podClearProductsButton" class="pod-secondary-button is-danger" type="button">
               清空列表
             </button>
+            </div>
           </div>
         </div>
 
@@ -422,28 +433,32 @@
           </div>
         </div>
         <div class="pod-ai-title-config-form">
-          <label class="pod-field">
-            <span class="pod-field-label">&#x6A21;&#x578B;&#x540D;&#x79F0;</span>
-            <input id="podAiTitleConfigModelInput" class="pod-field-control" type="text" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">API Base URL</span>
-            <input id="podAiTitleConfigApiBaseInput" class="pod-field-control" type="text" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;&#x6570;</span>
-            <input id="podAiTitleConfigConcurrencyInput" class="pod-field-control" type="number" min="1" max="100" step="1" />
-          </label>
-          <label class="pod-field pod-ai-title-config-keys-field">
-            <span class="pod-field-label">KEY</span>
-            <textarea
-              id="podAiTitleConfigKeysInput"
-              class="pod-field-control pod-textarea pod-ai-title-config-keys"
-              spellcheck="false"
-              placeholder="&#x4E00;&#x884C;&#x4E00;&#x4E2A; KEY"
-            ></textarea>
-          </label>
-          <p class="pod-field-hint">&#x591A;&#x4E2A; KEY &#x4F1A;&#x6309;&#x4EFB;&#x52A1;&#x5185;&#x8BF7;&#x6C42;&#x987A;&#x5E8F;&#x5FAA;&#x73AF;&#x4F7F;&#x7528;&#x3002;</p>
+          <div class="pod-ai-title-config-grid">
+            <label class="pod-field">
+              <span class="pod-field-label">&#x6A21;&#x578B;&#x540D;&#x79F0;</span>
+              <input id="podAiTitleConfigModelInput" class="pod-field-control" type="text" />
+            </label>
+            <label class="pod-field">
+              <span class="pod-field-label">API Base URL</span>
+              <input id="podAiTitleConfigApiBaseInput" class="pod-field-control" type="text" />
+            </label>
+            <label class="pod-field">
+              <span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;&#x6570;</span>
+              <input id="podAiTitleConfigConcurrencyInput" class="pod-field-control" type="number" min="1" max="100" step="1" />
+            </label>
+          </div>
+          <div class="pod-ai-title-config-keys-block">
+            <label class="pod-field pod-ai-title-config-keys-field">
+              <span class="pod-field-label">KEY</span>
+              <textarea
+                id="podAiTitleConfigKeysInput"
+                class="pod-field-control pod-textarea pod-ai-title-config-keys"
+                spellcheck="false"
+                placeholder="&#x4E00;&#x884C;&#x4E00;&#x4E2A; KEY"
+              ></textarea>
+            </label>
+            <p class="pod-field-hint">&#x591A;&#x4E2A; KEY &#x4F1A;&#x6309;&#x4EFB;&#x52A1;&#x5185;&#x8BF7;&#x6C42;&#x987A;&#x5E8F;&#x5FAA;&#x73AF;&#x4F7F;&#x7528;&#x3002;</p>
+          </div>
           <p id="podAiTitleConfigStatus" class="pod-ai-title-config-status" hidden></p>
         </div>
         <div class="pod-inline-actions pod-ai-title-config-footer">
@@ -632,5 +647,6 @@
     <input id="podAssetsFolderInput" type="file" accept="image/*" multiple webkitdirectory directory hidden />
     <input id="podPreviewFilesInput" type="file" accept="image/*" multiple hidden />
     <input id="podPreviewFolderInput" type="file" accept="image/*" multiple webkitdirectory directory hidden />
+    </div>
   </body>
 </html>
