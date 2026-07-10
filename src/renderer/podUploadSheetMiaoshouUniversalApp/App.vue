@@ -1,5 +1,5 @@
 <template>
-  <div class="pod-miaoshou-app-shell">
+  <div class="pod-miaoshou-app-shell" data-ui-version="20260710-layout-2">
     <header class="pod-miaoshou-app-header">
       <div class="pod-miaoshou-app-header__copy">
         <span class="pod-miaoshou-app-header__eyebrow">MIAOSHOU UNIVERSAL</span>
@@ -8,63 +8,112 @@
           <a-tag class="pod-miaoshou-theme-tag" bordered size="small">&#x5999;&#x624B;&#x901A;&#x7528;&#x7248;</a-tag>
         </div>
       </div>
-      <div class="pod-miaoshou-app-header__meta">
-        <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
-          &#x4FDD;&#x5B58;&#x6A21;&#x677F;
-        </a-button>
-        <a-button class="pod-danger-button" :disabled="!selectedTemplateId" :loading="deletingTemplate" @click="deleteSelectedTemplate">
-          &#x5220;&#x9664;&#x6A21;&#x677F;
-        </a-button>
-      </div>
     </header>
 
     <main class="pod-workbench">
-      <section class="pod-panel pod-template-panel pod-universal-template-panel">
+      <section class="pod-panel pod-template-manage-panel">
         <div class="pod-panel-head">
           <div>
             <p class="pod-panel-tag">&#x6A21;&#x677F;</p>
+            <h2 class="pod-panel-title">&#x6A21;&#x677F;&#x7BA1;&#x7406;</h2>
+          </div>
+        </div>
+        <div class="pod-template-save-row">
+          <div class="pod-field pod-inline-field">
+            <span class="pod-field-label">
+              &#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;
+              <a-tooltip content="&#x9009;&#x62E9;&#x5DF2;&#x4FDD;&#x5B58;&#x7684;&#x6A21;&#x677F;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x8868;&#x5355;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-select v-model="selectedTemplateId" allow-clear popup-container="body" :loading="loadingTemplates" :options="formTemplateOptions" @change="applySelectedTemplate" />
+          </div>
+          <div class="pod-field pod-inline-field">
+            <span class="pod-field-label">
+              &#x6A21;&#x677F;&#x540D;&#x79F0;
+              <a-tooltip content="&#x4FDD;&#x5B58;&#x5F53;&#x524D;&#x8868;&#x5355;&#x914D;&#x7F6E;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x540D;&#x79F0;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-input v-model="templateName" allow-clear />
+          </div>
+          <div class="pod-template-save-actions">
+            <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
+              &#x4FDD;&#x5B58;&#x6A21;&#x677F;
+            </a-button>
+            <a-button class="pod-danger-button" :disabled="!selectedTemplateId" :loading="deletingTemplate" @click="deleteSelectedTemplate">
+              &#x5220;&#x9664;&#x6A21;&#x677F;
+            </a-button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pod-panel pod-template-panel pod-universal-template-panel">
+        <div class="pod-panel-head">
+          <div>
+            <p class="pod-panel-tag">&#x57FA;&#x7840;</p>
             <h2 class="pod-panel-title">&#x901A;&#x7528;&#x8868;&#x683C;&#x5B57;&#x6BB5;</h2>
           </div>
           <a-tag class="pod-miaoshou-theme-tag" bordered>{{ products.length }} &#x4E2A;&#x5546;&#x54C1;</a-tag>
         </div>
-        <div class="pod-template-save-row">
-          <label class="pod-field">
-            <span class="pod-field-label">&#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;</span>
-            <a-select v-model="selectedTemplateId" allow-clear :loading="loadingTemplates" :options="formTemplateOptions" @change="applySelectedTemplate" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x6A21;&#x677F;&#x540D;&#x79F0;</span>
-            <a-input v-model="templateName" allow-clear />
-          </label>
-        </div>
         <div class="pod-universal-main-row">
           <label class="pod-field">
-            <span class="pod-field-label">&#x8D27;&#x6E90;&#x7C7B;&#x76EE;</span>
+            <span class="pod-field-label">
+              &#x8D27;&#x6E90;&#x7C7B;&#x76EE;
+              <a-tooltip content="&#x5BFC;&#x51FA;&#x8868;&#x683C;&#x65F6;&#x5199;&#x5165;&#x8D27;&#x6E90;&#x7C7B;&#x76EE;&#x5B57;&#x6BB5;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.sourceCategory" allow-clear @change="syncGlobalToProducts" />
           </label>
           <label class="pod-field">
-            <span class="pod-field-label">&#x81EA;&#x5B9A;&#x4E49;&#x5C5E;&#x6027;</span>
+            <span class="pod-field-label">
+              &#x81EA;&#x5B9A;&#x4E49;&#x5C5E;&#x6027;
+              <a-tooltip content="&#x586B;&#x5199;&#x5E73;&#x53F0;&#x8868;&#x683C;&#x8981;&#x6C42;&#x7684;&#x81EA;&#x5B9A;&#x4E49;&#x5C5E;&#x6027;&#x5185;&#x5BB9;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.customAttributes" allow-clear @change="syncGlobalToProducts" />
           </label>
         </div>
         <div class="pod-universal-media-row">
           <label class="pod-field">
-            <span class="pod-field-label">&#x4EA7;&#x54C1;&#x89C6;&#x9891;</span>
+            <span class="pod-field-label">
+              &#x4EA7;&#x54C1;&#x89C6;&#x9891;
+              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x4EA7;&#x54C1;&#x89C6;&#x9891;&#x6587;&#x4EF6;&#x6216;&#x94FE;&#x63A5;&#x4FE1;&#x606F;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.mainVideo" allow-clear @change="syncGlobalToProducts" />
           </label>
           <label class="pod-field">
-            <span class="pod-field-label">&#x4EA7;&#x54C1;&#x8BC1;&#x4E66;</span>
+            <span class="pod-field-label">
+              &#x4EA7;&#x54C1;&#x8BC1;&#x4E66;
+              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x8BC1;&#x4E66;&#x6587;&#x4EF6;&#x6216;&#x8868;&#x683C;&#x9700;&#x8981;&#x7684;&#x8BC1;&#x4E66;&#x4FE1;&#x606F;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.certificate" allow-clear @change="syncGlobalToProducts" />
           </label>
           <label class="pod-field">
-            <span class="pod-field-label">&#x5C3A;&#x5BF8;&#x56FE;&#x8868;</span>
+            <span class="pod-field-label">
+              &#x5C3A;&#x5BF8;&#x56FE;&#x8868;
+              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x5C3A;&#x5BF8;&#x56FE;&#x8868;&#x76F8;&#x5173;&#x4FE1;&#x606F;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.sizeChart" allow-clear @change="syncGlobalToProducts" />
           </label>
         </div>
         <div class="pod-universal-description-row">
           <label class="pod-field">
-            <span class="pod-field-label">&#x8BE6;&#x60C5;&#x63CF;&#x8FF0;</span>
-            <a-textarea v-model="globalForm.description" :auto-size="{ minRows: 2, maxRows: 4 }" @change="syncGlobalToProducts" />
+            <span class="pod-field-label">
+              &#x8BE6;&#x60C5;&#x63CF;&#x8FF0;
+              <a-tooltip content="&#x6279;&#x91CF;&#x5199;&#x5165;&#x4EA7;&#x54C1;&#x8BE6;&#x60C5;&#x63CF;&#x8FF0;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5546;&#x54C1;&#x6570;&#x636E;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-textarea v-model="globalForm.description" :auto-size="{ minRows: 4, maxRows: 8 }" @change="syncGlobalToProducts" />
           </label>
         </div>
       </section>
@@ -79,11 +128,21 @@
         </div>
         <div class="pod-sku-layout">
           <label class="pod-field">
-            <span class="pod-field-label">SKU&#x89C4;&#x683C;1</span>
+            <span class="pod-field-label">
+              SKU&#x89C4;&#x683C;1
+              <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x7528;&#x4E8E;&#x751F;&#x6210; SKU &#x884C;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
           </label>
           <label class="pod-field">
-            <span class="pod-field-label">SKU&#x89C4;&#x683C;2</span>
+            <span class="pod-field-label">
+              SKU&#x89C4;&#x683C;2
+              <a-tooltip content="&#x7B2C;&#x4E8C;&#x7EC4; SKU &#x89C4;&#x683C;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
           </label>
         </div>
@@ -95,7 +154,7 @@
               <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].declaredPrice" @change="syncSkuConfigToProducts" /></template>
             </a-table-column>
             <a-table-column title="SKU&#x56FE;&#x7247;" :width="150">
-              <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear :options="skuImageOptions" @change="syncSkuConfigToProducts" /></template>
+              <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear popup-container="body" :options="skuImageOptions" @change="syncSkuConfigToProducts" /></template>
             </a-table-column>
             <a-table-column title="&#x5E73;&#x53F0;SKU" :width="150">
               <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].platformSku" @change="syncSkuConfigToProducts" /></template>
@@ -124,7 +183,7 @@
             <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4E3B;&#x56FE;</a-button>
             <a-button class="pod-blue-button" :disabled="products.length < 1" @click="randomizeCarousel">&#x6279;&#x91CF;&#x968F;&#x673A;&#x4E3B;&#x56FE;</a-button>
             <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8BE6;&#x60C5;&#x56FE;</a-button>
-            <a-select v-model="imageUploadMode" class="pod-upload-mode" :options="imageUploadOptions" @change="scheduleStateSave" />
+            <a-select v-model="imageUploadMode" class="pod-upload-mode" popup-container="body" :options="imageUploadOptions" @change="scheduleStateSave" />
             <a-button class="pod-red-button" :loading="uploadingImages" :disabled="!products.length" @click="uploadImages">
               {{ uploadingImages ? '\u4e0a\u4f20\u4e2d' : '\u6279\u91cf\u4e0a\u4f20\u56fe\u7247' }}
             </a-button>
@@ -218,12 +277,12 @@
           <span>{{ batchAiTitleSummary.totalCount }} &#x4E2A;&#x5546;&#x54C1;</span>
         </div>
         <div class="pod-modal-grid">
-          <label class="pod-field"><span class="pod-field-label">AI &#x5E73;&#x53F0;</span><a-select v-model="batchAiTitleForm.aiProvider" :disabled="batchAiTitleBusy" :options="batchAiTitleAiPlatformOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5B58;&#x50A8;&#x7D20;&#x6750;</span><a-select v-model="batchAiTitleForm.storageProvider" :disabled="batchAiTitleBusy" :options="batchAiTitleStorageProviderOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x56FE;&#x7247;&#x538B;&#x7F29;</span><a-select v-model="batchAiTitleForm.imageCompression" :disabled="batchAiTitleBusy" :options="batchAiTitleImageCompressionOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;</span><a-input-number v-model="batchAiTitleForm.concurrency" :disabled="batchAiTitleBusy" :min="batchAiTitleMinConcurrency" :max="batchAiTitleMaxConcurrency" mode="button" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6;</span><a-input-number v-model="batchAiTitleForm.targetLength" :disabled="batchAiTitleBusy" :min="batchAiTitleMinTargetLength" :max="batchAiTitleMaxTargetLength" mode="button" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x8F93;&#x51FA;&#x8BED;&#x8A00;</span><a-select v-model="batchAiTitleForm.outputLanguage" :disabled="batchAiTitleBusy" :options="batchAiTitleOutputLanguageOptions" /></label>
+          <div class="pod-field"><span class="pod-field-label">AI &#x5E73;&#x53F0;<a-tooltip content="&#x9009;&#x62E9;&#x6279;&#x91CF;&#x751F;&#x6210;&#x6807;&#x9898;&#x4F7F;&#x7528;&#x7684; AI &#x914D;&#x7F6E;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.aiProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleAiPlatformOptions" /></div>
+          <div class="pod-field"><span class="pod-field-label">&#x5B58;&#x50A8;&#x7D20;&#x6750;<a-tooltip content="&#x9009;&#x62E9;&#x63D0;&#x4EA4;&#x7ED9; AI &#x8BC6;&#x56FE;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x7D20;&#x6750;&#x5B58;&#x50A8;&#x65B9;&#x5F0F;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.storageProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleStorageProviderOptions" /></div>
+          <div class="pod-field"><span class="pod-field-label">&#x56FE;&#x7247;&#x538B;&#x7F29;<a-tooltip content="&#x63D0;&#x4EA4;&#x7ED9; AI &#x524D;&#x7684;&#x56FE;&#x7247;&#x5904;&#x7406;&#x65B9;&#x5F0F;&#xFF0C;&#x7528;&#x4E8E;&#x63A7;&#x5236;&#x4E0A;&#x4F20;&#x4F53;&#x79EF;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.imageCompression" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleImageCompressionOptions" /></div>
+          <label class="pod-field"><span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;<a-tooltip content="&#x540C;&#x65F6;&#x751F;&#x6210;&#x6807;&#x9898;&#x7684;&#x4EFB;&#x52A1;&#x6570;&#xFF0C;&#x8FC7;&#x9AD8;&#x53EF;&#x80FD;&#x89E6;&#x53D1;&#x9650;&#x6D41;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.concurrency" :disabled="batchAiTitleBusy" :min="batchAiTitleMinConcurrency" :max="batchAiTitleMaxConcurrency" mode="button" /></label>
+          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6;<a-tooltip content="AI &#x751F;&#x6210;&#x6807;&#x9898;&#x65F6;&#x5C3D;&#x91CF;&#x63A5;&#x8FD1;&#x7684;&#x76EE;&#x6807;&#x5B57;&#x6570;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.targetLength" :disabled="batchAiTitleBusy" :min="batchAiTitleMinTargetLength" :max="batchAiTitleMaxTargetLength" mode="button" /></label>
+          <div class="pod-field"><span class="pod-field-label">&#x8F93;&#x51FA;&#x8BED;&#x8A00;<a-tooltip content="&#x9009;&#x62E9;&#x6807;&#x9898;&#x6700;&#x7EC8;&#x8F93;&#x51FA;&#x7684;&#x8BED;&#x8A00;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.outputLanguage" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleOutputLanguageOptions" /></div>
         </div>
         <div class="pod-quality-row">
           <span>&#x56FE;&#x7247;&#x8D28;&#x91CF;</span>
@@ -250,6 +309,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
+import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
@@ -861,6 +921,10 @@ async function loadFormTemplates() {
   try {
     const result = await featureBridge.value.getPodUploadSheetMiaoshouUniversalFormTemplates();
     formTemplates.value = Array.isArray(result && result.templates) ? result.templates : [];
+    if (!selectedTemplateId.value && formTemplates.value.length > 0) {
+      selectedTemplateId.value = formTemplates.value[0].id;
+      applySelectedTemplate(selectedTemplateId.value);
+    }
   } finally {
     loadingTemplates.value = false;
   }
@@ -983,6 +1047,7 @@ function updateViewportHeight() {
 }
 
 onMounted(() => {
+  console.info('[pod-upload-sheet-miaoshou-universal] ui-version 20260710-layout-2');
   document.body.classList.add('pod-miaoshou-vue-mounted');
   updateViewportHeight();
   window.addEventListener('resize', updateViewportHeight);
@@ -1023,9 +1088,9 @@ defineExpose({
 <style>
 .pod-miaoshou-app-shell {
   height: 100vh;
-  overflow: hidden;
-  padding: 12px;
-  background: #f6f8fb;
+  overflow: auto;
+  padding: 14px;
+  background: #ffffff;
   color: #172033;
 }
 
@@ -1054,9 +1119,10 @@ body.dark-theme .pod-panel {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 58px;
+  min-height: 54px;
+  max-width: 1440px;
   padding: 8px 14px;
-  margin-bottom: 10px;
+  margin: 0 auto 10px;
 }
 
 .pod-miaoshou-app-header__copy,
@@ -1123,13 +1189,17 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-workbench {
-  grid-template-columns: minmax(520px, 1.02fr) minmax(500px, 0.98fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   grid-template-areas:
-    "template sku"
-    "list list";
+    "templateManage"
+    "template"
+    "sku"
+    "list";
+  max-width: 1440px;
   height: calc(100vh - 80px);
   min-height: 0;
+  margin: 0 auto;
 }
 
 .pod-panel {
@@ -1138,18 +1208,20 @@ body.dark-theme .pod-modal-title strong {
   overflow: hidden;
 }
 
+.pod-template-manage-panel {
+  grid-area: templateManage;
+}
+
 .pod-template-panel {
   grid-area: template;
-  max-height: 248px;
   align-content: start;
-  overflow: auto;
+  overflow: visible;
 }
 
 .pod-sku-panel {
   grid-area: sku;
-  max-height: 248px;
   align-content: start;
-  overflow: auto;
+  overflow: visible;
 }
 
 .pod-list-panel {
@@ -1174,15 +1246,24 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-template-save-row {
-  grid-template-columns: minmax(180px, 0.9fr) minmax(180px, 1fr);
+  grid-template-columns: minmax(330px, 0.9fr) minmax(300px, 0.8fr) auto;
+  align-items: center;
+}
+
+.pod-template-save-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 210px;
 }
 
 .pod-universal-main-row {
-  grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 1fr);
+  grid-template-columns: 260px minmax(520px, 1fr);
 }
 
 .pod-universal-media-row {
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
 }
 
 .pod-universal-description-row {
@@ -1190,7 +1271,7 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-sku-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
 }
 
 .pod-field {
@@ -1199,14 +1280,34 @@ body.dark-theme .pod-modal-title strong {
   min-width: 0;
 }
 
+.pod-inline-field {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.pod-inline-field .pod-field-label {
+  white-space: nowrap;
+}
+
 .pod-field-wide {
   grid-column: span 2;
 }
 
 .pod-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: #5f6f83;
   font-size: 11px;
   font-weight: 700;
+}
+
+.pod-help-icon {
+  color: var(--theme-primary-color, #f4bf22);
+  font-size: 13px;
+  line-height: 1;
+  cursor: help;
 }
 
 body.dark-theme .pod-field-label {
@@ -1215,12 +1316,17 @@ body.dark-theme .pod-field-label {
 
 .pod-list-head {
   align-items: flex-start;
+  grid-template-columns: 180px minmax(0, 1fr);
 }
 
 .pod-actions {
   justify-content: flex-end;
   align-items: center;
   gap: 6px;
+  padding: 8px;
+  border: 1px solid #e5ebf3;
+  border-radius: 8px;
+  background: #f8fafc;
 }
 
 .pod-upload-mode {
@@ -1237,7 +1343,7 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-actions .arco-btn {
-  min-width: 92px;
+  min-width: 104px;
 }
 
 .pod-miaoshou-app-header__meta .arco-btn {
@@ -1255,10 +1361,45 @@ body.dark-theme .pod-field-label {
 .pod-field :deep(.arco-textarea-wrapper),
 .pod-upload-mode :deep(.arco-select-view-single) {
   min-height: 32px;
-  border-color: #dbe3ee;
+  border-color: #cbd5e1;
   border-radius: 6px;
   background: #ffffff;
   box-shadow: none;
+}
+
+.pod-template-manage-panel .pod-field :deep(.arco-input-wrapper),
+.pod-template-manage-panel .pod-field :deep(.arco-select-view-single) {
+  min-height: 34px;
+  border-color: #b8c4d4;
+  background: #ffffff;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper,
+.pod-miaoshou-app-shell .arco-select-view-single,
+.pod-miaoshou-app-shell .arco-select-view,
+.pod-miaoshou-app-shell .arco-textarea-wrapper {
+  border: 1px solid #b8c4d4 !important;
+  background: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12) !important;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper:hover,
+.pod-miaoshou-app-shell .arco-select-view:hover,
+.pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
+  border-color: #94a3b8 !important;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
+.pod-miaoshou-app-shell .arco-select-view-focus,
+.pod-miaoshou-app-shell .arco-textarea-wrapper:focus-within {
+  border-color: var(--theme-primary-color, #f4bf22) !important;
+  box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18) !important;
+}
+
+.pod-miaoshou-app-shell .arco-btn-disabled,
+.pod-miaoshou-app-shell .arco-btn-disabled:hover {
+  background: #f3f6fa !important;
+  color: #94a3b8 !important;
 }
 
 .pod-field :deep(.arco-textarea-wrapper) {
@@ -1376,7 +1517,6 @@ body.dark-theme .pod-field-label {
 
 @media (max-width: 1100px) {
   .pod-template-grid,
-  .pod-template-save-row,
   .pod-universal-main-row,
   .pod-universal-media-row,
   .pod-universal-description-row,
@@ -1386,8 +1526,9 @@ body.dark-theme .pod-field-label {
 
   .pod-workbench {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     grid-template-areas:
+      "templateManage"
       "template"
       "sku"
       "list";
@@ -1414,6 +1555,10 @@ body.dark-theme .pod-field-label {
 
   .pod-field-wide {
     grid-column: auto;
+  }
+
+  .pod-inline-field {
+    grid-template-columns: 1fr;
   }
 }
 </style>

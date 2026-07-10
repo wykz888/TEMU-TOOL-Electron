@@ -4,6 +4,8 @@ const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
 const { podUploadSheetMiaoshouFeature } = require('../features/featureCenter/podUploadSheetMiaoshou');
 
+const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260710-layout-2';
+
 function createPodUploadSheetMiaoshouWindow(options = {}) {
   const {
     backgroundColor = '#ffffff',
@@ -28,7 +30,11 @@ function createPodUploadSheetMiaoshouWindow(options = {}) {
     title: resolveWindowTitle(title)
   });
 
-  podUploadSheetWindow.loadFile(path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshou.html'));
+  podUploadSheetWindow.loadFile(path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshou.html'), {
+    query: {
+      v: POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION
+    }
+  });
 
   return podUploadSheetWindow;
 }

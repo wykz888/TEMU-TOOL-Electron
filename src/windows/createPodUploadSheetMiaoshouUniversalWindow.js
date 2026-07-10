@@ -6,6 +6,8 @@ const {
   podUploadSheetMiaoshouUniversalFeature
 } = require('../features/featureCenter/podUploadSheetMiaoshouUniversal');
 
+const POD_UPLOAD_SHEET_MIAOSHOU_UNIVERSAL_ASSET_VERSION = '20260710-layout-2';
+
 function createPodUploadSheetMiaoshouUniversalWindow(options = {}) {
   const {
     backgroundColor = '#ffffff',
@@ -31,7 +33,12 @@ function createPodUploadSheetMiaoshouUniversalWindow(options = {}) {
   });
 
   podUploadSheetUniversalWindow.loadFile(
-    path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshouUniversal.html')
+    path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshouUniversal.html'),
+    {
+      query: {
+        v: POD_UPLOAD_SHEET_MIAOSHOU_UNIVERSAL_ASSET_VERSION
+      }
+    }
   );
 
   return podUploadSheetUniversalWindow;

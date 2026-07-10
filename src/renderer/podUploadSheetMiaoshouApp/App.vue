@@ -1,5 +1,5 @@
 <template>
-  <div class="pod-miaoshou-app-shell">
+  <div class="pod-miaoshou-app-shell" data-ui-version="20260710-layout-2">
     <header class="pod-miaoshou-app-header">
       <div class="pod-miaoshou-app-header__copy">
         <span class="pod-miaoshou-app-header__eyebrow">MIAOSHOU TEMU</span>
@@ -8,74 +8,136 @@
           <a-tag class="pod-miaoshou-theme-tag" bordered size="small">&#x5999;&#x624B; TEMU &#x7248;</a-tag>
         </div>
       </div>
-      <div class="pod-miaoshou-app-header__meta">
-        <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
-          &#x4FDD;&#x5B58;&#x6A21;&#x677F;
-        </a-button>
-        <a-button class="pod-danger-button" :disabled="!selectedTemplateId" :loading="deletingTemplate" @click="deleteSelectedTemplate">
-          &#x5220;&#x9664;&#x6A21;&#x677F;
-        </a-button>
-      </div>
     </header>
 
     <main class="pod-workbench">
-      <section class="pod-panel pod-template-panel">
+      <section class="pod-panel pod-template-manage-panel">
         <div class="pod-panel-head">
           <div>
             <p class="pod-panel-tag">&#x6A21;&#x677F;</p>
-            <h2 class="pod-panel-title">&#x57FA;&#x7840;&#x4FE1;&#x606F;&#x6A21;&#x677F;</h2>
+            <h2 class="pod-panel-title">&#x6A21;&#x677F;&#x7BA1;&#x7406;</h2>
           </div>
-          <a-tag class="pod-miaoshou-theme-tag" bordered>{{ products.length }} &#x4E2A;&#x5546;&#x54C1;</a-tag>
         </div>
         <div class="pod-template-save-row">
-          <label class="pod-field">
-            <span class="pod-field-label">&#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;</span>
+          <div class="pod-field pod-inline-field">
+            <span class="pod-field-label">
+              &#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;
+              <a-tooltip content="&#x9009;&#x62E9;&#x5DF2;&#x4FDD;&#x5B58;&#x7684;&#x6A21;&#x677F;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x8868;&#x5355;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-select
               v-model="selectedTemplateId"
               allow-clear
+              popup-container="body"
               :loading="loadingTemplates"
               :options="formTemplateOptions"
               @change="applySelectedTemplate"
             />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x6A21;&#x677F;&#x540D;&#x79F0;</span>
+          </div>
+          <div class="pod-field pod-inline-field">
+            <span class="pod-field-label">
+              &#x6A21;&#x677F;&#x540D;&#x79F0;
+              <a-tooltip content="&#x4FDD;&#x5B58;&#x5F53;&#x524D;&#x8868;&#x5355;&#x914D;&#x7F6E;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x540D;&#x79F0;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="templateName" allow-clear />
-          </label>
+          </div>
+          <div class="pod-template-save-actions">
+            <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
+              &#x4FDD;&#x5B58;&#x6A21;&#x677F;
+            </a-button>
+            <a-button class="pod-danger-button" :disabled="!selectedTemplateId" :loading="deletingTemplate" @click="deleteSelectedTemplate">
+              &#x5220;&#x9664;&#x6A21;&#x677F;
+            </a-button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pod-panel pod-template-panel">
+        <div class="pod-panel-head">
+          <div>
+            <p class="pod-panel-tag">&#x57FA;&#x7840;</p>
+            <h2 class="pod-panel-title">&#x57FA;&#x7840;&#x4FE1;&#x606F;&#x6A21;&#x677F;</h2>
+          </div>
+          <a-tag class="pod-miaoshou-theme-tag" bordered>{{ products.length }} &#x4E2A;&#x5546;&#x54C1;</a-tag>
         </div>
         <div class="pod-template-main-row">
-          <label class="pod-field pod-template-select-field">
-            <span class="pod-field-label">&#x8868;&#x683C;&#x6A21;&#x677F;</span>
-            <a-select v-model="globalForm.templateId" :options="templateTypeOptions" @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field pod-category-field">
-            <span class="pod-field-label">&#x56FA;&#x5B9A;&#x7C7B;&#x76EE;</span>
+          <div class="pod-field pod-template-select-field">
+            <span class="pod-field-label">
+              &#x8868;&#x683C;&#x6A21;&#x677F;
+              <a-tooltip content="&#x9009;&#x62E9;&#x5BFC;&#x51FA;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x8868;&#x683C;&#x7C7B;&#x578B;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-select v-model="globalForm.templateId" popup-container="body" :options="templateTypeOptions" @change="syncGlobalToProducts" />
+          </div>
+          <div class="pod-field pod-category-field">
+            <span class="pod-field-label">
+              &#x56FA;&#x5B9A;&#x7C7B;&#x76EE;
+              <a-tooltip content="&#x9009;&#x4E2D;&#x540E;&#x4F1A;&#x6279;&#x91CF;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x5546;&#x54C1;&#x6570;&#x636E;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-select
               v-model="globalForm.category"
               allow-clear
               allow-search
+              popup-container="body"
               :loading="loadingCategories"
               :options="categorySelectOptions"
               @change="syncGlobalToProducts"
             />
-          </label>
+          </div>
         </div>
         <div class="pod-template-meta-row">
+          <div class="pod-field">
+            <span class="pod-field-label">
+              &#x627F;&#x8BFA;&#x53D1;&#x8D27;&#x65F6;&#x6548;
+              <a-tooltip content="&#x586B;&#x8868;&#x5BFC;&#x51FA;&#x65F6;&#x5199;&#x5165;&#x7684;&#x53D1;&#x8D27;&#x65F6;&#x6548;&#x503C;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-select v-model="globalForm.delivery" popup-container="body" :options="deliveryOptions" @change="syncGlobalToProducts" />
+          </div>
           <label class="pod-field">
-            <span class="pod-field-label">&#x627F;&#x8BFA;&#x53D1;&#x8D27;&#x65F6;&#x6548;</span>
-            <a-select v-model="globalForm.delivery" :options="deliveryOptions" @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x4EA7;&#x5730;</span>
+            <span class="pod-field-label">
+              &#x4EA7;&#x5730;
+              <a-tooltip content="&#x5BFC;&#x51FA;&#x8868;&#x683C;&#x65F6;&#x5199;&#x5165;&#x7684;&#x4EA7;&#x5730;&#x5185;&#x5BB9;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.origin" @change="syncGlobalToProducts" />
           </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x5B9A;&#x5236;&#x54C1;</span>
-            <a-select v-model="globalForm.isCustom" :options="customOptions" @change="syncGlobalToProducts" />
-          </label>
+          <div class="pod-field">
+            <span class="pod-field-label">
+              &#x5B9A;&#x5236;&#x54C1;
+              <a-tooltip content="&#x6309;&#x5E73;&#x53F0;&#x8868;&#x683C;&#x8981;&#x6C42;&#x5199;&#x5165;&#x662F;&#x5426;&#x5B9A;&#x5236;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-select v-model="globalForm.isCustom" popup-container="body" :options="customOptions" @change="syncGlobalToProducts" />
+          </div>
           <label class="pod-field pod-source-link-field">
-            <span class="pod-field-label">&#x8D27;&#x6E90;&#x94FE;&#x63A5;</span>
+            <span class="pod-field-label">
+              &#x8D27;&#x6E90;&#x94FE;&#x63A5;
+              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x5546;&#x54C1;&#x6216;&#x7D20;&#x6750;&#x6765;&#x6E90;&#x94FE;&#x63A5;&#xFF0C;&#x4FBF;&#x4E8E;&#x8868;&#x683C;&#x8FFD;&#x6EAF;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.sourceLink" allow-clear @change="syncGlobalToProducts" />
+          </label>
+        </div>
+        <div class="pod-template-description-row">
+          <label class="pod-field">
+            <span class="pod-field-label">
+              &#x8BE6;&#x60C5;&#x63CF;&#x8FF0;
+              <a-tooltip content="&#x6279;&#x91CF;&#x5199;&#x5165;&#x4EA7;&#x54C1;&#x8BE6;&#x60C5;&#x63CF;&#x8FF0;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5546;&#x54C1;&#x6570;&#x636E;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-textarea v-model="globalForm.description" class="pod-description-textarea" :auto-size="{ minRows: 3, maxRows: 3 }" @change="syncGlobalToProducts" />
           </label>
         </div>
       </section>
@@ -86,49 +148,153 @@
             <p class="pod-panel-tag">SKU</p>
             <h2 class="pod-panel-title">&#x89C4;&#x683C;&#x4E0E;&#x4EF7;&#x683C;</h2>
           </div>
+          <a-tag class="pod-miaoshou-theme-tag" bordered>{{ skuRows.length }} SKU</a-tag>
         </div>
-        <div class="pod-sku-layout">
+        <div class="pod-sku-name-row">
           <label class="pod-field">
-            <span class="pod-field-label">&#x89C4;&#x683C;&#x540D;&#x79F0;1</span>
+            <span class="pod-field-label">
+              &#x89C4;&#x683C;&#x540D;&#x79F0;1
+              <a-tooltip content="&#x7B2C;&#x4E00;&#x7EC4; SKU &#x89C4;&#x683C;&#x540D;&#x79F0;&#xFF0C;&#x5982;&#x989C;&#x8272;&#x3001;&#x5C3A;&#x7801;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.specNameOne" @change="syncGlobalToProducts" />
           </label>
           <label class="pod-field">
-            <span class="pod-field-label">&#x89C4;&#x683C;&#x503C;1</span>
-            <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x89C4;&#x683C;&#x540D;&#x79F0;2</span>
+            <span class="pod-field-label">
+              &#x89C4;&#x683C;&#x540D;&#x79F0;2
+              <a-tooltip content="&#x7B2C;&#x4E8C;&#x7EC4; SKU &#x89C4;&#x683C;&#x540D;&#x79F0;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
             <a-input v-model="globalForm.specNameTwo" @change="syncGlobalToProducts" />
           </label>
+        </div>
+        <div class="pod-sku-value-row">
           <label class="pod-field">
-            <span class="pod-field-label">&#x89C4;&#x683C;&#x503C;2</span>
-            <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="syncGlobalToProducts" />
+            <span class="pod-field-label">
+              &#x89C4;&#x683C;&#x503C;1
+              <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x7528;&#x4E8E;&#x751F;&#x6210; SKU &#x6570;&#x636E;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
+          </label>
+          <label class="pod-field">
+            <span class="pod-field-label">
+              &#x89C4;&#x683C;&#x503C;2
+              <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
+                <icon-question-circle class="pod-help-icon" />
+              </a-tooltip>
+            </span>
+            <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
           </label>
         </div>
-        <div class="pod-sku-defaults">
-          <label class="pod-field"><span class="pod-field-label">&#x7533;&#x62A5;&#x4EF7;</span><a-input v-model="skuDefaults.declaredPrice" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5EFA;&#x8BAE;&#x552E;&#x4EF7;</span><a-input v-model="skuDefaults.price" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x957F;</span><a-input v-model="skuDefaults.length" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5BBD;</span><a-input v-model="skuDefaults.width" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x9AD8;</span><a-input v-model="skuDefaults.height" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x91CD;&#x91CF;</span><a-input v-model="skuDefaults.weight" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5E93;&#x5B58;</span><a-input v-model="skuDefaults.stock" @change="syncGlobalToProducts" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5E73;&#x53F0;SKU</span><a-input v-model="skuDefaults.platformSku" @change="syncGlobalToProducts" /></label>
-        </div>
+        <a-table class="pod-sku-table" row-key="key" :data="skuRows" :pagination="false" :scroll="skuTableScroll">
+          <template #columns>
+            <a-table-column data-index="specValueOne" :width="120">
+              <template #title>
+                <span class="pod-table-title">&#x89C4;&#x683C;&#x503C;1<a-tooltip content="&#x7531;&#x4E0A;&#x65B9;&#x89C4;&#x683C;&#x503C;1&#x81EA;&#x52A8;&#x751F;&#x6210;&#xFF0C;&#x6BCF;&#x4E00;&#x884C;&#x5BF9;&#x5E94;&#x4E00;&#x4E2A; SKU &#x7EC4;&#x5408;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+            </a-table-column>
+            <a-table-column data-index="specValueTwo" :width="120">
+              <template #title>
+                <span class="pod-table-title">&#x89C4;&#x683C;&#x503C;2<a-tooltip content="&#x7531;&#x4E0A;&#x65B9;&#x89C4;&#x683C;&#x503C;2&#x81EA;&#x52A8;&#x751F;&#x6210;&#xFF0C;&#x6CA1;&#x6709;&#x7B2C;&#x4E8C;&#x89C4;&#x683C;&#x65F6;&#x53EF;&#x4E3A;&#x7A7A;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+            </a-table-column>
+            <a-table-column :width="170">
+              <template #title>
+                <span class="pod-table-title">&#x9884;&#x89C8;&#x56FE;<a-tooltip content="&#x9009;&#x62E9;&#x8BE5; SKU &#x5BF9;&#x5E94;&#x7684;&#x8F6E;&#x64AD;&#x56FE;&#x5E8F;&#x53F7;&#xFF0C;&#x5BFC;&#x51FA;&#x5230;&#x9884;&#x89C8;&#x56FE;&#x6216;&#x989C;&#x8272;&#x56FE;&#x5B57;&#x6BB5;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear popup-container="body" :options="skuImageOptions" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="120">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x7533;&#x62A5;&#x4EF7;<a-tooltip content="&#x8BE5; SKU &#x5355;&#x72EC;&#x7684;&#x7533;&#x62A5;&#x4EF7;&#xFF0C;&#x5355;&#x4F4D; CNY&#xFF0C;&#x4F1A;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(CNY)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].declaredPrice" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="120">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x5EFA;&#x8BAE;&#x552E;&#x4EF7;<a-tooltip content="&#x8BE5; SKU &#x5355;&#x72EC;&#x7684;&#x5EFA;&#x8BAE;&#x552E;&#x4EF7;&#xFF0C;&#x5355;&#x4F4D; CNY&#xFF0C;&#x4F1A;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(CNY)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].price" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="90">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x957F;<a-tooltip content="&#x8BE5; SKU &#x5305;&#x88C5;&#x957F;&#x5EA6;&#xFF0C;&#x5355;&#x4F4D; cm&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(cm)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].length" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="90">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x5BBD;<a-tooltip content="&#x8BE5; SKU &#x5305;&#x88C5;&#x5BBD;&#x5EA6;&#xFF0C;&#x5355;&#x4F4D; cm&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(cm)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].width" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="90">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x9AD8;<a-tooltip content="&#x8BE5; SKU &#x5305;&#x88C5;&#x9AD8;&#x5EA6;&#xFF0C;&#x5355;&#x4F4D; cm&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(cm)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].height" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="110">
+              <template #title>
+                <span class="pod-table-title pod-table-title--unit"><span class="pod-table-title-main">&#x91CD;&#x91CF;<a-tooltip content="&#x8BE5; SKU &#x91CD;&#x91CF;&#xFF0C;&#x5355;&#x4F4D; g&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><span class="pod-table-title-unit">(g)</span></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].weight" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="100">
+              <template #title>
+                <span class="pod-table-title">&#x5E93;&#x5B58;<a-tooltip content="&#x8BE5; SKU &#x5E93;&#x5B58;&#x6570;&#x91CF;&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].stock" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="150">
+              <template #title>
+                <span class="pod-table-title">&#x5E73;&#x53F0;SKU<a-tooltip content="&#x8BE5; SKU &#x5355;&#x72EC;&#x7684;&#x5E73;&#x53F0; SKU &#x7F16;&#x7801;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].platformSku" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="140">
+              <template #title>
+                <span class="pod-table-title">SKU&#x5206;&#x7C7B;&#x7C7B;&#x578B;<a-tooltip content="&#x9700;&#x8981;&#x6309; SKU &#x5355;&#x72EC;&#x586B;&#x5199;&#x7684;&#x5206;&#x7C7B;&#x7C7B;&#x578B;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].skuCategoryType" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="140">
+              <template #title>
+                <span class="pod-table-title">SKU&#x5206;&#x7C7B;&#x6570;&#x91CF;<a-tooltip content="&#x9700;&#x8981;&#x6309; SKU &#x5355;&#x72EC;&#x586B;&#x5199;&#x7684;&#x5206;&#x7C7B;&#x6570;&#x91CF;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].skuCategoryCount" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="140">
+              <template #title>
+                <span class="pod-table-title">SKU&#x5206;&#x7C7B;&#x5355;&#x4F4D;<a-tooltip content="&#x9700;&#x8981;&#x6309; SKU &#x5355;&#x72EC;&#x586B;&#x5199;&#x7684;&#x5206;&#x7C7B;&#x5355;&#x4F4D;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].skuCategoryUnit" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+            <a-table-column :width="120">
+              <template #title>
+                <span class="pod-table-title">&#x72EC;&#x7ACB;&#x5305;&#x88C5;<a-tooltip content="&#x8BE5; SKU &#x662F;&#x5426;&#x72EC;&#x7ACB;&#x5305;&#x88C5;&#xFF0C;&#x6309;&#x884C;&#x5BFC;&#x51FA;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+              </template>
+              <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].independentPackaging" allow-clear popup-container="body" :options="customOptions" @change="syncSkuConfigToProducts" /></template>
+            </a-table-column>
+          </template>
+        </a-table>
       </section>
 
-      <section class="pod-panel pod-list-panel">
-        <div class="pod-list-head">
+      <section ref="listPanelRef" class="pod-panel pod-list-panel">
+        <div ref="listHeadRef" class="pod-list-head">
           <div>
             <p class="pod-panel-tag">&#x672C;&#x5730;&#x5546;&#x54C1;</p>
             <h2 class="pod-panel-title">&#x5546;&#x54C1;&#x6570;&#x636E;&#x5217;&#x8868;</h2>
           </div>
           <div class="pod-actions">
-            <a-button class="pod-blue-button" :loading="importingProducts" @click="importProducts">&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
+            <a-button class="pod-red-button" :loading="importingProducts" @click="importProducts">&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
             <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-            <a-button class="pod-blue-button" :disabled="products.length < 1" @click="randomizeCarousel">&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-            <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4EA7;&#x54C1;&#x63CF;&#x8FF0;</a-button>
-            <a-select v-model="imageUploadMode" class="pod-upload-mode" :options="imageUploadOptions" />
+            <a-button class="pod-blue-button" :disabled="products.length < 1" @click="openRandomCarouselPreset">&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</a-button>
+            <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x63CF;&#x8FF0;&#x56FE;</a-button>
             <a-button class="pod-red-button" :loading="uploadingImages" :disabled="!products.length" @click="uploadImages">
               {{ uploadingImages ? '\u4e0a\u4f20\u4e2d' : '\u6279\u91cf\u4e0a\u4f20\u56fe\u7247' }}
             </a-button>
@@ -139,7 +305,7 @@
             <a-button class="pod-danger-button" :disabled="!products.length" @click="clearProducts">&#x6E05;&#x7A7A;&#x5217;&#x8868;</a-button>
           </div>
         </div>
-        <div v-if="uploadProgressText || aiTitleProgressText" class="pod-progress-line">
+        <div v-if="uploadProgressText || aiTitleProgressText" ref="progressLineRef" class="pod-progress-line">
           <span v-if="uploadProgressText">{{ uploadProgressText }}</span>
           <span v-if="aiTitleProgressText">{{ aiTitleProgressText }}</span>
         </div>
@@ -174,14 +340,19 @@
             <a-table-column title="&#x8F6E;&#x64AD;&#x56FE;" :width="220">
               <template #cell="{ record }">
                 <div class="pod-chip-list" :title="getMaterialTitle(record, 'carousel')">
-                  <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" bordered>{{ item }}</a-tag>
+                  <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
+                  <a-tag v-if="getExtraItemCount(record.materials.carousel)" bordered>+{{ getExtraItemCount(record.materials.carousel) }}</a-tag>
                   <span v-if="!record.materials.carousel.length" class="pod-muted">&#x6682;&#x65E0;</span>
                 </div>
               </template>
             </a-table-column>
             <a-table-column title="&#x63CF;&#x8FF0;&#x56FE;" :width="220">
               <template #cell="{ record }">
-                <a-input v-model="record.descriptionImageOrders" placeholder="1,2,3" @change="scheduleStateSave" />
+                <div class="pod-chip-list" :title="getDescriptionImageTitle(record)">
+                  <a-tag v-for="item in getPreviewItems(getDescriptionImageItems(record))" :key="item" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
+                  <a-tag v-if="getExtraItemCount(getDescriptionImageItems(record))" bordered>+{{ getExtraItemCount(getDescriptionImageItems(record)) }}</a-tag>
+                  <span v-if="!getDescriptionImageItems(record).length" class="pod-muted">&#x6682;&#x65E0;</span>
+                </div>
               </template>
             </a-table-column>
             <a-table-column title="AI" :width="130">
@@ -194,14 +365,182 @@
       </section>
     </main>
 
-    <a-modal v-model:visible="carouselPresetVisible" :mask-closable="false" modal-class="pod-miaoshou-operation-modal" @ok="applyCarouselPreset">
-      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8F6E;&#x64AD;&#x56FE;</template>
-      <a-textarea v-model="carouselPresetText" :auto-size="{ minRows: 8, maxRows: 12 }" placeholder="&#x4E00;&#x884C;&#x4E00;&#x4E2A;&#x56FE;&#x7247;&#x540D;&#xFF0C;&#x4FDD;&#x5B58;&#x540E;&#x6279;&#x91CF;&#x653E;&#x5230;&#x8F6E;&#x64AD;&#x56FE;&#x524D;&#x9762;" />
+    <a-modal
+      :visible="carouselPresetVisible"
+      :mask-closable="false"
+      :footer="false"
+      modal-class="pod-miaoshou-operation-modal pod-carousel-preset-modal"
+      @cancel="closeCarouselPreset"
+    >
+      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4E3B;&#x56FE;/&#x8F6E;&#x64AD;&#x56FE;</template>
+      <div class="pod-carousel-preset-body">
+        <section class="pod-carousel-preset-panel">
+          <div class="pod-carousel-preset-head">
+            <div>
+              <strong>&#x56FE;&#x7247;&#x6587;&#x4EF6;&#x5217;&#x8868;</strong>
+              <span>&#x4ECE;&#x5DF2;&#x5BFC;&#x5165;&#x5546;&#x54C1;&#x7684;&#x8F6E;&#x64AD;&#x56FE;&#x4E2D;&#x9009;&#x62E9;</span>
+            </div>
+            <a-tag class="pod-carousel-count-tag" bordered>{{ carouselPresetCandidates.length }} &#x5F20;</a-tag>
+          </div>
+          <div class="pod-carousel-preset-toolbar">
+            <a-button size="small" @click="clearCarouselPresetItems">&#x53D6;&#x6D88;&#x5168;&#x9009;</a-button>
+            <a-button size="small" @click="selectAllCarouselPresetItems">&#x5168;&#x90E8;&#x52FE;&#x9009;</a-button>
+            <span>{{ carouselPresetSelected.length }} / {{ carouselPresetCandidates.length }}</span>
+          </div>
+          <div class="pod-carousel-candidate-list">
+            <label
+              v-for="item in carouselPresetCandidates"
+              :key="item.name"
+              class="pod-carousel-candidate-item"
+              :class="{ 'is-selected': isCarouselPresetSelected(item.name) }"
+            >
+              <a-checkbox :model-value="isCarouselPresetSelected(item.name)" @change="(checked) => toggleCarouselPresetItem(item.name, checked)" />
+              <span class="pod-carousel-file-name" :title="item.name">{{ item.name }}</span>
+              <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
+            </label>
+            <a-empty v-if="!carouselPresetCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
+          </div>
+        </section>
+        <section class="pod-carousel-preset-panel">
+          <div class="pod-carousel-preset-head">
+            <div>
+              <strong>&#x9009;&#x4E2D;&#x8F6E;&#x64AD;&#x987A;&#x5E8F;</strong>
+              <span>&#x786E;&#x8BA4;&#x540E;&#x4F1A;&#x6309;&#x6B64;&#x987A;&#x5E8F;&#x6392;&#x5230;&#x524D;&#x9762;</span>
+            </div>
+            <a-tag class="pod-carousel-count-tag" bordered>{{ carouselPresetSelected.length }} &#x5F20;</a-tag>
+          </div>
+          <div class="pod-carousel-selected-list">
+            <div v-for="(name, index) in carouselPresetSelected" :key="name" class="pod-carousel-selected-item">
+              <span class="pod-carousel-order-index">{{ index + 1 }}</span>
+              <div class="pod-carousel-assigned-file">
+                <span>&#x7B2C; {{ index + 1 }} &#x5F20;&#x5206;&#x914D;&#x56FE;&#x7247;</span>
+                <a-tooltip :content="getCarouselPresetFileTip(name)">
+                  <strong>{{ getCarouselPresetDisplayName(name) }}</strong>
+                </a-tooltip>
+              </div>
+              <div class="pod-carousel-order-actions">
+                <a-button size="mini" :disabled="index === 0" @click="moveCarouselPresetItem(index, -1)">&#x4E0A;&#x79FB;</a-button>
+                <a-button size="mini" :disabled="index === carouselPresetSelected.length - 1" @click="moveCarouselPresetItem(index, 1)">&#x4E0B;&#x79FB;</a-button>
+              </div>
+            </div>
+            <a-empty v-if="!carouselPresetSelected.length" class="pod-carousel-empty" description="&#x8BF7;&#x5728;&#x5DE6;&#x4FA7;&#x52FE;&#x9009;&#x56FE;&#x7247;" />
+          </div>
+        </section>
+      </div>
+      <div class="pod-modal-footer pod-carousel-preset-footer">
+        <a-button @click="closeCarouselPreset">&#x53D6;&#x6D88;</a-button>
+        <a-button class="pod-theme-button" type="primary" :disabled="!carouselPresetSelected.length" @click="applyCarouselPreset">&#x5E94;&#x7528;&#x9884;&#x8BBE;</a-button>
+      </div>
     </a-modal>
 
-    <a-modal v-model:visible="descriptionPresetVisible" :mask-closable="false" modal-class="pod-miaoshou-operation-modal" @ok="applyDescriptionPreset">
-      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4EA7;&#x54C1;&#x63CF;&#x8FF0;</template>
-      <a-textarea v-model="descriptionPresetText" :auto-size="{ minRows: 8, maxRows: 12 }" placeholder="&#x586B;&#x5199;&#x8F6E;&#x64AD;&#x56FE;&#x5E8F;&#x53F7;&#xFF0C;&#x5982; 1,2,3" />
+    <a-modal
+      :visible="randomCarouselVisible"
+      :mask-closable="false"
+      :footer="false"
+      modal-class="pod-miaoshou-operation-modal pod-random-carousel-modal"
+      @cancel="closeRandomCarouselPreset"
+    >
+      <template #title>&#x6279;&#x91CF;&#x968F;&#x673A;&#x4E3B;&#x56FE;</template>
+      <div class="pod-random-carousel-body">
+        <label class="pod-random-carousel-only-first">
+          <a-checkbox v-model="randomCarouselOnlyFirst" />
+          <span>&#x53EA;&#x6539;&#x9996;&#x56FE;</span>
+        </label>
+        <section class="pod-random-carousel-panel">
+          <div class="pod-random-carousel-toolbar">
+            <a-button size="small" @click="selectAllRandomCarouselItems">&#x5168;&#x9009;</a-button>
+            <span>{{ randomCarouselCandidates.length }}</span>
+          </div>
+          <div class="pod-random-carousel-list">
+            <label
+              v-for="item in randomCarouselCandidates"
+              :key="item.order"
+              class="pod-random-carousel-item"
+              :class="{ 'is-selected': isRandomCarouselSelected(item.order) }"
+            >
+              <a-checkbox :model-value="isRandomCarouselSelected(item.order)" @change="(checked) => toggleRandomCarouselItem(item.order, checked)" />
+              <span class="pod-random-carousel-index">{{ item.order }}</span>
+              <a-tooltip :content="getRandomCarouselItemTip(item)">
+                <strong>{{ item.displayName }}</strong>
+              </a-tooltip>
+              <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
+            </label>
+            <a-empty v-if="!randomCarouselCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
+          </div>
+        </section>
+      </div>
+      <div class="pod-modal-footer pod-random-carousel-footer">
+        <a-button @click="closeRandomCarouselPreset">&#x53D6;&#x6D88;</a-button>
+        <a-button class="pod-red-button" type="primary" :disabled="!randomCarouselSelected.length" @click="applyRandomCarouselPreset">&#x5E94;&#x7528;&#x968F;&#x673A;</a-button>
+      </div>
+    </a-modal>
+
+    <a-modal
+      :visible="descriptionPresetVisible"
+      :mask-closable="false"
+      :footer="false"
+      modal-class="pod-miaoshou-operation-modal pod-carousel-preset-modal"
+      @cancel="closeDescriptionPreset"
+    >
+      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x63CF;&#x8FF0;&#x56FE;</template>
+      <div class="pod-carousel-preset-body">
+        <section class="pod-carousel-preset-panel">
+          <div class="pod-carousel-preset-head">
+            <div>
+              <strong>&#x56FE;&#x7247;&#x6587;&#x4EF6;&#x5217;&#x8868;</strong>
+              <span>&#x4ECE;&#x8F6E;&#x64AD;&#x56FE;&#x4E2D;&#x9009;&#x62E9;&#x8981;&#x4F5C;&#x4E3A;&#x63CF;&#x8FF0;&#x56FE;&#x7684;&#x56FE;&#x7247;</span>
+            </div>
+            <a-tag class="pod-carousel-count-tag" bordered>{{ descriptionPresetCandidates.length }} &#x5F20;</a-tag>
+          </div>
+          <div class="pod-carousel-preset-toolbar">
+            <a-button size="small" @click="clearDescriptionPresetItems">&#x53D6;&#x6D88;&#x5168;&#x9009;</a-button>
+            <a-button size="small" @click="selectAllDescriptionPresetItems">&#x5168;&#x90E8;&#x52FE;&#x9009;</a-button>
+            <span>{{ descriptionPresetSelected.length }} / {{ descriptionPresetCandidates.length }}</span>
+          </div>
+          <div class="pod-carousel-candidate-list">
+            <label
+              v-for="item in descriptionPresetCandidates"
+              :key="item.name"
+              class="pod-carousel-candidate-item"
+              :class="{ 'is-selected': isDescriptionPresetSelected(item.name) }"
+            >
+              <a-checkbox :model-value="isDescriptionPresetSelected(item.name)" @change="(checked) => toggleDescriptionPresetItem(item.name, checked)" />
+              <span class="pod-carousel-file-name" :title="item.name">{{ item.name }}</span>
+              <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
+            </label>
+            <a-empty v-if="!descriptionPresetCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
+          </div>
+        </section>
+        <section class="pod-carousel-preset-panel">
+          <div class="pod-carousel-preset-head">
+            <div>
+              <strong>&#x9009;&#x4E2D;&#x63CF;&#x8FF0;&#x56FE;&#x987A;&#x5E8F;</strong>
+              <span>&#x786E;&#x8BA4;&#x540E;&#x4F1A;&#x6309;&#x6B64;&#x987A;&#x5E8F;&#x5199;&#x5165;&#x63CF;&#x8FF0;&#x56FE;</span>
+            </div>
+            <a-tag class="pod-carousel-count-tag" bordered>{{ descriptionPresetSelected.length }} &#x5F20;</a-tag>
+          </div>
+          <div class="pod-carousel-selected-list">
+            <div v-for="(name, index) in descriptionPresetSelected" :key="name" class="pod-carousel-selected-item">
+              <span class="pod-carousel-order-index">{{ index + 1 }}</span>
+              <div class="pod-carousel-assigned-file">
+                <span>&#x7B2C; {{ index + 1 }} &#x5F20;&#x63CF;&#x8FF0;&#x56FE;</span>
+                <a-tooltip :content="getCarouselPresetFileTip(name)">
+                  <strong>{{ getCarouselPresetDisplayName(name) }}</strong>
+                </a-tooltip>
+              </div>
+              <div class="pod-carousel-order-actions">
+                <a-button size="mini" :disabled="index === 0" @click="moveDescriptionPresetItem(index, -1)">&#x4E0A;&#x79FB;</a-button>
+                <a-button size="mini" :disabled="index === descriptionPresetSelected.length - 1" @click="moveDescriptionPresetItem(index, 1)">&#x4E0B;&#x79FB;</a-button>
+              </div>
+            </div>
+            <a-empty v-if="!descriptionPresetSelected.length" class="pod-carousel-empty" description="&#x8BF7;&#x5728;&#x5DE6;&#x4FA7;&#x52FE;&#x9009;&#x56FE;&#x7247;" />
+          </div>
+        </section>
+      </div>
+      <div class="pod-modal-footer pod-carousel-preset-footer">
+        <a-button @click="closeDescriptionPreset">&#x53D6;&#x6D88;</a-button>
+        <a-button class="pod-theme-button" type="primary" :disabled="!descriptionPresetSelected.length" @click="applyDescriptionPreset">&#x5E94;&#x7528;&#x9884;&#x8BBE;</a-button>
+      </div>
     </a-modal>
 
     <a-modal
@@ -222,21 +561,21 @@
       </template>
       <div class="pod-modal-body">
         <div class="pod-modal-grid">
+          <div class="pod-field">
+            <span class="pod-field-label">&#x6A21;&#x578B;&#x540D;&#x79F0;<a-tooltip content="&#x9009;&#x62E9;&#x6216;&#x8F93;&#x5165;&#x7528;&#x4E8E; AI &#x751F;&#x6210;&#x6807;&#x9898;&#x7684;&#x6A21;&#x578B;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+            <a-select v-model="aiTitleConfigForm.model" allow-create allow-search popup-container="body" :disabled="aiTitleConfigBusy" :options="aiTitleConfigModelOptions" />
+          </div>
+          <div class="pod-field">
+            <span class="pod-field-label">API Base URL<a-tooltip content="AI &#x63A5;&#x53E3;&#x5730;&#x5740;&#xFF0C;&#x9700;&#x4E0E;&#x6A21;&#x578B;&#x548C; API KEY &#x5339;&#x914D;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+            <a-select v-model="aiTitleConfigForm.apiBaseUrl" allow-create allow-search popup-container="body" :disabled="aiTitleConfigBusy" :options="aiTitleConfigApiBaseOptions" />
+          </div>
           <label class="pod-field">
-            <span class="pod-field-label">&#x6A21;&#x578B;&#x540D;&#x79F0;</span>
-            <a-select v-model="aiTitleConfigForm.model" allow-create allow-search :disabled="aiTitleConfigBusy" :options="aiTitleConfigModelOptions" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">API Base URL</span>
-            <a-select v-model="aiTitleConfigForm.apiBaseUrl" allow-create allow-search :disabled="aiTitleConfigBusy" :options="aiTitleConfigApiBaseOptions" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;&#x6570;</span>
+            <span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;&#x6570;<a-tooltip content="&#x540C;&#x65F6;&#x8BF7;&#x6C42; AI &#x7684;&#x6570;&#x91CF;&#xFF0C;&#x8FC7;&#x9AD8;&#x53EF;&#x80FD;&#x89E6;&#x53D1;&#x9650;&#x6D41;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
             <a-input-number v-model="aiTitleConfigForm.concurrency" :disabled="aiTitleConfigBusy" :min="aiTitleConfigMinConcurrency" :max="aiTitleConfigMaxConcurrency" mode="button" />
           </label>
         </div>
         <label class="pod-field">
-          <span class="pod-field-label">API KEY</span>
+          <span class="pod-field-label">API KEY<a-tooltip content="&#x53EF;&#x4EE5;&#x4E00;&#x884C;&#x586B;&#x4E00;&#x4E2A; API KEY&#xFF0C;&#x751F;&#x6210;&#x65F6;&#x4F1A;&#x6309;&#x914D;&#x7F6E;&#x4F7F;&#x7528;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
           <a-textarea v-model="aiTitleConfigForm.apiKeysText" :disabled="aiTitleConfigBusy" :auto-size="{ minRows: 8, maxRows: 12 }" />
         </label>
         <a-alert v-if="aiTitleConfigStatus.message" :type="resolveAiStatusType(aiTitleConfigStatus.tone)" show-icon>{{ aiTitleConfigStatus.message }}</a-alert>
@@ -270,12 +609,12 @@
           <span>{{ batchAiTitleSummary.totalCount }} &#x4E2A;&#x5546;&#x54C1;</span>
         </div>
         <div class="pod-modal-grid">
-          <label class="pod-field"><span class="pod-field-label">AI &#x5E73;&#x53F0;</span><a-select v-model="batchAiTitleForm.aiProvider" :disabled="batchAiTitleBusy" :options="batchAiTitleAiPlatformOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x5B58;&#x50A8;&#x7D20;&#x6750;</span><a-select v-model="batchAiTitleForm.storageProvider" :disabled="batchAiTitleBusy" :options="batchAiTitleStorageProviderOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x56FE;&#x7247;&#x538B;&#x7F29;</span><a-select v-model="batchAiTitleForm.imageCompression" :disabled="batchAiTitleBusy" :options="batchAiTitleImageCompressionOptions" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;</span><a-input-number v-model="batchAiTitleForm.concurrency" :disabled="batchAiTitleBusy" :min="batchAiTitleMinConcurrency" :max="batchAiTitleMaxConcurrency" mode="button" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6;</span><a-input-number v-model="batchAiTitleForm.targetLength" :disabled="batchAiTitleBusy" :min="batchAiTitleMinTargetLength" :max="batchAiTitleMaxTargetLength" mode="button" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x8F93;&#x51FA;&#x8BED;&#x8A00;</span><a-select v-model="batchAiTitleForm.outputLanguage" :disabled="batchAiTitleBusy" :options="batchAiTitleOutputLanguageOptions" /></label>
+          <div class="pod-field"><span class="pod-field-label">AI &#x5E73;&#x53F0;<a-tooltip content="&#x9009;&#x62E9;&#x6279;&#x91CF;&#x751F;&#x6210;&#x6807;&#x9898;&#x4F7F;&#x7528;&#x7684; AI &#x914D;&#x7F6E;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.aiProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleAiPlatformOptions" /></div>
+          <div class="pod-field"><span class="pod-field-label">&#x5B58;&#x50A8;&#x7D20;&#x6750;<a-tooltip content="&#x9009;&#x62E9;&#x63D0;&#x4EA4;&#x7ED9; AI &#x8BC6;&#x56FE;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x7D20;&#x6750;&#x5B58;&#x50A8;&#x65B9;&#x5F0F;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.storageProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleStorageProviderOptions" /></div>
+          <div class="pod-field"><span class="pod-field-label">&#x56FE;&#x7247;&#x538B;&#x7F29;<a-tooltip content="&#x63D0;&#x4EA4;&#x7ED9; AI &#x524D;&#x7684;&#x56FE;&#x7247;&#x5904;&#x7406;&#x65B9;&#x5F0F;&#xFF0C;&#x7528;&#x4E8E;&#x63A7;&#x5236;&#x4E0A;&#x4F20;&#x4F53;&#x79EF;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.imageCompression" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleImageCompressionOptions" /></div>
+          <label class="pod-field"><span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;<a-tooltip content="&#x540C;&#x65F6;&#x751F;&#x6210;&#x6807;&#x9898;&#x7684;&#x4EFB;&#x52A1;&#x6570;&#xFF0C;&#x8FC7;&#x9AD8;&#x53EF;&#x80FD;&#x89E6;&#x53D1;&#x9650;&#x6D41;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.concurrency" :disabled="batchAiTitleBusy" :min="batchAiTitleMinConcurrency" :max="batchAiTitleMaxConcurrency" mode="button" /></label>
+          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6;<a-tooltip content="AI &#x751F;&#x6210;&#x6807;&#x9898;&#x65F6;&#x5C3D;&#x91CF;&#x63A5;&#x8FD1;&#x7684;&#x76EE;&#x6807;&#x5B57;&#x6570;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.targetLength" :disabled="batchAiTitleBusy" :min="batchAiTitleMinTargetLength" :max="batchAiTitleMaxTargetLength" mode="button" /></label>
+          <div class="pod-field"><span class="pod-field-label">&#x8F93;&#x51FA;&#x8BED;&#x8A00;<a-tooltip content="&#x9009;&#x62E9;&#x6807;&#x9898;&#x6700;&#x7EC8;&#x8F93;&#x51FA;&#x7684;&#x8BED;&#x8A00;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.outputLanguage" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleOutputLanguageOptions" /></div>
         </div>
         <div class="pod-quality-row">
           <span>&#x56FE;&#x7247;&#x8D28;&#x91CF;</span>
@@ -300,8 +639,9 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
+import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
 import { useAiTitleConfigDialog } from './useAiTitleConfigDialog.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 
@@ -346,10 +686,21 @@ const templateTypeOptions = Object.freeze([
 ]);
 const deliveryOptions = Object.freeze(['1', '2', '9'].map((value) => ({ value, label: value })));
 const customOptions = Object.freeze(['\u662f', '\u5426'].map((value) => ({ value, label: value })));
-const imageUploadOptions = Object.freeze([
-  { value: 'original', label: '\u539f\u6587\u4ef6' },
-  { value: 'jpg', label: '\u8f6c JPG' },
-  { value: 'webp', label: '\u8f6c WebP' }
+const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
+const SKU_CONFIG_FIELDS = Object.freeze([
+  'declaredPrice',
+  'price',
+  'length',
+  'width',
+  'height',
+  'weight',
+  'stock',
+  'skuImage',
+  'platformSku',
+  'skuCategoryType',
+  'skuCategoryCount',
+  'skuCategoryUnit',
+  'independentPackaging'
 ]);
 
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
@@ -359,7 +710,6 @@ const categories = ref([]);
 const formTemplates = ref([]);
 const selectedTemplateId = ref('');
 const templateName = ref('');
-const imageUploadMode = ref('original');
 const lastImportDirectoryPath = ref('');
 const viewportHeight = ref(typeof window === 'undefined' ? 760 : window.innerHeight);
 const importingProducts = ref(false);
@@ -374,8 +724,13 @@ const uploadProgress = reactive({ total: 0, success: 0, uploaded: 0, cached: 0, 
 const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, canceled: 0 });
 const carouselPresetVisible = ref(false);
 const carouselPresetText = ref('');
+const carouselPresetSelected = ref([]);
+const randomCarouselVisible = ref(false);
+const randomCarouselOnlyFirst = ref(false);
+const randomCarouselSelected = ref([]);
 const descriptionPresetVisible = ref(false);
 const descriptionPresetText = ref('');
+const descriptionPresetSelected = ref([]);
 let cleanupAiTitleConfigBridge = null;
 let cleanupBatchAiTitleBridge = null;
 let removeAiTitleProgressListener = null;
@@ -403,6 +758,7 @@ const skuDefaults = reactive({
   stock: '',
   platformSku: ''
 });
+const skuConfigMap = reactive({});
 
 const aiTitleConfigDialog = useAiTitleConfigDialog();
 const aiTitleConfigVisible = aiTitleConfigDialog.visible;
@@ -441,9 +797,70 @@ const featureBridge = computed(() => window.temuApp && window.temuApp.featureCen
 const categorySelectOptions = computed(() => categories.value.map((item) => ({ value: item.id, label: item.label ? `${item.id} - ${item.label}` : item.id })));
 const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ value: item.id, label: item.name })));
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
+const skuRows = computed(() => buildSkuRows());
+const carouselPresetCandidates = computed(() => {
+  const itemMap = new Map();
+  products.value.forEach((product) => {
+    const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+    carousel.forEach((item) => {
+      const name = normalizeText(item);
+      if (!name) return;
+      const existing = itemMap.get(name);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        itemMap.set(name, { name, count: 1 });
+      }
+    });
+  });
+  return Array.from(itemMap.values());
+});
+const descriptionPresetCandidates = computed(() => carouselPresetCandidates.value);
+const randomCarouselCandidates = computed(() => {
+  const maxCount = products.value.reduce((count, product) => {
+    const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+    return Math.max(count, carousel.length);
+  }, 0);
+  return Array.from({ length: maxCount }, (_, index) => {
+    const order = index + 1;
+    const names = [];
+    let count = 0;
+    products.value.forEach((product) => {
+      const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+      const item = carousel[index];
+      if (!item) return;
+      count += 1;
+      const displayName = getMaterialDisplayName(product, 'carousel', item);
+      if (displayName && !names.includes(displayName)) names.push(displayName);
+    });
+    return {
+      order,
+      count,
+      displayName: names[0] || `#${order}`,
+      names
+    };
+  }).filter((item) => item.count > 0);
+});
+const skuTableScroll = computed(() => {
+  const rowCount = skuRows.value.length;
+  const scroll = { x: 1680 };
+  if (rowCount > 8) scroll.y = 8 * 48;
+  return scroll;
+});
+const skuImageOptions = computed(() => {
+  const product = activeProduct.value;
+  const items = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+  return items.map((item, index) => ({ value: String(index + 1), label: `\u7b2c${index + 1}\u5f20 ${normalizeText(item)}` }));
+});
 const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
 const aiTitleRetryCount = computed(() => products.value.filter((item) => item.aiTitleStatus === 'failed' && getPrimaryProductImage(item)).length);
-const productTableScroll = computed(() => ({ x: 1280, y: Math.max(300, viewportHeight.value - 360) }));
+const listPanelRef = ref(null);
+const listHeadRef = ref(null);
+const progressLineRef = ref(null);
+const productTableBodyHeight = ref(220);
+let productTableHeightRaf = 0;
+let listPanelResizeObserver = null;
+const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
 const uploadProgressText = computed(() => {
   if (!uploadProgress.total) return '';
   return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgress.success}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
@@ -469,6 +886,10 @@ function getFileBaseName(fileName) {
   return normalizeText(fileName).replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
 }
 
+function getFileNameWithExtension(fileName) {
+  return normalizeText(fileName).replace(/^.*[\\/]/, '');
+}
+
 function getMaterialNameKey(value) {
   const base = getFileBaseName(value);
   const segments = base.split(/[\s._-]+/).filter(Boolean);
@@ -490,6 +911,62 @@ function createEmptyPathMap() {
   return { carousel: {}, assets: {}, preview: {} };
 }
 
+function createSkuEntry(source = {}) {
+  return SKU_CONFIG_FIELDS.reduce((entry, fieldName) => {
+    entry[fieldName] = normalizeText(source[fieldName]);
+    return entry;
+  }, {});
+}
+
+function cloneSkuMap(source = {}) {
+  return Object.entries(source && typeof source === 'object' ? source : {}).reduce((result, [key, value]) => {
+    const normalizedKey = normalizeText(key);
+    if (normalizedKey && normalizedKey !== 'defaults') result[normalizedKey] = createSkuEntry(value || {});
+    return result;
+  }, {});
+}
+
+function getSkuValues(value) {
+  return splitLines(value);
+}
+
+function buildSkuKey(left, right) {
+  return `${normalizeText(left)}${SKU_ROW_KEY_SEPARATOR}${normalizeText(right)}`;
+}
+
+function mergeSkuDefaults(entry) {
+  const result = createSkuEntry(entry);
+  Object.entries(skuDefaults).forEach(([fieldName, value]) => {
+    if (!normalizeText(result[fieldName])) result[fieldName] = normalizeText(value);
+  });
+  return result;
+}
+
+function buildSkuRows() {
+  const leftItems = getSkuValues(globalForm.specValueOne);
+  const rightItems = getSkuValues(globalForm.specValueTwo);
+  const left = leftItems.length ? leftItems : [''];
+  const right = rightItems.length ? rightItems : [''];
+  const rows = [];
+
+  left.forEach((leftValue) => {
+    right.forEach((rightValue) => {
+      const key = buildSkuKey(leftValue, rightValue);
+      if (!skuConfigMap[key]) skuConfigMap[key] = mergeSkuDefaults();
+      rows.push({ key, specValueOne: leftValue, specValueTwo: rightValue, ...skuConfigMap[key] });
+    });
+  });
+
+  return rows;
+}
+
+function pruneSkuConfigMap() {
+  const validKeys = new Set(buildSkuRows().map((row) => row.key));
+  Object.keys(skuConfigMap).forEach((key) => {
+    if (!validKeys.has(key)) delete skuConfigMap[key];
+  });
+}
+
 function createProduct(overrides = {}) {
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
   return {
@@ -505,7 +982,7 @@ function createProduct(overrides = {}) {
       ...createEmptyPathMap(),
       ...(overrides.materialPathMap && typeof overrides.materialPathMap === 'object' ? overrides.materialPathMap : {})
     },
-    skuConfigMap: overrides.skuConfigMap && typeof overrides.skuConfigMap === 'object' ? { ...overrides.skuConfigMap } : {},
+    skuConfigMap: cloneSkuMap(overrides.skuConfigMap),
     aiTitleStatus: normalizeText(overrides.aiTitleStatus),
     aiTitleError: normalizeText(overrides.aiTitleError),
     aiTitlePatternSummary: normalizeText(overrides.aiTitlePatternSummary),
@@ -542,14 +1019,35 @@ function buildProductsFromFiles(files) {
     group.materials[section].push(name);
     if (key && file.path) group.materialPathMap[section][key] = file.path;
   });
-  return Array.from(groups.values()).map((group) => createProduct({ ...group, ...globalForm, ...skuDefaults }));
+  return Array.from(groups.values()).map((group) => createProduct({ ...group, ...globalForm, ...skuDefaults, skuConfigMap: cloneSkuMap(skuConfigMap) }));
 }
 
 function syncGlobalToProducts() {
   products.value = products.value.map((product) => ({
     ...product,
     ...globalForm,
-    ...skuDefaults
+    skuConfigMap: cloneSkuMap(skuConfigMap)
+  }));
+  scheduleStateSave();
+}
+
+function handleSkuSpecChange() {
+  pruneSkuConfigMap();
+  syncGlobalToProducts();
+}
+
+function handleSkuDefaultsChange() {
+  buildSkuRows();
+  Object.keys(skuConfigMap).forEach((key) => {
+    skuConfigMap[key] = mergeSkuDefaults(skuConfigMap[key]);
+  });
+  syncSkuConfigToProducts();
+}
+
+function syncSkuConfigToProducts() {
+  products.value = products.value.map((product) => ({
+    ...product,
+    skuConfigMap: cloneSkuMap(skuConfigMap)
   }));
   scheduleStateSave();
 }
@@ -563,11 +1061,36 @@ function getPrimaryProductImage(product) {
 }
 
 function getMaterialTitle(product, sectionId) {
-  return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId].join('\n') : '';
+  const items = product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
+  return items.map((item) => getMaterialDisplayName(product, sectionId, item)).join('\n');
 }
 
 function getPreviewItems(items) {
   return (Array.isArray(items) ? items : []).slice(0, 3);
+}
+
+function getExtraItemCount(items) {
+  const count = Array.isArray(items) ? items.length : 0;
+  return count > 3 ? count - 3 : 0;
+}
+
+function getMaterialDisplayName(product, sectionId, item) {
+  const name = normalizeText(item);
+  const key = getMaterialNameKey(name);
+  const pathMap = product && product.materialPathMap && product.materialPathMap[sectionId] && typeof product.materialPathMap[sectionId] === 'object' ? product.materialPathMap[sectionId] : {};
+  return getFileNameWithExtension((key && pathMap[key]) || name);
+}
+
+function getDescriptionImageItems(product) {
+  const carouselItems = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+  return splitLines(String(product && product.descriptionImageOrders || '').replace(/[,\uff0c]/g, '\n'))
+    .map((orderText) => Number.parseInt(orderText, 10))
+    .filter((orderNumber) => orderNumber > 0 && carouselItems[orderNumber - 1])
+    .map((orderNumber) => carouselItems[orderNumber - 1]);
+}
+
+function getDescriptionImageTitle(product) {
+  return getDescriptionImageItems(product).map((item) => getMaterialDisplayName(product, 'carousel', item)).join('\n');
 }
 
 function selectProduct(record) {
@@ -636,46 +1159,225 @@ function clearProducts() {
 }
 
 function openCarouselPreset() {
-  carouselPresetText.value = products.value[0] && products.value[0].materials ? products.value[0].materials.carousel.join('\n') : '';
+  const candidateNames = carouselPresetCandidates.value.map((item) => item.name);
+  const savedSelection = splitLines(carouselPresetText.value).filter((item) => candidateNames.includes(item));
+  const firstProductSelection = products.value[0] && products.value[0].materials ? products.value[0].materials.carousel.map((item) => normalizeText(item)).filter(Boolean) : [];
+  carouselPresetSelected.value = savedSelection.length ? savedSelection : firstProductSelection.filter((item) => candidateNames.includes(item));
   carouselPresetVisible.value = true;
 }
 
+function closeCarouselPreset() {
+  carouselPresetVisible.value = false;
+}
+
+function getCarouselPresetFileNames(name) {
+  const selectedName = normalizeText(name);
+  const selectedKey = getMaterialNameKey(selectedName);
+  const fileNames = [];
+  products.value.forEach((product) => {
+    const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+    if (!carousel.includes(selectedName)) return;
+    const pathMap = product.materialPathMap && product.materialPathMap.carousel && typeof product.materialPathMap.carousel === 'object' ? product.materialPathMap.carousel : {};
+    const filePath = selectedKey ? normalizeText(pathMap[selectedKey]) : '';
+    const fileName = getFileNameWithExtension(filePath || selectedName);
+    if (fileName && !fileNames.includes(fileName)) fileNames.push(fileName);
+  });
+  return fileNames;
+}
+
+function getCarouselPresetDisplayName(name) {
+  const fileNames = getCarouselPresetFileNames(name);
+  const firstName = fileNames[0] || normalizeText(name);
+  if (fileNames.length > 1) return `${firstName} +${fileNames.length - 1}`;
+  return firstName;
+}
+
+function getCarouselPresetFileTip(name) {
+  const fileNames = getCarouselPresetFileNames(name);
+  if (!fileNames.length) return normalizeText(name);
+  return fileNames.join('\n');
+}
+
+function isCarouselPresetSelected(name) {
+  return carouselPresetSelected.value.includes(normalizeText(name));
+}
+
+function toggleCarouselPresetItem(name, checked) {
+  const nextName = normalizeText(name);
+  if (!nextName) return;
+  const nextItems = carouselPresetSelected.value.filter((item) => item !== nextName);
+  carouselPresetSelected.value = checked ? [...nextItems, nextName] : nextItems;
+}
+
+function selectAllCarouselPresetItems() {
+  carouselPresetSelected.value = carouselPresetCandidates.value.map((item) => item.name);
+}
+
+function clearCarouselPresetItems() {
+  carouselPresetSelected.value = [];
+}
+
+function moveCarouselPresetItem(index, offset) {
+  const targetIndex = index + offset;
+  if (targetIndex < 0 || targetIndex >= carouselPresetSelected.value.length) return;
+  const nextItems = carouselPresetSelected.value.slice();
+  const current = nextItems[index];
+  nextItems[index] = nextItems[targetIndex];
+  nextItems[targetIndex] = current;
+  carouselPresetSelected.value = nextItems;
+}
+
 function applyCarouselPreset() {
-  const values = splitLines(carouselPresetText.value);
-  if (!values.length) return;
+  const values = carouselPresetSelected.value.map((item) => normalizeText(item)).filter(Boolean);
+  if (!values.length) {
+    Message.warning('\u8bf7\u5148\u9009\u62e9\u8f6e\u64ad\u56fe');
+    return;
+  }
   products.value = products.value.map((product) => ({
     ...product,
     materials: {
       ...product.materials,
-      carousel: Array.from(new Set([...values, ...product.materials.carousel]))
+      carousel: [
+        ...values.filter((item) => product.materials.carousel.includes(item)),
+        ...product.materials.carousel.filter((item) => !values.includes(item))
+      ]
     }
   }));
+  carouselPresetText.value = values.join('\n');
+  carouselPresetVisible.value = false;
   scheduleStateSave();
+  Message.success('\u5df2\u5e94\u7528\u8f6e\u64ad\u56fe\u9884\u8bbe');
 }
 
-function randomizeCarousel() {
+function openRandomCarouselPreset() {
+  randomCarouselSelected.value = randomCarouselCandidates.value.map((item) => item.order);
+  randomCarouselVisible.value = true;
+}
+
+function closeRandomCarouselPreset() {
+  randomCarouselVisible.value = false;
+}
+
+function isRandomCarouselSelected(order) {
+  return randomCarouselSelected.value.includes(Number(order));
+}
+
+function toggleRandomCarouselItem(order, checked) {
+  const nextOrder = Number(order);
+  if (!Number.isFinite(nextOrder) || nextOrder < 1) return;
+  const nextItems = randomCarouselSelected.value.filter((item) => item !== nextOrder);
+  randomCarouselSelected.value = checked ? [...nextItems, nextOrder].sort((left, right) => left - right) : nextItems;
+}
+
+function selectAllRandomCarouselItems() {
+  randomCarouselSelected.value = randomCarouselCandidates.value.map((item) => item.order);
+}
+
+function getRandomCarouselItemTip(item) {
+  const names = item && Array.isArray(item.names) ? item.names : [];
+  return names.length ? names.join('\n') : normalizeText(item && item.displayName);
+}
+
+function shuffleItems(items) {
+  const nextItems = items.slice();
+  for (let index = nextItems.length - 1; index > 0; index -= 1) {
+    const targetIndex = Math.floor(Math.random() * (index + 1));
+    const current = nextItems[index];
+    nextItems[index] = nextItems[targetIndex];
+    nextItems[targetIndex] = current;
+  }
+  return nextItems;
+}
+
+function applyRandomCarouselPreset() {
+  const selectedOrders = randomCarouselSelected.value.map((item) => Number(item)).filter((item) => item > 0);
+  if (!selectedOrders.length) {
+    Message.warning('\u8bf7\u5148\u9009\u62e9\u9700\u8981\u968f\u673a\u7684\u56fe\u7247');
+    return;
+  }
   products.value = products.value.map((product) => {
-    const next = product.materials.carousel.slice();
-    if (next.length > 1) {
-      const first = next.shift();
-      const index = Math.floor(Math.random() * (next.length + 1));
-      next.splice(index, 0, first);
+    const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+    const availableOrders = selectedOrders.filter((order) => carousel[order - 1]);
+    if (!availableOrders.length) return product;
+    const nextCarousel = carousel.slice();
+    if (randomCarouselOnlyFirst.value) {
+      const targetOrder = availableOrders[Math.floor(Math.random() * availableOrders.length)];
+      const targetIndex = targetOrder - 1;
+      const currentFirst = nextCarousel[0];
+      nextCarousel[0] = nextCarousel[targetIndex];
+      nextCarousel[targetIndex] = currentFirst;
+    } else {
+      const shuffledItems = shuffleItems(availableOrders.map((order) => nextCarousel[order - 1]));
+      availableOrders.forEach((order, index) => {
+        nextCarousel[order - 1] = shuffledItems[index];
+      });
     }
-    return { ...product, materials: { ...product.materials, carousel: next } };
+    return { ...product, materials: { ...product.materials, carousel: nextCarousel } };
   });
+  randomCarouselVisible.value = false;
   scheduleStateSave();
   Message.success('\u5df2\u6279\u91cf\u968f\u673a\u8c03\u6574\u8f6e\u64ad\u56fe');
 }
 
 function openDescriptionPreset() {
-  descriptionPresetText.value = activeProduct.value ? activeProduct.value.descriptionImageOrders : '';
+  const candidateNames = descriptionPresetCandidates.value.map((item) => item.name);
+  const savedSelection = splitLines(descriptionPresetText.value).filter((item) => candidateNames.includes(item));
+  const activeSelection = activeProduct.value ? getDescriptionImageItems(activeProduct.value).map((item) => normalizeText(item)).filter(Boolean) : [];
+  descriptionPresetSelected.value = savedSelection.length ? savedSelection : activeSelection.filter((item) => candidateNames.includes(item));
   descriptionPresetVisible.value = true;
 }
 
+function closeDescriptionPreset() {
+  descriptionPresetVisible.value = false;
+}
+
+function isDescriptionPresetSelected(name) {
+  return descriptionPresetSelected.value.includes(normalizeText(name));
+}
+
+function toggleDescriptionPresetItem(name, checked) {
+  const nextName = normalizeText(name);
+  if (!nextName) return;
+  const nextItems = descriptionPresetSelected.value.filter((item) => item !== nextName);
+  descriptionPresetSelected.value = checked ? [...nextItems, nextName] : nextItems;
+}
+
+function selectAllDescriptionPresetItems() {
+  descriptionPresetSelected.value = descriptionPresetCandidates.value.map((item) => item.name);
+}
+
+function clearDescriptionPresetItems() {
+  descriptionPresetSelected.value = [];
+}
+
+function moveDescriptionPresetItem(index, offset) {
+  const targetIndex = index + offset;
+  if (targetIndex < 0 || targetIndex >= descriptionPresetSelected.value.length) return;
+  const nextItems = descriptionPresetSelected.value.slice();
+  const current = nextItems[index];
+  nextItems[index] = nextItems[targetIndex];
+  nextItems[targetIndex] = current;
+  descriptionPresetSelected.value = nextItems;
+}
+
 function applyDescriptionPreset() {
-  const value = normalizeText(descriptionPresetText.value);
-  products.value = products.value.map((product) => ({ ...product, descriptionImageOrders: value }));
+  const values = descriptionPresetSelected.value.map((item) => normalizeText(item)).filter(Boolean);
+  if (!values.length) {
+    Message.warning('\u8bf7\u5148\u9009\u62e9\u63cf\u8ff0\u56fe');
+    return;
+  }
+  products.value = products.value.map((product) => {
+    const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+    const orders = values
+      .map((item) => carousel.indexOf(item))
+      .filter((index) => index >= 0)
+      .map((index) => String(index + 1));
+    return { ...product, descriptionImageOrders: orders.join(',') };
+  });
+  descriptionPresetText.value = values.join('\n');
+  descriptionPresetVisible.value = false;
   scheduleStateSave();
+  Message.success('\u5df2\u5e94\u7528\u63cf\u8ff0\u56fe\u9884\u8bbe');
 }
 
 async function uploadImages() {
@@ -686,7 +1388,7 @@ async function uploadImages() {
     const result = await featureBridge.value.uploadPodUploadSheetMiaoshouCosImages({
       runId: createId('pod-cos'),
       products: products.value,
-      imageUploadMode: imageUploadMode.value
+      imageUploadMode: 'original'
     });
     const items = Array.isArray(result && result.items) ? result.items : [];
     const urlByPath = new Map(items.filter((item) => item && item.status === 'success' && item.url).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
@@ -805,9 +1507,15 @@ async function exportTable() {
   if (!featureBridge.value || exportingTable.value || !products.value.length) return;
   exportingTable.value = true;
   try {
+    buildSkuRows();
+    const exportProducts = products.value.map((product) => ({
+      ...product,
+      ...globalForm,
+      skuConfigMap: cloneSkuMap(skuConfigMap)
+    }));
     const result = await featureBridge.value.exportPodUploadSheetMiaoshouTable({
       templateId: globalForm.templateId,
-      products: products.value
+      products: exportProducts
     });
     if (result && result.canceled) {
       Message.warning('\u5df2\u53d6\u6d88\u5bfc\u51fa');
@@ -842,6 +1550,10 @@ async function loadFormTemplates() {
   try {
     const result = await featureBridge.value.getPodUploadSheetMiaoshouFormTemplates();
     formTemplates.value = Array.isArray(result && result.templates) ? result.templates : [];
+    if (!selectedTemplateId.value && formTemplates.value.length > 0) {
+      selectedTemplateId.value = formTemplates.value[0].id;
+      applySelectedTemplate(selectedTemplateId.value);
+    }
   } finally {
     loadingTemplates.value = false;
   }
@@ -851,7 +1563,6 @@ async function loadWorkspaceState() {
   if (!featureBridge.value) return;
   const result = await featureBridge.value.getPodUploadSheetMiaoshouWorkspaceState().catch(() => null);
   const workspace = result && result.workspace ? result.workspace : {};
-  imageUploadMode.value = normalizeText(workspace.imageUploadMode) || 'original';
   lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
 }
 
@@ -866,7 +1577,10 @@ function buildTemplatePayload() {
       aiTitleExtraPrompt: '',
       aiTitleMaxLength: '250'
     },
-    skuConfigMap: { defaults: { ...skuDefaults } },
+    skuConfigMap: {
+      defaults: createSkuEntry(skuDefaults),
+      ...cloneSkuMap(skuConfigMap)
+    },
     batchPreset: {
       carouselPresetMode: 'selected',
       carouselPresetSelection: splitLines(carouselPresetText.value),
@@ -899,6 +1613,9 @@ function applySelectedTemplate(value) {
   templateName.value = template.name;
   Object.assign(globalForm, template.fields || {});
   Object.assign(skuDefaults, template.skuConfigMap && template.skuConfigMap.defaults ? template.skuConfigMap.defaults : {});
+  Object.keys(skuConfigMap).forEach((key) => delete skuConfigMap[key]);
+  Object.assign(skuConfigMap, cloneSkuMap(template.skuConfigMap));
+  pruneSkuConfigMap();
   syncGlobalToProducts();
 }
 
@@ -923,7 +1640,6 @@ function scheduleStateSave() {
     if (!featureBridge.value || typeof featureBridge.value.savePodUploadSheetMiaoshouWorkspaceState !== 'function') return;
     void featureBridge.value.savePodUploadSheetMiaoshouWorkspaceState({
       lastImportDirectoryPath: lastImportDirectoryPath.value,
-      imageUploadMode: imageUploadMode.value,
       carouselPresetSelection: splitLines(carouselPresetText.value),
       descriptionPresetSelection: splitLines(descriptionPresetText.value)
     }).catch(() => undefined);
@@ -945,12 +1661,63 @@ function installVueBridge() {
 
 function updateViewportHeight() {
   viewportHeight.value = window.innerHeight || viewportHeight.value;
+  scheduleProductTableHeightUpdate();
+}
+
+function parseCssPixel(value) {
+  const next = Number.parseFloat(value);
+  return Number.isFinite(next) ? next : 0;
+}
+
+function scheduleProductTableHeightUpdate() {
+  if (productTableHeightRaf) window.cancelAnimationFrame(productTableHeightRaf);
+  productTableHeightRaf = window.requestAnimationFrame(() => {
+    productTableHeightRaf = 0;
+    updateProductTableBodyHeight();
+  });
+}
+
+function updateProductTableBodyHeight() {
+  const panel = listPanelRef.value;
+  if (!panel) {
+    productTableBodyHeight.value = Math.max(140, viewportHeight.value - 680);
+    return;
+  }
+
+  const panelStyle = window.getComputedStyle(panel);
+  const panelPadding = parseCssPixel(panelStyle.paddingTop) + parseCssPixel(panelStyle.paddingBottom);
+  const panelGap = parseCssPixel(panelStyle.rowGap || panelStyle.gap);
+  const headHeight = listHeadRef.value ? listHeadRef.value.getBoundingClientRect().height : 0;
+  const progressHeight = progressLineRef.value ? progressLineRef.value.getBoundingClientRect().height : 0;
+  const gapCount = progressHeight > 0 ? 2 : 1;
+  const tableChromeHeight = 44;
+  const nextHeight = Math.max(220, Math.floor(panel.clientHeight - panelPadding - headHeight - progressHeight - panelGap * gapCount - tableChromeHeight));
+
+  if (Number.isFinite(nextHeight) && Math.abs(nextHeight - productTableBodyHeight.value) > 4) {
+    productTableBodyHeight.value = nextHeight;
+  }
+}
+
+function setupProductTableResizeObserver() {
+  if (listPanelResizeObserver) {
+    listPanelResizeObserver.disconnect();
+    listPanelResizeObserver = null;
+  }
+
+  if (typeof ResizeObserver === 'function') {
+    listPanelResizeObserver = new ResizeObserver(scheduleProductTableHeightUpdate);
+    [listPanelRef.value, listHeadRef.value].filter(Boolean).forEach((element) => listPanelResizeObserver.observe(element));
+  }
+
+  scheduleProductTableHeightUpdate();
 }
 
 onMounted(() => {
+  console.info('[pod-upload-sheet-miaoshou] ui-version 20260710-layout-2');
   document.body.classList.add('pod-miaoshou-vue-mounted');
   updateViewportHeight();
   window.addEventListener('resize', updateViewportHeight);
+  nextTick(setupProductTableResizeObserver);
   cleanupAiTitleConfigBridge = aiTitleConfigDialog.installGlobalBridge();
   cleanupBatchAiTitleBridge = batchAiTitleDialog.installGlobalBridge();
   const cleanupVueBridge = installVueBridge();
@@ -974,10 +1741,17 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (saveTimer) window.clearTimeout(saveTimer);
+  document.body.classList.remove('pod-miaoshou-vue-mounted');
   window.removeEventListener('resize', updateViewportHeight);
+  if (productTableHeightRaf) window.cancelAnimationFrame(productTableHeightRaf);
+  if (listPanelResizeObserver) listPanelResizeObserver.disconnect();
   if (typeof cleanupBatchAiTitleBridge === 'function') cleanupBatchAiTitleBridge();
   if (typeof cleanupAiTitleConfigBridge === 'function') cleanupAiTitleConfigBridge();
   if (typeof removeAiTitleProgressListener === 'function') removeAiTitleProgressListener();
+});
+
+watch([uploadProgressText, aiTitleProgressText, () => products.value.length], () => {
+  nextTick(scheduleProductTableHeightUpdate);
 });
 
 defineExpose({
@@ -988,12 +1762,23 @@ defineExpose({
 </script>
 
 <style>
+body.pod-miaoshou-vue-mounted {
+  overflow: auto;
+}
+
 .pod-miaoshou-app-shell {
-  height: 100vh;
-  overflow: hidden;
-  padding: 12px;
-  background: #f6f8fb;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 14px;
+  background: #ffffff;
   color: #172033;
+}
+
+.pod-miaoshou-app-shell *,
+.pod-miaoshou-app-shell *::before,
+.pod-miaoshou-app-shell *::after {
+  box-sizing: border-box;
 }
 
 body.dark-theme .pod-miaoshou-app-shell {
@@ -1021,9 +1806,9 @@ body.dark-theme .pod-panel {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 58px;
+  min-height: 54px;
   padding: 8px 14px;
-  margin-bottom: 10px;
+  margin: 0 0 10px;
 }
 
 .pod-miaoshou-app-header__copy,
@@ -1063,8 +1848,9 @@ body.dark-theme .pod-panel {
 
 .pod-list-head {
   display: grid;
-  grid-template-columns: minmax(180px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  gap: 8px;
 }
 
 .pod-miaoshou-app-header h1,
@@ -1084,48 +1870,60 @@ body.dark-theme .pod-modal-title strong {
 
 .pod-workbench {
   display: grid;
-  grid-template-columns: minmax(520px, 1.06fr) minmax(440px, 0.94fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto;
   grid-template-areas:
-    "template sku"
-    "list list";
-  gap: 9px;
-  height: calc(100vh - 80px);
+    "templateManage"
+    "template"
+    "sku"
+    "list";
+  gap: 14px;
+  height: auto;
   min-height: 0;
+  margin: 0;
+  overflow: visible;
 }
 
 .pod-panel {
   display: grid;
-  gap: 9px;
+  gap: 12px;
   min-height: 0;
   padding: 12px;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.pod-template-manage-panel {
+  grid-area: templateManage;
 }
 
 .pod-template-panel {
   grid-area: template;
-  max-height: 248px;
   align-content: start;
-  overflow: auto;
+  overflow: visible;
 }
 
 .pod-sku-panel {
   grid-area: sku;
-  max-height: 248px;
+  grid-template-rows: auto auto auto auto;
   align-content: start;
-  overflow: auto;
+  overflow: visible;
 }
 
 .pod-list-panel {
   grid-area: list;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  min-height: 360px;
+  overflow: visible;
 }
 
 .pod-template-grid,
 .pod-template-save-row,
 .pod-template-main-row,
 .pod-template-meta-row,
+.pod-template-description-row,
 .pod-sku-layout,
+.pod-sku-name-row,
+.pod-sku-value-row,
 .pod-sku-defaults,
 .pod-modal-grid {
   display: grid;
@@ -1138,29 +1936,63 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-template-save-row {
-  grid-template-columns: minmax(180px, 0.9fr) minmax(180px, 1fr);
+  grid-template-columns: minmax(330px, 0.9fr) minmax(300px, 0.8fr) auto;
+  align-items: center;
+}
+
+.pod-template-save-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 210px;
 }
 
 .pod-template-main-row {
-  grid-template-columns: 190px minmax(360px, 1fr);
+  grid-template-columns: 220px minmax(520px, 1fr);
+  align-items: end;
 }
 
 .pod-template-meta-row {
-  grid-template-columns: 122px 132px 112px minmax(260px, 1fr);
+  grid-template-columns: 150px 160px 130px minmax(360px, 1fr);
+  align-items: end;
+}
+
+.pod-template-description-row {
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 2px;
 }
 
 .pod-sku-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.pod-sku-name-row {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.pod-sku-value-row {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+}
+
 .pod-sku-defaults {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(90px, 1fr));
 }
 
 .pod-field {
   display: grid;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
+}
+
+.pod-inline-field {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.pod-inline-field .pod-field-label {
+  white-space: nowrap;
 }
 
 .pod-field-wide {
@@ -1168,7 +2000,48 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: #5f6f83;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pod-help-icon {
+  color: var(--theme-primary-color, #f4bf22);
+  font-size: 13px;
+  line-height: 1;
+  cursor: help;
+}
+
+.pod-table-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pod-table-title--unit {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.pod-table-title-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.pod-table-title-unit {
+  display: block;
+  color: #475569;
   font-size: 11px;
   font-weight: 700;
 }
@@ -1179,16 +2052,20 @@ body.dark-theme .pod-field-label {
 
 .pod-list-head {
   align-items: flex-start;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .pod-actions {
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   gap: 6px;
-}
-
-.pod-upload-mode {
-  width: 106px;
+  padding: 8px;
+  border: 1px solid #e5ebf3;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
 }
 
 .pod-actions .arco-btn,
@@ -1201,7 +2078,7 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-actions .arco-btn {
-  min-width: 92px;
+  min-width: 104px;
 }
 
 .pod-miaoshou-app-header__meta .arco-btn {
@@ -1216,17 +2093,58 @@ body.dark-theme .pod-field-label {
 
 .pod-field :deep(.arco-input-wrapper),
 .pod-field :deep(.arco-select-view-single),
-.pod-field :deep(.arco-textarea-wrapper),
-.pod-upload-mode :deep(.arco-select-view-single) {
+.pod-field :deep(.arco-textarea-wrapper) {
   min-height: 32px;
-  border-color: #dbe3ee;
+  border-color: #cbd5e1;
   border-radius: 6px;
   background: #ffffff;
   box-shadow: none;
 }
 
+.pod-template-manage-panel .pod-field :deep(.arco-input-wrapper),
+.pod-template-manage-panel .pod-field :deep(.arco-select-view-single) {
+  min-height: 34px;
+  border-color: #b8c4d4;
+  background: #ffffff;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper,
+.pod-miaoshou-app-shell .arco-select-view-single,
+.pod-miaoshou-app-shell .arco-select-view,
+.pod-miaoshou-app-shell .arco-textarea-wrapper {
+  border: 1px solid #b8c4d4 !important;
+  background: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12) !important;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper:hover,
+.pod-miaoshou-app-shell .arco-select-view:hover,
+.pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
+  border-color: #94a3b8 !important;
+}
+
+.pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
+.pod-miaoshou-app-shell .arco-select-view-focus,
+.pod-miaoshou-app-shell .arco-textarea-wrapper:focus-within {
+  border-color: var(--theme-primary-color, #f4bf22) !important;
+  box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18) !important;
+}
+
+.pod-miaoshou-app-shell .arco-btn-disabled,
+.pod-miaoshou-app-shell .arco-btn-disabled:hover {
+  background: #f3f6fa !important;
+  color: #94a3b8 !important;
+}
+
 .pod-field :deep(.arco-textarea-wrapper) {
   min-height: 54px;
+}
+
+.pod-template-panel .pod-description-textarea :deep(.arco-textarea-wrapper),
+.pod-template-panel .pod-description-textarea :deep(textarea) {
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
 }
 
 .pod-field :deep(.arco-input-wrapper:hover),
@@ -1263,26 +2181,34 @@ body.dark-theme .pod-field-label {
   color: var(--theme-primary-ink, #7a4a00);
 }
 
-.pod-product-table {
+.pod-product-table,
+.pod-sku-table {
   min-height: 0;
   border: 1px solid #e5ebf3;
   border-radius: 8px;
   overflow: hidden;
 }
 
-.pod-product-table :deep(.arco-table-th) {
+.pod-sku-table :deep(.arco-table-body) {
+  overflow-y: auto;
+}
+
+.pod-product-table :deep(.arco-table-th),
+.pod-sku-table :deep(.arco-table-th) {
   background: #f8fafc;
   color: #334155;
   font-size: 12px;
   font-weight: 800;
 }
 
-.pod-product-table :deep(.arco-table-td) {
+.pod-product-table :deep(.arco-table-td),
+.pod-sku-table :deep(.arco-table-td) {
   padding: 7px 10px;
   color: #243247;
 }
 
-.pod-product-table :deep(.arco-table-tr:hover .arco-table-td) {
+.pod-product-table :deep(.arco-table-tr:hover .arco-table-td),
+.pod-sku-table :deep(.arco-table-tr:hover .arco-table-td) {
   background: #fffaf0;
 }
 
@@ -1326,6 +2252,322 @@ body.dark-theme .pod-field-label {
   margin-top: 18px;
 }
 
+.pod-carousel-preset-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  align-items: stretch;
+  gap: 14px;
+}
+
+.pod-carousel-preset-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 552px;
+  min-height: 420px;
+  border: 1px solid #e5ebf3;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.pod-carousel-preset-panel:last-child {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.pod-carousel-preset-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid #eef2f7;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.pod-carousel-preset-head div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pod-carousel-preset-head strong {
+  color: #172033;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.pod-carousel-preset-head span {
+  color: #6b7789;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.pod-carousel-count-tag.arco-tag {
+  flex: 0 0 auto;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.28);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
+  color: var(--theme-primary-ink, #8f5a0e);
+  font-weight: 700;
+}
+
+.pod-carousel-preset-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  background: #ffffff;
+}
+
+.pod-carousel-preset-toolbar span {
+  margin-left: auto;
+  color: #6b7789;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pod-carousel-candidate-list,
+.pod-carousel-selected-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  padding: 10px;
+  overflow: auto;
+  background: #fbfcfe;
+}
+
+.pod-carousel-candidate-item,
+.pod-carousel-selected-item {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 1px solid #e7edf5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #243247;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.pod-carousel-candidate-item {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.pod-carousel-candidate-item:hover,
+.pod-carousel-candidate-item.is-selected,
+.pod-carousel-selected-item:hover {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.44);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.pod-carousel-selected-item {
+  grid-template-columns: 32px minmax(180px, 1fr) auto;
+  padding: 8px 10px;
+}
+
+.pod-carousel-file-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #223049;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pod-carousel-assigned-file {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pod-carousel-assigned-file span {
+  color: #718096;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.pod-carousel-assigned-file strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pod-carousel-file-count {
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #e11d48;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.pod-carousel-order-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--theme-primary-color, #f4bf22);
+  color: var(--theme-primary-contrast, #2f2400);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pod-carousel-order-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pod-carousel-order-actions .arco-btn {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.pod-carousel-empty {
+  padding: 46px 0;
+}
+
+.pod-carousel-preset-footer {
+  padding-top: 4px;
+}
+
+.pod-random-carousel-body {
+  display: grid;
+  gap: 14px;
+}
+
+.pod-random-carousel-only-first {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff7f7;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pod-random-carousel-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 478px;
+  min-height: 360px;
+  border: 1px solid #e5ebf3;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.pod-random-carousel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eef2f7;
+  background: #f8fafc;
+}
+
+.pod-random-carousel-toolbar .arco-btn {
+  border-color: #fecaca;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.pod-random-carousel-toolbar span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pod-random-carousel-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.pod-random-carousel-item {
+  display: grid;
+  grid-template-columns: auto 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #e7edf5;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #243247;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.pod-random-carousel-item:hover,
+.pod-random-carousel-item.is-selected {
+  border-color: rgba(239, 68, 68, 0.28);
+  background: #fffafa;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.pod-random-carousel-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pod-random-carousel-item strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #243247;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pod-random-carousel-footer {
+  padding-top: 2px;
+}
+
 .pod-quality-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 42px;
@@ -1340,11 +2582,26 @@ body.dark-theme .pod-field-label {
   border-radius: 8px;
 }
 
+.pod-carousel-preset-modal .arco-modal {
+  width: min(900px, calc(100vw - 32px));
+}
+
+.arco-modal.pod-carousel-preset-modal,
+.pod-carousel-preset-modal {
+  width: min(900px, calc(100vw - 32px));
+}
+
+.pod-random-carousel-modal .arco-modal,
+.arco-modal.pod-random-carousel-modal,
+.pod-random-carousel-modal {
+  width: min(560px, calc(100vw - 32px));
+}
+
 @media (max-width: 1100px) {
   .pod-template-grid,
-  .pod-template-save-row,
   .pod-template-main-row,
   .pod-template-meta-row,
+  .pod-template-description-row,
   .pod-sku-defaults,
   .pod-modal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1352,12 +2609,18 @@ body.dark-theme .pod-field-label {
 
   .pod-workbench {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
     grid-template-areas:
+      "templateManage"
       "template"
       "sku"
       "list";
-    overflow: auto;
+    overflow: visible;
+  }
+
+  .pod-sku-layout,
+  .pod-sku-defaults {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1372,6 +2635,9 @@ body.dark-theme .pod-field-label {
   .pod-template-save-row,
   .pod-template-main-row,
   .pod-template-meta-row,
+  .pod-template-description-row,
+  .pod-sku-name-row,
+  .pod-sku-value-row,
   .pod-sku-layout,
   .pod-sku-defaults,
   .pod-modal-grid {
@@ -1380,6 +2646,23 @@ body.dark-theme .pod-field-label {
 
   .pod-field-wide {
     grid-column: auto;
+  }
+
+  .pod-inline-field {
+    grid-template-columns: 1fr;
+  }
+
+  .pod-carousel-preset-body {
+    grid-template-columns: 1fr;
+  }
+
+  .pod-carousel-preset-panel {
+    min-height: 300px;
+  }
+
+  .pod-carousel-candidate-list,
+  .pod-carousel-selected-list {
+    max-height: 300px;
   }
 }
 </style>
