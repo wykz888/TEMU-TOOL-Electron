@@ -329,19 +329,25 @@
             </a-table-column>
             <a-table-column title="&#x4EA7;&#x54C1;&#x6807;&#x9898;" :width="270">
               <template #cell="{ record }">
-                <a-textarea v-model="record.title" :auto-size="{ minRows: 2, maxRows: 4 }" @change="scheduleStateSave" />
+                <div class="pod-title-cell">
+                  <a-textarea v-model="record.title" :max-length="TITLE_MAX_LENGTH" :auto-size="{ minRows: 2, maxRows: 4 }" @change="handleProductTitleChange(record, 'title')" />
+                  <span class="pod-title-length" :class="{ 'is-over': getTextLength(record.title) > TITLE_MAX_LENGTH }">{{ getTextLength(record.title) }} / {{ TITLE_MAX_LENGTH }}</span>
+                </div>
               </template>
             </a-table-column>
             <a-table-column title="&#x82F1;&#x6587;&#x6807;&#x9898;" :width="270">
               <template #cell="{ record }">
-                <a-textarea v-model="record.englishTitle" :auto-size="{ minRows: 2, maxRows: 4 }" @change="scheduleStateSave" />
+                <div class="pod-title-cell">
+                  <a-textarea v-model="record.englishTitle" :max-length="TITLE_MAX_LENGTH" :auto-size="{ minRows: 2, maxRows: 4 }" @change="handleProductTitleChange(record, 'englishTitle')" />
+                  <span class="pod-title-length" :class="{ 'is-over': getTextLength(record.englishTitle) > TITLE_MAX_LENGTH }">{{ getTextLength(record.englishTitle) }} / {{ TITLE_MAX_LENGTH }}</span>
+                </div>
               </template>
             </a-table-column>
             <a-table-column title="&#x8F6E;&#x64AD;&#x56FE;" :width="220">
               <template #cell="{ record }">
                 <div class="pod-chip-list" :title="getMaterialTitle(record, 'carousel')">
-                  <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
-                  <a-tag v-if="getExtraItemCount(record.materials.carousel)" bordered>+{{ getExtraItemCount(record.materials.carousel) }}</a-tag>
+                  <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" class="pod-material-chip" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
+                  <a-tag v-if="getExtraItemCount(record.materials.carousel)" class="pod-material-chip pod-material-chip-more" bordered>+{{ getExtraItemCount(record.materials.carousel) }}</a-tag>
                   <span v-if="!record.materials.carousel.length" class="pod-muted">&#x6682;&#x65E0;</span>
                 </div>
               </template>
@@ -349,13 +355,13 @@
             <a-table-column title="&#x63CF;&#x8FF0;&#x56FE;" :width="220">
               <template #cell="{ record }">
                 <div class="pod-chip-list" :title="getDescriptionImageTitle(record)">
-                  <a-tag v-for="item in getPreviewItems(getDescriptionImageItems(record))" :key="item" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
-                  <a-tag v-if="getExtraItemCount(getDescriptionImageItems(record))" bordered>+{{ getExtraItemCount(getDescriptionImageItems(record)) }}</a-tag>
+                  <a-tag v-for="item in getPreviewItems(getDescriptionImageItems(record))" :key="item" class="pod-material-chip" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
+                  <a-tag v-if="getExtraItemCount(getDescriptionImageItems(record))" class="pod-material-chip pod-material-chip-more" bordered>+{{ getExtraItemCount(getDescriptionImageItems(record)) }}</a-tag>
                   <span v-if="!getDescriptionImageItems(record).length" class="pod-muted">&#x6682;&#x65E0;</span>
                 </div>
               </template>
             </a-table-column>
-            <a-table-column title="AI" :width="130">
+            <a-table-column :width="130">
               <template #cell="{ record }">
                 <a-tag :color="getAiStatusColor(record.aiTitleStatus)" bordered>{{ getAiStatusText(record.aiTitleStatus) }}</a-tag>
               </template>
@@ -687,6 +693,7 @@ const templateTypeOptions = Object.freeze([
 const deliveryOptions = Object.freeze(['1', '2', '9'].map((value) => ({ value, label: value })));
 const customOptions = Object.freeze(['\u662f', '\u5426'].map((value) => ({ value, label: value })));
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
+const TITLE_MAX_LENGTH = 255;
 const SKU_CONFIG_FIELDS = Object.freeze([
   'declaredPrice',
   'price',
@@ -815,7 +822,22 @@ const carouselPresetCandidates = computed(() => {
   });
   return Array.from(itemMap.values());
 });
-const descriptionPresetCandidates = computed(() => carouselPresetCandidates.value);
+const descriptionPresetCandidates = computed(() => {
+  const itemMap = new Map();
+  products.value.forEach((product) => {
+    getMaterialImportOrderItems(product, 'carousel').forEach((item) => {
+      const name = normalizeText(item);
+      if (!name) return;
+      const existing = itemMap.get(name);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        itemMap.set(name, { name, count: 1 });
+      }
+    });
+  });
+  return Array.from(itemMap.values());
+});
 const randomCarouselCandidates = computed(() => {
   const maxCount = products.value.reduce((count, product) => {
     const carousel = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
@@ -911,6 +933,24 @@ function createEmptyPathMap() {
   return { carousel: {}, assets: {}, preview: {} };
 }
 
+function createEmptyImportOrderMap() {
+  return { carousel: [], assets: [], preview: [] };
+}
+
+function createImportOrderMap(materials = {}, source = {}) {
+  return ['carousel', 'assets', 'preview'].reduce((result, sectionId) => {
+    const items = source && Array.isArray(source[sectionId]) ? source[sectionId] : materials[sectionId];
+    result[sectionId] = Array.isArray(items) ? items.map((item) => normalizeText(item)).filter(Boolean) : [];
+    return result;
+  }, createEmptyImportOrderMap());
+}
+
+function getMaterialImportOrderItems(product, sectionId) {
+  const source = product && product.materialImportOrderMap && Array.isArray(product.materialImportOrderMap[sectionId]) ? product.materialImportOrderMap[sectionId] : null;
+  if (source) return source;
+  return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
+}
+
 function createSkuEntry(source = {}) {
   return SKU_CONFIG_FIELDS.reduce((entry, fieldName) => {
     entry[fieldName] = normalizeText(source[fieldName]);
@@ -969,6 +1009,7 @@ function pruneSkuConfigMap() {
 
 function createProduct(overrides = {}) {
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
+  const materialImportOrderMap = createImportOrderMap(materials, overrides.materialImportOrderMap);
   return {
     id: normalizeText(overrides.id) || createId('pod-product'),
     ...DEFAULT_PRODUCT_FIELDS,
@@ -982,6 +1023,7 @@ function createProduct(overrides = {}) {
       ...createEmptyPathMap(),
       ...(overrides.materialPathMap && typeof overrides.materialPathMap === 'object' ? overrides.materialPathMap : {})
     },
+    materialImportOrderMap,
     skuConfigMap: cloneSkuMap(overrides.skuConfigMap),
     aiTitleStatus: normalizeText(overrides.aiTitleStatus),
     aiTitleError: normalizeText(overrides.aiTitleError),
@@ -1010,13 +1052,14 @@ function buildProductsFromFiles(files) {
     const groupInfo = getImportedProductGroup(file);
     const groupKey = `${groupInfo.sourceFolder}__${groupInfo.productKey}`;
     if (!groups.has(groupKey)) {
-      groups.set(groupKey, { localName: groupInfo.productKey, sourceFolder: groupInfo.sourceFolder, materials: { carousel: [], assets: [], preview: [] }, materialPathMap: createEmptyPathMap() });
+      groups.set(groupKey, { localName: groupInfo.productKey, sourceFolder: groupInfo.sourceFolder, materials: { carousel: [], assets: [], preview: [] }, materialPathMap: createEmptyPathMap(), materialImportOrderMap: createEmptyImportOrderMap() });
     }
     const group = groups.get(groupKey);
     const section = classifySection(file.name, file.webkitRelativePath);
     const name = normalizeMaterialName(file, groupInfo) || file.name;
     const key = getMaterialNameKey(name);
     group.materials[section].push(name);
+    group.materialImportOrderMap[section].push(name);
     if (key && file.path) group.materialPathMap[section][key] = file.path;
   });
   return Array.from(groups.values()).map((group) => createProduct({ ...group, ...globalForm, ...skuDefaults, skuConfigMap: cloneSkuMap(skuConfigMap) }));
@@ -1099,6 +1142,17 @@ function selectProduct(record) {
 
 function getProductRowClass(record) {
   return record && activeProductId.value === record.id ? 'is-active' : '';
+}
+
+function getTextLength(value) {
+  return String(value === undefined || value === null ? '' : value).length;
+}
+
+function handleProductTitleChange(record, fieldName) {
+  if (!record || !fieldName) return;
+  const value = String(record[fieldName] === undefined || record[fieldName] === null ? '' : record[fieldName]);
+  if (value.length > TITLE_MAX_LENGTH) record[fieldName] = value.slice(0, TITLE_MAX_LENGTH);
+  scheduleStateSave();
 }
 
 function getAiStatusText(status) {
@@ -1323,7 +1377,7 @@ function openDescriptionPreset() {
   const candidateNames = descriptionPresetCandidates.value.map((item) => item.name);
   const savedSelection = splitLines(descriptionPresetText.value).filter((item) => candidateNames.includes(item));
   const activeSelection = activeProduct.value ? getDescriptionImageItems(activeProduct.value).map((item) => normalizeText(item)).filter(Boolean) : [];
-  descriptionPresetSelected.value = savedSelection.length ? savedSelection : activeSelection.filter((item) => candidateNames.includes(item));
+  descriptionPresetSelected.value = sortDescriptionSelectionByImportOrder(savedSelection.length ? savedSelection : activeSelection.filter((item) => candidateNames.includes(item)));
   descriptionPresetVisible.value = true;
 }
 
@@ -1339,7 +1393,7 @@ function toggleDescriptionPresetItem(name, checked) {
   const nextName = normalizeText(name);
   if (!nextName) return;
   const nextItems = descriptionPresetSelected.value.filter((item) => item !== nextName);
-  descriptionPresetSelected.value = checked ? [...nextItems, nextName] : nextItems;
+  descriptionPresetSelected.value = sortDescriptionSelectionByImportOrder(checked ? [...nextItems, nextName] : nextItems);
 }
 
 function selectAllDescriptionPresetItems() {
@@ -1348,6 +1402,11 @@ function selectAllDescriptionPresetItems() {
 
 function clearDescriptionPresetItems() {
   descriptionPresetSelected.value = [];
+}
+
+function sortDescriptionSelectionByImportOrder(items) {
+  const selectedSet = new Set((Array.isArray(items) ? items : []).map((item) => normalizeText(item)).filter(Boolean));
+  return descriptionPresetCandidates.value.map((item) => item.name).filter((name) => selectedSet.has(name));
 }
 
 function moveDescriptionPresetItem(index, offset) {
@@ -1767,12 +1826,27 @@ body.pod-miaoshou-vue-mounted {
 }
 
 .pod-miaoshou-app-shell {
+  --pod-bg: #f6f8fb;
+  --pod-surface: #ffffff;
+  --pod-surface-soft: #fbfcfe;
+  --pod-surface-muted: #f7f9fc;
+  --pod-hover: #f3f6fb;
+  --pod-border: #e5e8ef;
+  --pod-border-soft: #eef1f5;
+  --pod-border-strong: #cbd5e1;
+  --pod-text: #1d2533;
+  --pod-text-strong: #111827;
+  --pod-text-muted: #667085;
+  --pod-text-subtle: #86909c;
+  --pod-shadow: rgba(29, 33, 41, 0.07);
+  --pod-primary-soft: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  --pod-primary-softer: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.055);
   min-height: 100vh;
   box-sizing: border-box;
   overflow: visible;
   padding: 14px;
-  background: #ffffff;
-  color: #172033;
+  background: var(--pod-bg);
+  color: var(--pod-text);
 }
 
 .pod-miaoshou-app-shell *,
@@ -1782,23 +1856,36 @@ body.pod-miaoshou-vue-mounted {
 }
 
 body.dark-theme .pod-miaoshou-app-shell {
-  background: #0f172a;
-  color: #e5eefc;
+  --pod-bg: #101419;
+  --pod-surface: #171c23;
+  --pod-surface-soft: #1d2430;
+  --pod-surface-muted: #141a22;
+  --pod-hover: #222b38;
+  --pod-border: #2c3542;
+  --pod-border-soft: #25303d;
+  --pod-border-strong: #3a4656;
+  --pod-text: #d7dde8;
+  --pod-text-strong: #f2f5fa;
+  --pod-text-muted: #9aa6b6;
+  --pod-text-subtle: #7f8b9d;
+  --pod-shadow: rgba(0, 0, 0, 0.28);
+  background: var(--pod-bg);
+  color: var(--pod-text);
 }
 
 .pod-miaoshou-app-header,
 .pod-panel {
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--pod-border);
+  border-radius: 6px;
+  background: var(--pod-surface);
+  box-shadow: 0 4px 14px rgba(29, 33, 41, 0.05);
 }
 
 body.dark-theme .pod-miaoshou-app-header,
 body.dark-theme .pod-panel {
-  border-color: rgba(71, 85, 105, 0.42);
-  background: rgba(15, 23, 42, 0.88);
-  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.28);
+  border-color: var(--pod-border);
+  background: var(--pod-surface);
+  box-shadow: 0 10px 24px var(--pod-shadow);
 }
 
 .pod-miaoshou-app-header {
@@ -1821,7 +1908,7 @@ body.dark-theme .pod-panel {
 .pod-panel-tag,
 .pod-modal-title span {
   margin: 0;
-  color: var(--theme-primary-ink, #8f5a0e);
+  color: var(--theme-primary-ink, var(--theme-primary-color, #b7791f));
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1857,7 +1944,7 @@ body.dark-theme .pod-panel {
 .pod-panel-title,
 .pod-modal-title strong {
   margin: 0;
-  color: #172033;
+  color: var(--pod-text-strong);
   font-size: 16px;
   line-height: 1.2;
 }
@@ -2003,7 +2090,7 @@ body.dark-theme .pod-modal-title strong {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #5f6f83;
+  color: var(--pod-text-muted);
   font-size: 11px;
   font-weight: 700;
 }
@@ -2041,7 +2128,7 @@ body.dark-theme .pod-modal-title strong {
 
 .pod-table-title-unit {
   display: block;
-  color: #475569;
+  color: var(--pod-text-muted);
   font-size: 11px;
   font-weight: 700;
 }
@@ -2060,9 +2147,10 @@ body.dark-theme .pod-field-label {
   align-items: center;
   gap: 6px;
   padding: 8px;
-  border: 1px solid #e5ebf3;
-  border-radius: 8px;
-  background: #f8fafc;
+  border: 1px solid var(--pod-border);
+  border-radius: 6px;
+  background: var(--pod-surface);
+  box-shadow: 0 1px 4px rgba(29, 33, 41, 0.04);
   overflow-x: auto;
   overflow-y: hidden;
   flex-wrap: nowrap;
@@ -2075,6 +2163,7 @@ body.dark-theme .pod-field-label {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
 }
 
 .pod-actions .arco-btn {
@@ -2088,39 +2177,40 @@ body.dark-theme .pod-field-label {
 .pod-actions .arco-btn:hover,
 .pod-miaoshou-app-header__meta .arco-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
 }
 
 .pod-field :deep(.arco-input-wrapper),
 .pod-field :deep(.arco-select-view-single),
 .pod-field :deep(.arco-textarea-wrapper) {
   min-height: 32px;
-  border-color: #cbd5e1;
+  border-color: var(--pod-border-strong);
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--pod-surface);
   box-shadow: none;
 }
 
 .pod-template-manage-panel .pod-field :deep(.arco-input-wrapper),
 .pod-template-manage-panel .pod-field :deep(.arco-select-view-single) {
   min-height: 34px;
-  border-color: #b8c4d4;
-  background: #ffffff;
+  border-color: var(--pod-border-strong);
+  background: var(--pod-surface);
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper,
 .pod-miaoshou-app-shell .arco-select-view-single,
 .pod-miaoshou-app-shell .arco-select-view,
 .pod-miaoshou-app-shell .arco-textarea-wrapper {
-  border: 1px solid #b8c4d4 !important;
-  background: #ffffff !important;
-  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12) !important;
+  border: 1px solid var(--pod-border-strong) !important;
+  background: var(--pod-surface) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) !important;
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper:hover,
 .pod-miaoshou-app-shell .arco-select-view:hover,
 .pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
-  border-color: #94a3b8 !important;
+  border-color: var(--pod-border-strong) !important;
+  background: var(--pod-surface-soft) !important;
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
@@ -2132,8 +2222,8 @@ body.dark-theme .pod-field-label {
 
 .pod-miaoshou-app-shell .arco-btn-disabled,
 .pod-miaoshou-app-shell .arco-btn-disabled:hover {
-  background: #f3f6fa !important;
-  color: #94a3b8 !important;
+  background: var(--pod-surface-muted) !important;
+  color: var(--pod-text-subtle) !important;
 }
 
 .pod-field :deep(.arco-textarea-wrapper) {
@@ -2150,7 +2240,7 @@ body.dark-theme .pod-field-label {
 .pod-field :deep(.arco-input-wrapper:hover),
 .pod-field :deep(.arco-select-view-single:hover),
 .pod-field :deep(.arco-textarea-wrapper:hover) {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.5);
+  border-color: var(--pod-border-strong);
 }
 
 .pod-theme-button.arco-btn-primary,
@@ -2160,33 +2250,90 @@ body.dark-theme .pod-field-label {
   color: var(--theme-primary-contrast, #2f2400);
 }
 
-.pod-blue-button.arco-btn {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
-  color: #ffffff;
+.pod-theme-button.arco-btn:hover,
+.pod-theme-button.arco-btn:focus,
+.pod-theme-button.arco-btn-primary:hover,
+.pod-theme-button.arco-btn-primary:focus {
+  border-color: var(--theme-primary-color, #f4bf22) !important;
+  background: var(--theme-primary-color, #f4bf22) !important;
+  color: var(--theme-primary-contrast, #2f2400) !important;
+  filter: saturate(1.08) brightness(1.02);
 }
 
-.pod-red-button.arco-btn,
+.pod-blue-button.arco-btn {
+  border-color: var(--pod-border-strong);
+  background: var(--pod-surface);
+  color: var(--pod-text-strong);
+}
+
+.pod-blue-button.arco-btn:hover,
+.pod-blue-button.arco-btn:focus {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42) !important;
+  background: var(--pod-primary-softer) !important;
+  color: var(--theme-primary-ink, var(--pod-text-strong)) !important;
+  filter: none;
+}
+
+.pod-red-button.arco-btn {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.48);
+  background: var(--theme-primary-color, #f4bf22);
+  color: var(--theme-primary-contrast, #2f2400);
+}
+
+.pod-red-button.arco-btn:hover,
+.pod-red-button.arco-btn:focus {
+  border-color: var(--theme-primary-color, #f4bf22) !important;
+  background: var(--theme-primary-color, #f4bf22) !important;
+  color: var(--theme-primary-contrast, #2f2400) !important;
+  filter: saturate(1.08) brightness(1.02);
+}
+
 .pod-danger-button.arco-btn {
   border-color: #dc2626;
   background: #dc2626;
   color: #ffffff;
 }
 
+.pod-danger-button.arco-btn:hover,
+.pod-danger-button.arco-btn:focus {
+  border-color: #dc2626 !important;
+  background: #b91c1c !important;
+  color: #ffffff !important;
+  filter: none;
+}
+
+.pod-miaoshou-app-shell .arco-btn:not(.pod-theme-button):not(.pod-blue-button):not(.pod-red-button):not(.pod-danger-button):not(.arco-btn-disabled):hover {
+  border-color: var(--pod-border-strong) !important;
+  background: var(--pod-hover) !important;
+  color: var(--pod-text-strong) !important;
+}
+
+.pod-miaoshou-app-shell .arco-btn-disabled,
+.pod-miaoshou-app-shell .arco-btn-disabled:hover,
+.pod-miaoshou-app-shell .arco-btn-disabled:focus {
+  border-color: var(--pod-border) !important;
+  background: var(--pod-surface-muted) !important;
+  color: var(--pod-text-subtle) !important;
+  filter: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .pod-miaoshou-theme-tag.arco-tag,
 .pod-summary-pills span,
 .pod-progress-line span {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  background: var(--pod-primary-soft);
   color: var(--theme-primary-ink, #7a4a00);
 }
 
 .pod-product-table,
 .pod-sku-table {
   min-height: 0;
-  border: 1px solid #e5ebf3;
+  border: 1px solid var(--pod-border);
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.035);
 }
 
 .pod-sku-table :deep(.arco-table-body) {
@@ -2195,8 +2342,8 @@ body.dark-theme .pod-field-label {
 
 .pod-product-table :deep(.arco-table-th),
 .pod-sku-table :deep(.arco-table-th) {
-  background: #f8fafc;
-  color: #334155;
+  background: var(--pod-surface-muted);
+  color: var(--pod-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -2204,12 +2351,12 @@ body.dark-theme .pod-field-label {
 .pod-product-table :deep(.arco-table-td),
 .pod-sku-table :deep(.arco-table-td) {
   padding: 7px 10px;
-  color: #243247;
+  color: var(--pod-text);
 }
 
 .pod-product-table :deep(.arco-table-tr:hover .arco-table-td),
 .pod-sku-table :deep(.arco-table-tr:hover .arco-table-td) {
-  background: #fffaf0;
+  background: var(--pod-hover);
 }
 
 .pod-product-name {
@@ -2217,9 +2364,26 @@ body.dark-theme .pod-field-label {
   gap: 3px;
 }
 
+.pod-title-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.pod-title-length {
+  justify-self: end;
+  color: var(--pod-text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pod-title-length.is-over {
+  color: #dc2626;
+}
+
 .pod-product-name span,
 .pod-muted {
-  color: #7a8899;
+  color: var(--pod-text-subtle);
   font-size: 11px;
 }
 
@@ -2238,8 +2402,21 @@ body.dark-theme .pod-field-label {
   white-space: nowrap;
 }
 
+.pod-material-chip.arco-tag {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
+  background: var(--pod-primary-soft);
+  color: var(--theme-primary-ink, #7a4a00);
+  font-weight: 700;
+}
+
+.pod-material-chip-more.arco-tag {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.3);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.13);
+  color: var(--theme-primary-ink, #7a4a00);
+}
+
 .pod-product-table :deep(.arco-table-tr.is-active) .arco-table-td {
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  background: var(--pod-primary-soft);
 }
 
 .pod-modal-body {
@@ -2264,9 +2441,9 @@ body.dark-theme .pod-field-label {
   grid-template-rows: auto auto minmax(0, 1fr);
   height: 552px;
   min-height: 420px;
-  border: 1px solid #e5ebf3;
+  border: 1px solid var(--pod-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--pod-surface);
   overflow: hidden;
 }
 
@@ -2280,8 +2457,8 @@ body.dark-theme .pod-field-label {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 12px 10px;
-  border-bottom: 1px solid #eef2f7;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid var(--pod-border-soft);
+  background: var(--pod-surface-soft);
 }
 
 .pod-carousel-preset-head div {
@@ -2291,13 +2468,13 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-carousel-preset-head strong {
-  color: #172033;
+  color: var(--pod-text-strong);
   font-size: 14px;
   line-height: 1.2;
 }
 
 .pod-carousel-preset-head span {
-  color: #6b7789;
+  color: var(--pod-text-muted);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -2315,15 +2492,20 @@ body.dark-theme .pod-field-label {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-bottom: 1px solid #eef2f7;
-  background: #ffffff;
+  border-bottom: 1px solid var(--pod-border-soft);
+  background: var(--pod-surface);
 }
 
 .pod-carousel-preset-toolbar span {
   margin-left: auto;
-  color: #6b7789;
+  color: var(--pod-text-muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.pod-carousel-preset-modal .arco-checkbox-checked .arco-checkbox-icon {
+  border-color: var(--theme-primary-color, #f4bf22);
+  background: var(--theme-primary-color, #f4bf22);
 }
 
 .pod-carousel-candidate-list,
@@ -2335,7 +2517,7 @@ body.dark-theme .pod-field-label {
   min-height: 0;
   padding: 10px;
   overflow: auto;
-  background: #fbfcfe;
+  background: var(--pod-surface-soft);
 }
 
 .pod-carousel-candidate-item,
@@ -2344,10 +2526,10 @@ body.dark-theme .pod-field-label {
   align-items: center;
   gap: 8px;
   min-height: 38px;
-  border: 1px solid #e7edf5;
+  border: 1px solid var(--pod-border);
   border-radius: 8px;
-  background: #ffffff;
-  color: #243247;
+  background: var(--pod-surface);
+  color: var(--pod-text);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
@@ -2360,8 +2542,8 @@ body.dark-theme .pod-field-label {
 .pod-carousel-candidate-item:hover,
 .pod-carousel-candidate-item.is-selected,
 .pod-carousel-selected-item:hover {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.44);
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  background: var(--pod-primary-softer);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
@@ -2373,7 +2555,7 @@ body.dark-theme .pod-field-label {
 .pod-carousel-file-name {
   min-width: 0;
   overflow: hidden;
-  color: #223049;
+  color: var(--pod-text);
   font-size: 12px;
   font-weight: 650;
   text-overflow: ellipsis;
@@ -2387,7 +2569,7 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-carousel-assigned-file span {
-  color: #718096;
+  color: var(--pod-text-subtle);
   font-size: 11px;
   font-weight: 700;
   line-height: 1.1;
@@ -2396,7 +2578,7 @@ body.dark-theme .pod-field-label {
 .pod-carousel-assigned-file strong {
   min-width: 0;
   overflow: hidden;
-  color: #172033;
+  color: var(--pod-text-strong);
   font-size: 13px;
   font-weight: 800;
   line-height: 1.25;
@@ -2406,8 +2588,8 @@ body.dark-theme .pod-field-label {
 
 .pod-carousel-file-count {
   border-radius: 999px;
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--pod-primary-soft);
+  color: var(--theme-primary-ink, #7a4a00);
   font-size: 11px;
   font-weight: 800;
   padding: 3px 8px;
@@ -2459,10 +2641,10 @@ body.dark-theme .pod-field-label {
   gap: 8px;
   min-height: 34px;
   padding: 0 14px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--pod-border);
   border-radius: 999px;
-  background: #fff7f7;
-  color: #dc2626;
+  background: var(--pod-surface-soft);
+  color: var(--pod-text-strong);
   font-size: 13px;
   font-weight: 800;
 }
@@ -2472,9 +2654,9 @@ body.dark-theme .pod-field-label {
   grid-template-rows: auto minmax(0, 1fr);
   height: 478px;
   min-height: 360px;
-  border: 1px solid #e5ebf3;
+  border: 1px solid var(--pod-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--pod-surface);
   overflow: hidden;
 }
 
@@ -2485,15 +2667,15 @@ body.dark-theme .pod-field-label {
   gap: 10px;
   min-height: 42px;
   padding: 8px 12px;
-  border-bottom: 1px solid #eef2f7;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--pod-border-soft);
+  background: var(--pod-surface-soft);
 }
 
 .pod-random-carousel-toolbar .arco-btn {
-  border-color: #fecaca;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.28);
   border-radius: 999px;
-  background: #ffffff;
-  color: #ef4444;
+  background: var(--pod-surface);
+  color: var(--theme-primary-ink, #7a4a00);
   font-weight: 800;
 }
 
@@ -2504,8 +2686,8 @@ body.dark-theme .pod-field-label {
   min-width: 30px;
   height: 24px;
   border-radius: 999px;
-  background: #ffffff;
-  color: #ef4444;
+  background: var(--pod-surface);
+  color: var(--theme-primary-ink, #7a4a00);
   font-size: 12px;
   font-weight: 900;
 }
@@ -2517,7 +2699,7 @@ body.dark-theme .pod-field-label {
   min-height: 0;
   padding: 10px;
   overflow: auto;
-  background: #ffffff;
+  background: var(--pod-surface);
 }
 
 .pod-random-carousel-item {
@@ -2527,17 +2709,17 @@ body.dark-theme .pod-field-label {
   gap: 10px;
   min-height: 42px;
   padding: 8px 12px;
-  border: 1px solid #e7edf5;
+  border: 1px solid var(--pod-border);
   border-radius: 9px;
-  background: #ffffff;
-  color: #243247;
+  background: var(--pod-surface);
+  color: var(--pod-text);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
 .pod-random-carousel-item:hover,
 .pod-random-carousel-item.is-selected {
-  border-color: rgba(239, 68, 68, 0.28);
-  background: #fffafa;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  background: var(--pod-primary-softer);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
@@ -2548,8 +2730,8 @@ body.dark-theme .pod-field-label {
   width: 24px;
   height: 24px;
   border-radius: 8px;
-  background: #fee2e2;
-  color: #ef4444;
+  background: var(--pod-primary-soft);
+  color: var(--theme-primary-ink, #7a4a00);
   font-size: 12px;
   font-weight: 900;
 }
@@ -2557,7 +2739,7 @@ body.dark-theme .pod-field-label {
 .pod-random-carousel-item strong {
   min-width: 0;
   overflow: hidden;
-  color: #243247;
+  color: var(--pod-text-strong);
   font-size: 13px;
   font-weight: 800;
   text-overflow: ellipsis;
