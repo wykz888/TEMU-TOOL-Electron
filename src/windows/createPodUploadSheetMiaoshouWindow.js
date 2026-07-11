@@ -4,7 +4,7 @@ const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
 const { podUploadSheetMiaoshouFeature } = require('../features/featureCenter/podUploadSheetMiaoshou');
 
-const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260710-layout-2';
+const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260711-white-bg-2';
 
 function createPodUploadSheetMiaoshouWindow(options = {}) {
   const {

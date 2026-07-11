@@ -1,7 +1,7 @@
 (function initPodUploadSheetMiaoshouView(global) {
   'use strict';
 
-  var ASSET_VERSION = '20260710-layout-2';
+  var ASSET_VERSION = '20260711-white-bg-2';
 
   function withVersion(assetPath) {
     return assetPath + '?v=' + encodeURIComponent(ASSET_VERSION);

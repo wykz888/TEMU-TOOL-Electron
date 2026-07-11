@@ -1,5 +1,5 @@
 <template>
-  <div class="pod-miaoshou-app-shell" data-ui-version="20260710-layout-2">
+  <div class="pod-miaoshou-app-shell" data-ui-version="20260711-white-bg-2">
     <header class="pod-miaoshou-app-header">
       <div class="pod-miaoshou-app-header__copy">
         <span class="pod-miaoshou-app-header__eyebrow">MIAOSHOU TEMU</span>
@@ -311,6 +311,7 @@
         </div>
         <a-table
           class="pod-product-table"
+          :style="productTableStyle"
           row-key="id"
           :data="products"
           :pagination="false"
@@ -879,10 +880,14 @@ const aiTitleRetryCount = computed(() => products.value.filter((item) => item.ai
 const listPanelRef = ref(null);
 const listHeadRef = ref(null);
 const progressLineRef = ref(null);
-const productTableBodyHeight = ref(220);
+const productTableMinBodyHeight = 320;
+const productTableBodyHeight = ref(productTableMinBodyHeight);
 let productTableHeightRaf = 0;
 let listPanelResizeObserver = null;
 const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
+const productTableStyle = computed(() => ({
+  '--pod-product-table-body-height': `${productTableBodyHeight.value}px`
+}));
 const uploadProgressText = computed(() => {
   if (!uploadProgress.total) return '';
   return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgress.success}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
@@ -1739,7 +1744,7 @@ function scheduleProductTableHeightUpdate() {
 function updateProductTableBodyHeight() {
   const panel = listPanelRef.value;
   if (!panel) {
-    productTableBodyHeight.value = Math.max(140, viewportHeight.value - 680);
+    productTableBodyHeight.value = Math.max(productTableMinBodyHeight, viewportHeight.value - 680);
     return;
   }
 
@@ -1750,7 +1755,7 @@ function updateProductTableBodyHeight() {
   const progressHeight = progressLineRef.value ? progressLineRef.value.getBoundingClientRect().height : 0;
   const gapCount = progressHeight > 0 ? 2 : 1;
   const tableChromeHeight = 44;
-  const nextHeight = Math.max(220, Math.floor(panel.clientHeight - panelPadding - headHeight - progressHeight - panelGap * gapCount - tableChromeHeight));
+  const nextHeight = Math.max(productTableMinBodyHeight, Math.floor(panel.clientHeight - panelPadding - headHeight - progressHeight - panelGap * gapCount - tableChromeHeight));
 
   if (Number.isFinite(nextHeight) && Math.abs(nextHeight - productTableBodyHeight.value) > 4) {
     productTableBodyHeight.value = nextHeight;
@@ -1772,7 +1777,8 @@ function setupProductTableResizeObserver() {
 }
 
 onMounted(() => {
-  console.info('[pod-upload-sheet-miaoshou] ui-version 20260710-layout-2');
+  console.info('[pod-upload-sheet-miaoshou] ui-version 20260711-white-bg-2');
+  document.documentElement.classList.add('pod-miaoshou-vue-mounted');
   document.body.classList.add('pod-miaoshou-vue-mounted');
   updateViewportHeight();
   window.addEventListener('resize', updateViewportHeight);
@@ -1800,6 +1806,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (saveTimer) window.clearTimeout(saveTimer);
+  document.documentElement.classList.remove('pod-miaoshou-vue-mounted');
   document.body.classList.remove('pod-miaoshou-vue-mounted');
   window.removeEventListener('resize', updateViewportHeight);
   if (productTableHeightRaf) window.cancelAnimationFrame(productTableHeightRaf);
@@ -1821,14 +1828,23 @@ defineExpose({
 </script>
 
 <style>
+html.pod-miaoshou-vue-mounted,
 body.pod-miaoshou-vue-mounted {
+  min-height: 100%;
+  margin: 0;
   overflow: auto;
+  background: #ffffff;
+}
+
+body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-root {
+  min-height: 100vh;
+  background: #ffffff;
 }
 
 .pod-miaoshou-app-shell {
-  --pod-bg: #f6f8fb;
+  --pod-bg: #ffffff;
   --pod-surface: #ffffff;
-  --pod-surface-soft: #fbfcfe;
+  --pod-surface-soft: #ffffff;
   --pod-surface-muted: #f7f9fc;
   --pod-hover: #f3f6fb;
   --pod-border: #e5e8ef;
@@ -1841,11 +1857,13 @@ body.pod-miaoshou-vue-mounted {
   --pod-shadow: rgba(29, 33, 41, 0.07);
   --pod-primary-soft: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
   --pod-primary-softer: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.055);
+  --pod-primary-border: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  --pod-control-height: 36px;
   min-height: 100vh;
   box-sizing: border-box;
   overflow: visible;
-  padding: 14px;
-  background: var(--pod-bg);
+  padding: 16px;
+  background: #ffffff;
   color: var(--pod-text);
 }
 
@@ -1876,16 +1894,16 @@ body.dark-theme .pod-miaoshou-app-shell {
 .pod-miaoshou-app-header,
 .pod-panel {
   border: 1px solid var(--pod-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--pod-surface);
-  box-shadow: 0 4px 14px rgba(29, 33, 41, 0.05);
+  box-shadow: 0 10px 26px rgba(29, 33, 41, 0.075);
 }
 
 body.dark-theme .pod-miaoshou-app-header,
 body.dark-theme .pod-panel {
   border-color: var(--pod-border);
   background: var(--pod-surface);
-  box-shadow: 0 10px 24px var(--pod-shadow);
+  box-shadow: 0 12px 28px var(--pod-shadow);
 }
 
 .pod-miaoshou-app-header {
@@ -1896,6 +1914,10 @@ body.dark-theme .pod-panel {
   min-height: 54px;
   padding: 8px 14px;
   margin: 0 0 10px;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
+  background:
+    linear-gradient(90deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1), rgba(255, 255, 255, 0) 42%),
+    var(--pod-surface);
 }
 
 .pod-miaoshou-app-header__copy,
@@ -1907,11 +1929,19 @@ body.dark-theme .pod-panel {
 .pod-miaoshou-app-header__eyebrow,
 .pod-panel-tag,
 .pod-modal-title span {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 22px;
   margin: 0;
+  padding: 0 8px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.2);
+  border-radius: 999px;
   color: var(--theme-primary-ink, var(--theme-primary-color, #b7791f));
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
 }
 
 .pod-miaoshou-app-header__title-row,
@@ -1931,6 +1961,8 @@ body.dark-theme .pod-panel {
 .pod-list-head,
 .pod-panel-head {
   justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
 }
 
 .pod-list-head {
@@ -1945,7 +1977,8 @@ body.dark-theme .pod-panel {
 .pod-modal-title strong {
   margin: 0;
   color: var(--pod-text-strong);
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 850;
   line-height: 1.2;
 }
 
@@ -1972,11 +2005,28 @@ body.dark-theme .pod-modal-title strong {
 }
 
 .pod-panel {
+  position: relative;
   display: grid;
   gap: 12px;
   min-height: 0;
-  padding: 12px;
+  padding: 14px;
   overflow: visible;
+  border-color: rgba(203, 213, 225, 0.72);
+}
+
+body.dark-theme .pod-panel {
+  border-color: var(--pod-border);
+}
+
+.pod-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(90deg, var(--theme-primary-color, #f4bf22), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16));
+  opacity: 0.82;
+  pointer-events: none;
 }
 
 .pod-template-manage-panel {
@@ -2147,10 +2197,12 @@ body.dark-theme .pod-field-label {
   align-items: center;
   gap: 6px;
   padding: 8px;
-  border: 1px solid var(--pod-border);
-  border-radius: 6px;
-  background: var(--pod-surface);
-  box-shadow: 0 1px 4px rgba(29, 33, 41, 0.04);
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.045), rgba(255, 255, 255, 0)),
+    var(--pod-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 6px 16px rgba(29, 33, 41, 0.05);
   overflow-x: auto;
   overflow-y: hidden;
   flex-wrap: nowrap;
@@ -2158,11 +2210,11 @@ body.dark-theme .pod-field-label {
 
 .pod-actions .arco-btn,
 .pod-miaoshou-app-header__meta .arco-btn {
-  height: 32px;
-  padding: 0 11px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  height: var(--pod-control-height);
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
 }
 
@@ -2171,7 +2223,7 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-miaoshou-app-header__meta .arco-btn {
-  height: 34px;
+  height: var(--pod-control-height);
 }
 
 .pod-actions .arco-btn:hover,
@@ -2180,19 +2232,19 @@ body.dark-theme .pod-field-label {
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
 }
 
-.pod-field :deep(.arco-input-wrapper),
-.pod-field :deep(.arco-select-view-single),
-.pod-field :deep(.arco-textarea-wrapper) {
-  min-height: 32px;
+.pod-field .arco-input-wrapper,
+.pod-field .arco-select-view-single,
+.pod-field .arco-textarea-wrapper {
+  min-height: var(--pod-control-height);
   border-color: var(--pod-border-strong);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--pod-surface);
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.pod-template-manage-panel .pod-field :deep(.arco-input-wrapper),
-.pod-template-manage-panel .pod-field :deep(.arco-select-view-single) {
-  min-height: 34px;
+.pod-template-manage-panel .pod-field .arco-input-wrapper,
+.pod-template-manage-panel .pod-field .arco-select-view-single {
+  min-height: var(--pod-control-height);
   border-color: var(--pod-border-strong);
   background: var(--pod-surface);
 }
@@ -2203,21 +2255,36 @@ body.dark-theme .pod-field-label {
 .pod-miaoshou-app-shell .arco-textarea-wrapper {
   border: 1px solid var(--pod-border-strong) !important;
   background: var(--pod-surface) !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.pod-miaoshou-app-shell .arco-input,
+.pod-miaoshou-app-shell .arco-select-view-value,
+.pod-miaoshou-app-shell .arco-textarea {
+  color: var(--pod-text-strong) !important;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.pod-miaoshou-app-shell .arco-select-view-suffix,
+.pod-miaoshou-app-shell .arco-input-suffix,
+.pod-miaoshou-app-shell .arco-input-prefix {
+  color: var(--pod-text-subtle) !important;
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper:hover,
 .pod-miaoshou-app-shell .arco-select-view:hover,
 .pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
-  border-color: var(--pod-border-strong) !important;
-  background: var(--pod-surface-soft) !important;
+  border-color: var(--pod-primary-border) !important;
+  background: #ffffff !important;
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
 .pod-miaoshou-app-shell .arco-select-view-focus,
 .pod-miaoshou-app-shell .arco-textarea-wrapper:focus-within {
   border-color: var(--theme-primary-color, #f4bf22) !important;
-  box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16), 0 6px 16px rgba(15, 23, 42, 0.06) !important;
 }
 
 .pod-miaoshou-app-shell .arco-btn-disabled,
@@ -2226,28 +2293,30 @@ body.dark-theme .pod-field-label {
   color: var(--pod-text-subtle) !important;
 }
 
-.pod-field :deep(.arco-textarea-wrapper) {
+.pod-field .arco-textarea-wrapper {
   min-height: 54px;
 }
 
-.pod-template-panel .pod-description-textarea :deep(.arco-textarea-wrapper),
-.pod-template-panel .pod-description-textarea :deep(textarea) {
+.pod-template-panel .pod-description-textarea .arco-textarea-wrapper,
+.pod-template-panel .pod-description-textarea textarea {
   height: 76px !important;
   min-height: 76px !important;
   max-height: 76px !important;
 }
 
-.pod-field :deep(.arco-input-wrapper:hover),
-.pod-field :deep(.arco-select-view-single:hover),
-.pod-field :deep(.arco-textarea-wrapper:hover) {
+.pod-field .arco-input-wrapper:hover,
+.pod-field .arco-select-view-single:hover,
+.pod-field .arco-textarea-wrapper:hover {
   border-color: var(--pod-border-strong);
 }
 
 .pod-theme-button.arco-btn-primary,
 .pod-theme-button.arco-btn {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.45);
-  background: var(--theme-primary-color, #f4bf22);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 82%, #ffffff), var(--theme-primary-color, #f4bf22));
   color: var(--theme-primary-contrast, #2f2400);
+  box-shadow: 0 7px 16px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
 }
 
 .pod-theme-button.arco-btn:hover,
@@ -2255,49 +2324,58 @@ body.dark-theme .pod-field-label {
 .pod-theme-button.arco-btn-primary:hover,
 .pod-theme-button.arco-btn-primary:focus {
   border-color: var(--theme-primary-color, #f4bf22) !important;
-  background: var(--theme-primary-color, #f4bf22) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22)) !important;
   color: var(--theme-primary-contrast, #2f2400) !important;
   filter: saturate(1.08) brightness(1.02);
 }
 
 .pod-blue-button.arco-btn {
-  border-color: var(--pod-border-strong);
-  background: var(--pod-surface);
-  color: var(--pod-text-strong);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1)),
+    var(--pod-surface);
+  color: var(--theme-primary-ink, var(--pod-text-strong));
+  box-shadow: 0 4px 12px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
 }
 
 .pod-blue-button.arco-btn:hover,
 .pod-blue-button.arco-btn:focus {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42) !important;
-  background: var(--pod-primary-softer) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16)) !important;
   color: var(--theme-primary-ink, var(--pod-text-strong)) !important;
   filter: none;
 }
 
 .pod-red-button.arco-btn {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.48);
-  background: var(--theme-primary-color, #f4bf22);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 82%, #ffffff), var(--theme-primary-color, #f4bf22));
   color: var(--theme-primary-contrast, #2f2400);
+  box-shadow: 0 7px 16px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
 }
 
 .pod-red-button.arco-btn:hover,
 .pod-red-button.arco-btn:focus {
   border-color: var(--theme-primary-color, #f4bf22) !important;
-  background: var(--theme-primary-color, #f4bf22) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22)) !important;
   color: var(--theme-primary-contrast, #2f2400) !important;
   filter: saturate(1.08) brightness(1.02);
 }
 
 .pod-danger-button.arco-btn {
   border-color: #dc2626;
-  background: #dc2626;
+  background: linear-gradient(180deg, #ef4444, #dc2626);
   color: #ffffff;
+  box-shadow: 0 7px 16px rgba(220, 38, 38, 0.18);
 }
 
 .pod-danger-button.arco-btn:hover,
 .pod-danger-button.arco-btn:focus {
   border-color: #dc2626 !important;
-  background: #b91c1c !important;
+  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
   color: #ffffff !important;
   filter: none;
 }
@@ -2319,6 +2397,52 @@ body.dark-theme .pod-field-label {
   box-shadow: none !important;
 }
 
+body.pod-miaoshou-vue-mounted .arco-select-dropdown,
+body.pod-miaoshou-vue-mounted .arco-trigger-popup {
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+}
+
+body.pod-miaoshou-vue-mounted .arco-select-option {
+  border-radius: 6px;
+  color: var(--pod-text, #1d2533);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+body.pod-miaoshou-vue-mounted .arco-select-option-hover,
+body.pod-miaoshou-vue-mounted .arco-select-option:hover {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+}
+
+body.pod-miaoshou-vue-mounted .arco-select-option-selected {
+  color: var(--theme-primary-ink, #7a4a00);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
+  font-weight: 800;
+}
+
+body.pod-miaoshou-vue-mounted .arco-modal {
+  overflow: hidden;
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 8px;
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.18);
+}
+
+body.pod-miaoshou-vue-mounted .arco-modal-header {
+  border-bottom: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
+  background:
+    linear-gradient(90deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1), rgba(255, 255, 255, 0) 46%),
+    #ffffff;
+}
+
+body.pod-miaoshou-vue-mounted .arco-modal-title {
+  color: var(--pod-text-strong, #111827);
+  font-size: 16px;
+  font-weight: 850;
+}
+
 .pod-miaoshou-theme-tag.arco-tag,
 .pod-summary-pills span,
 .pod-progress-line span {
@@ -2333,30 +2457,57 @@ body.dark-theme .pod-field-label {
   border: 1px solid var(--pod-border);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.035);
+  background: var(--pod-surface);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045);
 }
 
-.pod-sku-table :deep(.arco-table-body) {
+.pod-product-table {
+  min-height: calc(var(--pod-product-table-body-height, 320px) + 45px);
+}
+
+.pod-product-table .arco-table-container,
+.pod-product-table .arco-table-content,
+.pod-product-table .arco-table-body,
+.pod-product-table .arco-table-element,
+.pod-product-table .arco-table-td {
+  background: #ffffff;
+}
+
+.pod-product-table .arco-table-body {
+  min-height: var(--pod-product-table-body-height, 320px) !important;
+}
+
+.pod-product-table.arco-table-empty .arco-table-body,
+.pod-product-table .arco-table-tr-empty,
+.pod-product-table .arco-table-tr-empty .arco-table-td {
+  height: var(--pod-product-table-body-height, 320px);
+  min-height: var(--pod-product-table-body-height, 320px);
+  background: #ffffff;
+}
+
+.pod-sku-table .arco-table-body {
   overflow-y: auto;
 }
 
-.pod-product-table :deep(.arco-table-th),
-.pod-sku-table :deep(.arco-table-th) {
-  background: var(--pod-surface-muted);
+.pod-product-table .arco-table-th,
+.pod-sku-table .arco-table-th {
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.065), rgba(255, 255, 255, 0)),
+    var(--pod-surface-muted);
   color: var(--pod-text);
   font-size: 12px;
   font-weight: 800;
 }
 
-.pod-product-table :deep(.arco-table-td),
-.pod-sku-table :deep(.arco-table-td) {
+.pod-product-table .arco-table-td,
+.pod-sku-table .arco-table-td {
   padding: 7px 10px;
   color: var(--pod-text);
 }
 
-.pod-product-table :deep(.arco-table-tr:hover .arco-table-td),
-.pod-sku-table :deep(.arco-table-tr:hover .arco-table-td) {
-  background: var(--pod-hover);
+.pod-product-table .arco-table-tr:hover .arco-table-td,
+.pod-sku-table .arco-table-tr:hover .arco-table-td {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.052);
 }
 
 .pod-product-name {
@@ -2403,8 +2554,8 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-material-chip.arco-tag {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
-  background: var(--pod-primary-soft);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.28);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
   color: var(--theme-primary-ink, #7a4a00);
   font-weight: 700;
 }
@@ -2415,7 +2566,7 @@ body.dark-theme .pod-field-label {
   color: var(--theme-primary-ink, #7a4a00);
 }
 
-.pod-product-table :deep(.arco-table-tr.is-active) .arco-table-td {
+.pod-product-table .arco-table-tr.is-active .arco-table-td {
   background: var(--pod-primary-soft);
 }
 
@@ -2444,6 +2595,7 @@ body.dark-theme .pod-field-label {
   border: 1px solid var(--pod-border);
   border-radius: 8px;
   background: var(--pod-surface);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045);
   overflow: hidden;
 }
 
@@ -2458,7 +2610,9 @@ body.dark-theme .pod-field-label {
   gap: 10px;
   padding: 12px 12px 10px;
   border-bottom: 1px solid var(--pod-border-soft);
-  background: var(--pod-surface-soft);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06), rgba(255, 255, 255, 0)),
+    var(--pod-surface-soft);
 }
 
 .pod-carousel-preset-head div {
@@ -2481,8 +2635,8 @@ body.dark-theme .pod-field-label {
 
 .pod-carousel-count-tag.arco-tag {
   flex: 0 0 auto;
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.28);
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.36);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
   color: var(--theme-primary-ink, #8f5a0e);
   font-weight: 700;
 }
@@ -2542,9 +2696,9 @@ body.dark-theme .pod-field-label {
 .pod-carousel-candidate-item:hover,
 .pod-carousel-candidate-item.is-selected,
 .pod-carousel-selected-item:hover {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
-  background: var(--pod-primary-softer);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.07);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .pod-carousel-selected-item {
@@ -2617,7 +2771,7 @@ body.dark-theme .pod-field-label {
 .pod-carousel-order-actions .arco-btn {
   height: 24px;
   padding: 0 7px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 11px;
 }
 
@@ -2655,8 +2809,9 @@ body.dark-theme .pod-field-label {
   height: 478px;
   min-height: 360px;
   border: 1px solid var(--pod-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--pod-surface);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045);
   overflow: hidden;
 }
 
@@ -2668,7 +2823,9 @@ body.dark-theme .pod-field-label {
   min-height: 42px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--pod-border-soft);
-  background: var(--pod-surface-soft);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06), rgba(255, 255, 255, 0)),
+    var(--pod-surface-soft);
 }
 
 .pod-random-carousel-toolbar .arco-btn {
@@ -2718,9 +2875,9 @@ body.dark-theme .pod-field-label {
 
 .pod-random-carousel-item:hover,
 .pod-random-carousel-item.is-selected {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
-  background: var(--pod-primary-softer);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.07);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .pod-random-carousel-index {
