@@ -1,10 +1,30 @@
 const path = require('node:path');
-const { BrowserWindow } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
 const { podUploadSheetMiaoshouFeature } = require('../features/featureCenter/podUploadSheetMiaoshou');
 
-const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260711-white-bg-2';
+const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260711-pod-opt-2';
+
+function resolveDevServerUrl() {
+  const urlText = String(process.env.TEMU_POD_UPLOAD_SHEET_MIAOSHOU_DEV_SERVER_URL || '').trim();
+
+  if (app.isPackaged || !urlText) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(urlText);
+
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return '';
+    }
+
+    return parsedUrl.toString();
+  } catch (_error) {
+    return '';
+  }
+}
 
 function createPodUploadSheetMiaoshouWindow(options = {}) {
   const {
@@ -30,11 +50,17 @@ function createPodUploadSheetMiaoshouWindow(options = {}) {
     title: resolveWindowTitle(title)
   });
 
-  podUploadSheetWindow.loadFile(path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshou.html'), {
-    query: {
-      v: POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION
-    }
-  });
+  const devServerUrl = resolveDevServerUrl();
+
+  if (devServerUrl) {
+    podUploadSheetWindow.loadURL(devServerUrl);
+  } else {
+    podUploadSheetWindow.loadFile(path.join(__dirname, '..', 'renderer', 'podUploadSheetMiaoshou.html'), {
+      query: {
+        v: POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION
+      }
+    });
+  }
 
   return podUploadSheetWindow;
 }

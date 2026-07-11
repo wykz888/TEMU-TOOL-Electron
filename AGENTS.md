@@ -8,6 +8,13 @@ These rules are mandatory for future development in this repository.
 - Prefer existing renderer modules and the current theme system over parallel custom HTML/CSS patterns.
 - Keep feature UI inside renderer pages and feature components. Do not move product UI into main-process template strings.
 
+## Module Structure
+
+- Treat TEMU toolbox development with the same module organization used by YiZhi Ecommerce: thin renderer entry, feature-specific `components`, `runtime` or `services`, `state`, `view-models`, `styles`, `types`, and `utils` directories when those responsibilities exist.
+- Keep feature pages and feature windows isolated as independent renderer modules when they have meaningful UI or workflow ownership.
+- Keep state, rendering, dialogs, export mapping, image handling, persistence, and service orchestration in separate modules instead of one mixed page file.
+- Preserve existing workflow order, column order, and button order unless the user explicitly asks for a re-layout.
+
 ## UI Baseline
 
 - Keep layouts stable unless the user explicitly requests structural changes.
@@ -16,6 +23,7 @@ These rules are mandatory for future development in this repository.
 - Use another software as a layout and density reference only when asked. For this project, the YiZhi Ecommerce Electron app is a visual reference for cleanliness, hierarchy, and control density.
 - Do not copy another app's brand palette or theme colors unless the user explicitly asks for that palette.
 - Reserve red for destructive or failure states. Use the app theme color for primary actions.
+- For TEMU toolbox UI, follow the same density and surface discipline as YiZhi Ecommerce while keeping the TEMU app's own theme identity and color system.
 
 ## Feature Layout Rules
 
