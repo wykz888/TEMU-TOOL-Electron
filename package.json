@@ -56,7 +56,7 @@
     ],
     "win": {
       "icon": "src/assets/icons/app-icon.ico",
-      "signAndEditExecutable": true,
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "portable",
