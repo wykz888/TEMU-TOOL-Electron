@@ -1,15 +1,50 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { getAppDataRoot } = require('../../utils/persistenceRoots');
+const {
+  getAppDataRoot,
+  mergeLegacyDirectoryContents
+} = require('../../utils/persistenceRoots');
+
+const STORE_ROOT_SEGMENT = 'shop_management';
+const LEGACY_STORE_ROOT_SEGMENTS = Object.freeze(['local_state', STORE_ROOT_SEGMENT]);
 
 function createShopLocalStore({ app }) {
-  function getRootDir() {
+  let migrationChecked = false;
+
+  function getNextRootDir() {
     return path.join(
       getAppDataRoot(app),
-      'local_state',
-      'shop_management',
+      STORE_ROOT_SEGMENT,
       'users'
     );
+  }
+
+  function getLegacyRootDir() {
+    return path.join(
+      getAppDataRoot(app),
+      ...LEGACY_STORE_ROOT_SEGMENTS,
+      'users'
+    );
+  }
+
+  function ensureRootMigrated() {
+    if (migrationChecked) {
+      return;
+    }
+
+    migrationChecked = true;
+
+    try {
+      mergeLegacyDirectoryContents(getLegacyRootDir(), getNextRootDir());
+    } catch (_error) {
+      // Keep reading and writing the new cloud-aligned local path.
+    }
+  }
+
+  function getRootDir() {
+    ensureRootMigrated();
+
+    return getNextRootDir();
   }
 
   function getOwnerDir(owner) {

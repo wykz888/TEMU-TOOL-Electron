@@ -36,17 +36,18 @@
         :bordered="false"
       >
         <div class="catalog-center-card-content">
-          <div class="catalog-center-card-icon">
-            <component :is="getEntryIcon(entry)" />
+          <div class="catalog-center-card-head">
+            <div class="catalog-center-card-icon">
+              <component :is="getEntryIcon(entry)" />
+            </div>
+
+            <a-tag class="catalog-center-card-tag" bordered>
+              {{ entry.tag || fallbackTag }}
+            </a-tag>
           </div>
 
           <div class="catalog-center-card-copy">
-            <div class="catalog-center-card-title-row">
-              <h3>{{ entry.title || '-' }}</h3>
-              <a-tag class="catalog-center-card-tag" bordered>
-                {{ entry.tag || fallbackTag }}
-              </a-tag>
-            </div>
+            <h3>{{ entry.title || '-' }}</h3>
             <p>{{ entry.description || emptyDescription }}</p>
           </div>
         </div>
@@ -367,11 +368,11 @@ defineExpose({
   opacity: 0.92;
 }
 
-.catalog-center-card :deep(.arco-card-body) {
+.catalog-center-card .arco-card-body {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start;
+  gap: 14px;
   flex: 1;
   height: 100%;
   min-height: 256px;
@@ -379,11 +380,20 @@ defineExpose({
 }
 
 .catalog-center-card-content {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
   padding-top: 6px;
+  flex: 1;
+}
+
+.catalog-center-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
 }
 
 .catalog-center-card-footer {
@@ -392,7 +402,7 @@ defineExpose({
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 0;
+  margin-top: auto;
 }
 
 .catalog-center-card-icon {
@@ -406,7 +416,7 @@ defineExpose({
   background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
 }
 
-.catalog-center-card-icon :deep(svg) {
+.catalog-center-card-icon svg {
   font-size: 20px;
 }
 
@@ -423,21 +433,12 @@ defineExpose({
 
 .catalog-center-card-copy {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   align-content: start;
-  min-width: 0;
-  padding-top: 2px;
-}
-
-.catalog-center-card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   min-width: 0;
 }
 
 .catalog-center-card-copy h3 {
-  flex: 1;
   min-width: 0;
   margin: 0;
   color: #132238;
@@ -490,7 +491,7 @@ defineExpose({
   box-shadow: 0 1px 4px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.catalog-center-action-button :deep(.arco-btn-icon) {
+.catalog-center-action-button .arco-btn-icon {
   margin-right: 6px;
 }
 

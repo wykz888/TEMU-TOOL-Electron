@@ -2,8 +2,73 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const APP_DATA_ROOT_SEGMENT = 'TEMU_Data_Electron';
-const SCOPED_DATA_ROOT_SEGMENT = 'TEMU_Data';
+const LEGACY_SCOPED_DATA_ROOT_SEGMENT = 'TEMU_Data';
+const SCOPED_DATA_ROOT_SEGMENT = '';
 const migratedScopedRootPaths = new Set();
+
+function shouldReplaceFile(sourceFilePath, targetFilePath) {
+  if (!fs.existsSync(targetFilePath)) {
+    return true;
+  }
+
+  try {
+    const sourceStat = fs.statSync(sourceFilePath);
+    const targetStat = fs.statSync(targetFilePath);
+
+    return sourceStat.mtimeMs > targetStat.mtimeMs;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function mergeLegacyDirectoryContents(sourceDirectoryPath, targetDirectoryPath) {
+  if (
+    !fs.existsSync(sourceDirectoryPath)
+    || !fs.statSync(sourceDirectoryPath).isDirectory()
+  ) {
+    return;
+  }
+
+  fs.mkdirSync(targetDirectoryPath, { recursive: true });
+
+  for (const entry of fs.readdirSync(sourceDirectoryPath, { withFileTypes: true })) {
+    const sourceEntryPath = path.join(sourceDirectoryPath, entry.name);
+    const targetEntryPath = path.join(targetDirectoryPath, entry.name);
+
+    if (path.resolve(sourceEntryPath) === path.resolve(targetEntryPath)) {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      if (!fs.existsSync(targetEntryPath)) {
+        fs.renameSync(sourceEntryPath, targetEntryPath);
+        continue;
+      }
+
+      if (!fs.statSync(targetEntryPath).isDirectory()) {
+        continue;
+      }
+
+      mergeLegacyDirectoryContents(sourceEntryPath, targetEntryPath);
+      continue;
+    }
+
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    if (
+      fs.existsSync(targetEntryPath)
+      && fs.statSync(targetEntryPath).isDirectory()
+    ) {
+      continue;
+    }
+
+    if (shouldReplaceFile(sourceEntryPath, targetEntryPath)) {
+      fs.copyFileSync(sourceEntryPath, targetEntryPath);
+    }
+  }
+}
 
 function ensureScopedDataRootMigrated(app) {
   const userDataPath = app.getPath('userData');
@@ -12,20 +77,21 @@ function ensureScopedDataRootMigrated(app) {
     return;
   }
 
-  const legacyScopedRootPath = path.join(userDataPath, SCOPED_DATA_ROOT_SEGMENT);
-  const nextScopedRootPath = path.join(
-    userDataPath,
-    APP_DATA_ROOT_SEGMENT,
-    SCOPED_DATA_ROOT_SEGMENT
-  );
+  const nextScopedRootPath = getAppDataRoot(app);
+  const legacyScopedRootPaths = [
+    path.join(userDataPath, LEGACY_SCOPED_DATA_ROOT_SEGMENT),
+    path.join(nextScopedRootPath, LEGACY_SCOPED_DATA_ROOT_SEGMENT)
+  ];
 
   try {
-    if (
-      fs.existsSync(legacyScopedRootPath)
-      && !fs.existsSync(nextScopedRootPath)
-    ) {
-      fs.mkdirSync(path.dirname(nextScopedRootPath), { recursive: true });
-      fs.renameSync(legacyScopedRootPath, nextScopedRootPath);
+    fs.mkdirSync(nextScopedRootPath, { recursive: true });
+
+    for (const legacyScopedRootPath of legacyScopedRootPaths) {
+      if (path.resolve(legacyScopedRootPath) === path.resolve(nextScopedRootPath)) {
+        continue;
+      }
+
+      mergeLegacyDirectoryContents(legacyScopedRootPath, nextScopedRootPath);
     }
   } catch (_error) {
     // Ignore migration failures and keep using the unified target path.
@@ -44,15 +110,14 @@ function getAppDataRoot(app) {
 function getScopedDataRoot(app) {
   ensureScopedDataRootMigrated(app);
 
-  return path.join(
-    getAppDataRoot(app),
-    SCOPED_DATA_ROOT_SEGMENT
-  );
+  return getAppDataRoot(app);
 }
 
 module.exports = {
   APP_DATA_ROOT_SEGMENT,
+  LEGACY_SCOPED_DATA_ROOT_SEGMENT,
   SCOPED_DATA_ROOT_SEGMENT,
   getAppDataRoot,
-  getScopedDataRoot
+  getScopedDataRoot,
+  mergeLegacyDirectoryContents
 };
