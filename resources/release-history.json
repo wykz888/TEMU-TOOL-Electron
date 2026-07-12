@@ -1,7 +1,16 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-12T00:00:00.000Z",
+  "updatedAt": "2026-07-12T14:35:00.000Z",
   "items": [
+    {
+      "version": "1.0.2",
+      "releaseDate": "2026-07-12",
+      "title": "\u4fee\u590d\u4e3b\u7a0b\u5e8f\u56fe\u6807\u663e\u793a",
+      "notes": [
+        "\u4fee\u590d\u5b89\u88c5\u5305\u751f\u6210\u540e\u4e3b\u7a0b\u5e8f\u4ecd\u663e\u793a Electron \u9ed8\u8ba4\u56fe\u6807\u7684\u95ee\u9898\uff0c\u684c\u9762\u5feb\u6377\u65b9\u5f0f\u548c\u5f00\u59cb\u83dc\u5355\u56fe\u6807\u4f1a\u8ddf\u968f TEMU \u56fe\u6807\u3002",
+        "\u7edf\u4e00 Windows \u5b89\u88c5\u5305\u3001\u5378\u8f7d\u5668\u548c\u4e3b\u7a0b\u5e8f\u7684\u56fe\u6807\u914d\u7f6e\uff0c\u907f\u514d\u4e0d\u540c\u5165\u53e3\u663e\u793a\u4e0d\u4e00\u81f4\u3002"
+      ]
+    },
     {
       "version": "1.0.1",
       "releaseDate": "2026-07-12",
