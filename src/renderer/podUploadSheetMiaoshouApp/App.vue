@@ -175,9 +175,14 @@ import {
   customOptions
 } from './constants/podUploadSheetMiaoshou.js';
 import {
+  normalizeText,
   resolveAiStatusType,
   splitLines
 } from './utils/podUploadSheetMiaoshouData.js';
+import {
+  pickPreferenceFields,
+  rememberPreferenceFields
+} from './utils/dialogPreferenceCache.js';
 import { useAiTitleConfigDialog } from './useAiTitleConfigDialog.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 import AiTitleConfigModal from './components/AiTitleConfigModal.vue';
@@ -194,10 +199,39 @@ import { useSkuSettings } from './useSkuSettings.js';
 import { useTemplateWorkspace } from './useTemplateWorkspace.js';
 
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
+const IMAGE_UPLOAD_PREFERENCE_KEYS = Object.freeze([
+  'storageProvider',
+  'imageUploadMode',
+  'concurrency',
+  'imageQuality'
+]);
+const BATCH_AI_TITLE_PREFERENCE_KEYS = Object.freeze([
+  'aiProvider',
+  'apiBaseUrl',
+  'model',
+  'storageProvider',
+  'imageCompression',
+  'concurrency',
+  'targetLength',
+  'imageQuality',
+  'prefixText',
+  'suffixText',
+  'outputLanguage',
+  'useCache',
+  'extraPrompt'
+]);
+const BATCH_AI_TITLE_EMPTY_TEXT_KEYS = Object.freeze([
+  'prefixText',
+  'suffixText',
+  'extraPrompt',
+  'outputLanguage'
+]);
 const products = ref([]);
 const activeProductId = ref('');
 const lastImportDirectoryPath = ref('');
 const viewportHeight = ref(typeof window === 'undefined' ? 920 : window.innerHeight);
+const imageUploadPreferenceCache = ref({});
+const batchAiTitlePreferenceCache = ref({});
 let cleanupAiTitleConfigBridge = null;
 let cleanupBatchAiTitleBridge = null;
 let cleanupImageUploadBridge = null;
@@ -246,17 +280,41 @@ const batchAiTitleMinTargetLength = batchAiTitleDialog.minTargetLength;
 const batchAiTitleMaxTargetLength = batchAiTitleDialog.maxTargetLength;
 const batchAiTitleMinImageQuality = batchAiTitleDialog.minImageQuality;
 const batchAiTitleMaxImageQuality = batchAiTitleDialog.maxImageQuality;
-const closeBatchAiTitleDialog = batchAiTitleDialog.closeDialog;
+function closeBatchAiTitleDialog() {
+  collectBatchAiTitlePreferences();
+  return batchAiTitleDialog.closeDialog();
+}
 function startBatchAiTitleDialogGenerationFromDialog(retryFailedOnly = false) {
   return batchAiTitleDialog.startGeneration(retryFailedOnly);
 }
 
-function collectBatchAiTitlePreferences() {
-  return batchAiTitleDialog.collectPayload(false);
+function collectBatchAiTitlePreferences(options = {}) {
+  const payload = batchAiTitleDialog.collectPayload(false);
+
+  if (options.remember !== false) {
+    rememberPreferenceFields(
+      batchAiTitlePreferenceCache,
+      payload,
+      BATCH_AI_TITLE_PREFERENCE_KEYS,
+      BATCH_AI_TITLE_EMPTY_TEXT_KEYS
+    );
+  }
+
+  return payload;
 }
 
 function applyBatchAiTitlePreferences(snapshot) {
-  return batchAiTitleDialog.applyPreferences(snapshot);
+  const preferences = rememberPreferenceFields(
+    batchAiTitlePreferenceCache,
+    snapshot,
+    BATCH_AI_TITLE_PREFERENCE_KEYS,
+    BATCH_AI_TITLE_EMPTY_TEXT_KEYS
+  );
+
+  return batchAiTitleDialog.applyPreferences({
+    ...preferences,
+    ...pickPreferenceFields(snapshot, BATCH_AI_TITLE_PREFERENCE_KEYS, BATCH_AI_TITLE_EMPTY_TEXT_KEYS)
+  });
 }
 
 const featureBridge = computed(() => window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null);
@@ -362,6 +420,7 @@ const {
     uploadingImages,
     exportingTable,
     generatingAiTitles,
+    aiTitleRunId,
     uploadProgress,
     uploadFailedFilePaths,
     aiProgress,
@@ -409,18 +468,32 @@ const imageUploadMinConcurrency = imageUploadDialog.minConcurrency;
 const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
 const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
 const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
-const closeImageUploadDialog = imageUploadDialog.closeDialog;
+function closeImageUploadDialog() {
+  collectImageUploadPreferences();
+  return imageUploadDialog.closeDialog();
+}
 function startImageUploadFromDialogFromDialog(retryFailedOnly = false) {
   return imageUploadDialog.startUploadFromDialog(retryFailedOnly);
 }
 
 const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
-function collectImageUploadPreferences() {
-  return imageUploadDialog.collectPayload(false);
+function collectImageUploadPreferences(options = {}) {
+  const payload = imageUploadDialog.collectPayload(false);
+
+  if (options.remember !== false) {
+    rememberPreferenceFields(imageUploadPreferenceCache, payload, IMAGE_UPLOAD_PREFERENCE_KEYS);
+  }
+
+  return payload;
 }
 
 function applyImageUploadPreferences(snapshot) {
-  return imageUploadDialog.applyPreferences(snapshot);
+  const preferences = rememberPreferenceFields(imageUploadPreferenceCache, snapshot, IMAGE_UPLOAD_PREFERENCE_KEYS);
+
+  return imageUploadDialog.applyPreferences({
+    ...preferences,
+    ...pickPreferenceFields(snapshot, IMAGE_UPLOAD_PREFERENCE_KEYS)
+  });
 }
 const productTableBodyHeight = computed(() => Math.max(580, Math.min(820, Math.round((viewportHeight.value - 500) * 1.55))));
 const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
@@ -430,36 +503,28 @@ const productTableStyle = computed(() => ({
 
 function getImageUploadPreferencesSnapshot() {
   const progressSnapshot = getImageUploadProgressSnapshot();
-  const preferences = collectImageUploadPreferences();
+  const preferences = collectImageUploadPreferences({ remember: false });
 
   return {
     ...progressSnapshot,
-    storageProvider: preferences.storageProvider,
-    imageUploadMode: preferences.imageUploadMode,
-    concurrency: preferences.concurrency,
-    imageQuality: preferences.imageQuality
+    ...preferences,
+    ...imageUploadPreferenceCache.value,
+    totalCount: progressSnapshot.totalCount,
+    retryCount: progressSnapshot.retryCount,
+    retryFilePaths: progressSnapshot.retryFilePaths
   };
 }
 
 function getBatchAiTitlePreferencesSnapshot() {
   const progressSnapshot = getBatchAiTitleProgressSnapshot();
-  const preferences = collectBatchAiTitlePreferences();
+  const preferences = collectBatchAiTitlePreferences({ remember: false });
 
   return {
     ...progressSnapshot,
-    aiProvider: preferences.aiProvider,
-    apiBaseUrl: preferences.apiBaseUrl,
-    model: preferences.model,
-    storageProvider: preferences.storageProvider,
-    imageCompression: preferences.imageCompression,
-    concurrency: preferences.concurrency,
-    targetLength: preferences.targetLength,
-    imageQuality: preferences.imageQuality,
-    prefixText: preferences.prefixText,
-    suffixText: preferences.suffixText,
-    outputLanguage: preferences.outputLanguage,
-    useCache: preferences.useCache,
-    extraPrompt: preferences.extraPrompt
+    ...preferences,
+    ...batchAiTitlePreferenceCache.value,
+    totalCount: progressSnapshot.totalCount,
+    retryCount: progressSnapshot.retryCount
   };
 }
 
@@ -472,11 +537,13 @@ function openBatchAiTitleDialog() {
 }
 
 function startImageUploadFromDialog(retryFailedOnly = false) {
+  collectImageUploadPreferences();
   scheduleStateSave();
   return startImageUploadFromDialogFromDialog(retryFailedOnly);
 }
 
 function startBatchAiTitleDialogGeneration(retryFailedOnly = false) {
+  collectBatchAiTitlePreferences();
   scheduleStateSave();
   return startBatchAiTitleDialogGenerationFromDialog(retryFailedOnly);
 }
@@ -582,6 +649,13 @@ onMounted(() => {
   })(cleanupBatchAiTitleBridge);
   if (featureBridge.value && typeof featureBridge.value.onPodUploadSheetMiaoshouAiTitleProgress === 'function') {
     removeAiTitleProgressListener = featureBridge.value.onPodUploadSheetMiaoshouAiTitleProgress((payload) => {
+      const payloadRunId = normalizeText(payload && payload.runId);
+      const activeRunId = normalizeText(aiTitleRunId.value);
+
+      if (payloadRunId && payloadRunId !== activeRunId) {
+        return;
+      }
+
       Object.assign(aiProgress, {
         total: Number(payload && payload.totalCount) || aiProgress.total,
         completed: Number(payload && payload.completedCount) || aiProgress.completed,

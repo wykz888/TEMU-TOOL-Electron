@@ -69,6 +69,27 @@ function getMaterialImportOrderItems(product, sectionId) {
   return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
 }
 
+function getSectionPathMap(product, sectionId) {
+  return product && product.materialPathMap && product.materialPathMap[sectionId] && typeof product.materialPathMap[sectionId] === 'object'
+    ? product.materialPathMap[sectionId]
+    : {};
+}
+
+function getMaterialPathByName(product, sectionId, item, index = -1) {
+  const pathMap = getSectionPathMap(product, sectionId);
+  const key = getMaterialNameKey(item);
+
+  if (key && pathMap[key]) {
+    return pathMap[key];
+  }
+
+  const importOrderItems = getMaterialImportOrderItems(product, sectionId);
+  const importedName = index >= 0 && index < importOrderItems.length ? importOrderItems[index] : '';
+  const importedKey = getMaterialNameKey(importedName);
+
+  return importedKey && pathMap[importedKey] ? pathMap[importedKey] : '';
+}
+
 function createPodUploadSheetMiaoshouProduct(overrides = {}, options = {}) {
   const defaultFields = options && typeof options.defaultFields === 'object' ? options.defaultFields : {};
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
@@ -123,11 +144,7 @@ function getExtraItemCount(items) {
 
 function getMaterialDisplayName(product, sectionId, item) {
   const name = normalizeText(item);
-  const key = getMaterialNameKey(name);
-  const pathMap = product && product.materialPathMap && product.materialPathMap[sectionId] && typeof product.materialPathMap[sectionId] === 'object'
-    ? product.materialPathMap[sectionId]
-    : {};
-  return getFileNameWithExtension((key && pathMap[key]) || name);
+  return getFileNameWithExtension(getMaterialPathByName(product, sectionId, name) || name);
 }
 
 function getDescriptionImageItems(product) {
@@ -143,14 +160,14 @@ function getDescriptionImageTitle(product) {
 }
 
 function getPrimaryProductImage(product) {
-  const item = product && product.materials && product.materials.carousel && product.materials.carousel[0];
+  const items = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+  const item = items[0];
 
   if (!item) return null;
 
-  const key = getMaterialNameKey(item);
-  const path = product.materialPathMap && product.materialPathMap.carousel ? product.materialPathMap.carousel[key] : '';
+  const path = getMaterialPathByName(product, 'carousel', item, 0);
 
-  return { name: item, path };
+  return path ? { name: item, path } : null;
 }
 
 function getTextLength(value) {
@@ -196,6 +213,7 @@ export {
   getMaterialDisplayName,
   getMaterialImportOrderItems,
   getMaterialNameKey,
+  getMaterialPathByName,
   getPreviewItems,
   getPrimaryProductImage,
   getTextLength,

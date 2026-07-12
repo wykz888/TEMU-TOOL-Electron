@@ -109,157 +109,37 @@ function createPodUploadSheetMiaoshouExportService({
     return String(Math.trunc(hash) + PRODUCT_CODE_HASH_BASE);
   }
 
-  function getFileNameWithoutExtension(fileName) {
-    return normalizeText(fileName).replace(/\.[^.]+$/, '');
-  }
 
-  function getSourceMappedFolderParts(product) {
-    const sourceFolder = normalizeText(product && product.sourceFolder).replace(/\\/g, '/');
-    const segments = sourceFolder
+  function buildFolderMainNumber(sourceFolder, fallbackName) {
+    const parts = normalizeText(sourceFolder)
+      .replace(/\\/g, '/')
       .split('/')
       .map((segment) => normalizeText(segment))
       .filter(Boolean);
 
-    return {
-      mainFolderName: normalizeText(segments[0] || product && product.localName),
-      detailFolderName: normalizeText(segments.length > 1 ? segments[segments.length - 1] : '')
-    };
-  }
-
-  function getSourceMappedImageName(product) {
-    const materials = product && product.materials && typeof product.materials === 'object'
-      ? product.materials
-      : {};
-
-    for (const sectionId of ['carousel', 'assets', 'preview']) {
-      const items = Array.isArray(materials[sectionId]) ? materials[sectionId] : [];
-      const imageName = getFileNameWithoutExtension(items[0]);
-
-      if (imageName) {
-        return imageName;
-      }
+    if (parts.length >= 2) {
+      return parts.slice(-2).join('-');
     }
 
-    return '';
-  }
-
-  function getSourceMappedFieldValue(product) {
-    const { mainFolderName, detailFolderName } = getSourceMappedFolderParts(product);
-    const imageName = getSourceMappedImageName(product);
-    const folderName = detailFolderName || mainFolderName;
-
-    if (mainFolderName && detailFolderName) {
-      const match = detailFolderName.match(/^(.*?)(\s*[\(\uFF08][^()\uFF08\uFF09]+[\)\uFF09]\s*)$/);
-
-      if (match) {
-        const detailBaseName = normalizeText(match[1]);
-        const suffix = normalizeText(match[2]);
-        const mappedImageName = imageName || detailBaseName;
-
-        if (mappedImageName) {
-          return `${mainFolderName}-${mappedImageName}${suffix ? ` ${suffix}` : ''}`;
-        }
-
-        return suffix ? `${mainFolderName} ${suffix}` : mainFolderName;
-      }
-
-      if (imageName) {
-        return `${mainFolderName}-${imageName}`;
-      }
-
-      return detailFolderName === mainFolderName
-        ? mainFolderName
-        : `${mainFolderName}-${detailFolderName}`;
+    if (parts.length === 1) {
+      return parts[0];
     }
 
-    if (folderName && imageName) {
-      const match = folderName.match(/^(.*?)(\s*[\(\uFF08][^()\uFF08\uFF09]+[\)\uFF09]\s*)$/);
-
-      if (match) {
-        const baseName = normalizeText(match[1]);
-        const suffix = normalizeText(match[2]);
-
-        return baseName ? `${baseName}-${imageName} ${suffix}` : `${imageName} ${suffix}`;
-      }
-
-      return `${folderName}-${imageName}`;
-    }
-
-    return folderName || imageName;
-  }
-
-  function getLegacySourceMappedFieldValue(product) {
-    const { detailFolderName, mainFolderName } = getSourceMappedFolderParts(product);
-    const folderName = detailFolderName || mainFolderName;
-    const imageName = getSourceMappedImageName(product);
-
-    if (folderName && imageName) {
-      const match = folderName.match(/^(.*?)(\s*[\(\uFF08][^()\uFF08\uFF09]+[\)\uFF09]\s*)$/);
-
-      if (match) {
-        const baseName = normalizeText(match[1]);
-        const suffix = normalizeText(match[2]);
-
-        return baseName ? `${baseName}-${imageName} ${suffix}` : `${imageName} ${suffix}`;
-      }
-
-      return `${folderName}-${imageName}`;
-    }
-
-    return folderName || imageName;
-  }
-
-  function resolveAutoMappedFieldValue(product, currentValue) {
-    const normalizedCurrentValue = normalizeText(currentValue);
-    const sourceMappedValue = getSourceMappedFieldValue(product);
-
-    if (!sourceMappedValue) {
-      return normalizedCurrentValue;
-    }
-
-    if (!normalizedCurrentValue) {
-      return sourceMappedValue;
-    }
-
-    const legacySourceMappedValue = getLegacySourceMappedFieldValue(product);
-    const { detailFolderName } = getSourceMappedFolderParts(product);
-    const imageName = getSourceMappedImageName(product);
-
-    if (
-      normalizedCurrentValue === legacySourceMappedValue
-      || normalizedCurrentValue === detailFolderName
-      || normalizedCurrentValue === imageName
-    ) {
-      return sourceMappedValue;
-    }
-
-    return normalizedCurrentValue;
+    return normalizeText(fallbackName);
   }
 
   function getMainNumberValue(product) {
-    const mainNumber = resolveAutoMappedFieldValue(product, product && product.mainNumber);
-
-    if (mainNumber) {
-      return mainNumber;
-    }
-
-    const legacyCodeValue = normalizeText(product && product.codeValue);
-
-    if (legacyCodeValue && /\D/.test(legacyCodeValue)) {
-      return legacyCodeValue;
-    }
-
-    return resolveAutoMappedFieldValue(product, product && product.masterSku);
+    return buildFolderMainNumber(
+      product && product.sourceFolder,
+      product && product.localName
+    );
   }
 
   function getMasterSkuValue(product) {
-    const masterSku = resolveAutoMappedFieldValue(product, product && product.masterSku);
-
-    if (masterSku) {
-      return masterSku;
-    }
-
-    return getMainNumberValue(product);
+    return buildFolderMainNumber(
+      product && product.sourceFolder,
+      product && product.localName
+    );
   }
 
   function getProductCodeValue(product) {

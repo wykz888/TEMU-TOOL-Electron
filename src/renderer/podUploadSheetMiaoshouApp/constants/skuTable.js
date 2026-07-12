@@ -2,9 +2,9 @@ const POD_SKU_COLUMN_WIDTHS = Object.freeze({
   specValue: 120,
   previewImage: 170,
   price: 120,
-  dimension: 144,
-  weight: 124,
-  stock: 100,
+  dimension: 120,
+  weight: 120,
+  stock: 120,
   platformSku: 150,
   skuCategory: 140,
   independentPackaging: 120

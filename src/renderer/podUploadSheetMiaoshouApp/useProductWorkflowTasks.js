@@ -8,6 +8,7 @@ import {
   createPodUploadSheetMiaoshouProduct,
   getImportedProductGroup,
   getMaterialNameKey,
+  getMaterialPathByName,
   getPrimaryProductImage,
   normalizeMaterialName,
   normalizeText
@@ -336,10 +337,21 @@ export function useProductWorkflowTasks(options = {}) {
       });
 
       ['carousel', 'assets', 'preview'].forEach((sectionId) => {
-        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
-          const key = getMaterialNameKey(name);
-          const path = nextProduct.materialPathMap[sectionId][key];
-          return urlByPath.get(path) || name;
+        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name, index) => {
+          const path = getMaterialPathByName(nextProduct, sectionId, name, index);
+          const url = urlByPath.get(path);
+
+          if (!url) {
+            return name;
+          }
+
+          const urlKey = getMaterialNameKey(url);
+
+          if (urlKey && path) {
+            nextProduct.materialPathMap[sectionId][urlKey] = path;
+          }
+
+          return url;
         });
       });
 
@@ -598,6 +610,7 @@ export function useProductWorkflowTasks(options = {}) {
     uploadingImages,
     exportingTable,
     generatingAiTitles,
+    aiTitleRunId,
     uploadProgress,
     uploadFailedFilePaths,
     aiProgress,

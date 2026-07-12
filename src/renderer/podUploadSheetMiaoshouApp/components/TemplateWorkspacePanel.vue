@@ -8,7 +8,7 @@
     </div>
     <div class="pod-template-save-row">
       <div class="pod-field pod-inline-field">
-        <span class="pod-field-label">
+        <span class="pod-field-label pod-field-label--clean">
           &#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;
           <a-tooltip content="&#x9009;&#x62E9;&#x5DF2;&#x4FDD;&#x5B58;&#x7684;&#x6A21;&#x677F;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x8868;&#x5355;&#x3002;">
             <icon-question-circle class="pod-help-icon" />
@@ -53,7 +53,7 @@
     </div>
     <div class="pod-template-main-row">
       <div class="pod-field pod-template-select-field">
-          <span class="pod-field-label">
+          <span class="pod-field-label pod-field-label--clean">
             &#x8868;&#x683C;&#x6A21;&#x677F;
             <a-tooltip content="&#x9009;&#x62E9;&#x5BFC;&#x51FA;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x8868;&#x683C;&#x7C7B;&#x578B;&#x3002;">
               <icon-question-circle class="pod-help-icon" />
@@ -62,7 +62,7 @@
           <a-select v-model="globalForm.templateId" popup-container="body" :options="templateTypeOptions" @change="syncGlobalToProducts" />
         </div>
         <div class="pod-field pod-category-field">
-          <span class="pod-field-label">
+          <span class="pod-field-label pod-field-label--clean">
             &#x56FA;&#x5B9A;&#x7C7B;&#x76EE;
             <a-tooltip content="&#x9009;&#x4E2D;&#x540E;&#x4F1A;&#x6279;&#x91CF;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x5546;&#x54C1;&#x6570;&#x636E;&#x3002;">
               <icon-question-circle class="pod-help-icon" />
@@ -81,7 +81,7 @@
       </div>
       <div class="pod-template-meta-row">
         <div class="pod-field">
-          <span class="pod-field-label">
+          <span class="pod-field-label pod-field-label--clean">
             &#x627F;&#x8BFA;&#x53D1;&#x8D27;&#x65F6;&#x6548;
             <a-tooltip content="&#x586B;&#x8868;&#x5BFC;&#x51FA;&#x65F6;&#x5199;&#x5165;&#x7684;&#x53D1;&#x8D27;&#x65F6;&#x6548;&#x503C;&#x3002;">
               <icon-question-circle class="pod-help-icon" />

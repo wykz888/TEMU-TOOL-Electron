@@ -458,6 +458,23 @@ body.dark-theme .pod-panel {
   font-weight: 700;
 }
 
+.pod-field-label--clean,
+.pod-field-label--clean *,
+.pod-field-label--clean .arco-trigger-wrapper {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+.pod-field-label--clean::before,
+.pod-field-label--clean::after,
+.pod-field-label--clean *::before,
+.pod-field-label--clean *::after {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
 .pod-help-icon {
   color: var(--theme-primary-color, #f4bf22);
   font-size: 13px;
@@ -983,6 +1000,36 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 .pod-sku-table .arco-table-td {
   padding: 7px 10px;
   color: var(--pod-text);
+}
+
+.pod-sku-table .arco-table-th,
+.pod-sku-table .arco-table-td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pod-sku-cell-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.pod-sku-cell-control .arco-input-wrapper,
+.pod-sku-cell-control .arco-select-view-single {
+  width: 100%;
+  min-width: 0;
+}
+
+.pod-sku-cell-control .arco-input,
+.pod-sku-cell-control .arco-select-view-value,
+.pod-sku-cell-control .arco-select-view-placeholder {
+  text-align: center;
+}
+
+.pod-sku-cell-control .arco-select-view-value {
+  justify-content: center;
 }
 
 .pod-product-table .arco-table-tr:hover .arco-table-td,
