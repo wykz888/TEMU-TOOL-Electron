@@ -22,6 +22,8 @@
     "backup": "node scripts/gitBackup.js",
     "start": "node scripts/gitBackup.js && npm run build:renderer:psd-smart-suite && npm run build:renderer:promotion-manager && npm run build:renderer:main-window && npm run build:renderer:shop-management && npm run build:renderer:global-config && npm run build:renderer:confirm-dialog && npm run build:renderer:feature-center && npm run build:renderer:creation-center && npm run build:renderer:shop-window && npm run build:renderer:global-category-sync && npm run build:renderer:pod-upload-sheet-miaoshou && npm run build:renderer:pod-upload-sheet-miaoshou-universal && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1",
     "build:win": "node scripts/gitBackup.js && npm run build:renderer:psd-smart-suite && npm run build:renderer:promotion-manager && npm run build:renderer:main-window && npm run build:renderer:shop-management && npm run build:renderer:global-config && npm run build:renderer:confirm-dialog && npm run build:renderer:feature-center && npm run build:renderer:creation-center && npm run build:renderer:shop-window && npm run build:renderer:global-category-sync && npm run build:renderer:pod-upload-sheet-miaoshou && npm run build:renderer:pod-upload-sheet-miaoshou-universal && electron-builder --win portable",
+    "build:win-updater": "node scripts/gitBackup.js && npm run build:renderer:psd-smart-suite && npm run build:renderer:promotion-manager && npm run build:renderer:main-window && npm run build:renderer:shop-management && npm run build:renderer:global-config && npm run build:renderer:confirm-dialog && npm run build:renderer:feature-center && npm run build:renderer:creation-center && npm run build:renderer:shop-window && npm run build:renderer:global-category-sync && npm run build:renderer:pod-upload-sheet-miaoshou && npm run build:renderer:pod-upload-sheet-miaoshou-universal && electron-builder --win nsis",
+    "release:win-updater": "npm run build:win-updater && node scripts/upload-update-release-to-cos.cjs",
     "validate:auth-bridge": "node scripts/validateAuthBridgeRunner.js",
     "validate:feature-catalog": "node scripts/validateFeatureCatalog.js",
     "validate:preload-ipc": "node scripts/validatePreloadIpcSurface.js",
@@ -42,6 +44,12 @@
     "directories": {
       "output": "release"
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://item-1251234463.cos.ap-guangzhou.myqcloud.com/TEMU_Data_Electron/App_Update/win/"
+      }
+    ],
     "files": [
       "src/**/*",
       "package.json"
@@ -58,11 +66,22 @@
         }
       ],
       "artifactName": "TEMU 工具箱.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TEMU \u5de5\u5177\u7bb1",
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": true
     }
   },
   "dependencies": {
     "@arco-design/web-vue": "^2.58.0",
     "cos-nodejs-sdk-v5": "^2.15.4",
+    "electron-updater": "^6.8.9",
     "sharp": "^0.34.5",
     "vue": "^3.5.39"
   },

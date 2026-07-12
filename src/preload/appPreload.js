@@ -6,6 +6,7 @@ const { FEATURE_CHANNELS } = require('../ipc/featureChannels');
 const { GLOBAL_CONFIG_CHANNELS } = require('../ipc/globalConfigChannels');
 const { JIMENG_IMAGE_CHANNELS } = require('../ipc/jimengImageChannels');
 const { POD_SUITE_TOOL_CHANNELS } = require('../ipc/podSuiteToolChannels');
+const { UPDATE_CHANNELS } = require('../ipc/updateChannels');
 const { SHOP_CHANNELS } = require('../ipc/shopChannels');
 const { SHOP_WINDOW_CHANNELS } = require('../ipc/shopWindowChannels');
 const { THEME_CHANNELS } = require('../ipc/themeChannels');
@@ -50,6 +51,18 @@ contextBridge.exposeInMainWorld('temuApp', {
   dialogs: createInvokeApi(ipcRenderer, {
     confirm: DIALOG_CHANNELS.SHOW_CONFIRM_DIALOG
   }),
+  updater: {
+    ...createInvokeApi(ipcRenderer, {
+      getStatus: UPDATE_CHANNELS.GET_STATUS,
+      check: UPDATE_CHANNELS.CHECK,
+      download: UPDATE_CHANNELS.DOWNLOAD,
+      install: UPDATE_CHANNELS.INSTALL,
+      skip: UPDATE_CHANNELS.SKIP
+    }),
+    onStatus(listener) {
+      return subscribe(UPDATE_CHANNELS.STATUS, listener);
+    }
+  },
   globalConfig: createInvokeApi(ipcRenderer, {
     getGeneralSettings: GLOBAL_CONFIG_CHANNELS.GET_GENERAL_SETTINGS,
     saveGeneralSettings: GLOBAL_CONFIG_CHANNELS.SAVE_GENERAL_SETTINGS,

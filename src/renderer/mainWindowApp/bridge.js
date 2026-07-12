@@ -25,3 +25,13 @@ export function getThemeBridge() {
 
   return null;
 }
+
+export function getUpdaterBridge() {
+  const temuApp = getTemuApp();
+
+  if (temuApp.updater && typeof temuApp.updater === 'object') {
+    return temuApp.updater;
+  }
+
+  return null;
+}

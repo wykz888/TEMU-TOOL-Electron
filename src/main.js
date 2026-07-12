@@ -6,6 +6,7 @@ const { registerAuthIpc } = require('./ipc/registerAuthIpc');
 const { registerDialogIpc } = require('./ipc/registerDialogIpc');
 const { registerFeatureCenterIpc } = require('./ipc/registerFeatureCenterIpc');
 const { registerGlobalConfigIpc } = require('./ipc/registerGlobalConfigIpc');
+const { registerUpdaterIpc } = require('./ipc/registerUpdaterIpc');
 const { registerJimengImageIpc } = require('./ipc/registerJimengImageIpc');
 const { registerPodSuiteToolIpc } = require('./ipc/registerPodSuiteToolIpc');
 const { registerShopManagementIpc } = require('./ipc/registerShopManagementIpc');
@@ -16,6 +17,7 @@ const { createJimengImageSettingsService } = require('./services/creationCenter/
 const { createFeatureCenterProfileService } = require('./services/featureCenter/featureCenterProfileService');
 const { createGlobalConfigService } = require('./services/globalConfig/globalConfigService');
 const { createGlobalAiTitleConfigAdapter } = require('./services/globalConfig/globalAiTitleConfigAdapter');
+const { createAppUpdateService } = require('./services/update/updateService');
 const { createPromotionMasterSessionService } = require('./services/featureCenter/promotionMasterSessionService');
 const { createPromotionMonitorService } = require('./services/featureCenter/promotionMonitorService');
 const { createPromotionManagerSettingsService } = require('./services/featureCenter/promotionManagerSettingsService');
@@ -123,6 +125,11 @@ const featureCenterProfileService = createFeatureCenterProfileService({ app });
 const globalConfigService = createGlobalConfigService({
   sessionStore,
   featureCenterProfileService
+});
+const appUpdateService = createAppUpdateService({
+  app,
+  getUpdateSettings: () => globalConfigService.getUpdateSettings(),
+  runtimeLogger
 });
 const promotionManagerSettingsService = createPromotionManagerSettingsService({
   sessionStore,
@@ -1630,6 +1637,7 @@ function openAuthenticatedArea(session) {
   runtimeLogger.log('login_success', {
     username: session && session.username ? session.username : ''
   });
+  appUpdateService.scheduleStartupUpdateCheck();
   showMainWindow();
 
   if (authWindow && !authWindow.isDestroyed()) {
@@ -1684,6 +1692,9 @@ app.whenReady().then(() => {
   });
   registerGlobalConfigIpc({
     globalConfigService
+  });
+  registerUpdaterIpc({
+    updateService: appUpdateService
   });
   shopManagementService = registerShopManagementIpc({
     app,

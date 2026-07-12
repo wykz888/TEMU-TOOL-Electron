@@ -59,6 +59,20 @@
         </a-button>
 
         <div class="main-window-top-actions">
+          <a-tooltip content="&#x68C0;&#x67E5;&#x66F4;&#x65B0;">
+            <a-button
+              class="main-window-icon-button"
+              size="small"
+              shape="circle"
+              :loading="updateChecking"
+              @click="checkForUpdates"
+            >
+              <template #icon>
+                <icon-sync />
+              </template>
+            </a-button>
+          </a-tooltip>
+
           <a-tooltip content="&#x5168;&#x5c40;&#x914d;&#x7f6e;">
             <a-button
               class="main-window-icon-button"
@@ -114,11 +128,29 @@
       </template>
       {{ runtimeStatus.message }}
     </a-alert>
+
+    <a-modal
+      v-model:visible="updateDialogVisible"
+      width="640px"
+      :footer="false"
+      :mask-closable="false"
+      :closable="false"
+      title="&#x8F6F;&#x4EF6;&#x66F4;&#x65B0;"
+    >
+      <UpdateDialog
+        :status="updateStatus"
+        @close="updateDialogVisible = false"
+        @check="checkForUpdates"
+        @skip="skipUpdate"
+        @download="downloadUpdate"
+        @install="installUpdate"
+      />
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import {
   IconApps,
@@ -128,9 +160,11 @@ import {
   IconRobot,
   IconSafe,
   IconSettings,
+  IconSync,
   IconUser
 } from '@arco-design/web-vue/es/icon';
-import { getAuthBridge, getThemeBridge } from './bridge';
+import UpdateDialog from './components/UpdateDialog.vue';
+import { getAuthBridge, getThemeBridge, getUpdaterBridge } from './bridge';
 import { DEFAULT_SECTION_ID, MAIN_WINDOW_SECTIONS } from './constants';
 
 const iconMap = Object.freeze({
@@ -156,6 +190,12 @@ const runtimeStatus = reactive({
   message: '',
   badgeText: ''
 });
+const updateDialogVisible = ref(false);
+const updateStatus = ref({
+  phase: 'idle',
+  currentVersion: ''
+});
+let stopUpdaterStatusListener = null;
 
 function formatDateTime(value) {
   if (!value) {
@@ -359,6 +399,97 @@ async function syncThemeFromBridge() {
   applyShellTheme(theme, appearance);
 }
 
+function getAvailableUpdaterBridge() {
+  const updaterBridge = getUpdaterBridge();
+
+  if (!updaterBridge) {
+    throw new Error('\u66f4\u65b0\u901a\u4fe1\u672a\u5c31\u7eea\u3002');
+  }
+
+  return updaterBridge;
+}
+
+function handleUpdateStatus(status) {
+  updateStatus.value = status && typeof status === 'object'
+    ? {
+      phase: String(status.phase || 'idle'),
+      currentVersion: String(status.currentVersion || ''),
+      availableVersion: String(status.availableVersion || ''),
+      releaseDate: String(status.releaseDate || ''),
+      releaseName: String(status.releaseName || ''),
+      releaseNotes: String(status.releaseNotes || ''),
+      releaseHistory: Array.isArray(status.releaseHistory) ? status.releaseHistory : [],
+      progress: status.progress && typeof status.progress === 'object' ? status.progress : null,
+      manual: status.manual === true,
+      message: String(status.message || '')
+    }
+    : {
+      phase: 'idle',
+      currentVersion: ''
+    };
+
+  if (shouldShowUpdateDialog(updateStatus.value)) {
+    updateDialogVisible.value = true;
+  }
+}
+
+function shouldShowUpdateDialog(status) {
+  if (!status || status.phase === 'idle') {
+    return false;
+  }
+
+  if (status.manual) {
+    return true;
+  }
+
+  return [
+    'available',
+    'downloading',
+    'downloaded',
+    'error'
+  ].includes(status.phase);
+}
+
+async function checkForUpdates() {
+  updateDialogVisible.value = true;
+
+  try {
+    handleUpdateStatus(await getAvailableUpdaterBridge().check({
+      manual: true
+    }));
+  } catch (error) {
+    Message.error(normalizeUserError(error, '\u68c0\u67e5\u66f4\u65b0\u5931\u8d25\u3002'));
+  }
+}
+
+async function downloadUpdate() {
+  try {
+    handleUpdateStatus(await getAvailableUpdaterBridge().download());
+  } catch (error) {
+    Message.error(normalizeUserError(error, '\u4e0b\u8f7d\u66f4\u65b0\u5931\u8d25\u3002'));
+  }
+}
+
+async function installUpdate() {
+  try {
+    await getAvailableUpdaterBridge().install();
+  } catch (error) {
+    Message.error(normalizeUserError(error, '\u5b89\u88c5\u66f4\u65b0\u5931\u8d25\u3002'));
+  }
+}
+
+async function skipUpdate() {
+  try {
+    handleUpdateStatus(await getAvailableUpdaterBridge().skip({
+      version: updateStatus.value.availableVersion
+    }));
+    updateDialogVisible.value = false;
+    Message.success('\u5df2\u8df3\u8fc7\u672c\u6b21\u66f4\u65b0');
+  } catch (error) {
+    Message.error(normalizeUserError(error, '\u8df3\u8fc7\u66f4\u65b0\u5931\u8d25\u3002'));
+  }
+}
+
 function openGlobalConfigSection() {
   setSection('global-config');
 }
@@ -428,6 +559,24 @@ function bindThemeListener() {
   });
 }
 
+function bindUpdaterListener() {
+  const updaterBridge = getUpdaterBridge();
+
+  if (!updaterBridge) {
+    return;
+  }
+
+  if (typeof updaterBridge.onStatus === 'function') {
+    stopUpdaterStatusListener = updaterBridge.onStatus(handleUpdateStatus);
+  }
+
+  if (typeof updaterBridge.getStatus === 'function') {
+    void updaterBridge.getStatus()
+      .then(handleUpdateStatus)
+      .catch(() => undefined);
+  }
+}
+
 const sessionSummaryText = computed(() => {
   if (loadingSession.value) {
     return '\u4f1a\u8bdd\u52a0\u8f7d\u4e2d';
@@ -444,6 +593,8 @@ const statusBadgeText = computed(() => (
   runtimeStatus.message ? runtimeStatus.badgeText : ''
 ));
 
+const updateChecking = computed(() => updateStatus.value.phase === 'checking');
+
 const visibleSections = computed(() => (
   sections.filter((section) => section.visible !== false)
 ));
@@ -456,8 +607,16 @@ onMounted(() => {
   clearRuntimeStatus();
   setSection(detectInitialSection());
   bindThemeListener();
+  bindUpdaterListener();
   void syncThemeFromBridge();
   void refreshSession();
+});
+
+onBeforeUnmount(() => {
+  if (typeof stopUpdaterStatusListener === 'function') {
+    stopUpdaterStatusListener();
+    stopUpdaterStatusListener = null;
+  }
 });
 
 defineExpose({

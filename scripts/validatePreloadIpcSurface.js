@@ -32,11 +32,16 @@ const globalConfigRegisterText = fs.readFileSync(
   path.join(rootDir, 'src', 'ipc', 'registerGlobalConfigIpc.js'),
   'utf8'
 );
+const updaterRegisterText = fs.readFileSync(
+  path.join(rootDir, 'src', 'ipc', 'registerUpdaterIpc.js'),
+  'utf8'
+);
 const { FEATURE_CHANNELS } = require('../src/ipc/featureChannels');
 const { CREATION_CHANNELS } = require('../src/ipc/creationCenterChannels');
 const { POD_SUITE_TOOL_CHANNELS } = require('../src/ipc/podSuiteToolChannels');
 const { SHOP_CHANNELS } = require('../src/ipc/shopChannels');
 const { GLOBAL_CONFIG_CHANNELS } = require('../src/ipc/globalConfigChannels');
+const { UPDATE_CHANNELS } = require('../src/ipc/updateChannels');
 
 const EXPECTED_FEATURE_INVOKES = Object.freeze([
   ['getFeatureCatalog', 'GET_FEATURE_CATALOG'],
@@ -127,8 +132,22 @@ const EXPECTED_GLOBAL_CONFIG_INVOKES = Object.freeze([
   ['listCloudflareR2Objects', 'LIST_CLOUDFLARE_R2_OBJECTS'],
   ['deleteCloudflareR2Objects', 'DELETE_CLOUDFLARE_R2_OBJECTS'],
   ['getAiConfig', 'GET_AI_CONFIG'],
+  ['getUpdateSettings', 'GET_UPDATE_SETTINGS'],
+  ['saveUpdateSettings', 'SAVE_UPDATE_SETTINGS'],
   ['saveAiConfig', 'SAVE_AI_CONFIG'],
   ['testAiApiKey', 'TEST_AI_API_KEY']
+]);
+
+const EXPECTED_UPDATER_INVOKES = Object.freeze([
+  ['getStatus', 'GET_STATUS'],
+  ['check', 'CHECK'],
+  ['download', 'DOWNLOAD'],
+  ['install', 'INSTALL'],
+  ['skip', 'SKIP']
+]);
+
+const EXPECTED_UPDATER_EVENTS = Object.freeze([
+  ['onStatus', 'STATUS']
 ]);
 
 function assert(condition, message) {
@@ -221,6 +240,18 @@ function main() {
     channelMap: GLOBAL_CONFIG_CHANNELS,
     registerText: globalConfigRegisterText,
     requireRegister: true
+  });
+  validatePairs(EXPECTED_UPDATER_INVOKES, {
+    channelNamespace: 'UPDATE_CHANNELS',
+    channelMap: UPDATE_CHANNELS,
+    registerText: updaterRegisterText,
+    requireRegister: true
+  });
+  validatePairs(EXPECTED_UPDATER_EVENTS, {
+    channelNamespace: 'UPDATE_CHANNELS',
+    channelMap: UPDATE_CHANNELS,
+    registerText: updaterRegisterText,
+    requireRegister: false
   });
 
   console.log('preload IPC surface validation passed');
