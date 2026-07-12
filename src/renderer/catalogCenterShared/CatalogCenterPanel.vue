@@ -35,28 +35,27 @@
         :class="{ 'is-disabled': !canOpenEntry(entry) }"
         :bordered="false"
       >
-        <div class="catalog-center-card-top">
+        <div class="catalog-center-card-content">
           <div class="catalog-center-card-icon">
             <component :is="getEntryIcon(entry)" />
           </div>
-          <a-tag class="catalog-center-card-tag" bordered>
-            {{ entry.tag || fallbackTag }}
-          </a-tag>
-        </div>
 
-        <div class="catalog-center-card-main">
           <div class="catalog-center-card-copy">
-            <h3>{{ entry.title || '-' }}</h3>
+            <div class="catalog-center-card-title-row">
+              <h3>{{ entry.title || '-' }}</h3>
+              <a-tag class="catalog-center-card-tag" bordered>
+                {{ entry.tag || fallbackTag }}
+              </a-tag>
+            </div>
             <p>{{ entry.description || emptyDescription }}</p>
           </div>
         </div>
-
 
         <div class="catalog-center-card-footer">
           <a-button
             v-if="canOpenEntry(entry)"
             type="primary"
-            size="large"
+            size="small"
             class="catalog-center-action-button"
             :loading="openingEntryId === entry.id"
             @click="handleEntryAction(entry)"
@@ -69,7 +68,7 @@
 
           <a-button
             v-else
-            size="large"
+            size="small"
             class="catalog-center-action-button is-disabled"
             disabled
           >
@@ -347,6 +346,9 @@ defineExpose({
 .catalog-center-card {
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 256px;
   border-radius: 8px;
   background: #ffffff;
@@ -368,26 +370,29 @@ defineExpose({
 .catalog-center-card :deep(.arco-card-body) {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 100%;
-  padding: 16px 16px 18px;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 1;
+  height: 100%;
+  min-height: 256px;
+  padding: 20px 18px 18px;
 }
 
-.catalog-center-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+.catalog-center-card-content {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding-top: 6px;
 }
 
 .catalog-center-card-footer {
   display: flex;
   align-items: center;
-  justify-content: stretch;
+  justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .catalog-center-card-icon {
@@ -416,21 +421,24 @@ defineExpose({
   font-weight: 700;
 }
 
-.catalog-center-card-main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-  align-items: start;
-}
-
 .catalog-center-card-copy {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   align-content: start;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.catalog-center-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
 .catalog-center-card-copy h3 {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   color: #132238;
   font-size: 16px;
@@ -454,15 +462,15 @@ defineExpose({
 }
 
 .catalog-center-action-button {
-  width: 100%;
-  min-width: 0;
+  width: auto;
+  min-width: 112px;
   justify-content: center;
-  min-height: 36px;
-  padding: 0 18px;
+  min-height: 32px;
+  padding: 0 14px;
   margin-left: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #ffffff !important;
   background: linear-gradient(135deg, var(--theme-primary-color), var(--theme-primary-color-deep)) !important;
   border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.35) !important;
@@ -535,11 +543,11 @@ body.dark-theme .catalog-center-action-button.is-disabled {
   }
 
   .catalog-center-card-footer {
-    justify-content: stretch;
+    justify-content: flex-end;
   }
 
   .catalog-center-action-button {
-    width: 100%;
+    width: auto;
     margin-left: 0;
   }
 }

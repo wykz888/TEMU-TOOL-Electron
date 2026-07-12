@@ -2,6 +2,16 @@
   let controller = null;
   let mountPromise = null;
   let stylesheetPromise = null;
+  let moduleRef = null;
+  let assetVersion = String(Date.now());
+
+  function bumpAssetVersion() {
+    assetVersion = String(Date.now());
+  }
+
+  function versionAssetPath(assetPath) {
+    return `${assetPath}?v=${assetVersion}`;
+  }
 
   function normalizeFallbackError(error, fallbackMessage) {
     if (!error || !error.message || !String(error.message).trim()) {
@@ -52,15 +62,15 @@
 
     stylesheetPromise = new Promise((resolve, reject) => {
       const existing = document.querySelector('link[data-feature-center-app-style="true"]');
+      const href = versionAssetPath('./featureCenterApp/dist/feature-center-app.css');
 
       if (existing) {
-        resolve(existing);
-        return;
+        existing.remove();
       }
 
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = './featureCenterApp/dist/feature-center-app.css';
+      link.href = href;
       link.dataset.featureCenterAppStyle = 'true';
       link.onload = () => resolve(link);
       link.onerror = () => reject(new Error('\u529f\u80fd\u4e2d\u5fc3\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002'));
@@ -75,12 +85,13 @@
       ensureVueProcessShim();
 
       mountPromise = ensureStylesheet()
-        .then(() => import('./featureCenterApp/dist/feature-center-app.js'))
+        .then(() => import(versionAssetPath('./featureCenterApp/dist/feature-center-app.js')))
         .then((module) => {
           if (!module || typeof module.mountFeatureCenterApp !== 'function') {
             throw new Error('\u529f\u80fd\u4e2d\u5fc3\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002');
           }
 
+          moduleRef = module;
           controller = module.mountFeatureCenterApp('#featureCenterApp');
           return controller;
         })
@@ -91,6 +102,29 @@
     }
 
     return mountPromise;
+  }
+
+  function resetMount() {
+    if (moduleRef && typeof moduleRef.unmountFeatureCenterApp === 'function') {
+      moduleRef.unmountFeatureCenterApp();
+    }
+
+    const mountNode = document.getElementById('featureCenterApp');
+
+    if (mountNode) {
+      mountNode.textContent = '';
+    }
+
+    controller = null;
+    mountPromise = null;
+    stylesheetPromise = null;
+    moduleRef = null;
+  }
+
+  function reloadMount() {
+    resetMount();
+    bumpAssetVersion();
+    return ensureMount();
   }
 
   global.featureCenterView = {
@@ -104,17 +138,7 @@
       return ensureMount();
     },
     refresh() {
-      if (controller && typeof controller.refresh === 'function') {
-        return controller.refresh();
-      }
-
-      return ensureMount().then((activeController) => {
-        if (activeController && typeof activeController.refresh === 'function') {
-          return activeController.refresh();
-        }
-
-        return null;
-      });
+      return reloadMount();
     }
   };
 })(window);

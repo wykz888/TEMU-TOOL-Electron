@@ -25,3 +25,12 @@ export function mountFeatureCenterApp(target = '#featureCenterApp') {
   appInstance = app;
   return controllerRef;
 }
+
+export function unmountFeatureCenterApp() {
+  if (appInstance) {
+    appInstance.unmount();
+  }
+
+  appInstance = null;
+  controllerRef = null;
+}

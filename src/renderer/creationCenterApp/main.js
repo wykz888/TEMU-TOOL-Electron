@@ -25,3 +25,12 @@ export function mountCreationCenterApp(target = '#creationCenterApp') {
   appInstance = app;
   return controllerRef;
 }
+
+export function unmountCreationCenterApp() {
+  if (appInstance) {
+    appInstance.unmount();
+  }
+
+  appInstance = null;
+  controllerRef = null;
+}
