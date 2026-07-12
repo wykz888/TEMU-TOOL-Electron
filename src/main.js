@@ -326,6 +326,7 @@ async function showManagedFeatureSubWindow(options = {}, config = {}) {
       const shouldOpenNewWindow = await showConfirmDialog({
         parentWindow,
         theme: currentTheme,
+        appearance: currentThemeAppearance,
         title: String(config && config.openedTitle || '').trim(),
         badgeText: String(config && config.badgeText || '').trim(),
         message: String(config && config.openedMessage || '').trim(),
@@ -577,6 +578,7 @@ async function confirmMainWindowExit() {
     return await showConfirmDialog({
       parentWindow: mainWindow,
       theme: currentTheme,
+      appearance: currentThemeAppearance,
       tone: 'warning',
       title: '\u9000\u51fa\u786e\u8ba4',
       badgeText: '\u7a97\u53e3\u5173\u95ed',
@@ -3332,7 +3334,8 @@ app.whenReady().then(() => {
   registerDialogIpc({
     showConfirmDialog: (payload) => showConfirmDialog({
       ...payload,
-      theme: currentTheme
+      theme: currentTheme,
+      appearance: currentThemeAppearance
     })
   });
   registerJimengImageIpc({

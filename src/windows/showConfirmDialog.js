@@ -2,6 +2,9 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { BrowserWindow, ipcMain } = require('electron');
 const { DIALOG_CHANNELS } = require('../ipc/dialogChannels');
+const {
+  normalizeThemeAppearance
+} = require('../services/theme/themePreferenceService');
 const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
 
@@ -39,7 +42,8 @@ function buildConfirmDialogPayload(payload = {}) {
     confirmText: normalizeText(payload.confirmText) || '\u786e\u8ba4',
     cancelText: normalizeText(payload.cancelText) || '\u53d6\u6d88',
     tone,
-    theme: normalizeTheme(payload.theme)
+    theme: normalizeTheme(payload.theme),
+    appearance: normalizeThemeAppearance(payload.appearance)
   };
 }
 

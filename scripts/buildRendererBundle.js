@@ -14,6 +14,14 @@ const TARGETS = Object.freeze({
       'src/renderer/globalConfigApp/dist/global-config-app.css'
     ]
   },
+  'confirm-dialog': {
+    config: 'vite.confirm-dialog.config.mjs',
+    sourceDirs: ['src/renderer/confirmDialogApp'],
+    outputFiles: [
+      'src/renderer/confirmDialogApp/dist/confirm-dialog-app.js',
+      'src/renderer/confirmDialogApp/dist/confirm-dialog-app.css'
+    ]
+  },
   'shop-management': {
     config: 'vite.shop-management.config.mjs',
     sourceDirs: ['src/renderer/shopManagementApp'],
