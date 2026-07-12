@@ -54,6 +54,7 @@
       "src/**/*",
       "package.json"
     ],
+    "afterPack": "scripts/afterPackSetWindowsIcon.cjs",
     "win": {
       "icon": "src/assets/icons/app-icon.ico",
       "signAndEditExecutable": false,
