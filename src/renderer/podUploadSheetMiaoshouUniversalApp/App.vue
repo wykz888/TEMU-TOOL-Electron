@@ -329,7 +329,11 @@ function retryFailedAiTitleGeneration() {
   });
 }
 
-const featureBridge = computed(() => window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null);
+const featureBridge = {
+  get value() {
+    return window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null;
+  }
+};
 const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ value: item.id, label: item.name })));
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
 const {
@@ -1124,10 +1128,16 @@ async function exportTable() {
 }
 
 async function loadFormTemplates() {
-  if (!featureBridge.value) return;
+  const bridge = featureBridge.value;
+
+  if (!bridge || typeof bridge.getPodUploadSheetMiaoshouUniversalFormTemplates !== 'function') {
+    Message.warning('\u6a21\u677f\u63a5\u53e3\u672a\u5c31\u7eea\uff0c\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5');
+    return;
+  }
+
   loadingTemplates.value = true;
   try {
-    const result = await featureBridge.value.getPodUploadSheetMiaoshouUniversalFormTemplates();
+    const result = await bridge.getPodUploadSheetMiaoshouUniversalFormTemplates();
     formTemplates.value = Array.isArray(result && result.templates) ? result.templates : [];
     const selectedTemplate = selectedTemplateId.value
       ? formTemplates.value.find((item) => item.id === selectedTemplateId.value)
@@ -1142,6 +1152,9 @@ async function loadFormTemplates() {
       selectedTemplateId.value = formTemplates.value[0].id;
       applySelectedTemplate(selectedTemplateId.value);
     }
+  } catch (error) {
+    console.error('[pod-upload-sheet-miaoshou-universal] load form templates failed', error);
+    Message.error('\u6a21\u677f\u8bfb\u53d6\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
   } finally {
     loadingTemplates.value = false;
   }
@@ -1382,7 +1395,10 @@ onMounted(() => {
       });
     });
   }
-  void loadInitialData();
+  void loadInitialData().catch((error) => {
+    console.error('[pod-upload-sheet-miaoshou-universal] load initial data failed', error);
+    Message.error('\u521d\u59cb\u6570\u636e\u52a0\u8f7d\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
+  });
 });
 
 onBeforeUnmount(() => {

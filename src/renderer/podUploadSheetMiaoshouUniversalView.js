@@ -1,7 +1,7 @@
 (function initPodUploadSheetMiaoshouUniversalView(global) {
   'use strict';
 
-  var ASSET_VERSION = '20260710-layout-2';
+  var ASSET_VERSION = '20260712-template-bridge-1';
 
   function withVersion(assetPath) {
     return assetPath + '?v=' + encodeURIComponent(ASSET_VERSION);
