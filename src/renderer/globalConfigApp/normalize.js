@@ -29,7 +29,7 @@ export function normalizeStorageConfig(config) {
         secretKey: String((providers.tencentCos && providers.tencentCos.secretKey) || ''),
         bucket: String((providers.tencentCos && providers.tencentCos.bucket) || ''),
         region: String((providers.tencentCos && providers.tencentCos.region) || ''),
-        rootPrefix: String((providers.tencentCos && providers.tencentCos.rootPrefix) || DEFAULT_ROOT_PREFIX),
+        rootPrefix: DEFAULT_ROOT_PREFIX,
         protocol: String((providers.tencentCos && providers.tencentCos.protocol) || 'https:')
       },
       cloudflareR2: {
@@ -41,7 +41,7 @@ export function normalizeStorageConfig(config) {
         bucket: String((providers.cloudflareR2 && providers.cloudflareR2.bucket) || ''),
         endpoint: String((providers.cloudflareR2 && providers.cloudflareR2.endpoint) || ''),
         publicBaseUrl: String((providers.cloudflareR2 && providers.cloudflareR2.publicBaseUrl) || ''),
-        rootPrefix: String((providers.cloudflareR2 && providers.cloudflareR2.rootPrefix) || DEFAULT_ROOT_PREFIX)
+        rootPrefix: DEFAULT_ROOT_PREFIX
       }
     }
   };

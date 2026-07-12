@@ -118,7 +118,7 @@ function createGlobalConfigService({
       secretKey: normalizeText(record.secretKey),
       bucket: normalizeText(record.bucket),
       region: normalizeText(record.region),
-      rootPrefix: normalizeText(record.rootPrefix) || DEFAULT_ROOT_PREFIX,
+      rootPrefix: DEFAULT_ROOT_PREFIX,
       protocol: normalizeText(record.protocol) || 'https:'
     };
   }
@@ -156,7 +156,7 @@ function createGlobalConfigService({
       bucket: normalizeText(record.bucket),
       endpoint: getCloudflareEndpoint(accountId),
       publicBaseUrl: normalizeText(record.publicBaseUrl),
-      rootPrefix: normalizeText(record.rootPrefix) || DEFAULT_ROOT_PREFIX
+      rootPrefix: DEFAULT_ROOT_PREFIX
     };
   }
 

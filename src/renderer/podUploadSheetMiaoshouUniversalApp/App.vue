@@ -1,5 +1,5 @@
 <template>
-  <div class="pod-miaoshou-app-shell" data-ui-version="20260710-layout-2">
+  <div class="pod-miaoshou-app-shell" data-ui-version="20260712-universal-align-1">
     <header class="pod-miaoshou-app-header">
       <div class="pod-miaoshou-app-header__copy">
         <span class="pod-miaoshou-app-header__eyebrow">MIAOSHOU UNIVERSAL</span>
@@ -11,316 +11,153 @@
     </header>
 
     <main class="pod-workbench">
-      <section class="pod-panel pod-template-manage-panel">
-        <div class="pod-panel-head">
-          <div>
-            <p class="pod-panel-tag">&#x6A21;&#x677F;</p>
-            <h2 class="pod-panel-title">&#x6A21;&#x677F;&#x7BA1;&#x7406;</h2>
-          </div>
-        </div>
-        <div class="pod-template-save-row">
-          <div class="pod-field pod-inline-field">
-            <span class="pod-field-label">
-              &#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;
-              <a-tooltip content="&#x9009;&#x62E9;&#x5DF2;&#x4FDD;&#x5B58;&#x7684;&#x6A21;&#x677F;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5F53;&#x524D;&#x8868;&#x5355;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-select v-model="selectedTemplateId" allow-clear popup-container="body" :loading="loadingTemplates" :options="formTemplateOptions" @change="applySelectedTemplate" />
-          </div>
-          <div class="pod-field pod-inline-field">
-            <span class="pod-field-label">
-              &#x6A21;&#x677F;&#x540D;&#x79F0;
-              <a-tooltip content="&#x4FDD;&#x5B58;&#x5F53;&#x524D;&#x8868;&#x5355;&#x914D;&#x7F6E;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x540D;&#x79F0;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="templateName" allow-clear />
-          </div>
-          <div class="pod-template-save-actions">
-            <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
-              &#x4FDD;&#x5B58;&#x6A21;&#x677F;
-            </a-button>
-            <a-button class="pod-danger-button" :disabled="!selectedTemplateId" :loading="deletingTemplate" @click="deleteSelectedTemplate">
-              &#x5220;&#x9664;&#x6A21;&#x677F;
-            </a-button>
-          </div>
-        </div>
-      </section>
+      <UniversalTemplateWorkspacePanel
+        v-model:selected-template-id="selectedTemplateId"
+        v-model:template-name="templateName"
+        :products-count="products.length"
+        :loading-templates="loadingTemplates"
+        :form-template-options="formTemplateOptions"
+        :saving-template="savingTemplate"
+        :deleting-template="deletingTemplate"
+        :global-form="globalForm"
+        :sync-global-to-products="syncGlobalToProducts"
+        :apply-selected-template="applySelectedTemplate"
+        :save-current-template="saveCurrentTemplate"
+        :delete-selected-template="deleteSelectedTemplate"
+      />
 
-      <section class="pod-panel pod-template-panel pod-universal-template-panel">
-        <div class="pod-panel-head">
-          <div>
-            <p class="pod-panel-tag">&#x57FA;&#x7840;</p>
-            <h2 class="pod-panel-title">&#x901A;&#x7528;&#x8868;&#x683C;&#x5B57;&#x6BB5;</h2>
-          </div>
-          <a-tag class="pod-miaoshou-theme-tag" bordered>{{ products.length }} &#x4E2A;&#x5546;&#x54C1;</a-tag>
-        </div>
-        <div class="pod-universal-main-row">
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x8D27;&#x6E90;&#x7C7B;&#x76EE;
-              <a-tooltip content="&#x5BFC;&#x51FA;&#x8868;&#x683C;&#x65F6;&#x5199;&#x5165;&#x8D27;&#x6E90;&#x7C7B;&#x76EE;&#x5B57;&#x6BB5;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="globalForm.sourceCategory" allow-clear @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x81EA;&#x5B9A;&#x4E49;&#x5C5E;&#x6027;
-              <a-tooltip content="&#x586B;&#x5199;&#x5E73;&#x53F0;&#x8868;&#x683C;&#x8981;&#x6C42;&#x7684;&#x81EA;&#x5B9A;&#x4E49;&#x5C5E;&#x6027;&#x5185;&#x5BB9;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="globalForm.customAttributes" allow-clear @change="syncGlobalToProducts" />
-          </label>
-        </div>
-        <div class="pod-universal-media-row">
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x4EA7;&#x54C1;&#x89C6;&#x9891;
-              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x4EA7;&#x54C1;&#x89C6;&#x9891;&#x6587;&#x4EF6;&#x6216;&#x94FE;&#x63A5;&#x4FE1;&#x606F;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="globalForm.mainVideo" allow-clear @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x4EA7;&#x54C1;&#x8BC1;&#x4E66;
-              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x8BC1;&#x4E66;&#x6587;&#x4EF6;&#x6216;&#x8868;&#x683C;&#x9700;&#x8981;&#x7684;&#x8BC1;&#x4E66;&#x4FE1;&#x606F;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="globalForm.certificate" allow-clear @change="syncGlobalToProducts" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x5C3A;&#x5BF8;&#x56FE;&#x8868;
-              <a-tooltip content="&#x53EF;&#x586B;&#x5199;&#x5C3A;&#x5BF8;&#x56FE;&#x8868;&#x76F8;&#x5173;&#x4FE1;&#x606F;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-input v-model="globalForm.sizeChart" allow-clear @change="syncGlobalToProducts" />
-          </label>
-        </div>
-        <div class="pod-universal-description-row">
-          <label class="pod-field">
-            <span class="pod-field-label">
-              &#x8BE6;&#x60C5;&#x63CF;&#x8FF0;
-              <a-tooltip content="&#x6279;&#x91CF;&#x5199;&#x5165;&#x4EA7;&#x54C1;&#x8BE6;&#x60C5;&#x63CF;&#x8FF0;&#xFF0C;&#x4F1A;&#x540C;&#x6B65;&#x5230;&#x5546;&#x54C1;&#x6570;&#x636E;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-textarea v-model="globalForm.description" :auto-size="{ minRows: 4, maxRows: 8 }" @change="syncGlobalToProducts" />
-          </label>
-        </div>
-      </section>
+      <UniversalSkuSettingsPanel
+        :global-form="globalForm"
+        :sku-rows="skuRows"
+        :sku-config-map="skuConfigMap"
+        :sku-image-options="skuImageOptions"
+        :sync-sku-config-to-products="syncSkuConfigToProducts"
+        :handle-sku-spec-change="handleSkuSpecChange"
+      />
 
-      <section class="pod-panel pod-sku-panel pod-universal-sku-panel">
-        <div class="pod-panel-head">
-          <div>
-            <p class="pod-panel-tag">SKU</p>
-            <h2 class="pod-panel-title">SKU&#x89C4;&#x683C;&#x4E0E;&#x57FA;&#x7840;&#x6570;&#x636E;</h2>
-          </div>
-          <a-tag class="pod-miaoshou-theme-tag" bordered>{{ skuRows.length }} SKU</a-tag>
-        </div>
-        <div class="pod-sku-layout">
-          <label class="pod-field">
-            <span class="pod-field-label">
-              SKU&#x89C4;&#x683C;1
-              <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x7528;&#x4E8E;&#x751F;&#x6210; SKU &#x884C;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
-          </label>
-          <label class="pod-field">
-            <span class="pod-field-label">
-              SKU&#x89C4;&#x683C;2
-              <a-tooltip content="&#x7B2C;&#x4E8C;&#x7EC4; SKU &#x89C4;&#x683C;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
-                <icon-question-circle class="pod-help-icon" />
-              </a-tooltip>
-            </span>
-            <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
-          </label>
-        </div>
-        <a-table class="pod-sku-table" row-key="key" :data="skuRows" :pagination="false" :scroll="{ x: 980, y: 220 }">
-          <template #columns>
-            <a-table-column title="&#x89C4;&#x683C;&#x503C;1" data-index="specValueOne" :width="130" />
-            <a-table-column title="&#x89C4;&#x683C;&#x503C;2" data-index="specValueTwo" :width="130" />
-            <a-table-column title="SKU&#x552E;&#x4EF7;" :width="130">
-              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].declaredPrice" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-            <a-table-column title="SKU&#x56FE;&#x7247;" :width="150">
-              <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear popup-container="body" :options="skuImageOptions" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-            <a-table-column title="&#x5E73;&#x53F0;SKU" :width="150">
-              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].platformSku" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-            <a-table-column title="SKU&#x5E93;&#x5B58;" :width="120">
-              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].stock" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-            <a-table-column title="SKU&#x91CD;&#x91CF;(KG)" :width="140">
-              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].skuWeightKg" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-            <a-table-column title="SKU&#x5C3A;&#x5BF8;(CM)" :width="150">
-              <template #cell="{ record }"><a-input v-model="skuConfigMap[record.key].skuSize" @change="syncSkuConfigToProducts" /></template>
-            </a-table-column>
-          </template>
-        </a-table>
-      </section>
-
-      <section class="pod-panel pod-list-panel">
-        <div class="pod-list-head">
-          <div>
-            <p class="pod-panel-tag">&#x672C;&#x5730;&#x5546;&#x54C1;</p>
-            <h2 class="pod-panel-title">&#x901A;&#x7528;&#x7248;&#x5546;&#x54C1;&#x5217;&#x8868;</h2>
-          </div>
-          <div class="pod-actions">
-            <a-button class="pod-blue-button" :loading="importingProducts" @click="importProducts">&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
-            <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4E3B;&#x56FE;</a-button>
-            <a-button class="pod-blue-button" :disabled="products.length < 1" @click="randomizeCarousel">&#x6279;&#x91CF;&#x968F;&#x673A;&#x4E3B;&#x56FE;</a-button>
-            <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset">&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8BE6;&#x60C5;&#x56FE;</a-button>
-            <a-select v-model="imageUploadMode" class="pod-upload-mode" popup-container="body" :options="imageUploadOptions" @change="scheduleStateSave" />
-            <a-button class="pod-red-button" :loading="uploadingImages" :disabled="!products.length" @click="uploadImages">
-              {{ uploadingImages ? '\u4e0a\u4f20\u4e2d' : '\u6279\u91cf\u4e0a\u4f20\u56fe\u7247' }}
-            </a-button>
-            <a-button class="pod-red-button" :loading="generatingAiTitles" :disabled="!aiTitleEligibleCount" @click="openBatchAiTitleDialog">
-              {{ generatingAiTitles ? '\u751f\u6210\u4e2d' : '\u6279\u91cfAI\u751f\u6210\u6807\u9898' }}
-            </a-button>
-            <a-button class="pod-theme-button" :loading="exportingTable" :disabled="!products.length" @click="exportTable">&#x5BFC;&#x51FA;&#x8868;&#x683C;</a-button>
-            <a-button class="pod-danger-button" :disabled="!products.length" @click="clearProducts">&#x6E05;&#x7A7A;&#x5217;&#x8868;</a-button>
-          </div>
-        </div>
-        <div v-if="uploadProgressText || aiTitleProgressText" class="pod-progress-line">
-          <span v-if="uploadProgressText">{{ uploadProgressText }}</span>
-          <span v-if="aiTitleProgressText">{{ aiTitleProgressText }}</span>
-        </div>
-        <a-table
-          class="pod-product-table"
-          row-key="id"
-          :data="products"
-          :pagination="false"
-          :scroll="productTableScroll"
-          :row-class="getProductRowClass"
-          @row-click="selectProduct"
-        >
-          <template #columns>
-            <a-table-column title="&#x672C;&#x5730;&#x5546;&#x54C1;" data-index="localName" :width="220">
-              <template #cell="{ record }">
-                <div class="pod-product-name">
-                  <strong>{{ record.localName || '\u672a\u547d\u540d\u5546\u54c1' }}</strong>
-                  <span>{{ record.sourceFolder || '\u6839\u76ee\u5f55' }}</span>
-                </div>
-              </template>
-            </a-table-column>
-            <a-table-column title="&#x4EA7;&#x54C1;&#x540D;&#x79F0;" :width="300">
-              <template #cell="{ record }">
-                <a-textarea v-model="record.title" :auto-size="{ minRows: 2, maxRows: 4 }" @change="scheduleStateSave" />
-              </template>
-            </a-table-column>
-            <a-table-column title="&#x4E3B;&#x56FE;" :width="230">
-              <template #cell="{ record }">
-                <div class="pod-chip-list" :title="getMaterialTitle(record, 'carousel')">
-                  <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" bordered>{{ item }}</a-tag>
-                  <span v-if="!record.materials.carousel.length" class="pod-muted">&#x6682;&#x65E0;</span>
-                </div>
-              </template>
-            </a-table-column>
-            <a-table-column title="&#x8BE6;&#x60C5;&#x56FE;" :width="210">
-              <template #cell="{ record }">
-                <a-input v-model="record.descriptionImageOrders" placeholder="1,2,3" @change="scheduleStateSave" />
-              </template>
-            </a-table-column>
-            <a-table-column title="AI" :width="130">
-              <template #cell="{ record }">
-                <a-tag :color="getAiStatusColor(record.aiTitleStatus)" bordered>{{ getAiStatusText(record.aiTitleStatus) }}</a-tag>
-              </template>
-            </a-table-column>
-          </template>
-        </a-table>
-      </section>
+      <UniversalProductDataTable
+        :products="products"
+        :table-style="productTableStyle"
+        :table-scroll="productTableScroll"
+        :importing-products="importingProducts"
+        :uploading-images="uploadingImages"
+        :exporting-table="exportingTable"
+        :saving-template="savingTemplate"
+        :generating-ai-titles="generatingAiTitles"
+        :ai-title-eligible-count="aiTitleEligibleCount"
+        :upload-progress="uploadProgress"
+        :upload-progress-text="uploadProgressText"
+        :ai-title-progress-text="aiTitleProgressText"
+        :import-products="importProducts"
+        :open-carousel-preset="openCarouselPreset"
+        :open-random-carousel-preset="openRandomCarouselPreset"
+        :open-description-preset="openDescriptionPreset"
+        :open-image-upload-dialog="openImageUploadDialog"
+        :open-batch-ai-title-dialog="openBatchAiTitleDialog"
+        :export-table="exportTable"
+        :save-current-template="saveCurrentTemplate"
+        :clear-products="clearProducts"
+        :get-product-row-class="getProductRowClass"
+        :select-product="selectProduct"
+        :handle-product-title-change="handleProductTitleChange"
+      />
     </main>
 
-    <a-modal v-model:visible="carouselPresetVisible" :mask-closable="false" modal-class="pod-miaoshou-operation-modal" @ok="applyCarouselPreset">
-      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4E3B;&#x56FE;</template>
-      <a-textarea v-model="carouselPresetText" :auto-size="{ minRows: 8, maxRows: 12 }" placeholder="&#x4E00;&#x884C;&#x4E00;&#x4E2A;&#x56FE;&#x7247;&#x540D;&#xFF0C;&#x4FDD;&#x5B58;&#x540E;&#x6279;&#x91CF;&#x653E;&#x5230;&#x4E3B;&#x56FE;&#x524D;&#x9762;" />
-    </a-modal>
+    <MaterialPresetModals
+      v-model:random-carousel-only-first="randomCarouselOnlyFirst"
+      :carousel-preset-visible="carouselPresetVisible"
+      :carousel-preset-candidates="carouselPresetCandidates"
+      :carousel-preset-selected="carouselPresetSelected"
+      :random-carousel-visible="randomCarouselVisible"
+      :random-carousel-candidates="randomCarouselCandidates"
+      :random-carousel-selected="randomCarouselSelected"
+      :description-preset-visible="descriptionPresetVisible"
+      :description-preset-candidates="descriptionPresetCandidates"
+      :description-preset-selected="descriptionPresetSelected"
+      :close-carousel-preset="closeCarouselPreset"
+      :clear-carousel-preset-items="clearCarouselPresetItems"
+      :select-all-carousel-preset-items="selectAllCarouselPresetItems"
+      :is-carousel-preset-selected="isCarouselPresetSelected"
+      :toggle-carousel-preset-item="toggleCarouselPresetItem"
+      :get-carousel-preset-file-tip="getCarouselPresetFileTip"
+      :get-carousel-preset-display-name="getCarouselPresetDisplayName"
+      :move-carousel-preset-item="moveCarouselPresetItem"
+      :apply-carousel-preset="applyCarouselPreset"
+      :close-random-carousel-preset="closeRandomCarouselPreset"
+      :select-all-random-carousel-items="selectAllRandomCarouselItems"
+      :is-random-carousel-selected="isRandomCarouselSelected"
+      :toggle-random-carousel-item="toggleRandomCarouselItem"
+      :get-random-carousel-item-tip="getRandomCarouselItemTip"
+      :apply-random-carousel-preset="applyRandomCarouselPreset"
+      :close-description-preset="closeDescriptionPreset"
+      :clear-description-preset-items="clearDescriptionPresetItems"
+      :select-all-description-preset-items="selectAllDescriptionPresetItems"
+      :is-description-preset-selected="isDescriptionPresetSelected"
+      :toggle-description-preset-item="toggleDescriptionPresetItem"
+      :move-description-preset-item="moveDescriptionPresetItem"
+      :apply-description-preset="applyDescriptionPreset"
+    />
 
-    <a-modal v-model:visible="descriptionPresetVisible" :mask-closable="false" modal-class="pod-miaoshou-operation-modal" @ok="applyDescriptionPreset">
-      <template #title>&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8BE6;&#x60C5;&#x56FE;</template>
-      <a-textarea v-model="descriptionPresetText" :auto-size="{ minRows: 8, maxRows: 12 }" placeholder="&#x586B;&#x5199;&#x4E3B;&#x56FE;&#x5E8F;&#x53F7;&#xFF0C;&#x5982; 1,2,3" />
-    </a-modal>
-
-    <a-modal
+    <BatchAiTitleModal
       :visible="batchAiTitleVisible"
-      :mask-closable="false"
-      :esc-to-close="!batchAiTitleStarting"
-      :closable="!batchAiTitleStarting"
-      :footer="false"
-      modal-class="pod-miaoshou-batch-ai-title-modal"
-      unmount-on-close
+      :starting="batchAiTitleStarting"
+      :busy="batchAiTitleBusy"
+      :form="batchAiTitleForm"
+      :summary="batchAiTitleSummary"
+      :status="batchAiTitleStatus"
+      :ai-platform-options="batchAiTitleAiPlatformOptions"
+      :storage-provider-options="batchAiTitleStorageProviderOptions"
+      :image-compression-options="batchAiTitleImageCompressionOptions"
+      :output-language-options="batchAiTitleOutputLanguageOptions"
+      :min-concurrency="batchAiTitleMinConcurrency"
+      :max-concurrency="batchAiTitleMaxConcurrency"
+      :min-target-length="batchAiTitleMinTargetLength"
+      :max-target-length="batchAiTitleMaxTargetLength"
+      :min-image-quality="batchAiTitleMinImageQuality"
+      :max-image-quality="batchAiTitleMaxImageQuality"
+      :resolve-status-type="resolveAiStatusType"
       @cancel="closeBatchAiTitleDialog"
-    >
-      <template #title>
-        <div class="pod-modal-title">
-          <span>AI TITLE</span>
-          <strong>&#x6279;&#x91CF;AI&#x751F;&#x6210;&#x6807;&#x9898;</strong>
-        </div>
-      </template>
-      <div class="pod-modal-body">
-        <div class="pod-summary-pills">
-          <span>{{ batchAiTitleSummary.aiName || '\u706b\u5c71\u5f15\u64ce' }}</span>
-          <span>{{ batchAiTitleSummary.storageName || '\u817e\u8baf COS' }}</span>
-          <span>{{ batchAiTitleSummary.totalCount }} &#x4E2A;&#x5546;&#x54C1;</span>
-        </div>
-        <div class="pod-modal-grid">
-          <div class="pod-field"><span class="pod-field-label">AI &#x5E73;&#x53F0;<a-tooltip content="&#x9009;&#x62E9;&#x6279;&#x91CF;&#x751F;&#x6210;&#x6807;&#x9898;&#x4F7F;&#x7528;&#x7684; AI &#x914D;&#x7F6E;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.aiProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleAiPlatformOptions" /></div>
-          <div class="pod-field"><span class="pod-field-label">&#x5B58;&#x50A8;&#x7D20;&#x6750;<a-tooltip content="&#x9009;&#x62E9;&#x63D0;&#x4EA4;&#x7ED9; AI &#x8BC6;&#x56FE;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x7D20;&#x6750;&#x5B58;&#x50A8;&#x65B9;&#x5F0F;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.storageProvider" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleStorageProviderOptions" /></div>
-          <div class="pod-field"><span class="pod-field-label">&#x56FE;&#x7247;&#x538B;&#x7F29;<a-tooltip content="&#x63D0;&#x4EA4;&#x7ED9; AI &#x524D;&#x7684;&#x56FE;&#x7247;&#x5904;&#x7406;&#x65B9;&#x5F0F;&#xFF0C;&#x7528;&#x4E8E;&#x63A7;&#x5236;&#x4E0A;&#x4F20;&#x4F53;&#x79EF;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.imageCompression" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleImageCompressionOptions" /></div>
-          <label class="pod-field"><span class="pod-field-label">&#x7EBF;&#x7A0B;&#x5E76;&#x53D1;<a-tooltip content="&#x540C;&#x65F6;&#x751F;&#x6210;&#x6807;&#x9898;&#x7684;&#x4EFB;&#x52A1;&#x6570;&#xFF0C;&#x8FC7;&#x9AD8;&#x53EF;&#x80FD;&#x89E6;&#x53D1;&#x9650;&#x6D41;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.concurrency" :disabled="batchAiTitleBusy" :min="batchAiTitleMinConcurrency" :max="batchAiTitleMaxConcurrency" mode="button" /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x957F;&#x5EA6;<a-tooltip content="AI &#x751F;&#x6210;&#x6807;&#x9898;&#x65F6;&#x5C3D;&#x91CF;&#x63A5;&#x8FD1;&#x7684;&#x76EE;&#x6807;&#x5B57;&#x6570;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-input-number v-model="batchAiTitleForm.targetLength" :disabled="batchAiTitleBusy" :min="batchAiTitleMinTargetLength" :max="batchAiTitleMaxTargetLength" mode="button" /></label>
-          <div class="pod-field"><span class="pod-field-label">&#x8F93;&#x51FA;&#x8BED;&#x8A00;<a-tooltip content="&#x9009;&#x62E9;&#x6807;&#x9898;&#x6700;&#x7EC8;&#x8F93;&#x51FA;&#x7684;&#x8BED;&#x8A00;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span><a-select v-model="batchAiTitleForm.outputLanguage" popup-container="body" :disabled="batchAiTitleBusy" :options="batchAiTitleOutputLanguageOptions" /></div>
-        </div>
-        <div class="pod-quality-row">
-          <span>&#x56FE;&#x7247;&#x8D28;&#x91CF;</span>
-          <a-slider v-model="batchAiTitleForm.imageQuality" :disabled="batchAiTitleBusy" :min="batchAiTitleMinImageQuality" :max="batchAiTitleMaxImageQuality" />
-          <strong>{{ batchAiTitleForm.imageQuality }}</strong>
-        </div>
-        <div class="pod-modal-grid">
-          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x524D;&#x7F00;</span><a-input v-model="batchAiTitleForm.prefixText" allow-clear /></label>
-          <label class="pod-field"><span class="pod-field-label">&#x6807;&#x9898;&#x540E;&#x7F00;</span><a-input v-model="batchAiTitleForm.suffixText" allow-clear /></label>
-        </div>
-        <label class="pod-field"><span class="pod-field-label">&#x9644;&#x52A0;&#x63D0;&#x793A;&#x8BCD;</span><a-textarea v-model="batchAiTitleForm.extraPrompt" :auto-size="{ minRows: 4, maxRows: 7 }" /></label>
-        <a-checkbox v-model="batchAiTitleForm.useCache">&#x4F7F;&#x7528;&#x7F13;&#x5B58;</a-checkbox>
-        <a-alert v-if="batchAiTitleStatus.message || batchAiTitleSummary.warning" :type="resolveAiStatusType(batchAiTitleStatus.tone || (batchAiTitleSummary.warning ? 'warning' : ''))" show-icon>{{ batchAiTitleStatus.message || batchAiTitleSummary.warning }}</a-alert>
-      </div>
-      <div class="pod-modal-footer">
-        <a-button :disabled="batchAiTitleStarting" @click="closeBatchAiTitleDialog">&#x53D6;&#x6D88;</a-button>
-        <a-button class="pod-danger-button" :disabled="batchAiTitleBusy || !batchAiTitleSummary.retryCount" @click="startBatchAiTitleDialogGeneration(true)">&#x91CD;&#x8BD5;&#x5931;&#x8D25;</a-button>
-        <a-button class="pod-theme-button" type="primary" :loading="batchAiTitleStarting" @click="startBatchAiTitleDialogGeneration(false)">&#x6279;&#x91CF;&#x5F00;&#x59CB;&#x6807;&#x9898;&#x751F;&#x6210;</a-button>
-      </div>
-    </a-modal>
+      @start="startBatchAiTitleDialogGeneration"
+    />
+
+    <ImageUploadConfigModal
+      :visible="imageUploadVisible"
+      :starting="imageUploadStarting"
+      :busy="imageUploadBusy"
+      :form="imageUploadForm"
+      :summary="imageUploadSummary"
+      :status="imageUploadStatus"
+      :storage-provider-options="imageUploadStorageProviderOptions"
+      :image-upload-mode-options="imageUploadModeOptions"
+      :min-concurrency="imageUploadMinConcurrency"
+      :max-concurrency="imageUploadMaxConcurrency"
+      :min-image-quality="imageUploadMinImageQuality"
+      :max-image-quality="imageUploadMaxImageQuality"
+      :handle-storage-provider-change="handleImageUploadStorageProviderChange"
+      :resolve-status-type="resolveAiStatusType"
+      @cancel="closeImageUploadDialog"
+      @start="startImageUploadFromDialog"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
-import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
+import BatchAiTitleModal from '../shared/batchAiTitle/BatchAiTitleModal.vue';
+import ImageUploadConfigModal from '../shared/imageUpload/ImageUploadConfigModal.vue';
+import MaterialPresetModals from '../shared/materialPreset/MaterialPresetModals.vue';
+import { useImageUploadDialog } from '../shared/imageUpload/useImageUploadDialog.js';
+import { useMaterialPresetDialogs } from '../shared/materialPreset/useMaterialPresetDialogs.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
+import UniversalProductDataTable from './components/UniversalProductDataTable.vue';
+import UniversalSkuSettingsPanel from './components/UniversalSkuSettingsPanel.vue';
+import UniversalTemplateWorkspacePanel from './components/UniversalTemplateWorkspacePanel.vue';
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const UNIVERSAL_TEMPLATE_ID = 'universal';
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const MATERIAL_SECTIONS = Object.freeze(['carousel', 'assets', 'preview']);
-const IMAGE_UPLOAD_OPTIONS = Object.freeze([
-  { value: 'original', label: '\u539f\u6587\u4ef6' },
-  { value: 'jpg', label: '\u8f6c JPG' },
-  { value: 'webp', label: '\u8f6c WebP' }
-]);
 
 const DEFAULT_PRODUCT_FIELDS = Object.freeze({
   localName: '',
@@ -359,11 +196,22 @@ const deletingTemplate = ref(false);
 const uploadingImages = ref(false);
 const exportingTable = ref(false);
 const generatingAiTitles = ref(false);
-const carouselPresetVisible = ref(false);
-const carouselPresetText = ref('');
-const descriptionPresetVisible = ref(false);
-const descriptionPresetText = ref('');
-const uploadProgress = reactive({ total: 0, success: 0, uploaded: 0, cached: 0, failed: 0, canceled: 0 });
+const uploadProgress = reactive({
+  total: 0,
+  completed: 0,
+  success: 0,
+  uploaded: 0,
+  cached: 0,
+  failed: 0,
+  canceled: 0,
+  label: '',
+  runState: 'idle',
+  storageProvider: '',
+  imageUploadMode: 'original',
+  concurrency: 0,
+  imageQuality: 0
+});
+const uploadFailedFilePaths = ref([]);
 const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, canceled: 0 });
 const globalForm = reactive({
   sourceCategory: '',
@@ -379,7 +227,9 @@ const skuConfigMap = reactive({});
 
 let saveTimer = 0;
 let cleanupBatchAiTitleBridge = null;
+let cleanupImageUploadBridge = null;
 let removeAiTitleProgressListener = null;
+let uploadProgressPollTimer = 0;
 
 const batchAiTitleDialog = useBatchAiTitleDialog();
 const batchAiTitleVisible = batchAiTitleDialog.visible;
@@ -401,10 +251,72 @@ const batchAiTitleMaxImageQuality = batchAiTitleDialog.maxImageQuality;
 const closeBatchAiTitleDialog = batchAiTitleDialog.closeDialog;
 const startBatchAiTitleDialogGeneration = batchAiTitleDialog.startGeneration;
 
+const imageUploadDialog = useImageUploadDialog({
+  startUpload: executeImageUpload
+});
+const imageUploadVisible = imageUploadDialog.visible;
+const imageUploadStarting = imageUploadDialog.starting;
+const imageUploadBusy = imageUploadDialog.busy;
+const imageUploadForm = imageUploadDialog.form;
+const imageUploadSummary = imageUploadDialog.summary;
+const imageUploadStatus = imageUploadDialog.status;
+const imageUploadStorageProviderOptions = imageUploadDialog.storageProviderOptions;
+const imageUploadModeOptions = imageUploadDialog.imageUploadModeOptions;
+const imageUploadMinConcurrency = imageUploadDialog.minConcurrency;
+const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
+const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
+const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
+const closeImageUploadDialog = imageUploadDialog.closeDialog;
+const startImageUploadFromDialog = imageUploadDialog.startUploadFromDialog;
+const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
+
 const featureBridge = computed(() => window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null);
-const imageUploadOptions = computed(() => IMAGE_UPLOAD_OPTIONS);
 const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ value: item.id, label: item.name })));
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
+const {
+  carouselPresetVisible,
+  carouselPresetText,
+  carouselPresetSelected,
+  randomCarouselVisible,
+  randomCarouselOnlyFirst,
+  randomCarouselSelected,
+  descriptionPresetVisible,
+  descriptionPresetText,
+  descriptionPresetSelected,
+  carouselPresetCandidates,
+  descriptionPresetCandidates,
+  randomCarouselCandidates,
+  openCarouselPreset,
+  closeCarouselPreset,
+  getCarouselPresetDisplayName,
+  getCarouselPresetFileTip,
+  isCarouselPresetSelected,
+  toggleCarouselPresetItem,
+  selectAllCarouselPresetItems,
+  clearCarouselPresetItems,
+  moveCarouselPresetItem,
+  applyCarouselPreset,
+  openRandomCarouselPreset,
+  closeRandomCarouselPreset,
+  isRandomCarouselSelected,
+  toggleRandomCarouselItem,
+  selectAllRandomCarouselItems,
+  getRandomCarouselItemTip,
+  applyRandomCarouselPreset,
+  openDescriptionPreset,
+  closeDescriptionPreset,
+  isDescriptionPresetSelected,
+  toggleDescriptionPresetItem,
+  selectAllDescriptionPresetItems,
+  clearDescriptionPresetItems,
+  moveDescriptionPresetItem,
+  applyDescriptionPreset
+} = useMaterialPresetDialogs({
+  products,
+  activeProduct,
+  scheduleStateSave,
+  messageApi: Message
+});
 const skuRows = computed(() => buildSkuRows());
 const skuImageOptions = computed(() => {
   const product = activeProduct.value;
@@ -413,10 +325,32 @@ const skuImageOptions = computed(() => {
 });
 const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
 const aiTitleRetryCount = computed(() => products.value.filter((item) => item.aiTitleStatus === 'failed' && getPrimaryProductImage(item)).length);
-const productTableScroll = computed(() => ({ x: 1280, y: Math.max(300, viewportHeight.value - 360) }));
+const productTableBodyHeight = computed(() => Math.max(380, Math.min(560, viewportHeight.value - 460)));
+const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
+const productTableStyle = computed(() => ({
+  '--pod-product-table-body-height': `${productTableBodyHeight.value}px`
+}));
+const hasUploadProgress = computed(() => Math.max(0, Number(uploadProgress.total) || 0) > 0);
+const uploadProgressPercent = computed(() => {
+  const total = Math.max(0, Number(uploadProgress.total) || 0);
+  const completed = Math.max(0, Number(uploadProgress.completed) || 0);
+  return total ? Math.max(0, Math.min(1, completed / total)) : 0;
+});
+const uploadProgressStatus = computed(() => {
+  if (uploadProgress.failed > 0 || uploadProgress.runState === 'failed') return 'danger';
+  if (uploadProgress.runState === 'completed') return 'success';
+  return 'normal';
+});
+const uploadProgressStateText = computed(() => {
+  if (uploadProgress.runState === 'completed') return '\u5df2\u5b8c\u6210';
+  if (uploadProgress.runState === 'failed') return '\u5931\u8d25';
+  if (uploadProgress.runState === 'canceled') return '\u5df2\u53d6\u6d88';
+  if (uploadProgress.runState === 'stopping') return '\u505c\u6b62\u4e2d';
+  return '\u4e0a\u4f20\u4e2d';
+});
 const uploadProgressText = computed(() => {
   if (!uploadProgress.total) return '';
-  return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgress.success}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
+  return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgressStateText.value} ${uploadProgress.completed}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
 });
 const aiTitleProgressText = computed(() => {
   if (!generatingAiTitles.value || !aiProgress.total) return '';
@@ -697,6 +631,123 @@ function resolveAiStatusType(tone) {
   return 'info';
 }
 
+function isHttpUrl(value) {
+  return /^https?:\/\//i.test(normalizeText(value));
+}
+
+function normalizeCandidatePath(value) {
+  return normalizeText(value).replace(/\//g, '\\').toLowerCase();
+}
+
+function getImageUploadCandidateCount() {
+  const candidatePathSet = new Set();
+
+  products.value.forEach((product) => {
+    MATERIAL_SECTIONS.forEach((sectionId) => {
+      const items = product && product.materials && Array.isArray(product.materials[sectionId])
+        ? product.materials[sectionId]
+        : [];
+
+      items.forEach((itemName) => {
+        if (isHttpUrl(itemName)) {
+          return;
+        }
+
+        const filePath = getMaterialPathByName(product, sectionId, itemName);
+        const normalizedPath = normalizeCandidatePath(filePath);
+
+        if (normalizedPath) {
+          candidatePathSet.add(normalizedPath);
+        }
+      });
+    });
+  });
+
+  return candidatePathSet.size;
+}
+
+function resetUploadProgress() {
+  Object.assign(uploadProgress, {
+    total: 0,
+    completed: 0,
+    success: 0,
+    uploaded: 0,
+    cached: 0,
+    failed: 0,
+    canceled: 0,
+    label: '',
+    runState: 'idle',
+    storageProvider: '',
+    imageUploadMode: imageUploadMode.value || 'original',
+    concurrency: 0,
+    imageQuality: 0
+  });
+}
+
+function applyUploadProgressSnapshot(snapshot) {
+  const progress = snapshot && snapshot.progress && typeof snapshot.progress === 'object'
+    ? snapshot.progress
+    : null;
+
+  if (!progress) {
+    return;
+  }
+
+  Object.assign(uploadProgress, {
+    total: Number(progress.totalCount) || uploadProgress.total,
+    completed: Number(progress.completedCount) || uploadProgress.completed,
+    success: Number(progress.successCount) || uploadProgress.success,
+    uploaded: Number(progress.uploadedCount) || uploadProgress.uploaded,
+    cached: Number(progress.cachedCount) || uploadProgress.cached,
+    failed: Number(progress.failedCount) || uploadProgress.failed,
+    canceled: Number(progress.canceledCount) || uploadProgress.canceled,
+    label: normalizeText(progress.label),
+    runState: normalizeText(progress.runState) || uploadProgress.runState,
+    storageProvider: normalizeText(progress.storageProvider) || uploadProgress.storageProvider,
+    imageUploadMode: normalizeText(progress.imageUploadMode) || uploadProgress.imageUploadMode,
+    concurrency: Number(progress.concurrency) || uploadProgress.concurrency,
+    imageQuality: Number(progress.imageQuality) || uploadProgress.imageQuality
+  });
+}
+
+function stopUploadProgressPolling() {
+  if (uploadProgressPollTimer) {
+    window.clearInterval(uploadProgressPollTimer);
+    uploadProgressPollTimer = 0;
+  }
+}
+
+function startUploadProgressPolling(runId) {
+  stopUploadProgressPolling();
+
+  uploadProgressPollTimer = window.setInterval(async () => {
+    if (!featureBridge.value || typeof featureBridge.value.getPodUploadSheetMiaoshouUniversalCosUploadProgressSnapshot !== 'function') {
+      return;
+    }
+
+    try {
+      applyUploadProgressSnapshot(await featureBridge.value.getPodUploadSheetMiaoshouUniversalCosUploadProgressSnapshot({
+        runId
+      }));
+    } catch (_error) {}
+  }, 500);
+}
+
+function getImageUploadSnapshot() {
+  return {
+    totalCount: getImageUploadCandidateCount(),
+    retryCount: uploadFailedFilePaths.value.length,
+    retryFilePaths: uploadFailedFilePaths.value.slice(),
+    imageUploadMode: imageUploadMode.value || uploadProgress.imageUploadMode || 'original',
+    concurrency: uploadProgress.concurrency || 8,
+    imageQuality: uploadProgress.imageQuality || 90
+  };
+}
+
+function openImageUploadDialog() {
+  return imageUploadDialog.openDialog(getImageUploadSnapshot());
+}
+
 async function importProducts() {
   if (!featureBridge.value || typeof featureBridge.value.selectPodUploadSheetMiaoshouUniversalImportDirectory !== 'function') return;
   importingProducts.value = true;
@@ -711,6 +762,8 @@ async function importProducts() {
     products.value.push(...nextProducts);
     activeProductId.value = nextProducts[0].id;
     lastImportDirectoryPath.value = normalizeText(result.directoryPath) || lastImportDirectoryPath.value;
+    uploadFailedFilePaths.value = [];
+    resetUploadProgress();
     Message.success(`\u5df2\u5bfc\u5165 ${nextProducts.length} \u4e2a\u5546\u54c1`);
     scheduleStateSave();
   } catch (error) {
@@ -728,88 +781,96 @@ function clearProducts() {
     onOk() {
       products.value = [];
       activeProductId.value = '';
+      uploadFailedFilePaths.value = [];
+      resetUploadProgress();
       scheduleStateSave();
     }
   });
 }
 
-function openCarouselPreset() {
-  carouselPresetText.value = activeProduct.value && activeProduct.value.materials ? activeProduct.value.materials.carousel.join('\n') : '';
-  carouselPresetVisible.value = true;
-}
-
-function applyCarouselPreset() {
-  const values = splitLines(carouselPresetText.value);
-  if (!values.length) return;
-  products.value = products.value.map((product) => ({
-    ...product,
-    materials: {
-      ...product.materials,
-      carousel: Array.from(new Set([...values, ...product.materials.carousel]))
-    }
-  }));
+function handleProductTitleChange() {
   scheduleStateSave();
 }
 
-function randomizeCarousel() {
+function applyImageUploadResult(result) {
+  const items = Array.isArray(result && result.items) ? result.items : [];
+  const urlByPath = new Map(items.filter((item) => {
+    return item && item.status === 'success' && item.url;
+  }).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
+
   products.value = products.value.map((product) => {
-    const next = product.materials.carousel.slice();
-    for (let index = next.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
-    }
-    return { ...product, materials: { ...product.materials, carousel: next } };
-  });
-  scheduleStateSave();
-  Message.success('\u5df2\u6279\u91cf\u968f\u673a\u8c03\u6574\u4e3b\u56fe');
-}
+    const nextProduct = createProduct(product);
 
-function openDescriptionPreset() {
-  descriptionPresetText.value = activeProduct.value ? activeProduct.value.descriptionImageOrders : '';
-  descriptionPresetVisible.value = true;
-}
-
-function applyDescriptionPreset() {
-  const value = splitLines(descriptionPresetText.value).join(',');
-  products.value = products.value.map((product) => ({ ...product, descriptionImageOrders: value }));
-  scheduleStateSave();
-}
-
-async function uploadImages() {
-  if (!featureBridge.value || uploadingImages.value) return;
-  uploadingImages.value = true;
-  Object.assign(uploadProgress, { total: 0, success: 0, uploaded: 0, cached: 0, failed: 0, canceled: 0 });
-  try {
-    const result = await featureBridge.value.uploadPodUploadSheetMiaoshouUniversalCosImages({
-      runId: createId('pod-universal-cos'),
-      products: products.value,
-      imageUploadMode: imageUploadMode.value
-    });
-    const items = Array.isArray(result && result.items) ? result.items : [];
-    const urlByPath = new Map(items.filter((item) => item && item.status === 'success' && item.url).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
-    products.value = products.value.map((product) => {
-      const nextProduct = createProduct(product);
-      MATERIAL_SECTIONS.forEach((sectionId) => {
-        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
-          const path = getMaterialPathByName(nextProduct, sectionId, name);
-          return urlByPath.get(path) || name;
-        });
+    MATERIAL_SECTIONS.forEach((sectionId) => {
+      nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
+        const filePath = getMaterialPathByName(nextProduct, sectionId, name);
+        return urlByPath.get(filePath) || name;
       });
-      return nextProduct;
     });
-    Object.assign(uploadProgress, {
-      total: Number(result && result.totalCount) || items.length,
-      success: Number(result && result.successCount) || 0,
-      uploaded: Number(result && result.uploadedCount) || 0,
-      cached: Number(result && result.cachedCount) || 0,
-      failed: Number(result && result.failedCount) || 0,
-      canceled: Number(result && result.canceledCount) || 0
+
+    return nextProduct;
+  });
+
+  uploadFailedFilePaths.value = items
+    .filter((item) => item && item.status === 'failed' && normalizeText(item.filePath))
+    .map((item) => normalizeText(item.filePath));
+
+  Object.assign(uploadProgress, {
+    total: Number(result && result.totalCount) || items.length,
+    completed: Number(result && result.completedCount) || items.length,
+    success: Number(result && result.successCount) || 0,
+    uploaded: Number(result && result.uploadedCount) || 0,
+    cached: Number(result && result.cachedCount) || 0,
+    failed: Number(result && result.failedCount) || 0,
+    canceled: Number(result && result.canceledCount) || 0,
+    runState: result && result.canceled ? 'canceled' : 'completed'
+  });
+}
+
+async function executeImageUpload(options = {}) {
+  if (!featureBridge.value || uploadingImages.value) return;
+
+  const nextImageUploadMode = normalizeText(options && options.imageUploadMode) || imageUploadMode.value || 'original';
+  const nextStorageProvider = normalizeText(options && options.storageProvider) || 'tencent-cos';
+  const nextConcurrency = Math.max(1, Number(options && options.concurrency) || 8);
+  const nextImageQuality = Math.max(1, Number(options && options.imageQuality) || 90);
+
+  imageUploadMode.value = nextImageUploadMode;
+  uploadingImages.value = true;
+  resetUploadProgress();
+  Object.assign(uploadProgress, {
+    runState: 'starting',
+    storageProvider: nextStorageProvider,
+    imageUploadMode: nextImageUploadMode,
+    concurrency: nextConcurrency,
+    imageQuality: nextImageQuality
+  });
+
+  try {
+    const runId = createId('pod-universal-cos');
+    startUploadProgressPolling(runId);
+
+    const result = await featureBridge.value.uploadPodUploadSheetMiaoshouUniversalCosImages({
+      runId,
+      storageProvider: nextStorageProvider,
+      imageUploadMode: nextImageUploadMode,
+      concurrency: nextConcurrency,
+      imageQuality: nextImageQuality,
+      retryFailedOnly: options && options.retryFailedOnly === true,
+      retryFilePaths: Array.isArray(options && options.retryFilePaths) ? options.retryFilePaths.slice() : [],
+      products: products.value
     });
+
+    applyImageUploadResult(result);
     Message.success('\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
     scheduleStateSave();
   } catch (error) {
+    Object.assign(uploadProgress, {
+      runState: 'failed'
+    });
     Message.error('\u56fe\u7247\u4e0a\u4f20\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5'));
   } finally {
+    stopUploadProgressPolling();
     uploadingImages.value = false;
   }
 }
@@ -937,7 +998,7 @@ async function loadWorkspaceState() {
   imageUploadMode.value = normalizeText(workspace.imageUploadMode) || 'original';
   lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
   carouselPresetText.value = Array.isArray(workspace.carouselPresetSelection) ? workspace.carouselPresetSelection.join('\n') : '';
-  descriptionPresetText.value = Array.isArray(workspace.descriptionPresetSelection) ? workspace.descriptionPresetSelection.join(',') : '';
+  descriptionPresetText.value = Array.isArray(workspace.descriptionPresetSelection) ? workspace.descriptionPresetSelection.join('\n') : '';
 }
 
 async function loadInitialData() {
@@ -1033,6 +1094,8 @@ function installVueBridge() {
   const existingBridge = window[VIEW_BRIDGE_KEY] && typeof window[VIEW_BRIDGE_KEY] === 'object' ? window[VIEW_BRIDGE_KEY] : {};
   const bridge = {
     ...existingBridge,
+    getImageUploadSnapshot,
+    startImageUpload: executeImageUpload,
     getBatchAiTitleSnapshot,
     startBatchAiTitleGeneration: executeBatchAiTitleGeneration
   };
@@ -1047,11 +1110,13 @@ function updateViewportHeight() {
 }
 
 onMounted(() => {
-  console.info('[pod-upload-sheet-miaoshou-universal] ui-version 20260710-layout-2');
+  console.info('[pod-upload-sheet-miaoshou-universal] ui-version 20260712-universal-align-1');
+  document.documentElement.classList.add('pod-miaoshou-vue-mounted');
   document.body.classList.add('pod-miaoshou-vue-mounted');
   updateViewportHeight();
   window.addEventListener('resize', updateViewportHeight);
   cleanupBatchAiTitleBridge = batchAiTitleDialog.installGlobalBridge();
+  cleanupImageUploadBridge = imageUploadDialog.installGlobalBridge();
   const cleanupVueBridge = installVueBridge();
   cleanupBatchAiTitleBridge = ((previousCleanup) => () => {
     cleanupVueBridge();
@@ -1073,8 +1138,12 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (saveTimer) window.clearTimeout(saveTimer);
+  stopUploadProgressPolling();
+  document.documentElement.classList.remove('pod-miaoshou-vue-mounted');
+  document.body.classList.remove('pod-miaoshou-vue-mounted');
   window.removeEventListener('resize', updateViewportHeight);
   if (typeof cleanupBatchAiTitleBridge === 'function') cleanupBatchAiTitleBridge();
+  if (typeof cleanupImageUploadBridge === 'function') cleanupImageUploadBridge();
   if (typeof removeAiTitleProgressListener === 'function') removeAiTitleProgressListener();
 });
 
@@ -1084,481 +1153,3 @@ defineExpose({
   }
 });
 </script>
-
-<style>
-.pod-miaoshou-app-shell {
-  height: 100vh;
-  overflow: auto;
-  padding: 14px;
-  background: #ffffff;
-  color: #172033;
-}
-
-body.dark-theme .pod-miaoshou-app-shell {
-  background: #0f172a;
-  color: #e5eefc;
-}
-
-.pod-miaoshou-app-header,
-.pod-panel {
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
-}
-
-body.dark-theme .pod-miaoshou-app-header,
-body.dark-theme .pod-panel {
-  border-color: rgba(71, 85, 105, 0.42);
-  background: rgba(15, 23, 42, 0.88);
-  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.28);
-}
-
-.pod-miaoshou-app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 54px;
-  max-width: 1440px;
-  padding: 8px 14px;
-  margin: 0 auto 10px;
-}
-
-.pod-miaoshou-app-header__copy,
-.pod-modal-title {
-  display: grid;
-  gap: 4px;
-}
-
-.pod-miaoshou-app-header__eyebrow,
-.pod-panel-tag,
-.pod-modal-title span {
-  margin: 0;
-  color: var(--theme-primary-ink, #8f5a0e);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-}
-
-.pod-miaoshou-app-header__title-row,
-.pod-miaoshou-app-header__meta,
-.pod-panel-head,
-.pod-list-head,
-.pod-actions,
-.pod-modal-footer,
-.pod-summary-pills,
-.pod-progress-line {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex-wrap: wrap;
-}
-
-.pod-list-head,
-.pod-panel-head {
-  justify-content: space-between;
-}
-
-.pod-list-head {
-  display: grid;
-  grid-template-columns: minmax(180px, auto) minmax(0, 1fr);
-  align-items: start;
-}
-
-.pod-miaoshou-app-header h1,
-.pod-panel-title,
-.pod-modal-title strong {
-  margin: 0;
-  color: #172033;
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-body.dark-theme .pod-miaoshou-app-header h1,
-body.dark-theme .pod-panel-title,
-body.dark-theme .pod-modal-title strong {
-  color: #f8fafc;
-}
-
-.pod-workbench,
-.pod-panel,
-.pod-modal-body {
-  display: grid;
-  gap: 10px;
-}
-
-.pod-workbench {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  grid-template-areas:
-    "templateManage"
-    "template"
-    "sku"
-    "list";
-  max-width: 1440px;
-  height: calc(100vh - 80px);
-  min-height: 0;
-  margin: 0 auto;
-}
-
-.pod-panel {
-  min-height: 0;
-  padding: 12px;
-  overflow: hidden;
-}
-
-.pod-template-manage-panel {
-  grid-area: templateManage;
-}
-
-.pod-template-panel {
-  grid-area: template;
-  align-content: start;
-  overflow: visible;
-}
-
-.pod-sku-panel {
-  grid-area: sku;
-  align-content: start;
-  overflow: visible;
-}
-
-.pod-list-panel {
-  grid-area: list;
-  grid-template-rows: auto auto minmax(0, 1fr);
-}
-
-.pod-template-grid,
-.pod-template-save-row,
-.pod-universal-main-row,
-.pod-universal-media-row,
-.pod-universal-description-row,
-.pod-sku-layout,
-.pod-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.pod-universal-template-panel .pod-template-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.pod-template-save-row {
-  grid-template-columns: minmax(330px, 0.9fr) minmax(300px, 0.8fr) auto;
-  align-items: center;
-}
-
-.pod-template-save-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  min-width: 210px;
-}
-
-.pod-universal-main-row {
-  grid-template-columns: 260px minmax(520px, 1fr);
-}
-
-.pod-universal-media-row {
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-}
-
-.pod-universal-description-row {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.pod-sku-layout {
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
-}
-
-.pod-field {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.pod-inline-field {
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-}
-
-.pod-inline-field .pod-field-label {
-  white-space: nowrap;
-}
-
-.pod-field-wide {
-  grid-column: span 2;
-}
-
-.pod-field-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #5f6f83;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.pod-help-icon {
-  color: var(--theme-primary-color, #f4bf22);
-  font-size: 13px;
-  line-height: 1;
-  cursor: help;
-}
-
-body.dark-theme .pod-field-label {
-  color: #a8b6ca;
-}
-
-.pod-list-head {
-  align-items: flex-start;
-  grid-template-columns: 180px minmax(0, 1fr);
-}
-
-.pod-actions {
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid #e5ebf3;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-
-.pod-upload-mode {
-  width: 106px;
-}
-
-.pod-actions .arco-btn,
-.pod-miaoshou-app-header__meta .arco-btn {
-  height: 32px;
-  padding: 0 11px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.pod-actions .arco-btn {
-  min-width: 104px;
-}
-
-.pod-miaoshou-app-header__meta .arco-btn {
-  height: 34px;
-}
-
-.pod-actions .arco-btn:hover,
-.pod-miaoshou-app-header__meta .arco-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
-}
-
-.pod-field :deep(.arco-input-wrapper),
-.pod-field :deep(.arco-select-view-single),
-.pod-field :deep(.arco-textarea-wrapper),
-.pod-upload-mode :deep(.arco-select-view-single) {
-  min-height: 32px;
-  border-color: #cbd5e1;
-  border-radius: 6px;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.pod-template-manage-panel .pod-field :deep(.arco-input-wrapper),
-.pod-template-manage-panel .pod-field :deep(.arco-select-view-single) {
-  min-height: 34px;
-  border-color: #b8c4d4;
-  background: #ffffff;
-}
-
-.pod-miaoshou-app-shell .arco-input-wrapper,
-.pod-miaoshou-app-shell .arco-select-view-single,
-.pod-miaoshou-app-shell .arco-select-view,
-.pod-miaoshou-app-shell .arco-textarea-wrapper {
-  border: 1px solid #b8c4d4 !important;
-  background: #ffffff !important;
-  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12) !important;
-}
-
-.pod-miaoshou-app-shell .arco-input-wrapper:hover,
-.pod-miaoshou-app-shell .arco-select-view:hover,
-.pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
-  border-color: #94a3b8 !important;
-}
-
-.pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
-.pod-miaoshou-app-shell .arco-select-view-focus,
-.pod-miaoshou-app-shell .arco-textarea-wrapper:focus-within {
-  border-color: var(--theme-primary-color, #f4bf22) !important;
-  box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18) !important;
-}
-
-.pod-miaoshou-app-shell .arco-btn-disabled,
-.pod-miaoshou-app-shell .arco-btn-disabled:hover {
-  background: #f3f6fa !important;
-  color: #94a3b8 !important;
-}
-
-.pod-field :deep(.arco-textarea-wrapper) {
-  min-height: 54px;
-}
-
-.pod-field :deep(.arco-input-wrapper:hover),
-.pod-field :deep(.arco-select-view-single:hover),
-.pod-field :deep(.arco-textarea-wrapper:hover) {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.5);
-}
-
-.pod-theme-button.arco-btn-primary,
-.pod-theme-button.arco-btn {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.45);
-  background: var(--theme-primary-color, #f4bf22);
-  color: var(--theme-primary-contrast, #2f2400);
-}
-
-.pod-blue-button.arco-btn {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
-  color: #ffffff;
-}
-
-.pod-red-button.arco-btn,
-.pod-danger-button.arco-btn {
-  border-color: #dc2626;
-  background: #dc2626;
-  color: #ffffff;
-}
-
-.pod-miaoshou-theme-tag.arco-tag,
-.pod-summary-pills span,
-.pod-progress-line span {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
-  color: var(--theme-primary-ink, #7a4a00);
-}
-
-.pod-product-table,
-.pod-sku-table {
-  min-height: 0;
-  border: 1px solid #e5ebf3;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.pod-product-table :deep(.arco-table-th),
-.pod-sku-table :deep(.arco-table-th) {
-  background: #f8fafc;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.pod-product-table :deep(.arco-table-td),
-.pod-sku-table :deep(.arco-table-td) {
-  padding: 7px 10px;
-  color: #243247;
-}
-
-.pod-product-table :deep(.arco-table-tr:hover .arco-table-td),
-.pod-sku-table :deep(.arco-table-tr:hover .arco-table-td) {
-  background: #fffaf0;
-}
-
-.pod-product-name {
-  display: grid;
-  gap: 3px;
-}
-
-.pod-product-name span,
-.pod-muted {
-  color: #7a8899;
-  font-size: 11px;
-}
-
-.pod-chip-list {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  max-height: 52px;
-  overflow: hidden;
-}
-
-.pod-chip-list .arco-tag {
-  max-width: 96px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pod-product-table :deep(.arco-table-tr.is-active) .arco-table-td {
-  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
-}
-
-.pod-modal-footer {
-  justify-content: flex-end;
-  margin-top: 18px;
-}
-
-.pod-quality-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 42px;
-  align-items: center;
-  gap: 12px;
-}
-
-.pod-miaoshou-batch-ai-title-modal .arco-modal,
-.pod-miaoshou-operation-modal .arco-modal {
-  width: min(760px, calc(100vw - 32px));
-  border-radius: 8px;
-}
-
-@media (max-width: 1100px) {
-  .pod-template-grid,
-  .pod-universal-main-row,
-  .pod-universal-media-row,
-  .pod-universal-description-row,
-  .pod-modal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pod-workbench {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    grid-template-areas:
-      "templateManage"
-      "template"
-      "sku"
-      "list";
-    overflow: auto;
-  }
-}
-
-@media (max-width: 720px) {
-  .pod-miaoshou-app-header,
-  .pod-list-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .pod-template-grid,
-  .pod-template-save-row,
-  .pod-universal-main-row,
-  .pod-universal-media-row,
-  .pod-universal-description-row,
-  .pod-sku-layout,
-  .pod-modal-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pod-field-wide {
-    grid-column: auto;
-  }
-
-  .pod-inline-field {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

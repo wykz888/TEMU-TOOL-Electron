@@ -1,18 +1,23 @@
 html.pod-miaoshou-vue-mounted,
 body.pod-miaoshou-vue-mounted {
   width: 100%;
+  height: auto;
   min-height: 100%;
+  min-height: 100vh;
   margin: 0;
   overflow: auto;
   background: #ffffff !important;
   background-color: #ffffff !important;
+  background-image: none !important;
 }
 
 body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-root {
   width: 100%;
+  height: auto;
   min-height: 100vh;
   background: #ffffff !important;
   background-color: #ffffff !important;
+  background-image: none !important;
 }
 
 .pod-miaoshou-app-shell {
@@ -39,6 +44,7 @@ body.pod-miaoshou-vue-mounted #pod-upload-sheet-miaoshou-root {
   padding: 16px;
   background: #ffffff !important;
   background-color: #ffffff !important;
+  background-image: none !important;
   color: var(--pod-text);
 }
 
@@ -196,6 +202,8 @@ body.dark-theme .pod-modal-title strong {
   min-height: 0;
   margin: 0;
   overflow: visible;
+  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .pod-panel {
@@ -246,6 +254,8 @@ body.dark-theme .pod-panel {
   align-content: start;
   min-height: calc(var(--pod-product-table-body-height, 360px) + 126px);
   overflow: hidden;
+  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .pod-template-grid,
@@ -390,14 +400,12 @@ body.dark-theme .pod-field-label {
 .pod-actions {
   justify-content: flex-start;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 8px;
-  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+  border: 1px solid var(--pod-border-soft);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.045), rgba(255, 255, 255, 0)),
-    var(--pod-surface);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 6px 16px rgba(29, 33, 41, 0.05);
+  background: #ffffff;
+  box-shadow: inset 0 -1px 0 rgba(226, 232, 240, 0.58);
   overflow-x: auto;
   overflow-y: hidden;
   flex-wrap: nowrap;
@@ -405,16 +413,19 @@ body.dark-theme .pod-field-label {
 
 .pod-actions .arco-btn,
 .pod-miaoshou-app-header__meta .arco-btn {
-  height: var(--pod-control-height);
-  padding: 0 14px;
+  height: 34px;
+  padding: 0 13px;
   border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 800;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .pod-actions .arco-btn {
-  min-width: 104px;
+  min-width: 0;
+  border-width: 1px;
+  white-space: nowrap;
 }
 
 .pod-miaoshou-app-header__meta .arco-btn {
@@ -424,7 +435,21 @@ body.dark-theme .pod-field-label {
 .pod-actions .arco-btn:hover,
 .pod-miaoshou-app-header__meta .arco-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 7px 14px rgba(15, 23, 42, 0.09);
+}
+
+.pod-actions .arco-btn-content,
+.pod-actions .arco-btn > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pod-action-icon {
+  flex: 0 0 auto;
+  font-size: 14px;
+  stroke-width: 4;
 }
 
 .pod-field .arco-input-wrapper,
@@ -509,9 +534,9 @@ body.dark-theme .pod-field-label {
 .pod-theme-button.arco-btn {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.45);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 82%, #ffffff), var(--theme-primary-color, #f4bf22));
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22));
   color: var(--theme-primary-contrast, #2f2400);
-  box-shadow: 0 7px 16px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
+  box-shadow: 0 5px 12px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18);
 }
 
 .pod-theme-button.arco-btn:hover,
@@ -526,45 +551,43 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-blue-button.arco-btn {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.26);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1)),
-    var(--pod-surface);
-  color: var(--theme-primary-ink, var(--pod-text-strong));
-  box-shadow: 0 4px 12px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+  border-color: #cddafe;
+  background: #ffffff;
+  color: #2450b8;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(37, 99, 235, 0.025);
 }
 
 .pod-blue-button.arco-btn:hover,
 .pod-blue-button.arco-btn:focus {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42) !important;
+  border-color: #93b4fd !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16)) !important;
-  color: var(--theme-primary-ink, var(--pod-text-strong)) !important;
+    linear-gradient(180deg, #ffffff, #f0f5ff) !important;
+  color: #1d4ed8 !important;
   filter: none;
 }
 
 .pod-red-button.arco-btn {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.48);
+  border-color: #e84a5a;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 82%, #ffffff), var(--theme-primary-color, #f4bf22));
-  color: var(--theme-primary-contrast, #2f2400);
-  box-shadow: 0 7px 16px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
+    linear-gradient(180deg, #f85b69, #dc2435);
+  color: #ffffff;
+  box-shadow: 0 5px 12px rgba(220, 36, 53, 0.18);
 }
 
 .pod-red-button.arco-btn:hover,
 .pod-red-button.arco-btn:focus {
-  border-color: var(--theme-primary-color, #f4bf22) !important;
+  border-color: #dc2626 !important;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22)) !important;
-  color: var(--theme-primary-contrast, #2f2400) !important;
-  filter: saturate(1.08) brightness(1.02);
+    linear-gradient(180deg, #ff6468, #c91526) !important;
+  color: #ffffff !important;
+  filter: saturate(1.02) brightness(1.01);
 }
 
 .pod-danger-button.arco-btn {
   border-color: #dc2626;
-  background: linear-gradient(180deg, #ef4444, #dc2626);
+  background: linear-gradient(180deg, #f05252, #dc2626);
   color: #ffffff;
-  box-shadow: 0 7px 16px rgba(220, 38, 38, 0.18);
+  box-shadow: 0 5px 12px rgba(220, 38, 38, 0.18);
 }
 
 .pod-danger-button.arco-btn:hover,
@@ -594,10 +617,66 @@ body.dark-theme .pod-field-label {
 
 body.pod-miaoshou-vue-mounted .arco-select-dropdown,
 body.pod-miaoshou-vue-mounted .arco-trigger-popup {
+  z-index: 3500;
   border: 1px solid rgba(203, 213, 225, 0.8);
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+}
+
+body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell,
+body.pod-miaoshou-vue-mounted .pod-carousel-candidate-list,
+body.pod-miaoshou-vue-mounted .pod-carousel-selected-list,
+body.pod-miaoshou-vue-mounted .pod-random-carousel-list,
+body.pod-miaoshou-vue-mounted .pod-product-table .arco-table-body,
+body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body,
+body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.72) transparent;
+}
+
+body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .pod-carousel-candidate-list::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .pod-carousel-selected-list::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .pod-random-carousel-list::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .pod-product-table .arco-table-body::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body::-webkit-scrollbar,
+body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .pod-carousel-candidate-list::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .pod-carousel-selected-list::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .pod-random-carousel-list::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .pod-product-table .arco-table-body::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body::-webkit-scrollbar-track,
+body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .pod-carousel-candidate-list::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .pod-carousel-selected-list::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .pod-random-carousel-list::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .pod-product-table .arco-table-body::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body::-webkit-scrollbar-thumb,
+body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: rgba(148, 163, 184, 0.65);
+}
+
+body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .pod-carousel-candidate-list::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .pod-carousel-selected-list::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .pod-random-carousel-list::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .pod-product-table .arco-table-body::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body::-webkit-scrollbar-thumb:hover,
+body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.82);
 }
 
 body.pod-miaoshou-vue-mounted .arco-select-option {
@@ -661,13 +740,73 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
   background-color: #ffffff;
 }
 
+.pod-product-table .arco-table,
+.pod-product-table .arco-table-wrapper,
+.pod-product-table .arco-spin,
+.pod-product-table .arco-spin-children,
 .pod-product-table .arco-table-container,
 .pod-product-table .arco-table-content,
 .pod-product-table .arco-table-body,
 .pod-product-table .arco-table-element,
+.pod-product-table .arco-table-tr,
 .pod-product-table .arco-table-td {
   background: #ffffff;
   background-color: #ffffff;
+}
+
+.pod-product-table .arco-table-content-scroll-x,
+.pod-product-table .arco-table-scroll-position-left,
+.pod-product-table .arco-table-scroll-position-right,
+.pod-product-table .arco-scrollbar,
+.pod-product-table .arco-scrollbar-container {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-scrollbar-track,
+.pod-product-table .arco-scrollbar-track-direction-horizontal,
+.pod-product-table .arco-scrollbar-track-direction-vertical {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-scrollbar.arco-scrollbar-type-track .arco-scrollbar-track,
+.pod-product-table .arco-scrollbar.arco-scrollbar-type-track .arco-scrollbar-track-direction-horizontal,
+.pod-product-table .arco-scrollbar.arco-scrollbar-type-track .arco-scrollbar-track-direction-vertical {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-scrollbar.arco-scrollbar-type-track.arco-scrollbar-both .arco-scrollbar-track-direction-vertical::after {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-table-content-scroll-x,
+.pod-product-table .arco-table-body,
+.pod-product-table .arco-table-header {
+  scrollbar-color: rgba(148, 163, 184, 0.58) #ffffff;
+}
+
+.pod-product-table .arco-table-content-scroll-x::-webkit-scrollbar,
+.pod-product-table .arco-table-body::-webkit-scrollbar,
+.pod-product-table .arco-table-header::-webkit-scrollbar {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-table-content-scroll-x::-webkit-scrollbar-track,
+.pod-product-table .arco-table-body::-webkit-scrollbar-track,
+.pod-product-table .arco-table-header::-webkit-scrollbar-track,
+.pod-product-table .arco-table-content-scroll-x::-webkit-scrollbar-corner,
+.pod-product-table .arco-table-body::-webkit-scrollbar-corner,
+.pod-product-table .arco-table-header::-webkit-scrollbar-corner {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .pod-product-table .arco-table-body {

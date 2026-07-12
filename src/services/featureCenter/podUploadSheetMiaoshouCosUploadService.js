@@ -1,6 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const COS = require('cos-nodejs-sdk-v5');
 const { cosClient } = require('../cos/client');
+const { cosConfig } = require('../cos/config');
 const {
   buildOwnerDescriptor,
   createHash,
@@ -13,16 +15,20 @@ const SERVICE_VERSION = 2;
 const DEFAULT_ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
 const CACHE_FILE_NAME = 'cos-image-upload-cache.json';
 const TARGET_BUCKET = 'chunagtao-1251234463';
-const TARGET_BUCKET_ROOT = '妙手存图';
+const DEFAULT_OBJECT_ROOT_PREFIX = 'TEMU_Resources_Data';
 const DEFAULT_BUCKET_REGION = 'ap-guangzhou';
 const MATERIAL_SECTION_IDS = Object.freeze(['carousel', 'assets', 'preview']);
 const FIELD_FILE_SECTION_ID = 'field-file';
-const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze(['original', 'jpg', 'webp']);
+const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze(['original', 'png', 'jpg', 'webp']);
 const CONVERTIBLE_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff']);
 const MIN_IMAGE_SIDE_PX = 800;
 const MAX_IMAGE_SIDE_PX = 2400;
 const JPG_QUALITY = 90;
 const WEBP_QUALITY = 88;
+const DEFAULT_IMAGE_QUALITY = 90;
+const MIN_IMAGE_QUALITY = 1;
+const MAX_IMAGE_QUALITY = 100;
+const PNG_MAX_COMPRESSION_LEVEL = 9;
 const JPG_FLATTEN_BACKGROUND = Object.freeze({
   r: 255,
   g: 255,
@@ -42,6 +48,7 @@ const UPLOAD_TIMEOUT_BYTES_PER_SECOND = 128 * 1024;
 function createPodUploadSheetMiaoshouCosUploadService({
   sessionStore,
   featureCenterProfileService,
+  globalConfigService = null,
   runtimeLogger,
   entryId = DEFAULT_ENTRY_ID,
   missingEntryMessage = '\u5999\u624b\u8868\u683c\u56fe\u7247\u4e0a\u4f20\u6a21\u5757\u672a\u6ce8\u518c\uff0c\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u7f13\u5b58\u3002',
@@ -128,6 +135,140 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return featureEntry;
   }
 
+  async function loadStorageSelection() {
+    if (!globalConfigService || typeof globalConfigService.getStorageSelection !== 'function') {
+      return null;
+    }
+
+    try {
+      return await globalConfigService.getStorageSelection();
+    } catch (error) {
+      logError('pod_upload_sheet_storage_selection_load_failed', error, {
+        entryId: normalizedEntryId
+      });
+      return null;
+    }
+  }
+
+  function getStorageProviders(storageSelection) {
+    return storageSelection
+      && storageSelection.providers
+      && typeof storageSelection.providers === 'object'
+      && !Array.isArray(storageSelection.providers)
+        ? storageSelection.providers
+        : {};
+  }
+
+  function isTencentCosConfigUsable(config) {
+    return Boolean(
+      config
+      && config.enabled !== false
+      && normalizeText(config.secretId)
+      && normalizeText(config.secretKey)
+      && normalizeText(config.bucket)
+      && normalizeText(config.region)
+    );
+  }
+
+  function isCloudflareR2ConfigUsable(config) {
+    return Boolean(
+      config
+      && config.enabled !== false
+      && normalizeText(config.accountId)
+      && normalizeText(config.accessKeyId)
+      && normalizeText(config.secretAccessKey)
+      && normalizeText(config.bucket)
+      && normalizeText(config.publicBaseUrl)
+    );
+  }
+
+  function createTencentCosClient(config) {
+    return new COS({
+      SecretId: normalizeText(config.secretId),
+      SecretKey: normalizeText(config.secretKey),
+      Protocol: normalizeText(config.protocol) || 'https:',
+      Timeout: 30000,
+      KeepAlive: true
+    });
+  }
+
+  function createTencentCosStorageContext(config) {
+    return {
+      storageProvider: 'tencent-cos',
+      bucket: normalizeText(config.bucket),
+      region: normalizeText(config.region),
+      rootPrefix: normalizeObjectPrefix(config.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+      publicBaseUrl: normalizeText(config.publicBaseUrl),
+      client: createTencentCosClient(config),
+      usesFallbackClient: false
+    };
+  }
+
+  function createFallbackTencentCosStorageContext() {
+    return {
+      storageProvider: 'tencent-cos',
+      bucket: TARGET_BUCKET,
+      region: DEFAULT_BUCKET_REGION,
+      rootPrefix: normalizeObjectPrefix(DEFAULT_OBJECT_ROOT_PREFIX, DEFAULT_OBJECT_ROOT_PREFIX),
+      publicBaseUrl: '',
+      client: cosClient,
+      usesFallbackClient: true
+    };
+  }
+
+  function createCloudflareR2StorageContext(config) {
+    const accountId = normalizeText(config.accountId);
+
+    return {
+      storageProvider: 'cloudflare-r2',
+      bucket: normalizeText(config.bucket),
+      region: 'auto',
+      rootPrefix: normalizeObjectPrefix(config.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+      publicBaseUrl: normalizeText(config.publicBaseUrl).replace(/[\\/]+$/, ''),
+      endpoint: normalizeText(config.endpoint) || `https://${accountId}.r2.cloudflarestorage.com`,
+      accountId,
+      accessKeyId: normalizeText(config.accessKeyId),
+      secretAccessKey: normalizeText(config.secretAccessKey),
+      client: null,
+      usesFallbackClient: false
+    };
+  }
+
+  async function resolveStorageContext(payload) {
+    const uploadSettings = normalizeUploadSettings(payload);
+    const storageSelection = await loadStorageSelection();
+    const providers = getStorageProviders(storageSelection);
+    const requestedProvider = normalizeStorageProvider(
+      (payload && payload.storageProvider) || (storageSelection && storageSelection.activeProvider)
+    );
+
+    if (requestedProvider === 'cloudflare-r2') {
+      const r2Config = providers.cloudflareR2 && typeof providers.cloudflareR2 === 'object'
+        ? providers.cloudflareR2
+        : {};
+
+      if (!isCloudflareR2ConfigUsable(r2Config)) {
+        throw new Error('\u0043\u006c\u006f\u0075\u0064\u0066\u006c\u0061\u0072\u0065\u0020\u0052\u0032 \u5b58\u50a8\u6e20\u9053\u672a\u914d\u7f6e\u5b8c\u6574\uff0c\u8bf7\u5148\u5728\u5168\u5c40\u914d\u7f6e\u4e2d\u586b\u5199\u6876\u3001\u5bc6\u94a5\u548c\u516c\u5171\u8bbf\u95ee\u57df\u540d\u3002');
+      }
+
+      return {
+        ...createCloudflareR2StorageContext(r2Config),
+        uploadSettings
+      };
+    }
+
+    const cosProviderConfig = providers.tencentCos && typeof providers.tencentCos === 'object'
+      ? providers.tencentCos
+      : {};
+
+    return {
+      ...(isTencentCosConfigUsable(cosProviderConfig)
+        ? createTencentCosStorageContext(cosProviderConfig)
+        : createFallbackTencentCosStorageContext()),
+      uploadSettings
+    };
+  }
+
   function getCacheFilePath(owner) {
     const featureEntry = getFeatureEntry();
 
@@ -136,17 +277,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
       'users',
       owner.userKey,
       'cache',
-      CACHE_FILE_NAME
-    );
-  }
-
-  function getLegacyCacheFilePath(owner) {
-    const featureEntry = getFeatureEntry();
-
-    return path.join(
-      featureEntry.storageProfile.localCacheDir,
-      'users',
-      owner.userKey,
       CACHE_FILE_NAME
     );
   }
@@ -219,6 +349,108 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return IMAGE_UPLOAD_MODE_OPTIONS.includes(normalizedValue) ? normalizedValue : 'original';
   }
 
+  function normalizeStorageProvider(value) {
+    return normalizeText(value) === 'cloudflare-r2' ? 'cloudflare-r2' : 'tencent-cos';
+  }
+
+  function normalizeInteger(value, fallback, minValue, maxValue) {
+    const parsed = Number.parseInt(value, 10);
+    const initialValue = Number.isFinite(parsed) ? parsed : fallback;
+
+    return Math.max(minValue, Math.min(maxValue, initialValue));
+  }
+
+  function normalizeUploadConcurrency(value) {
+    return normalizeInteger(value, DEFAULT_SETTINGS.concurrency, 1, 32);
+  }
+
+  function normalizeUploadRetryLimit(value) {
+    return normalizeInteger(value, DEFAULT_SETTINGS.retryLimit, 0, 3);
+  }
+
+  function getDefaultImageQuality(imageUploadMode) {
+    const normalizedMode = normalizeImageUploadMode(imageUploadMode);
+
+    if (normalizedMode === 'webp') return WEBP_QUALITY;
+    if (normalizedMode === 'jpg') return JPG_QUALITY;
+    return DEFAULT_IMAGE_QUALITY;
+  }
+
+  function normalizeImageQuality(value, imageUploadMode) {
+    return normalizeInteger(
+      value,
+      getDefaultImageQuality(imageUploadMode),
+      MIN_IMAGE_QUALITY,
+      MAX_IMAGE_QUALITY
+    );
+  }
+
+  function shouldCompareImageQuality(imageUploadMode) {
+    const normalizedMode = normalizeImageUploadMode(imageUploadMode);
+    return normalizedMode === 'jpg' || normalizedMode === 'webp';
+  }
+
+  function getImageQualityCacheToken(imageUploadMode, imageQuality) {
+    const normalizedMode = normalizeImageUploadMode(imageUploadMode);
+
+    return shouldCompareImageQuality(normalizedMode)
+      ? String(normalizeImageQuality(imageQuality, normalizedMode))
+      : 'lossless';
+  }
+
+  function normalizeUploadSettings(payload) {
+    const imageUploadMode = normalizeImageUploadMode(payload && payload.imageUploadMode);
+
+    return {
+      storageProvider: normalizeStorageProvider(payload && payload.storageProvider),
+      imageUploadMode,
+      imageQuality: normalizeImageQuality(payload && payload.imageQuality, imageUploadMode),
+      concurrency: normalizeUploadConcurrency(payload && payload.concurrency),
+      retryLimit: normalizeUploadRetryLimit(payload && payload.retryLimit),
+      sliceSize: DEFAULT_SETTINGS.sliceSize
+    };
+  }
+
+  function normalizeObjectPrefix(value, fallback) {
+    const text = normalizeText(value) || normalizeText(fallback);
+
+    return text.replace(/^[\\/]+/, '').replace(/[\\/]+$/, '').replace(/\\/g, '/');
+  }
+
+  function joinObjectKeySegments(...segments) {
+    return segments
+      .map((segment) => normalizeObjectPrefix(segment, ''))
+      .filter(Boolean)
+      .join('/');
+  }
+
+  function getOwnerObjectPathSegment(owner) {
+    return createSlug(owner && owner.userKey, 'anonymous').slice(0, 96) || 'anonymous';
+  }
+
+  function buildOwnerObjectKeyPrefix(storageContext, owner) {
+    return joinObjectKeySegments(
+      normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+      normalizedEntryId,
+      'users',
+      getOwnerObjectPathSegment(owner)
+    );
+  }
+
+  function isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner) {
+    const key = normalizeObjectPrefix(cacheEntry && cacheEntry.key, '');
+    const prefix = buildOwnerObjectKeyPrefix(storageContext, owner);
+
+    return Boolean(key && prefix && (key === prefix || key.startsWith(`${prefix}/`)));
+  }
+
+  function encodeObjectKey(objectKey) {
+    return String(objectKey || '')
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+  }
+
   function isConvertibleImagePath(filePath) {
     const extension = path.extname(normalizeText(filePath)).toLowerCase();
     return CONVERTIBLE_IMAGE_EXTENSIONS.has(extension);
@@ -280,18 +512,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
     );
   }
 
-  function getLegacyPreparedCacheRoot(owner) {
-    const featureEntry = getFeatureEntry();
-    const ownerKey = owner && owner.userKey ? owner.userKey : 'anonymous';
-
-    return path.join(
-      featureEntry.storageProfile.localCacheDir,
-      'users',
-      ownerKey,
-      PREPARED_UPLOAD_CACHE_DIR_NAME
-    );
-  }
-
   async function ensureDirectory(directoryPath) {
     await fs.promises.mkdir(directoryPath, { recursive: true });
   }
@@ -330,42 +550,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
     }
   }
 
-  async function pathExists(filePath) {
-    try {
-      await fs.promises.access(filePath, fs.constants.F_OK);
-      return true;
-    } catch (_error) {
-      return false;
-    }
-  }
-
-  async function ensureLocalCachePathsMigrated(owner) {
-    const nextCacheFilePath = getCacheFilePath(owner);
-    const legacyCacheFilePath = getLegacyCacheFilePath(owner);
-
-    if (!(await pathExists(nextCacheFilePath)) && (await pathExists(legacyCacheFilePath))) {
-      const legacyPayload = await readJsonFile(legacyCacheFilePath);
-
-      if (legacyPayload) {
-        await writeJsonFile(nextCacheFilePath, legacyPayload);
-      }
-    }
-
-    const nextPreparedCacheRoot = getPreparedCacheRoot(owner);
-    const legacyPreparedCacheRoot = getLegacyPreparedCacheRoot(owner);
-
-    if (
-      legacyPreparedCacheRoot !== nextPreparedCacheRoot
-      && !(await pathExists(nextPreparedCacheRoot))
-      && (await pathExists(legacyPreparedCacheRoot))
-    ) {
-      await fs.promises.mkdir(path.dirname(nextPreparedCacheRoot), { recursive: true });
-      await fs.promises.rename(legacyPreparedCacheRoot, nextPreparedCacheRoot).catch(() => {});
-    }
-
-    return nextCacheFilePath;
-  }
-
   function normalizeCacheSnapshot(record, owner) {
     const source = record && typeof record === 'object' && !Array.isArray(record) ? record : {};
     const itemSource = source.items && typeof source.items === 'object' && !Array.isArray(source.items)
@@ -389,7 +573,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
         size: Number.isFinite(Number(entry.size)) ? Number(entry.size) : 0,
         mtimeMs: Number.isFinite(Number(entry.mtimeMs)) ? Number(entry.mtimeMs) : 0,
         uploadedAt: normalizeText(entry.uploadedAt),
-        imageUploadMode: getCacheEntryImageUploadMode(entry)
+        storageProvider: normalizeStorageProvider(entry.storageProvider || source.storageProvider),
+        bucket: normalizeText(entry.bucket) || normalizeText(source.bucket) || TARGET_BUCKET,
+        region: normalizeText(entry.region) || normalizeText(source.region) || DEFAULT_BUCKET_REGION,
+        rootPrefix: normalizeObjectPrefix(entry.rootPrefix || source.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+        imageUploadMode: getCacheEntryImageUploadMode(entry),
+        imageQuality: normalizeImageQuality(entry.imageQuality, getCacheEntryImageUploadMode(entry))
       };
       return result;
     }, {});
@@ -402,8 +591,10 @@ function createPodUploadSheetMiaoshouCosUploadService({
         userKey: owner.userKey
       } : null,
       updatedAt: normalizeText(source.updatedAt),
-      bucket: TARGET_BUCKET,
+      bucket: normalizeText(source.bucket) || TARGET_BUCKET,
       region: normalizeText(source.region) || DEFAULT_BUCKET_REGION,
+      storageProvider: normalizeStorageProvider(source.storageProvider || 'tencent-cos'),
+      rootPrefix: normalizeObjectPrefix(source.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
       items
     };
   }
@@ -417,7 +608,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       return cachedCacheSnapshot;
     }
 
-    const cacheFilePath = await ensureLocalCachePathsMigrated(owner);
+    const cacheFilePath = getCacheFilePath(owner);
     const cacheSnapshot = normalizeCacheSnapshot(
       await readJsonFile(cacheFilePath),
       owner
@@ -436,11 +627,13 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const nextSnapshot = {
       ...snapshot,
       version: SERVICE_VERSION,
-      bucket: TARGET_BUCKET,
+      bucket: normalizeText(snapshot.bucket) || TARGET_BUCKET,
+      storageProvider: normalizeStorageProvider(snapshot.storageProvider || 'tencent-cos'),
+      rootPrefix: normalizeObjectPrefix(snapshot.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
       updatedAt: nowIso()
     };
 
-    const cacheFilePath = await ensureLocalCachePathsMigrated(owner);
+    const cacheFilePath = getCacheFilePath(owner);
 
     await writeJsonFile(cacheFilePath, nextSnapshot);
     cachedOwnerKey = owner.userKey;
@@ -511,9 +704,13 @@ function createPodUploadSheetMiaoshouCosUploadService({
       failedCount: Math.max(0, Number(overrides.failedCount) || 0),
       canceledCount: Math.max(0, Number(overrides.canceledCount) || 0),
       label: normalizeText(overrides.label),
+      storageProvider: normalizeStorageProvider(overrides.storageProvider),
       bucket: normalizeText(overrides.bucket),
       region: normalizeText(overrides.region),
-      imageUploadMode: normalizeImageUploadMode(overrides.imageUploadMode)
+      rootPrefix: normalizeObjectPrefix(overrides.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+      imageUploadMode: normalizeImageUploadMode(overrides.imageUploadMode),
+      imageQuality: normalizeImageQuality(overrides.imageQuality, overrides.imageUploadMode),
+      concurrency: normalizeUploadConcurrency(overrides.concurrency)
     };
   }
 
@@ -559,6 +756,8 @@ function createPodUploadSheetMiaoshouCosUploadService({
       key: jobKey,
       canceled: false,
       activeTaskIds: new Set(),
+      activeTaskClients: new Map(),
+      activeAbortControllers: new Set(),
       cancelHandlers: new Set(),
       progress: createUploadProgressSnapshot({
         runState: 'pending',
@@ -609,6 +808,18 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
     if (job.cancelHandlers && typeof job.cancelHandlers.clear === 'function') {
       job.cancelHandlers.clear();
+    }
+
+    if (job.activeTaskIds && typeof job.activeTaskIds.clear === 'function') {
+      job.activeTaskIds.clear();
+    }
+
+    if (job.activeTaskClients && typeof job.activeTaskClients.clear === 'function') {
+      job.activeTaskClients.clear();
+    }
+
+    if (job.activeAbortControllers && typeof job.activeAbortControllers.clear === 'function') {
+      job.activeAbortControllers.clear();
     }
 
     log('pod_upload_sheet_cos_image_upload_job_cleared', {
@@ -716,16 +927,17 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return 'application/octet-stream';
   }
 
-  function buildPreparedUploadCacheKey(localPath, fileStat, imageUploadMode) {
+  function buildPreparedUploadCacheKey(localPath, fileStat, imageUploadMode, imageQuality) {
     return [
       normalizeLocalFilePath(localPath),
       Number(fileStat && fileStat.size) || 0,
       Math.trunc(Number(fileStat && fileStat.mtimeMs) || 0),
-      normalizeImageUploadMode(imageUploadMode)
+      normalizeImageUploadMode(imageUploadMode),
+      getImageQualityCacheToken(imageUploadMode, imageQuality)
     ].join('|');
   }
 
-  async function prepareImageUploadFile(owner, filePath, fileStat, imageUploadMode) {
+  async function prepareImageUploadFile(owner, filePath, fileStat, imageUploadMode, imageQuality) {
     const effectiveImageUploadMode = resolveEffectiveImageUploadMode(filePath, imageUploadMode);
     const sharpFactory = effectiveImageUploadMode === 'original'
       ? tryGetSharpModule()
@@ -757,7 +969,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       };
     }
 
-    const cacheKey = buildPreparedUploadCacheKey(filePath, fileStat, effectiveImageUploadMode);
+    const cacheKey = buildPreparedUploadCacheKey(filePath, fileStat, effectiveImageUploadMode, imageQuality);
     const cachedPrepared = preparedFileCache.get(cacheKey);
 
     if (cachedPrepared) {
@@ -775,7 +987,11 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
     const longestSide = Math.max(width, height);
     const targetLongestSide = longestSide > MAX_IMAGE_SIDE_PX ? MAX_IMAGE_SIDE_PX : longestSide;
-    const outputExtension = effectiveImageUploadMode === 'webp' ? '.webp' : '.jpg';
+    const outputExtension = effectiveImageUploadMode === 'webp'
+      ? '.webp'
+      : effectiveImageUploadMode === 'png'
+        ? '.png'
+        : '.jpg';
     const createPreparedPipeline = () => {
       let pipeline = sharpFactory(filePath, { failOnError: false, animated: false }).rotate();
 
@@ -792,7 +1008,15 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
       if (effectiveImageUploadMode === 'webp') {
         return pipeline.webp({
-          quality: WEBP_QUALITY
+          quality: normalizeImageQuality(imageQuality, effectiveImageUploadMode)
+        });
+      }
+
+      if (effectiveImageUploadMode === 'png') {
+        return pipeline.png({
+          compressionLevel: PNG_MAX_COMPRESSION_LEVEL,
+          adaptiveFiltering: true,
+          force: true
         });
       }
 
@@ -800,7 +1024,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
         background: JPG_FLATTEN_BACKGROUND
       });
       return pipeline.jpeg({
-        quality: JPG_QUALITY,
+        quality: normalizeImageQuality(imageQuality, effectiveImageUploadMode),
         mozjpeg: true
       });
     };
@@ -1252,6 +1476,85 @@ function createPodUploadSheetMiaoshouCosUploadService({
     }));
   }
 
+  function normalizeStringList(value) {
+    if (value instanceof Set) {
+      return Array.from(value).map((item) => normalizeText(item)).filter(Boolean);
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => normalizeText(item)).filter(Boolean);
+    }
+
+    const text = normalizeText(value);
+    return text ? [text] : [];
+  }
+
+  function normalizeIncomingUploadCandidates(candidates) {
+    const candidateMap = new Map();
+
+    (Array.isArray(candidates) ? candidates : []).forEach((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return;
+      }
+
+      const localPath = normalizeText(item.localPath || item.filePath || item.path || item.normalizedPath);
+      const normalizedPath = normalizeLocalFilePath(localPath || item.normalizedPath);
+
+      if (!normalizedPath) {
+        return;
+      }
+
+      if (!candidateMap.has(normalizedPath)) {
+        candidateMap.set(normalizedPath, {
+          id: normalizeText(item.id) || createHash(normalizedPath, 20),
+          localPath: localPath || normalizedPath,
+          normalizedPath,
+          fileName: normalizeText(item.fileName || item.name) || path.basename(localPath || normalizedPath),
+          localName: normalizeText(item.localName),
+          sourceFolder: normalizeText(item.sourceFolder),
+          mainNumber: normalizeText(item.mainNumber),
+          productIds: new Set(),
+          sectionIds: new Set()
+        });
+      }
+
+      const candidate = candidateMap.get(normalizedPath);
+      normalizeStringList(item.productIds || item.productId).forEach((productId) => {
+        candidate.productIds.add(productId);
+      });
+      normalizeStringList(item.sectionIds || item.sectionId).forEach((sectionId) => {
+        candidate.sectionIds.add(sectionId);
+      });
+    });
+
+    return Array.from(candidateMap.values()).map((candidate) => ({
+      ...candidate,
+      productIds: Array.from(candidate.productIds),
+      sectionIds: Array.from(candidate.sectionIds)
+    }));
+  }
+
+  function filterRetryUploadCandidates(candidates, payload) {
+    if (!payload || payload.retryFailedOnly !== true) {
+      return Array.isArray(candidates) ? candidates : [];
+    }
+
+    const retryPathSet = new Set(
+      (Array.isArray(payload.retryFilePaths) ? payload.retryFilePaths : [])
+        .map((filePath) => normalizeLocalFilePath(filePath))
+        .filter(Boolean)
+    );
+
+    if (!retryPathSet.size) {
+      return [];
+    }
+
+    return (Array.isArray(candidates) ? candidates : []).filter((candidate) => {
+      return retryPathSet.has(normalizeLocalFilePath(candidate && candidate.localPath))
+        || retryPathSet.has(normalizeText(candidate && candidate.normalizedPath));
+    });
+  }
+
   function getCacheUrlForLocalPath(cacheSnapshot, filePath) {
     const normalizedPath = normalizeLocalFilePath(filePath);
     const cacheEntry = normalizedPath ? cacheSnapshot.items[normalizedPath] : null;
@@ -1259,29 +1562,43 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return normalizeText(cacheEntry && cacheEntry.url);
   }
 
-  function isReusableCacheEntry(cacheEntry, fileStat, imageUploadMode) {
+  function isReusableCacheEntry(cacheEntry, fileStat, storageContext, owner, imageUploadMode, imageQuality) {
     const expectedMode = normalizeImageUploadMode(imageUploadMode);
+    const expectedQuality = getImageQualityCacheToken(imageUploadMode, imageQuality);
 
     return Boolean(
       cacheEntry
       && normalizeText(cacheEntry.url)
       && normalizeText(cacheEntry.key)
+      && normalizeStorageProvider(cacheEntry.storageProvider || 'tencent-cos') === normalizeStorageProvider(storageContext && storageContext.storageProvider)
+      && normalizeText(cacheEntry.bucket) === normalizeText(storageContext && storageContext.bucket)
+      && normalizeText(cacheEntry.rootPrefix) === normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX)
+      && isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner)
       && getCacheEntryImageUploadMode(cacheEntry) === expectedMode
+      && getImageQualityCacheToken(getCacheEntryImageUploadMode(cacheEntry), cacheEntry.imageQuality) === expectedQuality
       && Number(cacheEntry.size) === Number(fileStat && fileStat.size)
       && Math.trunc(Number(cacheEntry.mtimeMs)) === Math.trunc(Number(fileStat && fileStat.mtimeMs))
     );
   }
 
-  function isReusableCacheEntryWithoutFile(cacheEntry, imageUploadMode) {
+  function isReusableCacheEntryWithoutFile(cacheEntry, storageContext, owner, imageUploadMode, imageQuality) {
+    const expectedMode = normalizeImageUploadMode(imageUploadMode);
+    const expectedQuality = getImageQualityCacheToken(imageUploadMode, imageQuality);
+
     return Boolean(
       cacheEntry
       && normalizeText(cacheEntry.url)
       && normalizeText(cacheEntry.key)
-      && getCacheEntryImageUploadMode(cacheEntry) === normalizeImageUploadMode(imageUploadMode)
+      && normalizeStorageProvider(cacheEntry.storageProvider || 'tencent-cos') === normalizeStorageProvider(storageContext && storageContext.storageProvider)
+      && normalizeText(cacheEntry.bucket) === normalizeText(storageContext && storageContext.bucket)
+      && normalizeText(cacheEntry.rootPrefix) === normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX)
+      && isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner)
+      && getCacheEntryImageUploadMode(cacheEntry) === expectedMode
+      && getImageQualityCacheToken(getCacheEntryImageUploadMode(cacheEntry), cacheEntry.imageQuality) === expectedQuality
     );
   }
 
-  function buildObjectKey(candidate, fileStat) {
+  function buildObjectKey(candidate, fileStat, storageContext, owner, imageUploadMode, imageQuality) {
     const extensionFromPath = path.extname(candidate.localPath).toLowerCase();
     const extensionFromName = path.extname(candidate.fileName).toLowerCase();
     const rawExtension = extensionFromPath || extensionFromName;
@@ -1302,11 +1619,26 @@ function createPodUploadSheetMiaoshouCosUploadService({
       : 'image';
     const fileSlug = createSlug(baseName, fallbackSlug).slice(0, 72);
     const uniqueHash = createHash(
-      `${candidate.normalizedPath}|${Number(fileStat && fileStat.size)}|${Number(fileStat && fileStat.mtimeMs)}`,
+      [
+        candidate.normalizedPath,
+        Number(fileStat && fileStat.size),
+        Number(fileStat && fileStat.mtimeMs),
+        normalizeStorageProvider(storageContext && storageContext.storageProvider),
+        normalizeText(storageContext && storageContext.bucket),
+        normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+        getOwnerObjectPathSegment(owner),
+        normalizeImageUploadMode(imageUploadMode),
+        getImageQualityCacheToken(imageUploadMode, imageQuality)
+      ].join('|'),
       16
     );
 
-    return `${TARGET_BUCKET_ROOT}/${dateFolder}/${productFolder}/${fileSlug}-${uniqueHash}${extension}`;
+    return joinObjectKeySegments(
+      buildOwnerObjectKeyPrefix(storageContext, owner),
+      dateFolder,
+      productFolder,
+      `${fileSlug}-${uniqueHash}${extension}`
+    );
   }
 
   function buildSuccessResult(candidate, cacheEntry, source, attemptCount = 1) {
@@ -1415,22 +1747,30 @@ function createPodUploadSheetMiaoshouCosUploadService({
     });
   }
 
-  function cancelCosTask(taskId) {
+  function cancelCosTask(client, taskId) {
     const normalizedTaskId = normalizeText(taskId);
+    const uploadClient = client && typeof client.cancelTask === 'function'
+      ? client
+      : cosClient;
 
     if (!normalizedTaskId) {
       return;
     }
 
     try {
-      cosClient.cancelTask(normalizedTaskId);
+      uploadClient.cancelTask(normalizedTaskId);
     } catch (_error) {}
   }
 
   function uploadCosFileWithTimeout(params, context = {}) {
+    const rawParams = params && typeof params === 'object' ? params : {};
+    const { client: _client, ...uploadParams } = rawParams;
     const job = context.job || null;
     const candidate = context.candidate || null;
     const timeoutMs = getUploadItemTimeoutMs(context.fileSize);
+    const uploadClient = rawParams.client && typeof rawParams.client.uploadFile === 'function'
+      ? rawParams.client
+      : cosClient;
     let taskId = '';
     let completed = false;
     let timeoutTimer = null;
@@ -1450,29 +1790,35 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
       if (job && taskId) {
         job.activeTaskIds.delete(taskId);
+        if (job.activeTaskClients && typeof job.activeTaskClients.delete === 'function') {
+          job.activeTaskClients.delete(taskId);
+        }
       }
     }
 
     const wrappedParams = {
-      ...params,
+      ...uploadParams,
       onTaskReady(nextTaskId) {
         taskId = normalizeText(nextTaskId);
 
         if (completed) {
-          cancelCosTask(taskId);
+          cancelCosTask(uploadClient, taskId);
           return;
         }
 
         if (job && taskId) {
           job.activeTaskIds.add(taskId);
+          if (job.activeTaskClients && typeof job.activeTaskClients.set === 'function') {
+            job.activeTaskClients.set(taskId, uploadClient);
+          }
 
           if (job.canceled) {
-            cancelCosTask(taskId);
+            cancelCosTask(uploadClient, taskId);
           }
         }
 
-        if (typeof params.onTaskReady === 'function') {
-          params.onTaskReady(nextTaskId);
+        if (typeof uploadParams.onTaskReady === 'function') {
+          uploadParams.onTaskReady(nextTaskId);
         }
       }
     };
@@ -1484,7 +1830,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
         }
 
         if (taskId) {
-          cancelCosTask(taskId);
+          cancelCosTask(uploadClient, taskId);
         }
 
         cleanup();
@@ -1506,7 +1852,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       }, timeoutMs);
 
       try {
-        uploadPromise = cosClient.uploadFile(wrappedParams);
+        uploadPromise = uploadClient.uploadFile(wrappedParams);
       } catch (error) {
         rejectIfPending(error);
         return;
@@ -1528,8 +1874,205 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
           cleanup();
           reject(error);
-        });
+      });
     });
+  }
+
+  function sha256Hex(value) {
+    return require('node:crypto').createHash('sha256').update(value).digest('hex');
+  }
+
+  function hmacSha256(key, value) {
+    return require('node:crypto').createHmac('sha256', key).update(value).digest();
+  }
+
+  function buildR2ObjectUrl(storageContext, objectKey) {
+    const baseUrl = normalizeText(storageContext && storageContext.publicBaseUrl);
+
+    if (!baseUrl) {
+      return '';
+    }
+
+    return `${baseUrl.replace(/[\\/]+$/, '')}/${encodeObjectKey(objectKey)}`;
+  }
+
+  function buildR2CanonicalUri(bucket, objectKey) {
+    return `/${encodeObjectKey(bucket)}/${encodeObjectKey(objectKey)}`;
+  }
+
+  function buildR2AuthHeaders(storageContext, bucket, objectKey, bodyBuffer, contentType, cacheControl) {
+    const accountId = normalizeText(storageContext && storageContext.accountId);
+    const accessKeyId = normalizeText(storageContext && storageContext.accessKeyId);
+    const secretAccessKey = normalizeText(storageContext && storageContext.secretAccessKey);
+    const host = `${accountId}.r2.cloudflarestorage.com`;
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const payloadHash = sha256Hex(bodyBuffer);
+    const canonicalHeaders = [
+      `host:${host}`,
+      `x-amz-content-sha256:${payloadHash}`,
+      `x-amz-date:${amzDate}`
+    ].join('\n') + '\n';
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const canonicalRequest = [
+      'PUT',
+      buildR2CanonicalUri(bucket, objectKey),
+      '',
+      canonicalHeaders,
+      signedHeaders,
+      payloadHash
+    ].join('\n');
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      credentialScope,
+      sha256Hex(canonicalRequest)
+    ].join('\n');
+    const signingKey = hmacSha256(
+      hmacSha256(
+        hmacSha256(
+          hmacSha256(`AWS4${secretAccessKey}`, dateStamp),
+          'auto'
+        ),
+        's3'
+      ),
+      'aws4_request'
+    );
+    const signature = hmacSha256(signingKey, stringToSign).toString('hex');
+    const authorization = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    return {
+      url: `https://${host}${buildR2CanonicalUri(bucket, objectKey)}`,
+      headers: {
+        Authorization: authorization,
+        'x-amz-content-sha256': payloadHash,
+        'x-amz-date': amzDate,
+        'Content-Type': contentType || 'application/octet-stream',
+        ...(cacheControl ? { 'Cache-Control': cacheControl } : {})
+      }
+    };
+  }
+
+  function uploadR2FileWithTimeout(params, context = {}) {
+    const rawParams = params && typeof params === 'object' ? params : {};
+    const job = context.job || null;
+    const candidate = context.candidate || null;
+    const timeoutMs = getUploadItemTimeoutMs(context.fileSize);
+    const storageContext = context.storageContext || null;
+    const bodyFilePath = normalizeText(rawParams.FilePath) || normalizeText(rawParams.filePath);
+    let timeoutTimer = null;
+    let completed = false;
+    let removeCancelHandler = () => {};
+    let controller = null;
+
+    function cleanup() {
+      completed = true;
+
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+
+      removeCancelHandler();
+      removeCancelHandler = () => {};
+
+      if (job && controller) {
+        job.activeAbortControllers.delete(controller);
+      }
+    }
+
+    return new Promise(async (resolve, reject) => {
+      function rejectIfPending(error) {
+        if (completed) {
+          return;
+        }
+
+        if (controller) {
+          try {
+            controller.abort();
+          } catch (_error) {}
+        }
+
+        cleanup();
+        reject(error);
+      }
+
+      try {
+        controller = new AbortController();
+
+        if (job) {
+          job.activeAbortControllers.add(controller);
+        }
+
+        removeCancelHandler = addJobCancelHandler(job, () => {
+          const error = new Error('\u4efb\u52a1\u5df2\u505c\u6b62\u3002');
+          error.code = 'POD_R2_UPLOAD_CANCELED';
+          rejectIfPending(error);
+        });
+
+        if (completed) {
+          return;
+        }
+
+        timeoutTimer = setTimeout(() => {
+          const error = createUploadTimeoutError(candidate, timeoutMs);
+          error.code = 'POD_R2_UPLOAD_TIMEOUT';
+          rejectIfPending(error);
+        }, timeoutMs);
+
+        const bodyBuffer = await fs.promises.readFile(bodyFilePath);
+        const objectKey = normalizeText(rawParams.Key || rawParams.key);
+        const bucket = normalizeText(rawParams.Bucket || rawParams.bucket) || normalizeText(storageContext && storageContext.bucket);
+        const contentType = normalizeText(rawParams.ContentType || rawParams.contentType) || getContentType(bodyFilePath);
+        const cacheControl = normalizeText(rawParams.CacheControl || rawParams.cacheControl);
+        const { url, headers } = buildR2AuthHeaders(storageContext, bucket, objectKey, bodyBuffer, contentType, cacheControl);
+        const response = await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: bodyBuffer,
+          signal: controller.signal
+        });
+
+        if (completed) {
+          return;
+        }
+
+        if (!response.ok) {
+          const responseText = await response.text().catch(() => '');
+          const message = responseText
+            ? `R2 \u4e0a\u4f20\u5931\u8d25\uff1a${response.status} ${response.statusText} ${responseText.slice(0, 180)}`
+            : `R2 \u4e0a\u4f20\u5931\u8d25\uff1a${response.status} ${response.statusText}`;
+          throw new Error(message);
+        }
+
+        const etag = normalizeText(response.headers.get('etag'));
+
+        cleanup();
+        resolve({
+          Location: buildR2ObjectUrl(storageContext, objectKey),
+          ETag: etag,
+          url: buildR2ObjectUrl(storageContext, objectKey)
+        });
+      } catch (error) {
+        rejectIfPending(error);
+      }
+    });
+  }
+
+  function uploadStorageFileWithTimeout(params, context = {}) {
+    const storageContext = context.storageContext || null;
+
+    if (storageContext && storageContext.storageProvider === 'cloudflare-r2') {
+      return uploadR2FileWithTimeout(params, context);
+    }
+
+    const uploadParams = {
+      ...(params && typeof params === 'object' ? params : {}),
+      client: storageContext && storageContext.client ? storageContext.client : cosClient
+    };
+    return uploadCosFileWithTimeout(uploadParams, context);
   }
 
   async function mapWithConcurrency(items, concurrency, worker, job) {
@@ -1560,11 +2103,22 @@ function createPodUploadSheetMiaoshouCosUploadService({
   }
 
   async function uploadSingleCandidate(candidate, context) {
-    const { cacheSnapshot, region, job, owner, imageUploadMode } = context;
+    const {
+      cacheSnapshot,
+      job,
+      owner,
+      imageUploadMode,
+      imageQuality,
+      storageContext,
+      uploadSettings
+    } = context;
     const effectiveImageUploadMode = resolveEffectiveImageUploadMode(
       candidate && candidate.localPath,
       imageUploadMode
     );
+    const effectiveImageQuality = normalizeImageQuality(imageQuality, effectiveImageUploadMode);
+    const effectiveStorageContext = storageContext || createFallbackTencentCosStorageContext();
+    const uploadRegion = normalizeText(effectiveStorageContext.region) || DEFAULT_BUCKET_REGION;
 
     if (job && job.canceled) {
       return buildCanceledResult(candidate);
@@ -1577,10 +2131,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
     } catch (error) {
       const existingCacheEntry = cacheSnapshot.items[candidate.normalizedPath];
 
-      if (isReusableCacheEntryWithoutFile(existingCacheEntry, effectiveImageUploadMode)) {
+      if (isReusableCacheEntryWithoutFile(existingCacheEntry, effectiveStorageContext, owner, effectiveImageUploadMode, effectiveImageQuality)) {
         log('pod_upload_sheet_cos_image_upload_item_reused', buildCandidateLogPayload(candidate, {
           source: 'cached',
           imageUploadMode: effectiveImageUploadMode,
+          imageQuality: effectiveImageQuality,
+          storageProvider: effectiveStorageContext.storageProvider,
           fileExists: false
         }));
         return buildSuccessResult(candidate, existingCacheEntry, 'cached');
@@ -1591,10 +2147,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
     const existingCacheEntry = cacheSnapshot.items[candidate.normalizedPath];
 
-    if (isReusableCacheEntry(existingCacheEntry, fileStat, effectiveImageUploadMode)) {
+    if (isReusableCacheEntry(existingCacheEntry, fileStat, effectiveStorageContext, owner, effectiveImageUploadMode, effectiveImageQuality)) {
       log('pod_upload_sheet_cos_image_upload_item_reused', buildCandidateLogPayload(candidate, {
         source: 'cached',
         imageUploadMode: effectiveImageUploadMode,
+        imageQuality: effectiveImageQuality,
+        storageProvider: effectiveStorageContext.storageProvider,
         fileExists: true,
         size: Number(fileStat.size) || 0
       }));
@@ -1605,7 +2163,8 @@ function createPodUploadSheetMiaoshouCosUploadService({
       owner,
       candidate.localPath,
       fileStat,
-      effectiveImageUploadMode
+      effectiveImageUploadMode,
+      effectiveImageQuality
     );
     const uploadFilePath = preparedUpload.uploadFilePath;
     const uploadFileStat = uploadFilePath === candidate.localPath
@@ -1615,32 +2174,35 @@ function createPodUploadSheetMiaoshouCosUploadService({
       ...candidate,
       localPath: uploadFilePath,
       fileName: path.basename(uploadFilePath) || candidate.fileName
-    }, uploadFileStat);
+    }, uploadFileStat, effectiveStorageContext, owner, effectiveImageUploadMode, effectiveImageQuality);
 
     try {
       log('pod_upload_sheet_cos_image_upload_item_started', buildCandidateLogPayload(candidate, {
         uploadFilePath,
         imageUploadMode: effectiveImageUploadMode,
+        imageQuality: effectiveImageQuality,
         preparedImageUploadMode: normalizeImageUploadMode(preparedUpload.imageUploadMode),
         size: Number(uploadFileStat.size) || 0,
-        region,
-        bucket: TARGET_BUCKET,
+        storageProvider: effectiveStorageContext.storageProvider,
+        region: uploadRegion,
+        bucket: effectiveStorageContext.bucket,
         objectKey
       }));
 
-      const uploadResult = await uploadCosFileWithTimeout({
-        Bucket: TARGET_BUCKET,
-        Region: region,
+      const uploadResult = await uploadStorageFileWithTimeout({
+        Bucket: effectiveStorageContext.bucket,
+        Region: uploadRegion,
         Key: objectKey,
         FilePath: uploadFilePath,
-        SliceSize: DEFAULT_SETTINGS.sliceSize,
-        ACL: 'public-read',
+        SliceSize: uploadSettings.sliceSize,
+        ACL: effectiveStorageContext.storageProvider === 'tencent-cos' ? 'public-read' : undefined,
         CacheControl: 'public, max-age=31536000, immutable',
         ContentType: getContentType(uploadFilePath)
       }, {
         candidate,
         fileSize: Number(uploadFileStat.size) || 0,
-        job
+        job,
+        storageContext: effectiveStorageContext
       });
 
       if (job && job.canceled) {
@@ -1649,23 +2211,30 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
       const cacheEntry = {
         filePath: candidate.localPath,
-        url: normalizeText(uploadResult && uploadResult.Location)
-          ? `https://${normalizeText(uploadResult.Location)}`
-          : getPublicUrlForKey(region, objectKey),
+        url: normalizeText(uploadResult && (uploadResult.url || uploadResult.Location))
+          || buildR2ObjectUrl(effectiveStorageContext, objectKey)
+          || getPublicUrlForKey(uploadRegion, objectKey),
         key: objectKey,
-        etag: normalizeText(uploadResult && uploadResult.ETag),
+        etag: normalizeText(uploadResult && (uploadResult.ETag || uploadResult.etag)),
         size: Number(fileStat.size) || 0,
         mtimeMs: Number(fileStat.mtimeMs) || 0,
         uploadedAt: nowIso(),
-        imageUploadMode: normalizeImageUploadMode(preparedUpload.imageUploadMode)
+        storageProvider: effectiveStorageContext.storageProvider,
+        bucket: effectiveStorageContext.bucket,
+        region: uploadRegion,
+        rootPrefix: normalizeObjectPrefix(effectiveStorageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
+        imageUploadMode: normalizeImageUploadMode(preparedUpload.imageUploadMode),
+        imageQuality: effectiveImageQuality
       };
 
       cacheSnapshot.items[candidate.normalizedPath] = cacheEntry;
       log('pod_upload_sheet_cos_image_upload_item_completed', buildCandidateLogPayload(candidate, {
         source: 'uploaded',
         imageUploadMode: cacheEntry.imageUploadMode,
-        region,
-        bucket: TARGET_BUCKET,
+        imageQuality: cacheEntry.imageQuality,
+        storageProvider: cacheEntry.storageProvider,
+        region: uploadRegion,
+        bucket: effectiveStorageContext.bucket,
         objectKey,
         url: cacheEntry.url,
         etag: cacheEntry.etag,
@@ -1682,7 +2251,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
   }
 
   async function uploadCandidateWithRetry(candidate, context) {
-    const maxAttemptCount = Math.max(1, DEFAULT_SETTINGS.retryLimit + 1);
+    const maxAttemptCount = Math.max(1, (context && context.uploadSettings ? context.uploadSettings.retryLimit : DEFAULT_SETTINGS.retryLimit) + 1);
     let lastError = null;
 
     for (let attempt = 1; attempt <= maxAttemptCount; attempt += 1) {
@@ -1726,18 +2295,20 @@ function createPodUploadSheetMiaoshouCosUploadService({
       filePath: candidate.localPath,
       fileName: candidate.fileName
     });
-    return buildFailedResult(candidate, lastError, Math.max(1, DEFAULT_SETTINGS.retryLimit + 1));
+    return buildFailedResult(candidate, lastError, Math.max(1, (context && context.uploadSettings ? context.uploadSettings.retryLimit : DEFAULT_SETTINGS.retryLimit) + 1));
   }
 
   async function uploadCandidates(candidates, owner, payload) {
     const targetCandidates = Array.isArray(candidates) ? candidates : [];
-    const imageUploadMode = normalizeImageUploadMode(payload && payload.imageUploadMode);
+    const uploadSettings = normalizeUploadSettings(payload);
+    const imageUploadMode = uploadSettings.imageUploadMode;
+    const storageContext = await resolveStorageContext(payload);
 
     if (!targetCandidates.length) {
       return {
         updatedAt: nowIso(),
-        bucket: TARGET_BUCKET,
-        region: await resolveTargetRegion(),
+        bucket: normalizeText(storageContext.bucket) || TARGET_BUCKET,
+        region: normalizeText(storageContext.region) || await resolveTargetRegion(),
         canceled: false,
         totalCount: 0,
         successCount: 0,
@@ -1756,7 +2327,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
     }
 
     const cacheSnapshot = await loadCacheSnapshot(owner);
-    const region = cacheSnapshot.region || await resolveTargetRegion();
+    const region = normalizeText(storageContext.region) || cacheSnapshot.region || await resolveTargetRegion();
     const job = createUploadJob(owner, payload);
 
     try {
@@ -1771,24 +2342,30 @@ function createPodUploadSheetMiaoshouCosUploadService({
         failedCount: 0,
         canceledCount: 0,
         label: '',
-        bucket: TARGET_BUCKET,
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
         region,
-        imageUploadMode
+        rootPrefix: storageContext.rootPrefix,
+        imageUploadMode,
+        imageQuality: uploadSettings.imageQuality,
+        concurrency: uploadSettings.concurrency
       });
 
       log('pod_upload_sheet_cos_image_upload_started', buildJobLogPayload(owner, payload, {
-        bucket: TARGET_BUCKET,
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
         region,
         candidateCount: targetCandidates.length,
         imageUploadMode,
-        concurrency: DEFAULT_SETTINGS.concurrency,
-        retryLimit: DEFAULT_SETTINGS.retryLimit,
-        sliceSize: DEFAULT_SETTINGS.sliceSize
+        imageQuality: uploadSettings.imageQuality,
+        concurrency: uploadSettings.concurrency,
+        retryLimit: uploadSettings.retryLimit,
+        sliceSize: uploadSettings.sliceSize
       }));
 
       const rawItems = await mapWithConcurrency(
         targetCandidates,
-        DEFAULT_SETTINGS.concurrency,
+        uploadSettings.concurrency,
         async (candidate) => {
           updateJobProgress(job, {
             runState: job.canceled ? 'stopping' : 'running',
@@ -1799,7 +2376,10 @@ function createPodUploadSheetMiaoshouCosUploadService({
             region,
             job,
             owner,
-            imageUploadMode
+            imageUploadMode,
+            imageQuality: uploadSettings.imageQuality,
+            storageContext,
+            uploadSettings
           });
           applyJobProgressResult(job, candidate, item);
           return item;
@@ -1813,7 +2393,10 @@ function createPodUploadSheetMiaoshouCosUploadService({
       const canceledCount = items.filter((item) => item && item.status === 'canceled').length;
       const nextSnapshot = await persistCacheSnapshot(owner, {
         ...cacheSnapshot,
-        region
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
+        region,
+        rootPrefix: storageContext.rootPrefix
       });
 
       updateJobProgress(job, {
@@ -1825,13 +2408,18 @@ function createPodUploadSheetMiaoshouCosUploadService({
         cachedCount,
         failedCount,
         canceledCount,
-        bucket: TARGET_BUCKET,
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
         region,
-        imageUploadMode
+        rootPrefix: storageContext.rootPrefix,
+        imageUploadMode,
+        imageQuality: uploadSettings.imageQuality,
+        concurrency: uploadSettings.concurrency
       });
 
       log('pod_upload_sheet_cos_image_upload_completed', buildJobLogPayload(owner, payload, {
-        bucket: TARGET_BUCKET,
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
         region,
         totalCount: items.length,
         uploadedCount,
@@ -1843,7 +2431,8 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
       return {
         updatedAt: nextSnapshot.updatedAt,
-        bucket: TARGET_BUCKET,
+        storageProvider: storageContext.storageProvider,
+        bucket: storageContext.bucket,
         region,
         canceled: job.canceled,
         totalCount: items.length,
@@ -1862,139 +2451,20 @@ function createPodUploadSheetMiaoshouCosUploadService({
   return {
     async uploadImages(payload) {
       const owner = getOwner();
-      const imageUploadMode = normalizeImageUploadMode(payload && payload.imageUploadMode);
 
       if (!owner) {
-        throw new Error('当前未登录，无法上传图片到 COS。');
+        throw new Error('\u5f53\u524d\u672a\u767b\u5f55\uff0c\u65e0\u6cd5\u4e0a\u4f20\u56fe\u7247\u3002');
       }
 
-      const products = normalizeIncomingProducts(payload && payload.products);
-      const candidates = collectUploadCandidates(products);
+      const explicitCandidates = normalizeIncomingUploadCandidates(payload && payload.candidates);
+      const products = explicitCandidates.length ? [] : normalizeIncomingProducts(payload && payload.products);
+      const productCandidates = explicitCandidates.length ? [] : collectUploadCandidates(products);
+      const candidates = filterRetryUploadCandidates(
+        explicitCandidates.length ? explicitCandidates : productCandidates,
+        payload
+      );
 
-      if (!candidates.length) {
-        return {
-          updatedAt: nowIso(),
-          bucket: TARGET_BUCKET,
-          region: await resolveTargetRegion(),
-          canceled: false,
-          totalCount: 0,
-          successCount: 0,
-          uploadedCount: 0,
-          cachedCount: 0,
-          failedCount: 0,
-          canceledCount: 0,
-          items: []
-        };
-      }
-
-      const existingJob = getUploadJob(owner, payload);
-
-      if (existingJob && !existingJob.canceled) {
-        throw new Error('当前已有图片上传任务正在执行，请先停止当前任务。');
-      }
-
-      const cacheSnapshot = await loadCacheSnapshot(owner);
-      const region = cacheSnapshot.region || await resolveTargetRegion();
-      const job = createUploadJob(owner, payload);
-
-      try {
-        updateJobProgress(job, {
-          runState: 'running',
-          runId: normalizeText(payload && payload.runId),
-          totalCount: candidates.length,
-          completedCount: 0,
-          successCount: 0,
-          uploadedCount: 0,
-          cachedCount: 0,
-          failedCount: 0,
-          canceledCount: 0,
-          label: '',
-          bucket: TARGET_BUCKET,
-          region,
-          imageUploadMode
-        });
-
-        log('pod_upload_sheet_cos_image_upload_started', buildJobLogPayload(owner, payload, {
-          bucket: TARGET_BUCKET,
-          region,
-          candidateCount: candidates.length,
-          imageUploadMode,
-          concurrency: DEFAULT_SETTINGS.concurrency,
-          retryLimit: DEFAULT_SETTINGS.retryLimit,
-          sliceSize: DEFAULT_SETTINGS.sliceSize
-        }));
-
-        const rawItems = await mapWithConcurrency(
-          candidates,
-          DEFAULT_SETTINGS.concurrency,
-          async (candidate) => {
-            updateJobProgress(job, {
-              runState: job.canceled ? 'stopping' : 'running',
-              label: normalizeText(candidate && candidate.fileName)
-            });
-            const item = await uploadCandidateWithRetry(candidate, {
-              cacheSnapshot,
-              region,
-              job,
-              owner,
-              imageUploadMode
-            });
-            applyJobProgressResult(job, candidate, item);
-            return item;
-          },
-          job
-        );
-        const items = candidates.map((candidate, index) => rawItems[index] || buildCanceledResult(candidate));
-        const uploadedCount = items.filter((item) => item && item.status === 'success' && item.source === 'uploaded').length;
-        const cachedCount = items.filter((item) => item && item.status === 'success' && item.source === 'cached').length;
-        const failedCount = items.filter((item) => item && item.status === 'failed').length;
-        const canceledCount = items.filter((item) => item && item.status === 'canceled').length;
-        const nextSnapshot = await persistCacheSnapshot(owner, {
-          ...cacheSnapshot,
-          region
-        });
-
-        updateJobProgress(job, {
-          runState: job.canceled ? 'canceled' : 'completed',
-          totalCount: items.length,
-          completedCount: items.length,
-          successCount: uploadedCount + cachedCount,
-          uploadedCount,
-          cachedCount,
-          failedCount,
-          canceledCount,
-          bucket: TARGET_BUCKET,
-          region,
-          imageUploadMode
-        });
-
-        log('pod_upload_sheet_cos_image_upload_completed', buildJobLogPayload(owner, payload, {
-          bucket: TARGET_BUCKET,
-          region,
-          totalCount: items.length,
-          uploadedCount,
-          cachedCount,
-          failedCount,
-          canceledCount,
-          canceled: job.canceled
-        }));
-
-        return {
-          updatedAt: nextSnapshot.updatedAt,
-          bucket: TARGET_BUCKET,
-          region,
-          canceled: job.canceled,
-          totalCount: items.length,
-          successCount: uploadedCount + cachedCount,
-          uploadedCount,
-          cachedCount,
-          failedCount,
-          canceledCount,
-          items
-        };
-      } finally {
-        clearUploadJob(job);
-      }
+      return uploadCandidates(candidates, owner, payload);
     },
     async cancelUpload(payload) {
       const owner = getOwner();
@@ -2009,9 +2479,23 @@ function createPodUploadSheetMiaoshouCosUploadService({
       job.canceled = true;
       notifyJobCanceled(job);
       Array.from(job.activeTaskIds).forEach((taskId) => {
-        cancelCosTask(taskId);
+        const taskClient = job.activeTaskClients && typeof job.activeTaskClients.get === 'function'
+          ? job.activeTaskClients.get(taskId)
+          : null;
+        cancelCosTask(taskClient, taskId);
       });
       job.activeTaskIds.clear();
+      if (job.activeTaskClients && typeof job.activeTaskClients.clear === 'function') {
+        job.activeTaskClients.clear();
+      }
+      Array.from(job.activeAbortControllers || []).forEach((controller) => {
+        try {
+          controller.abort();
+        } catch (_error) {}
+      });
+      if (job.activeAbortControllers && typeof job.activeAbortControllers.clear === 'function') {
+        job.activeAbortControllers.clear();
+      }
       updateJobProgress(job, {
         runState: 'stopping'
       });

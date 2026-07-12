@@ -1283,7 +1283,7 @@ function buildStorageSavePayload() {
         secretKey: String(storageConfig.providers.tencentCos.secretKey || ''),
         bucket: String(storageConfig.providers.tencentCos.bucket || ''),
         region: String(storageConfig.providers.tencentCos.region || ''),
-        rootPrefix: String(storageConfig.providers.tencentCos.rootPrefix || ''),
+        rootPrefix: DEFAULT_ROOT_PREFIX,
         protocol: String(storageConfig.providers.tencentCos.protocol || 'https:')
       },
       cloudflareR2: {
@@ -1295,7 +1295,7 @@ function buildStorageSavePayload() {
         bucket: String(storageConfig.providers.cloudflareR2.bucket || ''),
         endpoint: String(storageConfig.providers.cloudflareR2.endpoint || ''),
         publicBaseUrl: String(storageConfig.providers.cloudflareR2.publicBaseUrl || ''),
-        rootPrefix: String(storageConfig.providers.cloudflareR2.rootPrefix || '')
+        rootPrefix: DEFAULT_ROOT_PREFIX
       }
     }
   };
@@ -1787,7 +1787,8 @@ async function refresh() {
 }
 
 onMounted(() => {
-  storageConfig.providers.tencentCos.rootPrefix = storageConfig.providers.tencentCos.rootPrefix || DEFAULT_ROOT_PREFIX;
+  storageConfig.providers.tencentCos.rootPrefix = DEFAULT_ROOT_PREFIX;
+  storageConfig.providers.cloudflareR2.rootPrefix = DEFAULT_ROOT_PREFIX;
   void loadAll();
 });
 

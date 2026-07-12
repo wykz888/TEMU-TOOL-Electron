@@ -6,10 +6,22 @@
         <span class="pod-panel-tag">&#x672C;&#x5730;&#x5546;&#x54C1;</span>
       </div>
       <div class="pod-actions">
-        <a-button class="pod-red-button" :loading="importingProducts" @click="importProducts"><icon-upload class="pod-action-icon" />&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
-        <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-        <a-button class="pod-blue-button" :disabled="products.length < 1" @click="openRandomCarouselPreset"><icon-loop class="pod-action-icon" />&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-        <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x63CF;&#x8FF0;&#x56FE;</a-button>
+        <a-button class="pod-red-button" :loading="importingProducts" @click="importProducts">
+          <icon-upload class="pod-action-icon" />
+          &#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;
+        </a-button>
+        <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset">
+          <icon-image class="pod-action-icon" />
+          &#x6279;&#x91CF;&#x9884;&#x8BBE;&#x4E3B;&#x56FE;
+        </a-button>
+        <a-button class="pod-blue-button" :disabled="products.length < 1" @click="openRandomCarouselPreset">
+          <icon-loop class="pod-action-icon" />
+          &#x6279;&#x91CF;&#x968F;&#x673A;&#x4E3B;&#x56FE;
+        </a-button>
+        <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset">
+          <icon-image class="pod-action-icon" />
+          &#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8BE6;&#x60C5;&#x56FE;
+        </a-button>
         <a-button class="pod-red-button" :loading="uploadingImages" :disabled="!products.length" @click="openImageUploadDialog">
           <icon-upload class="pod-action-icon" />
           {{ uploadingImages ? '\u4e0a\u4f20\u4e2d' : '\u6279\u91cf\u4e0a\u4f20\u56fe\u7247' }}
@@ -18,9 +30,18 @@
           <icon-play-circle class="pod-action-icon" />
           {{ generatingAiTitles ? '\u751f\u6210\u4e2d' : '\u6279\u91cfAI\u751f\u6210\u6807\u9898' }}
         </a-button>
-        <a-button class="pod-theme-button" :loading="exportingTable" :disabled="!products.length" @click="exportTable"><icon-download class="pod-action-icon" />&#x5BFC;&#x51FA;&#x8868;&#x683C;</a-button>
-        <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate"><icon-save class="pod-action-icon" />&#x4FDD;&#x5B58;&#x6A21;&#x677F;</a-button>
-        <a-button class="pod-danger-button" :disabled="!products.length" @click="clearProducts"><icon-delete class="pod-action-icon" />&#x6E05;&#x7A7A;&#x5217;&#x8868;</a-button>
+        <a-button class="pod-theme-button" :loading="exportingTable" :disabled="!products.length" @click="exportTable">
+          <icon-download class="pod-action-icon" />
+          &#x5BFC;&#x51FA;&#x8868;&#x683C;
+        </a-button>
+        <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate">
+          <icon-save class="pod-action-icon" />
+          &#x4FDD;&#x5B58;&#x6A21;&#x677F;
+        </a-button>
+        <a-button class="pod-danger-button" :disabled="!products.length" @click="clearProducts">
+          <icon-delete class="pod-action-icon" />
+          &#x6E05;&#x7A7A;&#x5217;&#x8868;
+        </a-button>
       </div>
     </div>
     <div v-if="hasUploadProgress || uploadProgressText || aiTitleProgressText" class="pod-progress-stack">
@@ -52,7 +73,7 @@
       @row-click="selectProduct"
     >
       <template #columns>
-        <a-table-column title="&#x672C;&#x5730;&#x5546;&#x54C1;" data-index="localName" :width="210">
+        <a-table-column title="&#x672C;&#x5730;&#x5546;&#x54C1;" data-index="localName" :width="220">
           <template #cell="{ record }">
             <div class="pod-product-name">
               <strong>{{ record.localName || '\u672a\u547d\u540d\u5546\u54c1' }}</strong>
@@ -60,7 +81,7 @@
             </div>
           </template>
         </a-table-column>
-        <a-table-column title="&#x4EA7;&#x54C1;&#x6807;&#x9898;" :width="270">
+        <a-table-column title="&#x4EA7;&#x54C1;&#x540D;&#x79F0;" :width="320">
           <template #cell="{ record }">
             <div class="pod-title-cell">
               <a-textarea v-model="record.title" :max-length="TITLE_MAX_LENGTH" :auto-size="{ minRows: 2, maxRows: 4 }" @change="handleProductTitleChange(record, 'title')" />
@@ -68,15 +89,7 @@
             </div>
           </template>
         </a-table-column>
-        <a-table-column title="&#x82F1;&#x6587;&#x6807;&#x9898;" :width="270">
-          <template #cell="{ record }">
-            <div class="pod-title-cell">
-              <a-textarea v-model="record.englishTitle" :max-length="TITLE_MAX_LENGTH" :auto-size="{ minRows: 2, maxRows: 4 }" @change="handleProductTitleChange(record, 'englishTitle')" />
-              <span class="pod-title-length" :class="{ 'is-over': getTextLength(record.englishTitle) > TITLE_MAX_LENGTH }">{{ getTextLength(record.englishTitle) }} / {{ TITLE_MAX_LENGTH }}</span>
-            </div>
-          </template>
-        </a-table-column>
-        <a-table-column title="&#x8F6E;&#x64AD;&#x56FE;" :width="220">
+        <a-table-column title="&#x4E3B;&#x56FE;" :width="230">
           <template #cell="{ record }">
             <div class="pod-chip-list" :title="getMaterialTitle(record, 'carousel')">
               <a-tag v-for="item in getPreviewItems(record.materials.carousel)" :key="item" class="pod-material-chip" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
@@ -85,7 +98,7 @@
             </div>
           </template>
         </a-table-column>
-        <a-table-column title="&#x63CF;&#x8FF0;&#x56FE;" :width="220">
+        <a-table-column title="&#x8BE6;&#x60C5;&#x56FE;" :width="230">
           <template #cell="{ record }">
             <div class="pod-chip-list" :title="getDescriptionImageTitle(record)">
               <a-tag v-for="item in getPreviewItems(getDescriptionImageItems(record))" :key="item" class="pod-material-chip" bordered>{{ getMaterialDisplayName(record, 'carousel', item) }}</a-tag>
@@ -115,7 +128,6 @@ import {
   IconSave,
   IconUpload
 } from '@arco-design/web-vue/es/icon';
-import { TITLE_MAX_LENGTH } from '../constants/podUploadSheetMiaoshou.js';
 import {
   getAiStatusColor,
   getAiStatusText,
@@ -125,7 +137,9 @@ import {
   getMaterialDisplayName,
   getPreviewItems,
   getTextLength
-} from '../utils/podUploadSheetMiaoshouData.js';
+} from '../../shared/podUploadSheet/podUploadSheetDisplayData.js';
+
+const TITLE_MAX_LENGTH = 255;
 
 const props = defineProps({
   products: {

@@ -1,0 +1,38 @@
+.pod-universal-template-panel .pod-universal-main-row,
+.pod-universal-template-panel .pod-universal-media-row {
+  display: grid;
+  gap: 8px;
+}
+
+.pod-universal-template-panel .pod-universal-main-row {
+  grid-template-columns: 260px minmax(520px, 1fr);
+  align-items: end;
+}
+
+.pod-universal-template-panel .pod-universal-media-row {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  align-items: end;
+}
+
+.pod-universal-sku-panel .pod-sku-layout {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+}
+
+.pod-universal-sku-panel .pod-sku-table {
+  min-height: 190px;
+}
+
+@media (max-width: 1100px) {
+  .pod-universal-template-panel .pod-universal-main-row,
+  .pod-universal-template-panel .pod-universal-media-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .pod-universal-template-panel .pod-universal-main-row,
+  .pod-universal-template-panel .pod-universal-media-row,
+  .pod-universal-sku-panel .pod-sku-layout {
+    grid-template-columns: 1fr;
+  }
+}

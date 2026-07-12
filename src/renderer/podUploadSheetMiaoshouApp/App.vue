@@ -47,17 +47,20 @@
         :importing-products="importingProducts"
         :uploading-images="uploadingImages"
         :exporting-table="exportingTable"
+        :saving-template="savingTemplate"
         :generating-ai-titles="generatingAiTitles"
         :ai-title-eligible-count="aiTitleEligibleCount"
+        :upload-progress="uploadProgress"
         :upload-progress-text="uploadProgressText"
         :ai-title-progress-text="aiTitleProgressText"
         :import-products="importProducts"
         :open-carousel-preset="openCarouselPreset"
         :open-random-carousel-preset="openRandomCarouselPreset"
         :open-description-preset="openDescriptionPreset"
-        :upload-images="uploadImages"
+        :open-image-upload-dialog="openImageUploadDialog"
         :open-batch-ai-title-dialog="openBatchAiTitleDialog"
         :export-table="exportTable"
+        :save-current-template="saveCurrentTemplate"
         :clear-products="clearProducts"
         :get-product-row-class="getProductRowClass"
         :select-product="selectProduct"
@@ -136,6 +139,25 @@
       @cancel="closeBatchAiTitleDialog"
       @start="startBatchAiTitleDialogGeneration"
     />
+
+    <ImageUploadConfigModal
+      :visible="imageUploadVisible"
+      :starting="imageUploadStarting"
+      :busy="imageUploadBusy"
+      :form="imageUploadForm"
+      :summary="imageUploadSummary"
+      :status="imageUploadStatus"
+      :storage-provider-options="imageUploadStorageProviderOptions"
+      :image-upload-mode-options="imageUploadModeOptions"
+      :min-concurrency="imageUploadMinConcurrency"
+      :max-concurrency="imageUploadMaxConcurrency"
+      :min-image-quality="imageUploadMinImageQuality"
+      :max-image-quality="imageUploadMaxImageQuality"
+      :handle-storage-provider-change="handleImageUploadStorageProviderChange"
+      :resolve-status-type="resolveAiStatusType"
+      @cancel="closeImageUploadDialog"
+      @start="startImageUploadFromDialog"
+    />
   </div>
 </template>
 
@@ -152,12 +174,14 @@ import {
 import { useAiTitleConfigDialog } from './useAiTitleConfigDialog.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 import AiTitleConfigModal from './components/AiTitleConfigModal.vue';
-import BatchAiTitleModal from './components/BatchAiTitleModal.vue';
-import MaterialPresetModals from './components/MaterialPresetModals.vue';
+import BatchAiTitleModal from '../shared/batchAiTitle/BatchAiTitleModal.vue';
+import ImageUploadConfigModal from '../shared/imageUpload/ImageUploadConfigModal.vue';
+import MaterialPresetModals from '../shared/materialPreset/MaterialPresetModals.vue';
 import ProductDataTable from './components/ProductDataTable.vue';
 import SkuSettingsPanel from './components/SkuSettingsPanel.vue';
 import TemplateWorkspacePanel from './components/TemplateWorkspacePanel.vue';
-import { useMaterialPresetDialogs } from './useMaterialPresetDialogs.js';
+import { useMaterialPresetDialogs } from '../shared/materialPreset/useMaterialPresetDialogs.js';
+import { useImageUploadDialog } from '../shared/imageUpload/useImageUploadDialog.js';
 import { useProductWorkflowTasks } from './useProductWorkflowTasks.js';
 import { useSkuSettings } from './useSkuSettings.js';
 import { useTemplateWorkspace } from './useTemplateWorkspace.js';
@@ -169,6 +193,7 @@ const lastImportDirectoryPath = ref('');
 const viewportHeight = ref(typeof window === 'undefined' ? 920 : window.innerHeight);
 let cleanupAiTitleConfigBridge = null;
 let cleanupBatchAiTitleBridge = null;
+let cleanupImageUploadBridge = null;
 let removeAiTitleProgressListener = null;
 
 const globalForm = reactive({
@@ -312,6 +337,7 @@ const {
   uploadingImages,
   exportingTable,
   generatingAiTitles,
+  uploadProgress,
   aiProgress,
   aiTitleEligibleCount,
   uploadProgressText,
@@ -321,7 +347,8 @@ const {
   handleProductTitleChange,
   importProducts,
   clearProducts,
-  uploadImages,
+  getImageUploadSnapshot,
+  executeImageUpload,
   getBatchAiTitleSnapshot,
   openBatchAiTitleDialog,
   executeBatchAiTitleGeneration,
@@ -340,6 +367,24 @@ const {
   messageApi: Message,
   modalApi: Modal
 });
+const imageUploadDialog = useImageUploadDialog({
+  startUpload: executeImageUpload
+});
+const imageUploadVisible = imageUploadDialog.visible;
+const imageUploadStarting = imageUploadDialog.starting;
+const imageUploadBusy = imageUploadDialog.busy;
+const imageUploadForm = imageUploadDialog.form;
+const imageUploadSummary = imageUploadDialog.summary;
+const imageUploadStatus = imageUploadDialog.status;
+const imageUploadStorageProviderOptions = imageUploadDialog.storageProviderOptions;
+const imageUploadModeOptions = imageUploadDialog.imageUploadModeOptions;
+const imageUploadMinConcurrency = imageUploadDialog.minConcurrency;
+const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
+const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
+const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
+const closeImageUploadDialog = imageUploadDialog.closeDialog;
+const startImageUploadFromDialog = imageUploadDialog.startUploadFromDialog;
+const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
 const productTableBodyHeight = computed(() => Math.max(360, Math.min(520, viewportHeight.value - 520)));
 const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
 const productTableStyle = computed(() => ({
@@ -348,6 +393,10 @@ const productTableStyle = computed(() => ({
 
 function updateViewportHeight() {
   viewportHeight.value = window.innerHeight || viewportHeight.value;
+}
+
+function openImageUploadDialog() {
+  return imageUploadDialog.openDialog(getImageUploadSnapshot());
 }
 
 let saveTimer = 0;
@@ -368,6 +417,8 @@ function installVueBridge() {
   const existingBridge = window[VIEW_BRIDGE_KEY] && typeof window[VIEW_BRIDGE_KEY] === 'object' ? window[VIEW_BRIDGE_KEY] : {};
   const bridge = {
     ...existingBridge,
+    getImageUploadSnapshot,
+    startImageUpload: executeImageUpload,
     getBatchAiTitleSnapshot,
     startBatchAiTitleGeneration: executeBatchAiTitleGeneration
   };
@@ -385,6 +436,7 @@ onMounted(() => {
   window.addEventListener('resize', updateViewportHeight);
   cleanupAiTitleConfigBridge = aiTitleConfigDialog.installGlobalBridge();
   cleanupBatchAiTitleBridge = batchAiTitleDialog.installGlobalBridge();
+  cleanupImageUploadBridge = imageUploadDialog.installGlobalBridge();
   const cleanupVueBridge = installVueBridge();
   cleanupBatchAiTitleBridge = ((previousCleanup) => () => {
     cleanupVueBridge();
@@ -410,6 +462,7 @@ onBeforeUnmount(() => {
   document.body.classList.remove('pod-miaoshou-vue-mounted');
   window.removeEventListener('resize', updateViewportHeight);
   if (typeof cleanupBatchAiTitleBridge === 'function') cleanupBatchAiTitleBridge();
+  if (typeof cleanupImageUploadBridge === 'function') cleanupImageUploadBridge();
   if (typeof cleanupAiTitleConfigBridge === 'function') cleanupAiTitleConfigBridge();
   if (typeof removeAiTitleProgressListener === 'function') removeAiTitleProgressListener();
 });

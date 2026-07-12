@@ -1,6 +1,8 @@
 import { createApp } from 'vue';
 import ArcoVue from '@arco-design/web-vue';
 import '@arco-design/web-vue/dist/arco.css';
+import '../podUploadSheetMiaoshouApp/styles/pod-miaoshou-app.css';
+import './styles/pod-miaoshou-universal-app.css';
 import App from './App.vue';
 
 let controllerInstance = null;

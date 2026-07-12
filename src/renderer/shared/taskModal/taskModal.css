@@ -1,0 +1,255 @@
+.pod-task-modal .arco-modal,
+.arco-modal.pod-task-modal {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 26px 56px rgba(15, 23, 42, 0.18);
+}
+
+.pod-task-modal .arco-modal-header {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 1));
+}
+
+.pod-task-modal .arco-modal-title {
+  width: 100%;
+}
+
+.pod-task-modal .arco-modal-body {
+  padding: 18px 22px 16px;
+}
+
+.pod-task-modal .arco-modal-footer {
+  padding: 0 22px 20px;
+  border-top: 0;
+}
+
+.pod-task-modal .pod-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pod-task-modal .pod-modal-title strong {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.pod-task-modal .pod-task-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.pod-task-modal .pod-modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pod-task-modal .pod-modal-form-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pod-task-modal .pod-modal-form-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pod-task-modal .pod-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.pod-task-modal .pod-field-full {
+  grid-column: 1 / -1;
+}
+
+.pod-task-modal .pod-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.pod-task-modal .pod-help-icon {
+  color: #94a3b8;
+}
+
+.pod-task-modal .arco-input-wrapper,
+.pod-task-modal .arco-input-number,
+.pod-task-modal .arco-select-view,
+.pod-task-modal .arco-select-view-single,
+.pod-task-modal .arco-textarea-wrapper {
+  min-height: 40px;
+  border: 1px solid #d8e1ec !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.pod-task-modal .arco-input-wrapper:hover,
+.pod-task-modal .arco-input-number:hover,
+.pod-task-modal .arco-select-view:hover,
+.pod-task-modal .arco-select-view-single:hover,
+.pod-task-modal .arco-textarea-wrapper:hover {
+  border-color: #c6d0de !important;
+}
+
+.pod-task-modal .arco-input-wrapper:focus-within,
+.pod-task-modal .arco-input-number-focus,
+.pod-task-modal .arco-select-view-focus,
+.pod-task-modal .arco-textarea-wrapper:focus-within {
+  border-color: var(--theme-primary-color, #ef4444) !important;
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb, 239, 68, 68), 0.14) !important;
+}
+
+.pod-task-modal .arco-textarea-wrapper {
+  min-height: 96px;
+}
+
+.pod-task-modal .pod-quality-row-modern {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 12px;
+}
+
+.pod-task-modal .pod-quality-number {
+  width: 88px;
+}
+
+.pod-task-modal .arco-slider-track::before {
+  height: 4px;
+  background: #e8eef5;
+  border-radius: 999px;
+}
+
+.pod-task-modal .arco-slider-bar {
+  height: 4px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.82);
+  border-radius: 999px;
+}
+
+.pod-task-modal .arco-slider-btn::after {
+  background: #ffffff;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.9);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.pod-task-modal .arco-slider-btn.arco-slider-btn-active::after,
+.pod-task-modal .arco-slider-btn:hover::after {
+  box-shadow: 0 0 0 4px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12), 0 4px 10px rgba(15, 23, 42, 0.14);
+}
+
+.pod-task-modal .pod-modal-alert,
+.pod-task-modal .pod-task-note,
+.pod-task-modal .pod-cache-card {
+  border-radius: 12px;
+}
+
+.pod-task-modal .pod-modal-alert {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.pod-task-modal .pod-task-note {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 239, 68, 68), 0.18);
+  background: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.06);
+}
+
+.pod-task-modal .pod-task-note strong {
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pod-task-modal .pod-task-note span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.pod-task-modal .pod-cache-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 239, 68, 68), 0.18);
+  background: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.05);
+}
+
+.pod-task-modal .pod-cache-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.pod-task-modal .arco-checkbox-checked .arco-checkbox-mask {
+  border-color: var(--theme-primary-color, #ef4444);
+  background-color: var(--theme-primary-color, #ef4444);
+}
+
+.pod-task-modal .pod-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pod-task-modal .pod-modal-footer .arco-btn {
+  min-width: 92px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.pod-task-modal .pod-neutral-button.arco-btn {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+}
+
+.pod-task-modal .pod-hot-button.arco-btn {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(239, 68, 68, 0.22);
+}
+
+.pod-task-modal .pod-hot-button.arco-btn:hover,
+.pod-task-modal .pod-hot-button.arco-btn:focus {
+  border-color: #ea580c;
+  background: linear-gradient(135deg, #f43f5e 0%, #f97316 100%);
+}
+
+.pod-task-modal .pod-theme-button.arco-btn-primary,
+.pod-task-modal .pod-theme-button.arco-btn {
+  border-color: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.32);
+}
+
+@media (max-width: 960px) {
+  .pod-task-modal .pod-modal-form-grid,
+  .pod-task-modal .pod-modal-form-grid--three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pod-task-modal .pod-quality-row-modern {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pod-task-modal .pod-quality-number {
+    width: 100%;
+  }
+}

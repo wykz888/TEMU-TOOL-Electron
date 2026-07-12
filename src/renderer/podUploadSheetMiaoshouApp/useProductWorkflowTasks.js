@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import { DEFAULT_PRODUCT_FIELDS, TITLE_MAX_LENGTH } from './constants/podUploadSheetMiaoshou.js';
 import {
   classifySection,
@@ -45,8 +45,24 @@ export function useProductWorkflowTasks(options = {}) {
   const uploadingImages = ref(false);
   const exportingTable = ref(false);
   const generatingAiTitles = ref(false);
-  const uploadProgress = reactive({ total: 0, success: 0, uploaded: 0, cached: 0, failed: 0, canceled: 0 });
+  const uploadProgress = reactive({
+    total: 0,
+    completed: 0,
+    success: 0,
+    uploaded: 0,
+    cached: 0,
+    failed: 0,
+    canceled: 0,
+    label: '',
+    runState: 'idle',
+    storageProvider: '',
+    imageUploadMode: 'original',
+    concurrency: 0,
+    imageQuality: 0
+  });
+  const uploadFailedFilePaths = ref([]);
   const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, canceled: 0 });
+  let uploadProgressPollTimer = 0;
 
   const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
   const aiTitleRetryCount = computed(() => products.value.filter((item) => {
@@ -54,7 +70,14 @@ export function useProductWorkflowTasks(options = {}) {
   }).length);
   const uploadProgressText = computed(() => {
     if (!uploadProgress.total) return '';
-    return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgress.success}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
+    const stateText = uploadProgress.runState === 'completed'
+      ? '\u5df2\u5b8c\u6210'
+      : uploadProgress.runState === 'failed'
+        ? '\u5931\u8d25'
+        : uploadProgress.runState === 'canceled'
+          ? '\u5df2\u53d6\u6d88'
+          : '\u4e0a\u4f20\u4e2d';
+    return `\u56fe\u7247\u4e0a\u4f20\uff1a${stateText} ${uploadProgress.completed}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
   });
   const aiTitleProgressText = computed(() => {
     if (!generatingAiTitles.value || !aiProgress.total) return '';
@@ -121,6 +144,93 @@ export function useProductWorkflowTasks(options = {}) {
     scheduleStateSave();
   }
 
+  function resetUploadProgress() {
+    Object.assign(uploadProgress, {
+      total: 0,
+      completed: 0,
+      success: 0,
+      uploaded: 0,
+      cached: 0,
+      failed: 0,
+      canceled: 0,
+      label: '',
+      runState: 'idle',
+      storageProvider: '',
+      imageUploadMode: 'original',
+      concurrency: 0,
+      imageQuality: 0
+    });
+  }
+
+  function stopUploadProgressPolling() {
+    if (uploadProgressPollTimer) {
+      window.clearInterval(uploadProgressPollTimer);
+      uploadProgressPollTimer = 0;
+    }
+  }
+
+  function applyUploadProgressSnapshot(snapshot) {
+    const source = snapshot && snapshot.progress && typeof snapshot.progress === 'object'
+      ? snapshot.progress
+      : snapshot && typeof snapshot === 'object'
+        ? snapshot
+        : null;
+
+    if (!source) {
+      return;
+    }
+
+    function toCount(value, fallback) {
+      const parsed = Number(value);
+
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    Object.assign(uploadProgress, {
+      total: Math.max(0, toCount(source.totalCount, uploadProgress.total)),
+      completed: Math.max(0, toCount(source.completedCount, uploadProgress.completed)),
+      success: Math.max(0, toCount(source.successCount, uploadProgress.success)),
+      uploaded: Math.max(0, toCount(source.uploadedCount, uploadProgress.uploaded)),
+      cached: Math.max(0, toCount(source.cachedCount, uploadProgress.cached)),
+      failed: Math.max(0, toCount(source.failedCount, uploadProgress.failed)),
+      canceled: Math.max(0, toCount(source.canceledCount, uploadProgress.canceled)),
+      label: normalizeText(source.label) || uploadProgress.label,
+      runState: normalizeText(source.runState) || uploadProgress.runState,
+      storageProvider: normalizeText(source.storageProvider) || uploadProgress.storageProvider,
+      imageUploadMode: normalizeText(source.imageUploadMode) || uploadProgress.imageUploadMode,
+      concurrency: Math.max(0, toCount(source.concurrency, uploadProgress.concurrency)),
+      imageQuality: Math.max(0, toCount(source.imageQuality, uploadProgress.imageQuality))
+    });
+  }
+
+  async function refreshUploadProgress(runId) {
+    const bridge = getBridge(featureBridge);
+
+    if (!bridge || typeof bridge.getPodUploadSheetMiaoshouCosUploadProgressSnapshot !== 'function' || !runId) {
+      return;
+    }
+
+    try {
+      const snapshot = await bridge.getPodUploadSheetMiaoshouCosUploadProgressSnapshot({
+        runId
+      });
+      applyUploadProgressSnapshot(snapshot);
+    } catch (_error) {}
+  }
+
+  function startUploadProgressPolling(runId) {
+    stopUploadProgressPolling();
+
+    if (!runId) {
+      return;
+    }
+
+    void refreshUploadProgress(runId);
+    uploadProgressPollTimer = window.setInterval(() => {
+      void refreshUploadProgress(runId);
+    }, 600);
+  }
+
   async function importProducts() {
     const bridge = getBridge(featureBridge);
 
@@ -145,6 +255,7 @@ export function useProductWorkflowTasks(options = {}) {
       products.value.push(...nextProducts);
       activeProductId.value = nextProducts[0].id;
       lastImportDirectoryPath.value = normalizeText(result.directoryPath) || lastImportDirectoryPath.value;
+      uploadFailedFilePaths.value = [];
       showMessage(messageApi, 'success', `\u5df2\u5bfc\u5165 ${nextProducts.length} \u4e2a\u5546\u54c1`);
       scheduleStateSave();
     } catch (error) {
@@ -173,53 +284,92 @@ export function useProductWorkflowTasks(options = {}) {
       onOk() {
         products.value = [];
         activeProductId.value = '';
+        uploadFailedFilePaths.value = [];
+        resetUploadProgress();
         scheduleStateSave();
       }
     });
   }
 
-  async function uploadImages() {
+  function getImageUploadSnapshot() {
+    return {
+      totalCount: uploadProgress.total || products.value.length,
+      retryCount: uploadFailedFilePaths.value.length,
+      retryFilePaths: uploadFailedFilePaths.value.slice(),
+      imageUploadMode: uploadProgress.imageUploadMode || 'original',
+      concurrency: uploadProgress.concurrency || 8,
+      imageQuality: uploadProgress.imageQuality || 90
+    };
+  }
+
+  function applyUploadResult(result) {
+    const items = Array.isArray(result && result.items) ? result.items : [];
+    const urlByPath = new Map(items.filter((item) => {
+      return item && item.status === 'success' && item.url;
+    }).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
+    const failedFilePaths = items
+      .filter((item) => item && item.status === 'failed' && normalizeText(item.filePath))
+      .map((item) => normalizeText(item.filePath));
+
+    products.value = products.value.map((product) => {
+      const nextProduct = createPodUploadSheetMiaoshouProduct(product, {
+        defaultFields: DEFAULT_PRODUCT_FIELDS
+      });
+
+      ['carousel', 'assets', 'preview'].forEach((sectionId) => {
+        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
+          const key = getMaterialNameKey(name);
+          const path = nextProduct.materialPathMap[sectionId][key];
+          return urlByPath.get(path) || name;
+        });
+      });
+
+      return nextProduct;
+    });
+
+    uploadFailedFilePaths.value = failedFilePaths;
+    Object.assign(uploadProgress, {
+      total: Number(result && result.totalCount) || items.length,
+      completed: Number(result && result.completedCount) || items.length,
+      success: Number(result && result.successCount) || 0,
+      uploaded: Number(result && result.uploadedCount) || 0,
+      cached: Number(result && result.cachedCount) || 0,
+      failed: Number(result && result.failedCount) || 0,
+      canceled: Number(result && result.canceledCount) || 0,
+      runState: result && result.canceled ? 'canceled' : 'completed'
+    });
+  }
+
+  async function executeImageUpload(options = {}) {
     const bridge = getBridge(featureBridge);
 
     if (!bridge || uploadingImages.value) return;
 
     uploadingImages.value = true;
-    Object.assign(uploadProgress, { total: 0, success: 0, uploaded: 0, cached: 0, failed: 0, canceled: 0 });
+    resetUploadProgress();
+    Object.assign(uploadProgress, {
+      runState: 'starting',
+      storageProvider: normalizeText(options && options.storageProvider) || 'tencent-cos',
+      imageUploadMode: normalizeText(options && options.imageUploadMode) || 'original',
+      concurrency: Math.max(1, Number(options && options.concurrency) || 8),
+      imageQuality: Math.max(1, Number(options && options.imageQuality) || 90)
+    });
 
     try {
+      const runId = createId('pod-cos');
+      startUploadProgressPolling(runId);
+
       const result = await bridge.uploadPodUploadSheetMiaoshouCosImages({
-        runId: createId('pod-cos'),
+        runId,
+        storageProvider: normalizeText(options && options.storageProvider) || 'tencent-cos',
+        imageUploadMode: normalizeText(options && options.imageUploadMode) || 'original',
+        concurrency: Math.max(1, Number(options && options.concurrency) || 8),
+        imageQuality: Math.max(1, Number(options && options.imageQuality) || 90),
+        retryFailedOnly: options && options.retryFailedOnly === true,
+        retryFilePaths: Array.isArray(options && options.retryFilePaths) ? options.retryFilePaths.slice() : [],
         products: products.value,
-        imageUploadMode: 'original'
       });
-      const items = Array.isArray(result && result.items) ? result.items : [];
-      const urlByPath = new Map(items.filter((item) => {
-        return item && item.status === 'success' && item.url;
-      }).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
-
-      products.value = products.value.map((product) => {
-        const nextProduct = createPodUploadSheetMiaoshouProduct(product, {
-          defaultFields: DEFAULT_PRODUCT_FIELDS
-        });
-
-        ['carousel', 'assets', 'preview'].forEach((sectionId) => {
-          nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
-            const key = getMaterialNameKey(name);
-            const path = nextProduct.materialPathMap[sectionId][key];
-            return urlByPath.get(path) || name;
-          });
-        });
-
-        return nextProduct;
-      });
-      Object.assign(uploadProgress, {
-        total: Number(result && result.totalCount) || items.length,
-        success: Number(result && result.successCount) || 0,
-        uploaded: Number(result && result.uploadedCount) || 0,
-        cached: Number(result && result.cachedCount) || 0,
-        failed: Number(result && result.failedCount) || 0,
-        canceled: Number(result && result.canceledCount) || 0
-      });
+      applyUploadResult(result);
       showMessage(messageApi, 'success', '\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
       scheduleStateSave();
     } catch (error) {
@@ -229,6 +379,7 @@ export function useProductWorkflowTasks(options = {}) {
         '\u56fe\u7247\u4e0a\u4f20\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5')
       );
     } finally {
+      stopUploadProgressPolling();
       uploadingImages.value = false;
     }
   }
@@ -387,12 +538,17 @@ export function useProductWorkflowTasks(options = {}) {
     }
   }
 
+  onBeforeUnmount(() => {
+    stopUploadProgressPolling();
+  });
+
   return {
     importingProducts,
     uploadingImages,
     exportingTable,
     generatingAiTitles,
     uploadProgress,
+    uploadFailedFilePaths,
     aiProgress,
     aiTitleEligibleCount,
     aiTitleRetryCount,
@@ -403,7 +559,8 @@ export function useProductWorkflowTasks(options = {}) {
     handleProductTitleChange,
     importProducts,
     clearProducts,
-    uploadImages,
+    getImageUploadSnapshot,
+    executeImageUpload,
     getBatchAiTitleSnapshot,
     openBatchAiTitleDialog,
     executeBatchAiTitleGeneration,

@@ -1882,6 +1882,7 @@ app.whenReady().then(() => {
     return createPodUploadSheetMiaoshouCosUploadService({
       sessionStore,
       featureCenterProfileService,
+      globalConfigService,
       runtimeLogger
     });
   });
@@ -2004,6 +2005,7 @@ app.whenReady().then(() => {
     return createPodUploadSheetMiaoshouCosUploadService({
       sessionStore,
       featureCenterProfileService,
+      globalConfigService,
       runtimeLogger,
       entryId: 'pod-upload-sheet-miaoshou-universal-table',
       missingEntryMessage: '\u5999\u624b\u901a\u7528\u7248\u56fe\u7247\u4e0a\u4f20\u6a21\u5757\u672a\u6ce8\u518c\uff0c\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u7f13\u5b58\u3002',
