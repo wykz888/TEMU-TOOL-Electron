@@ -4,7 +4,7 @@ const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
 const { podUploadSheetMiaoshouFeature } = require('../features/featureCenter/podUploadSheetMiaoshou');
 
-const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260711-pod-opt-2';
+const POD_UPLOAD_SHEET_MIAOSHOU_ASSET_VERSION = '20260712-pod-dialog-fix-1';
 
 function resolveDevServerUrl() {
   const urlText = String(process.env.TEMU_POD_UPLOAD_SHEET_MIAOSHOU_DEV_SERVER_URL || '').trim();

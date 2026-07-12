@@ -5,6 +5,9 @@ import {
   DEFAULT_AI_BASE_URL,
   DEFAULT_AI_MODEL
 } from '../globalConfigApp/constants.js';
+import {
+  IMAGE_UPLOAD_MODE_OPTIONS
+} from '../shared/imageUpload/useImageUploadDialog.js';
 
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const DEFAULT_CONCURRENCY = 20;
@@ -35,21 +38,10 @@ const STORAGE_PROVIDER_OPTIONS = Object.freeze([
   })
 ]);
 
-const IMAGE_COMPRESSION_OPTIONS = Object.freeze([
-  Object.freeze({
-    value: 'smart-jpeg',
-    label: '\u667a\u80fd JPG \u538b\u7f29'
-  }),
-  Object.freeze({
-    value: 'high-quality',
-    label: '\u9ad8\u6e05\u4f18\u5148'
-  })
-]);
-
 const OUTPUT_LANGUAGE_OPTIONS = Object.freeze([
   Object.freeze({
     value: 'en',
-    label: 'English'
+    label: '\u82f1\u6587'
   }),
   Object.freeze({
     value: 'zh',
@@ -76,11 +68,27 @@ function normalizeAiProvider() {
 }
 
 function normalizeImageCompression(value) {
-  return value === 'high-quality' ? 'high-quality' : 'smart-jpeg';
+  const normalizedValue = normalizeText(value).toLowerCase();
+
+  if (!normalizedValue || normalizedValue === 'smart-jpeg' || normalizedValue === 'high-quality' || normalizedValue === 'jpeg') {
+    return 'jpg';
+  }
+
+  return IMAGE_UPLOAD_MODE_OPTIONS.some((item) => item.value === normalizedValue)
+    ? normalizedValue
+    : 'jpg';
 }
 
 function normalizeOutputLanguage(value) {
   return value === 'zh' ? 'zh' : 'en';
+}
+
+function hasOwnValue(source, key) {
+  return Object.prototype.hasOwnProperty.call(source, key);
+}
+
+function getStorageProviderLabel(provider) {
+  return provider === 'cloudflare-r2' ? 'Cloudflare R2' : '\u817e\u8baf COS';
 }
 
 function getGlobalConfigBridge() {
@@ -122,7 +130,7 @@ function createDefaultFormState() {
     apiBaseUrl: DEFAULT_AI_BASE_URL,
     model: DEFAULT_AI_MODEL,
     storageProvider: 'tencent-cos',
-    imageCompression: 'smart-jpeg',
+    imageCompression: 'jpg',
     concurrency: DEFAULT_CONCURRENCY,
     targetLength: DEFAULT_TARGET_LENGTH,
     imageQuality: DEFAULT_IMAGE_QUALITY,
@@ -168,16 +176,51 @@ export function useBatchAiTitleDialog() {
 
     summary.totalCount = Math.max(0, Number(source.totalCount) || 0);
     summary.retryCount = Math.max(0, Number(source.retryCount) || 0);
-    form.prefixText = normalizeText(source.prefixText);
-    form.suffixText = normalizeText(source.suffixText);
-    form.extraPrompt = normalizeText(source.extraPrompt);
+    applyPreferences(source);
+  }
+
+  function applyPreferences(preferences) {
+    const source = preferences && typeof preferences === 'object' ? preferences : {};
+
+    form.aiProvider = normalizeAiProvider(hasOwnValue(source, 'aiProvider') ? source.aiProvider : form.aiProvider);
+    form.apiBaseUrl = normalizeText(hasOwnValue(source, 'apiBaseUrl') ? source.apiBaseUrl : form.apiBaseUrl)
+      || normalizeText(form.apiBaseUrl)
+      || DEFAULT_AI_BASE_URL;
+    form.model = normalizeText(hasOwnValue(source, 'model') ? source.model : form.model)
+      || normalizeText(form.model)
+      || DEFAULT_AI_MODEL;
+    form.storageProvider = normalizeStorageProvider(
+      hasOwnValue(source, 'storageProvider') ? source.storageProvider || form.storageProvider : form.storageProvider
+    );
+    form.imageCompression = normalizeImageCompression(
+      hasOwnValue(source, 'imageCompression') ? source.imageCompression || form.imageCompression : form.imageCompression
+    );
+    form.concurrency = normalizeInteger(
+      hasOwnValue(source, 'concurrency') ? source.concurrency : form.concurrency,
+      form.concurrency || DEFAULT_CONCURRENCY,
+      MIN_CONCURRENCY,
+      MAX_CONCURRENCY
+    );
     form.targetLength = normalizeInteger(
-      source.targetLength,
-      DEFAULT_TARGET_LENGTH,
+      hasOwnValue(source, 'targetLength') ? source.targetLength : form.targetLength,
+      form.targetLength || DEFAULT_TARGET_LENGTH,
       MIN_TARGET_LENGTH,
       MAX_TARGET_LENGTH
     );
-    form.outputLanguage = normalizeOutputLanguage(source.outputLanguage);
+    form.imageQuality = normalizeInteger(
+      hasOwnValue(source, 'imageQuality') ? source.imageQuality : form.imageQuality,
+      form.imageQuality || DEFAULT_IMAGE_QUALITY,
+      MIN_IMAGE_QUALITY,
+      MAX_IMAGE_QUALITY
+    );
+    form.prefixText = hasOwnValue(source, 'prefixText') ? normalizeText(source.prefixText) : form.prefixText;
+    form.suffixText = hasOwnValue(source, 'suffixText') ? normalizeText(source.suffixText) : form.suffixText;
+    form.outputLanguage = normalizeOutputLanguage(
+      hasOwnValue(source, 'outputLanguage') ? source.outputLanguage || form.outputLanguage : form.outputLanguage
+    );
+    form.useCache = hasOwnValue(source, 'useCache') ? source.useCache === true : form.useCache === true;
+    form.extraPrompt = hasOwnValue(source, 'extraPrompt') ? normalizeText(source.extraPrompt) : form.extraPrompt;
+    summary.storageName = getStorageProviderLabel(form.storageProvider);
   }
 
   function applyGlobalConfig(storageConfig, aiConfig) {
@@ -196,7 +239,7 @@ export function useBatchAiTitleDialog() {
       MAX_CONCURRENCY
     );
     summary.apiKeyCount = apiKeyCount;
-    summary.storageName = storageProvider === 'cloudflare-r2' ? 'Cloudflare R2' : '\u817e\u8baf COS';
+    summary.storageName = getStorageProviderLabel(storageProvider);
     summary.aiName = '\u706b\u5c71\u5f15\u64ce';
     summary.warning = apiKeyCount ? '' : 'AI KEY \u672a\u914d\u7f6e\uff0c\u8bf7\u5148\u5230\u5168\u5c40\u914d\u7f6e\u586b\u5199\u3002';
   }
@@ -224,6 +267,7 @@ export function useBatchAiTitleDialog() {
 
     try {
       await loadGlobalConfig();
+      applySnapshot(snapshot);
       setStatus('');
     } catch (error) {
       setStatus(
@@ -345,7 +389,7 @@ export function useBatchAiTitleDialog() {
     status,
     aiPlatformOptions: AI_PLATFORM_OPTIONS,
     storageProviderOptions: STORAGE_PROVIDER_OPTIONS,
-    imageCompressionOptions: IMAGE_COMPRESSION_OPTIONS,
+    imageCompressionOptions: IMAGE_UPLOAD_MODE_OPTIONS,
     outputLanguageOptions: OUTPUT_LANGUAGE_OPTIONS,
     modelOptions: AI_MODEL_OPTIONS,
     apiBaseOptions: AI_BASE_URL_OPTIONS,
@@ -357,6 +401,8 @@ export function useBatchAiTitleDialog() {
     maxImageQuality: MAX_IMAGE_QUALITY,
     openDialog,
     closeDialog,
+    collectPayload,
+    applyPreferences,
     startGeneration,
     installGlobalBridge
   };

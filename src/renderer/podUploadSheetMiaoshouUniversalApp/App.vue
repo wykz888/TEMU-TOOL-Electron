@@ -156,6 +156,9 @@ import ImageUploadConfigModal from '../shared/imageUpload/ImageUploadConfigModal
 import MaterialPresetModals from '../shared/materialPreset/MaterialPresetModals.vue';
 import { useImageUploadDialog } from '../shared/imageUpload/useImageUploadDialog.js';
 import { useMaterialPresetDialogs } from '../shared/materialPreset/useMaterialPresetDialogs.js';
+import {
+  pickPreferenceFields
+} from '../shared/dialogPreferenceCache.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 import UniversalProductDataTable from './components/UniversalProductDataTable.vue';
 import UniversalSkuSettingsPanel from './components/UniversalSkuSettingsPanel.vue';
@@ -165,6 +168,33 @@ const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const UNIVERSAL_TEMPLATE_ID = 'universal';
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const MATERIAL_SECTIONS = Object.freeze(['carousel', 'assets', 'preview']);
+const IMAGE_UPLOAD_PREFERENCE_KEYS = Object.freeze([
+  'storageProvider',
+  'imageUploadMode',
+  'concurrency',
+  'imageQuality'
+]);
+const BATCH_AI_TITLE_PREFERENCE_KEYS = Object.freeze([
+  'aiProvider',
+  'apiBaseUrl',
+  'model',
+  'storageProvider',
+  'imageCompression',
+  'concurrency',
+  'targetLength',
+  'imageQuality',
+  'prefixText',
+  'suffixText',
+  'outputLanguage',
+  'useCache',
+  'extraPrompt'
+]);
+const BATCH_AI_TITLE_EMPTY_TEXT_KEYS = Object.freeze([
+  'prefixText',
+  'suffixText',
+  'extraPrompt',
+  'outputLanguage'
+]);
 
 const DEFAULT_PRODUCT_FIELDS = Object.freeze({
   localName: '',
@@ -196,6 +226,8 @@ const templateName = ref('');
 const imageUploadMode = ref('original');
 const lastImportDirectoryPath = ref('');
 const viewportHeight = ref(typeof window === 'undefined' ? 760 : window.innerHeight);
+const imageUploadPreferenceCache = ref({});
+const batchAiTitlePreferenceCache = ref({});
 const importingProducts = ref(false);
 const loadingTemplates = ref(false);
 const savingTemplate = ref(false);
@@ -257,8 +289,12 @@ const batchAiTitleMinTargetLength = batchAiTitleDialog.minTargetLength;
 const batchAiTitleMaxTargetLength = batchAiTitleDialog.maxTargetLength;
 const batchAiTitleMinImageQuality = batchAiTitleDialog.minImageQuality;
 const batchAiTitleMaxImageQuality = batchAiTitleDialog.maxImageQuality;
-const closeBatchAiTitleDialog = batchAiTitleDialog.closeDialog;
+function closeBatchAiTitleDialog() {
+  collectBatchAiTitlePreferences();
+  return batchAiTitleDialog.closeDialog();
+}
 function startBatchAiTitleDialogGeneration(retryFailedOnly = false) {
+  collectBatchAiTitlePreferences();
   scheduleStateSave();
   return batchAiTitleDialog.startGeneration(retryFailedOnly);
 }
@@ -278,26 +314,74 @@ const imageUploadMinConcurrency = imageUploadDialog.minConcurrency;
 const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
 const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
 const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
-const closeImageUploadDialog = imageUploadDialog.closeDialog;
+function closeImageUploadDialog() {
+  collectImageUploadPreferences();
+  return imageUploadDialog.closeDialog();
+}
 const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
 
-function collectImageUploadPreferences() {
-  return imageUploadDialog.collectPayload(false);
+function collectImageUploadPreferences(options = {}) {
+  const payload = imageUploadDialog.collectPayload(false);
+
+  if (options.remember !== false) {
+    rememberTemplatePreferenceFields(
+      imageUploadPreferenceCache,
+      getCurrentTemplatePreferenceKey(),
+      payload,
+      IMAGE_UPLOAD_PREFERENCE_KEYS
+    );
+  }
+
+  return payload;
 }
 
 function applyImageUploadPreferences(snapshot) {
-  return imageUploadDialog.applyPreferences(snapshot);
+  const preferences = rememberTemplatePreferenceFields(
+    imageUploadPreferenceCache,
+    getCurrentTemplatePreferenceKey(),
+    snapshot,
+    IMAGE_UPLOAD_PREFERENCE_KEYS
+  );
+
+  return imageUploadDialog.applyPreferences({
+    ...preferences,
+    ...pickPreferenceFields(snapshot, IMAGE_UPLOAD_PREFERENCE_KEYS)
+  });
 }
 
-function collectBatchAiTitlePreferences() {
-  return batchAiTitleDialog.collectPayload(false);
+function collectBatchAiTitlePreferences(options = {}) {
+  const payload = batchAiTitleDialog.collectPayload(false);
+
+  if (options.remember !== false) {
+    rememberTemplatePreferenceFields(
+      batchAiTitlePreferenceCache,
+      getCurrentTemplatePreferenceKey(),
+      payload,
+      BATCH_AI_TITLE_PREFERENCE_KEYS,
+      BATCH_AI_TITLE_EMPTY_TEXT_KEYS
+    );
+  }
+
+  return payload;
 }
 
 function applyBatchAiTitlePreferences(snapshot) {
-  return batchAiTitleDialog.applyPreferences(snapshot);
+  const preferences = rememberTemplatePreferenceFields(
+    batchAiTitlePreferenceCache,
+    getCurrentTemplatePreferenceKey(),
+    snapshot,
+    BATCH_AI_TITLE_PREFERENCE_KEYS,
+    BATCH_AI_TITLE_EMPTY_TEXT_KEYS
+  );
+
+  return batchAiTitleDialog.applyPreferences({
+    ...preferences,
+    ...pickPreferenceFields(snapshot, BATCH_AI_TITLE_PREFERENCE_KEYS, BATCH_AI_TITLE_EMPTY_TEXT_KEYS)
+  });
 }
 
 function startImageUploadFromDialog(retryFailedOnly = false) {
+  collectImageUploadPreferences();
   scheduleStateSave();
   return imageUploadDialog.startUploadFromDialog(retryFailedOnly);
 }
@@ -423,6 +507,46 @@ function normalizeText(value) {
 
 function createId(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function clonePlainValue(value, fallback) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+function getCurrentTemplatePreferenceKey() {
+  return normalizeText(selectedTemplateId.value) || UNIVERSAL_TEMPLATE_ID;
+}
+
+function getPreferenceCacheEntry(cacheRef, templateKey) {
+  const cache = cacheRef && cacheRef.value && typeof cacheRef.value === 'object' ? cacheRef.value : {};
+  const key = normalizeText(templateKey) || UNIVERSAL_TEMPLATE_ID;
+  return cache[key] && typeof cache[key] === 'object' ? cache[key] : {};
+}
+
+function rememberTemplatePreferenceFields(cacheRef, templateKey, source, keys, emptyTextKeys = []) {
+  const nextPreferences = pickPreferenceFields(source, keys, emptyTextKeys);
+
+  if (!Object.keys(nextPreferences).length) {
+    return getPreferenceCacheEntry(cacheRef, templateKey);
+  }
+
+  const cache = cacheRef && cacheRef.value && typeof cacheRef.value === 'object' ? cacheRef.value : {};
+  const key = normalizeText(templateKey) || UNIVERSAL_TEMPLATE_ID;
+  const nextEntry = {
+    ...getPreferenceCacheEntry(cacheRef, key),
+    ...nextPreferences
+  };
+
+  cacheRef.value = {
+    ...cache,
+    [key]: nextEntry
+  };
+
+  return nextEntry;
 }
 
 function splitLines(value) {
@@ -822,21 +946,37 @@ function startUploadProgressPolling(runId) {
 }
 
 function getImageUploadSnapshot() {
-  const preferences = collectImageUploadPreferences();
+  const preferences = collectImageUploadPreferences({ remember: false });
+  const templatePreferences = getPreferenceCacheEntry(imageUploadPreferenceCache, getCurrentTemplatePreferenceKey());
 
   return {
+    ...preferences,
+    ...templatePreferences,
     totalCount: getImageUploadCandidateCount(),
     retryCount: uploadFailedFilePaths.value.length,
     retryFilePaths: uploadFailedFilePaths.value.slice(),
-    storageProvider: preferences.storageProvider || uploadProgress.storageProvider,
-    imageUploadMode: preferences.imageUploadMode || imageUploadMode.value || uploadProgress.imageUploadMode || 'original',
-    concurrency: preferences.concurrency || uploadProgress.concurrency || 8,
-    imageQuality: preferences.imageQuality || uploadProgress.imageQuality || 90
+    storageProvider: templatePreferences.storageProvider || preferences.storageProvider || uploadProgress.storageProvider,
+    imageUploadMode: templatePreferences.imageUploadMode || preferences.imageUploadMode || imageUploadMode.value || uploadProgress.imageUploadMode || 'original',
+    concurrency: templatePreferences.concurrency || preferences.concurrency || uploadProgress.concurrency || 8,
+    imageQuality: templatePreferences.imageQuality || preferences.imageQuality || uploadProgress.imageQuality || 90
   };
 }
 
 function openImageUploadDialog() {
-  return imageUploadDialog.openDialog(getImageUploadSnapshot());
+  try {
+    const result = imageUploadDialog.openDialog(getImageUploadSnapshot());
+
+    if (result && typeof result.catch === 'function') {
+      return result.catch((error) => {
+        Message.error('\u6253\u5f00\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
+      });
+    }
+
+    return result;
+  } catch (error) {
+    Message.error('\u6253\u5f00\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
+    return undefined;
+  }
 }
 
 async function importProducts() {
@@ -886,18 +1026,12 @@ function handleProductTitleChange() {
 
 function applyImageUploadResult(result) {
   const items = Array.isArray(result && result.items) ? result.items : [];
-  const urlByPath = new Map(items.filter((item) => {
-    return item && item.status === 'success' && item.url;
-  }).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
 
   products.value = products.value.map((product) => {
     const nextProduct = createProduct(product);
 
     MATERIAL_SECTIONS.forEach((sectionId) => {
-      nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => {
-        const filePath = getMaterialPathByName(nextProduct, sectionId, name);
-        return urlByPath.get(filePath) || name;
-      });
+      nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => name);
     });
 
     return nextProduct;
@@ -942,6 +1076,7 @@ async function executeImageUpload(options = {}) {
 
   try {
     startUploadProgressPolling(runId);
+    const uploadProducts = clonePlainValue(products.value, []);
 
     const result = await featureBridge.value.uploadPodUploadSheetMiaoshouUniversalCosImages({
       runId,
@@ -951,7 +1086,7 @@ async function executeImageUpload(options = {}) {
       imageQuality: nextImageQuality,
       retryFailedOnly: options && options.retryFailedOnly === true,
       retryFilePaths: Array.isArray(options && options.retryFilePaths) ? options.retryFilePaths.slice() : [],
-      products: products.value
+      products: uploadProducts
     });
 
     applyImageUploadResult(result);
@@ -992,29 +1127,45 @@ async function stopImageUploadTask() {
 }
 
 function getBatchAiTitleSnapshot() {
-  const preferences = collectBatchAiTitlePreferences();
+  const preferences = collectBatchAiTitlePreferences({ remember: false });
+  const templatePreferences = getPreferenceCacheEntry(batchAiTitlePreferenceCache, getCurrentTemplatePreferenceKey());
 
   return {
+    ...preferences,
+    ...templatePreferences,
     totalCount: aiTitleEligibleCount.value,
     retryCount: aiTitleRetryCount.value,
-    aiProvider: preferences.aiProvider,
-    apiBaseUrl: preferences.apiBaseUrl,
-    model: preferences.model,
-    storageProvider: preferences.storageProvider,
-    imageCompression: preferences.imageCompression,
-    concurrency: preferences.concurrency,
-    targetLength: preferences.targetLength || '250',
-    imageQuality: preferences.imageQuality,
-    prefixText: preferences.prefixText,
-    suffixText: preferences.suffixText,
-    outputLanguage: preferences.outputLanguage || 'en',
-    useCache: preferences.useCache,
-    extraPrompt: preferences.extraPrompt
+    aiProvider: templatePreferences.aiProvider || preferences.aiProvider,
+    apiBaseUrl: templatePreferences.apiBaseUrl || preferences.apiBaseUrl,
+    model: templatePreferences.model || preferences.model,
+    storageProvider: templatePreferences.storageProvider || preferences.storageProvider,
+    imageCompression: templatePreferences.imageCompression || preferences.imageCompression,
+    concurrency: templatePreferences.concurrency || preferences.concurrency,
+    targetLength: templatePreferences.targetLength || preferences.targetLength || '250',
+    imageQuality: templatePreferences.imageQuality || preferences.imageQuality,
+    prefixText: templatePreferences.prefixText ?? preferences.prefixText,
+    suffixText: templatePreferences.suffixText ?? preferences.suffixText,
+    outputLanguage: templatePreferences.outputLanguage || preferences.outputLanguage || 'en',
+    useCache: templatePreferences.useCache ?? preferences.useCache,
+    extraPrompt: templatePreferences.extraPrompt ?? preferences.extraPrompt
   };
 }
 
 function openBatchAiTitleDialog() {
-  return batchAiTitleDialog.openDialog(getBatchAiTitleSnapshot());
+  try {
+    const result = batchAiTitleDialog.openDialog(getBatchAiTitleSnapshot());
+
+    if (result && typeof result.catch === 'function') {
+      return result.catch((error) => {
+        Message.error('\u6253\u5f00\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
+      });
+    }
+
+    return result;
+  } catch (error) {
+    Message.error('\u6253\u5f00\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u542f\u8f6f\u4ef6\u540e\u518d\u8bd5'));
+    return undefined;
+  }
 }
 
 async function executeBatchAiTitleGeneration(options = {}) {
@@ -1111,9 +1262,10 @@ async function exportTable() {
   if (!featureBridge.value || exportingTable.value || !products.value.length) return;
   exportingTable.value = true;
   try {
+    const exportProducts = clonePlainValue(products.value, []).map((product) => applyGlobalFields(product));
     const result = await featureBridge.value.exportPodUploadSheetMiaoshouUniversalTable({
       templateId: UNIVERSAL_TEMPLATE_ID,
-      products: products.value.map((product) => applyGlobalFields(product))
+      products: exportProducts
     });
     if (result && result.canceled) {
       Message.warning('\u5df2\u53d6\u6d88\u5bfc\u51fa');

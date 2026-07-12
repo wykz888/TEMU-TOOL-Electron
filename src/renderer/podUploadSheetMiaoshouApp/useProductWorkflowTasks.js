@@ -324,9 +324,6 @@ export function useProductWorkflowTasks(options = {}) {
 
   function applyUploadResult(result) {
     const items = Array.isArray(result && result.items) ? result.items : [];
-    const urlByPath = new Map(items.filter((item) => {
-      return item && item.status === 'success' && item.url;
-    }).map((item) => [normalizeText(item.filePath), normalizeText(item.url)]));
     const failedFilePaths = items
       .filter((item) => item && item.status === 'failed' && normalizeText(item.filePath))
       .map((item) => normalizeText(item.filePath));
@@ -337,22 +334,7 @@ export function useProductWorkflowTasks(options = {}) {
       });
 
       ['carousel', 'assets', 'preview'].forEach((sectionId) => {
-        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name, index) => {
-          const path = getMaterialPathByName(nextProduct, sectionId, name, index);
-          const url = urlByPath.get(path);
-
-          if (!url) {
-            return name;
-          }
-
-          const urlKey = getMaterialNameKey(url);
-
-          if (urlKey && path) {
-            nextProduct.materialPathMap[sectionId][urlKey] = path;
-          }
-
-          return url;
-        });
+        nextProduct.materials[sectionId] = nextProduct.materials[sectionId].map((name) => name);
       });
 
       return nextProduct;

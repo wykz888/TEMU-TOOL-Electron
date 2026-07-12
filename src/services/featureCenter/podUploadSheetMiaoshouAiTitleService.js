@@ -1312,8 +1312,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const suffixHint = splitLocalizedTitleHint(suffixText);
     const resolvedOutputLanguage = getLengthControlLanguage(entryId, outputLanguage);
     const lengthTarget = normalizeRequestedTitleLength(targetLength);
-    const limitBothTitles = getResolvedEntryId(entryId) === ENTRY_ID;
-    const secondaryTitleMaxLength = limitBothTitles ? lengthTarget : TITLE_MAX_LENGTH;
+    const secondaryTitleMaxLength = lengthTarget;
     const strictLengthRules = resolvedOutputLanguage === 'zh'
       ? [
         'zhTitle composition rules:',
@@ -1402,8 +1401,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const suffixHint = splitLocalizedTitleHint(suffixText);
     const resolvedOutputLanguage = getLengthControlLanguage(entryId, outputLanguage);
     const resolvedTargetLength = normalizeRequestedTitleLength(targetLength);
-    const limitBothTitles = getResolvedEntryId(entryId) === ENTRY_ID;
-    const secondaryTitleMaxLength = limitBothTitles ? resolvedTargetLength : TITLE_MAX_LENGTH;
+    const secondaryTitleMaxLength = resolvedTargetLength;
     const enMiddleText = resolvedOutputLanguage === 'en'
       ? buildLengthOptimizedEnglishMiddleText(
         titleResult,
@@ -1420,18 +1418,18 @@ function createPodUploadSheetMiaoshouAiTitleService({
       normalizeMiddleTitlePart(titleResult.zhTitle, prefixHint.zhText, suffixHint.zhText) || titleResult.zhTitle,
       suffixHint.zhText,
       {
-        maxLength: resolvedOutputLanguage === 'zh' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength
+        maxLength: resolvedOutputLanguage === 'zh' ? resolvedTargetLength : secondaryTitleMaxLength
       }
-    ) || trimTitleLength(titleResult.zhTitle, resolvedOutputLanguage === 'zh' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength);
+    ) || trimTitleLength(titleResult.zhTitle, resolvedOutputLanguage === 'zh' ? resolvedTargetLength : secondaryTitleMaxLength);
     const enTitle = fitTitlePartsToLength(
       prefixHint.enText,
       enMiddleText,
       suffixHint.enText,
       {
         preferSpace: true,
-        maxLength: resolvedOutputLanguage === 'en' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength
+        maxLength: resolvedOutputLanguage === 'en' ? resolvedTargetLength : secondaryTitleMaxLength
       }
-    ) || trimTitleLength(titleResult.enTitle, resolvedOutputLanguage === 'en' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength);
+    ) || trimTitleLength(titleResult.enTitle, resolvedOutputLanguage === 'en' ? resolvedTargetLength : secondaryTitleMaxLength);
 
     if (!zhTitle || !enTitle) {
       throw new Error('AI returned incomplete titles.');

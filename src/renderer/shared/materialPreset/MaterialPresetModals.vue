@@ -29,7 +29,7 @@
             :class="{ 'is-selected': isCarouselPresetSelected(item.name) }"
           >
             <a-checkbox :model-value="isCarouselPresetSelected(item.name)" @change="(checked) => toggleCarouselPresetItem(item.name, checked)" />
-            <span class="pod-carousel-file-name" :title="item.name">{{ item.name }}</span>
+            <span class="pod-carousel-file-name" :title="getCarouselPresetFileTip(item.name)">{{ getCarouselPresetDisplayName(item.name) }}</span>
             <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
           </label>
           <a-empty v-if="!carouselPresetCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
@@ -173,7 +173,7 @@
             :class="{ 'is-selected': isDescriptionPresetSelected(item.name) }"
           >
             <a-checkbox :model-value="isDescriptionPresetSelected(item.name)" @change="(checked) => toggleDescriptionPresetItem(item.name, checked)" />
-            <span class="pod-carousel-file-name" :title="item.name">{{ item.name }}</span>
+            <span class="pod-carousel-file-name" :title="getCarouselPresetFileTip(item.name)">{{ getCarouselPresetDisplayName(item.name) }}</span>
             <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
           </label>
           <a-empty v-if="!descriptionPresetCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
