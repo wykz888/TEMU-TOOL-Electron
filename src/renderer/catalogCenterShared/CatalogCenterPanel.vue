@@ -336,7 +336,7 @@ defineExpose({
 .catalog-center-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(308px, 1fr));
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
 }
 
@@ -347,16 +347,17 @@ defineExpose({
 .catalog-center-card {
   position: relative;
   overflow: hidden;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), #ffffff);
-  border: 1px solid rgba(208, 217, 230, 0.9);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+  min-height: 256px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
   transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .catalog-center-card:hover {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.42);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
   transform: translateY(-1px);
 }
 
@@ -365,20 +366,28 @@ defineExpose({
 }
 
 .catalog-center-card :deep(.arco-card-body) {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-height: 100%;
-  padding: 18px 18px 16px;
+  padding: 16px 16px 18px;
 }
 
-.catalog-center-card-top,
-.catalog-center-card-footer {
+.catalog-center-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.catalog-center-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
 }
 
 .catalog-center-card-icon {
@@ -387,9 +396,9 @@ defineExpose({
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
-  color: #ff5a3c;
-  background: linear-gradient(180deg, rgba(255, 90, 60, 0.12), rgba(255, 90, 60, 0.06));
+  border-radius: 11px;
+  color: var(--theme-primary-color-deep);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
 }
 
 .catalog-center-card-icon :deep(svg) {
@@ -398,11 +407,11 @@ defineExpose({
 
 .catalog-center-card-tag {
   margin-left: auto;
-  padding-inline: 10px;
-  min-height: 28px;
-  color: var(--theme-primary-ink, #445468);
-  background: rgba(248, 250, 252, 0.92);
-  border-color: rgba(226, 232, 240, 0.9);
+  padding: 0 10px;
+  min-height: 26px;
+  color: var(--theme-primary-color-deep);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
   border-radius: 999px;
   font-weight: 700;
 }
@@ -410,13 +419,13 @@ defineExpose({
 .catalog-center-card-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: 8px;
   align-items: start;
 }
 
 .catalog-center-card-copy {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   align-content: start;
   min-width: 0;
 }
@@ -424,9 +433,9 @@ defineExpose({
 .catalog-center-card-copy h3 {
   margin: 0;
   color: #132238;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 1.35;
+  line-height: 1.38;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -437,7 +446,7 @@ defineExpose({
   margin: 0;
   color: #5f6f84;
   font-size: 13px;
-  line-height: 1.72;
+  line-height: 1.65;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -445,19 +454,19 @@ defineExpose({
 }
 
 .catalog-center-action-button {
-  width: auto;
-  min-width: 110px;
+  width: 100%;
+  min-width: 0;
   justify-content: center;
-  min-height: 34px;
+  min-height: 36px;
   padding: 0 18px;
-  margin-left: auto;
-  border-radius: 10px;
-  font-weight: 600;
+  margin-left: 0;
+  border-radius: 8px;
+  font-weight: 700;
   font-size: 13px;
   color: #ffffff !important;
   background: linear-gradient(135deg, var(--theme-primary-color), var(--theme-primary-color-deep)) !important;
   border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.35) !important;
-  box-shadow: 0 2px 8px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 18px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
