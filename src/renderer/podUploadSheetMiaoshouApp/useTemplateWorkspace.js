@@ -1,6 +1,8 @@
 import { computed, ref } from 'vue';
 import { normalizeText, splitLines } from './utils/podUploadSheetMiaoshouData.js';
 
+const NEW_FORM_TEMPLATE_OPTION_VALUE = '__new_form_template__';
+
 function getBridge(featureBridge) {
   return featureBridge && typeof featureBridge === 'object' && 'value' in featureBridge
     ? featureBridge.value
@@ -74,10 +76,16 @@ export function useTemplateWorkspace(options = {}) {
       label: item.label ? `${item.id} - ${item.label}` : item.id
     }));
   });
-  const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({
-    value: item.id,
-    label: item.name
-  })));
+  const formTemplateOptions = computed(() => [
+    {
+      value: NEW_FORM_TEMPLATE_OPTION_VALUE,
+      label: '\u65b0\u589e\u6a21\u677f'
+    },
+    ...formTemplates.value.map((item) => ({
+      value: item.id,
+      label: item.name
+    }))
+  ]);
 
   async function loadInitialData() {
     await Promise.allSettled([loadCategories(), loadWorkspaceState()]);
@@ -231,6 +239,13 @@ export function useTemplateWorkspace(options = {}) {
   }
 
   function applySelectedTemplate(value) {
+    if (value === NEW_FORM_TEMPLATE_OPTION_VALUE) {
+      selectedTemplateId.value = '';
+      templateName.value = '';
+      scheduleStateSave();
+      return;
+    }
+
     const template = formTemplates.value.find((item) => item.id === value);
 
     if (!template) return;

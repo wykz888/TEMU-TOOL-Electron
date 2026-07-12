@@ -166,6 +166,7 @@ import UniversalTemplateWorkspacePanel from './components/UniversalTemplateWorks
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const UNIVERSAL_TEMPLATE_ID = 'universal';
+const NEW_FORM_TEMPLATE_OPTION_VALUE = '__new_form_template__';
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const MATERIAL_SECTIONS = Object.freeze(['carousel', 'assets', 'preview']);
 const IMAGE_UPLOAD_PREFERENCE_KEYS = Object.freeze([
@@ -419,7 +420,13 @@ const featureBridge = {
     return window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null;
   }
 };
-const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ value: item.id, label: item.name })));
+const formTemplateOptions = computed(() => [
+  {
+    value: NEW_FORM_TEMPLATE_OPTION_VALUE,
+    label: '\u65b0\u589e\u6a21\u677f'
+  },
+  ...formTemplates.value.map((item) => ({ value: item.id, label: item.name }))
+]);
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
 const {
   carouselPresetVisible,
@@ -1433,6 +1440,13 @@ async function saveCurrentTemplate() {
 }
 
 function applySelectedTemplate(value) {
+  if (value === NEW_FORM_TEMPLATE_OPTION_VALUE) {
+    selectedTemplateId.value = '';
+    templateName.value = '';
+    scheduleStateSave();
+    return;
+  }
+
   const template = formTemplates.value.find((item) => item.id === value);
   if (!template) return;
   selectedTemplateId.value = template.id;
