@@ -225,6 +225,7 @@ const selectedTemplateId = ref('');
 const templateName = ref('');
 const imageUploadMode = ref('original');
 const lastImportDirectoryPath = ref('');
+const lastExportDirectoryPath = ref('');
 const viewportHeight = ref(typeof window === 'undefined' ? 760 : window.innerHeight);
 const imageUploadPreferenceCache = ref({});
 const batchAiTitlePreferenceCache = ref({});
@@ -503,6 +504,17 @@ const aiTitleProgressText = computed(() => {
 
 function normalizeText(value) {
   return String(value === undefined || value === null ? '' : value).trim();
+}
+
+function getDirectoryPathFromFilePath(filePath) {
+  const normalizedPath = normalizeText(filePath).replace(/\//g, '\\');
+  const lastSeparatorIndex = normalizedPath.lastIndexOf('\\');
+
+  if (lastSeparatorIndex === 2 && /^[a-z]:\\/i.test(normalizedPath)) {
+    return normalizedPath.slice(0, 3);
+  }
+
+  return lastSeparatorIndex > 0 ? normalizedPath.slice(0, lastSeparatorIndex) : '';
 }
 
 function createId(prefix) {
@@ -1268,13 +1280,22 @@ async function exportTable() {
     const exportProducts = clonePlainValue(products.value, []).map((product) => applyGlobalFields(product));
     const result = await featureBridge.value.exportPodUploadSheetMiaoshouUniversalTable({
       templateId: UNIVERSAL_TEMPLATE_ID,
-      products: exportProducts
+      products: exportProducts,
+      defaultExportDirectoryPath: lastExportDirectoryPath.value
     });
     if (result && result.canceled) {
       Message.warning('\u5df2\u53d6\u6d88\u5bfc\u51fa');
       return;
     }
+    if (result && result.filePath) {
+      const nextExportDirectoryPath = normalizeText(result.directoryPath) || getDirectoryPathFromFilePath(result.filePath);
+      lastExportDirectoryPath.value = nextExportDirectoryPath || lastExportDirectoryPath.value;
+      scheduleStateSave();
+    }
     Message.success(`\u5df2\u5bfc\u51fa ${Number(result && result.rowCount) || 0} \u884c`);
+    if (result && result.filePath) {
+      Message.info(`\u4fdd\u5b58\u5230\uff1a${result.filePath}`);
+    }
   } catch (error) {
     Message.error('\u5bfc\u51fa\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5'));
   } finally {
@@ -1330,6 +1351,7 @@ async function loadWorkspaceState() {
   templateName.value = normalizeText(workspace.templateName || workspace.selectedTemplateName);
   imageUploadMode.value = normalizeText(workspaceImageUploadConfig.imageUploadMode || workspace.imageUploadMode) || 'original';
   lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
+  lastExportDirectoryPath.value = normalizeText(workspace.lastExportDirectoryPath);
   carouselPresetText.value = Array.isArray(workspace.carouselPresetSelection) ? workspace.carouselPresetSelection.join('\n') : '';
   descriptionPresetText.value = Array.isArray(workspace.descriptionPresetSelection) ? workspace.descriptionPresetSelection.join('\n') : '';
   randomCarouselOnlyFirst.value = workspace.randomCarouselOnlyFirst === true
@@ -1471,6 +1493,7 @@ function scheduleStateSave() {
     void featureBridge.value.savePodUploadSheetMiaoshouUniversalWorkspaceState({
       workspace: {
         lastImportDirectoryPath: lastImportDirectoryPath.value,
+        lastExportDirectoryPath: lastExportDirectoryPath.value,
         imageUploadMode: imageUploadPreferences.imageUploadMode,
         selectedTemplateId: selectedTemplateId.value,
         templateName: templateName.value,

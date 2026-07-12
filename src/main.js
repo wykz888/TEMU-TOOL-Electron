@@ -3283,7 +3283,7 @@ app.whenReady().then(() => {
           ...(payload && typeof payload === 'object' ? payload : {}),
           parentWindow: resolvePodUploadSheetParentWindow(context, 'universal')
         })
-        : { canceled: true, filePath: '', rowCount: 0, productCount: 0 }
+        : { canceled: true, filePath: '', directoryPath: '', rowCount: 0, productCount: 0 }
     ),
     uploadPodUploadSheetMiaoshouUniversalCosImages: (payload) => (
       podUploadSheetMiaoshouUniversalCosUploadService

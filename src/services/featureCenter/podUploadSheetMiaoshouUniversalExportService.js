@@ -1109,6 +1109,25 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     return `pod-export-miaoshou-universal-${formatExportTimestamp()}.xlsx`;
   }
 
+  function resolveDefaultExportDirectoryPath(payload, fallbackDirectoryPath) {
+    const candidate = normalizeText(
+      payload && (
+        payload.defaultExportDirectoryPath
+        || payload.lastExportDirectoryPath
+        || payload.exportDirectoryPath
+      )
+    );
+
+    if (!candidate || /^[a-z][a-z0-9+.-]*:\/\//i.test(candidate)) {
+      return fallbackDirectoryPath;
+    }
+
+    const resolvedPath = path.resolve(candidate);
+    const extension = path.extname(resolvedPath).toLowerCase();
+
+    return extension === '.xlsx' ? path.dirname(resolvedPath) : resolvedPath;
+  }
+
   async function promptExportWorkbookFilePath(defaultFilePath, parentWindow) {
     const saveResult = await dialog.showSaveDialog(parentWindow || undefined, {
       title: '导出表格',
@@ -1141,13 +1160,15 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     const downloadsDirectory = app && typeof app.getPath === 'function'
       ? app.getPath('downloads')
       : process.cwd();
-    const defaultFilePath = path.join(downloadsDirectory, getDefaultExportWorkbookFileName());
+    const defaultDirectoryPath = resolveDefaultExportDirectoryPath(payload, downloadsDirectory);
+    const defaultFilePath = path.join(defaultDirectoryPath, getDefaultExportWorkbookFileName());
     const selectedFilePath = await promptExportWorkbookFilePath(defaultFilePath, parentWindow);
 
     if (!selectedFilePath) {
       return {
         canceled: true,
         filePath: '',
+        directoryPath: '',
         rowCount: 0,
         productCount: products.length,
         templateId: UNIVERSAL_TEMPLATE_ID,
@@ -1159,10 +1180,12 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     const exportPayload = await buildExportRows(resolvedProducts);
     const workbookBuffer = await buildWorkbookBufferFromTemplate(exportPayload.dataRows);
     await fs.promises.writeFile(selectedFilePath, workbookBuffer);
+    const selectedDirectoryPath = path.dirname(selectedFilePath);
 
     if (runtimeLogger && typeof runtimeLogger.log === 'function') {
       runtimeLogger.log('pod_upload_sheet_universal_table_exported', {
         filePaths: [selectedFilePath],
+        directoryPath: selectedDirectoryPath,
         productCount: resolvedProducts.length,
         rowCount: exportPayload.rowCount
       });
@@ -1171,6 +1194,7 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     return {
       canceled: false,
       filePath: selectedFilePath,
+      directoryPath: selectedDirectoryPath,
       filePaths: [selectedFilePath],
       rowCount: exportPayload.rowCount,
       productCount: resolvedProducts.length,
@@ -1178,6 +1202,7 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       exports: [{
         templateId: UNIVERSAL_TEMPLATE_ID,
         filePath: selectedFilePath,
+        directoryPath: selectedDirectoryPath,
         rowCount: exportPayload.rowCount,
         productCount: exportPayload.productCount
       }]

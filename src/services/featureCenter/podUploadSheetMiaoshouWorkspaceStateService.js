@@ -77,6 +77,7 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
       updatedAt: '',
       workspace: {
         lastImportDirectoryPath: '',
+        lastExportDirectoryPath: '',
         selectedTemplateId: '',
         templateName: '',
         imageUploadMode: 'original',
@@ -368,6 +369,10 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         workspaceSource.lastImportDirectoryPath
         || workspaceSource.lastImportPath
         || workspaceSource.importDirectoryPath
+      ),
+      lastExportDirectoryPath: normalizeText(
+        workspaceSource.lastExportDirectoryPath
+        || workspaceSource.exportDirectoryPath
       ),
       selectedTemplateId: normalizeText(
         workspaceSource.selectedTemplateId

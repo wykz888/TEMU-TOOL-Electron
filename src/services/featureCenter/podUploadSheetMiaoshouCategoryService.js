@@ -1,4 +1,14 @@
 const CATEGORY_LIST_URL = 'https://chunagtao-1251234463.cos.ap-guangzhou.myqcloud.com/Deploy_Data/TEMU_POD_CAT_LIST_PUT.json';
+const BUILTIN_CATEGORY_ITEMS = Object.freeze([
+  {
+    id: '1021',
+    label: '\u529e\u516c\u7528\u54c1>\u65e5\u5e38\u529e\u516c\u7528\u54c1>\u529e\u516c\u684c\u9762\u7528\u54c1>\u9f20\u6807\u57ab\u548c\u8155\u6258>\u9f20\u6807\u57ab'
+  },
+  {
+    id: '3896',
+    label: '\u7535\u5b50>\u7535\u8111\u53ca\u914d\u4ef6>\u5916\u8bbe\u4ea7\u54c1>\u7535\u8111\u9f20\u6807\u3001\u952e\u76d8\u3001\u8f93\u5165\u8bbe\u5907>\u7535\u8111\u952e\u76d8\u53ca\u914d\u4ef6>\u9f20\u6807\u57ab'
+  }
+]);
 
 function createPodUploadSheetMiaoshouCategoryService({
   runtimeLogger,
@@ -44,6 +54,13 @@ function createPodUploadSheetMiaoshouCategoryService({
           label
         });
       });
+
+    BUILTIN_CATEGORY_ITEMS.forEach((item) => {
+      categoryMap.set(item.id, {
+        id: item.id,
+        label: item.label
+      });
+    });
 
     return Array.from(categoryMap.values());
   }
