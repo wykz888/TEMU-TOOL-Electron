@@ -4,6 +4,7 @@
     :mask-closable="false"
     :esc-to-close="!starting"
     :closable="!starting"
+    :width="920"
     :footer="false"
     modal-class="pod-task-modal pod-batch-ai-title-modal"
     unmount-on-close
@@ -17,7 +18,7 @@
 
     <div class="pod-modal-body pod-task-modal-body">
       <div class="pod-modal-form-grid">
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">
             AI &#x5E73;&#x53F0;&#x9009;&#x62E9;
             <a-tooltip content="&#x9009;&#x62E9;&#x6279;&#x91CF;&#x751F;&#x6210;&#x6807;&#x9898;&#x4F7F;&#x7528;&#x7684; AI &#x914D;&#x7F6E;&#x3002;">
@@ -25,9 +26,9 @@
             </a-tooltip>
           </span>
           <a-select v-model="form.aiProvider" popup-container="body" :disabled="busy" :options="aiPlatformOptions" />
-        </label>
+        </div>
 
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">
             &#x5B58;&#x50A8;&#x7D20;&#x6750;
             <a-tooltip content="&#x9009;&#x62E9;&#x63D0;&#x4EA4;&#x7ED9; AI &#x8BC6;&#x56FE;&#x65F6;&#x4F7F;&#x7528;&#x7684;&#x7D20;&#x6750;&#x5B58;&#x50A8;&#x65B9;&#x5F0F;&#x3002;">
@@ -35,21 +36,21 @@
             </a-tooltip>
           </span>
           <a-select v-model="form.storageProvider" popup-container="body" :disabled="busy" :options="storageProviderOptions" />
-        </label>
+        </div>
       </div>
 
       <div class="pod-modal-form-grid">
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">
             &#x56FE;&#x7247;&#x538B;&#x7F29;
-            <a-tooltip content="&#x63D0;&#x4EA4;&#x7ED9; AI &#x524D;&#x7684;&#x56FE;&#x7247;&#x5904;&#x7406;&#x65B9;&#x5F0F;&#x3002;">
+            <a-tooltip content="&#x4E0E;&#x4E0A;&#x4F20;&#x56FE;&#x7247;&#x76F8;&#x540C;&#x7684;&#x683C;&#x5F0F;&#x9009;&#x9879;&#x3002;">
               <icon-question-circle class="pod-help-icon" />
             </a-tooltip>
           </span>
           <a-select v-model="form.imageCompression" popup-container="body" :disabled="busy" :options="imageCompressionOptions" />
-        </label>
+        </div>
 
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">
             &#x7EBF;&#x7A0B;&#x5E76;&#x53D1;
             <a-tooltip content="&#x540C;&#x65F6;&#x751F;&#x6210;&#x6807;&#x9898;&#x7684;&#x4EFB;&#x52A1;&#x6570;&#x3002;">
@@ -57,21 +58,21 @@
             </a-tooltip>
           </span>
           <a-input-number v-model="form.concurrency" :disabled="busy" :min="minConcurrency" :max="maxConcurrency" mode="button" />
-        </label>
+        </div>
       </div>
 
       <div class="pod-modal-form-grid">
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">
             &#x6807;&#x9898;&#x957F;&#x5EA6;
-            <a-tooltip content="AI &#x751F;&#x6210;&#x6807;&#x9898;&#x65F6;&#x7684;&#x76EE;&#x6807;&#x5B57;&#x6570;&#x3002;">
+            <a-tooltip content="&#x4EE5;&#x82F1;&#x6587;&#x6807;&#x9898;&#x957F;&#x5EA6;&#x4E3A;&#x57FA;&#x51C6;&#x3002;">
               <icon-question-circle class="pod-help-icon" />
             </a-tooltip>
           </span>
           <a-input-number v-model="form.targetLength" :disabled="busy" :min="minTargetLength" :max="maxTargetLength" mode="button" />
-        </label>
+        </div>
 
-        <label class="pod-field">
+        <div v-if="showOutputLanguage" class="pod-field">
           <span class="pod-field-label">
             &#x8F93;&#x51FA;&#x8BED;&#x8A00;
             <a-tooltip content="&#x9009;&#x62E9;&#x6807;&#x9898;&#x6700;&#x7EC8;&#x8F93;&#x51FA;&#x7684;&#x8BED;&#x8A00;&#x3002;">
@@ -79,10 +80,23 @@
             </a-tooltip>
           </span>
           <a-select v-model="form.outputLanguage" popup-container="body" :disabled="busy" :options="outputLanguageOptions" />
-        </label>
+        </div>
+        <div v-else class="pod-field pod-batch-ai-title-quality-field">
+          <span class="pod-field-label">&#x56FE;&#x7247;&#x8D28;&#x91CF;</span>
+          <div class="pod-batch-ai-title-quality-control">
+            <a-slider v-model="form.imageQuality" :disabled="busy" :min="minImageQuality" :max="maxImageQuality" />
+            <a-input-number
+              v-model="form.imageQuality"
+              class="pod-quality-number"
+              :disabled="busy"
+              :min="minImageQuality"
+              :max="maxImageQuality"
+            />
+          </div>
+        </div>
       </div>
 
-      <div class="pod-quality-row pod-quality-row-modern">
+      <div v-if="showOutputLanguage" class="pod-quality-row pod-quality-row-modern pod-batch-ai-title-quality-row">
         <span class="pod-field-label">&#x56FE;&#x7247;&#x8D28;&#x91CF;</span>
         <a-slider v-model="form.imageQuality" :disabled="busy" :min="minImageQuality" :max="maxImageQuality" />
         <a-input-number
@@ -95,15 +109,15 @@
       </div>
 
       <div class="pod-modal-form-grid">
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">&#x6807;&#x9898;&#x524D;&#x7F00;</span>
           <a-input v-model="form.prefixText" allow-clear />
-        </label>
+        </div>
 
-        <label class="pod-field">
+        <div class="pod-field">
           <span class="pod-field-label">&#x6807;&#x9898;&#x540E;&#x7F00;</span>
           <a-input v-model="form.suffixText" allow-clear />
-        </label>
+        </div>
       </div>
 
       <div class="pod-modal-form-grid pod-modal-form-grid--two">
@@ -134,11 +148,11 @@
 
       <div v-else class="pod-task-note">
         <strong>
-          {{ summary.retryCount ? '\u91CD\u8BD5\u5931\u8D25\u5546\u54C1' : '\u5C06\u751F\u6210\u6807\u9898' }}
+          {{ summary.retryCount ? '\u91CD\u8BD5\u5931\u8D25\u5546\u54C1' : '\u5C06\u751F\u6210\u4E2D\u82F1\u53CC\u6807\u9898' }}
         </strong>
         <span>
           {{ summary.retryCount ? '\u5DF2\u8BB0\u5F55 ' + summary.retryCount + ' \u4E2A\u5931\u8D25\u9879' : '\u5C06\u5904\u7406 ' + summary.totalCount + ' \u4E2A\u5546\u54C1' }}
-          {{ summary.retryCount ? '\uFF0C\u53EA\u91CD\u8BD5\u5931\u8D25\u9879\u3002' : '\uFF0C\u751F\u6210\u5B8C\u6210\u540E\u53EF\u76F4\u63A5\u4F7F\u7528\u3002' }}
+          {{ summary.retryCount ? '\uFF0C\u53EA\u91CD\u8BD5\u5931\u8D25\u9879\u3002' : '\uFF0C\u9ED8\u8BA4\u540C\u6B65\u751F\u6210\u4E2D\u82F1\u53CC\u6807\u9898\uFF0C\u82F1\u6587\u957F\u5EA6\u4E3A\u51C6\u3002' }}
         </span>
       </div>
     </div>
@@ -184,6 +198,10 @@ defineProps({
   status: {
     type: Object,
     required: true
+  },
+  showOutputLanguage: {
+    type: Boolean,
+    default: true
   },
   aiPlatformOptions: {
     type: Array,

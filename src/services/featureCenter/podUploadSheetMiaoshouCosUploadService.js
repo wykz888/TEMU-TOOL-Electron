@@ -224,7 +224,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       bucket: normalizeText(config.bucket),
       region: 'auto',
       rootPrefix: normalizeObjectPrefix(config.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
-      publicBaseUrl: normalizeText(config.publicBaseUrl).replace(/[\\/]+$/, ''),
+      publicBaseUrl: normalizeRemoteUrl(config.publicBaseUrl, { allowBareDomain: true }),
       endpoint: normalizeText(config.endpoint) || `https://${accountId}.r2.cloudflarestorage.com`,
       accountId,
       accessKeyId: normalizeText(config.accessKeyId),
@@ -417,6 +417,36 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return text.replace(/^[\\/]+/, '').replace(/[\\/]+$/, '').replace(/\\/g, '/');
   }
 
+  function normalizeRemoteUrl(value, options = {}) {
+    const text = normalizeText(value).replace(/[\\/]+$/, '');
+
+    if (!text) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(text)) {
+      return text;
+    }
+
+    if (/^\/\//.test(text)) {
+      return `https:${text}`;
+    }
+
+    if (/^[a-zA-Z]:[\\/]/.test(text) || /^\\\\/.test(text) || /[\s\\]/.test(text)) {
+      return '';
+    }
+
+    const domainPattern = options && options.allowBareDomain === true
+      ? /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?::\d{1,5})?(?:[/?#]|$)/i
+      : /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?::\d{1,5})?[/?#]/i;
+
+    if (!domainPattern.test(text)) {
+      return '';
+    }
+
+    return `https://${text.replace(/^\/+/, '')}`;
+  }
+
   function joinObjectKeySegments(...segments) {
     return segments
       .map((segment) => normalizeObjectPrefix(segment, ''))
@@ -558,7 +588,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const items = Object.entries(itemSource).reduce((result, [rawPath, rawEntry]) => {
       const entry = rawEntry && typeof rawEntry === 'object' && !Array.isArray(rawEntry) ? rawEntry : {};
       const normalizedPath = normalizeLocalFilePath(rawPath || entry.filePath);
-      const url = normalizeText(entry.url);
+      const url = normalizeRemoteUrl(entry.url) || normalizeText(entry.url);
       const key = normalizeText(entry.key);
 
       if (!normalizedPath || !url || !key) {
@@ -1241,11 +1271,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
     preferredSectionIds
   ) {
     const text = normalizeText(referenceText);
+    const remoteUrl = normalizeRemoteUrl(text);
 
-    if (!text || isHttpUrl(text)) {
+    if (!text || remoteUrl) {
       return {
-        value: text,
-        resolved: false
+        value: remoteUrl || text,
+        resolved: Boolean(remoteUrl && remoteUrl !== text)
       };
     }
 
@@ -1314,7 +1345,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
   }
 
   function isHttpUrl(value) {
-    return /^https?:\/\//i.test(normalizeText(value));
+    return Boolean(normalizeRemoteUrl(value));
   }
 
   function normalizeIncomingProducts(products) {
@@ -1559,7 +1590,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const normalizedPath = normalizeLocalFilePath(filePath);
     const cacheEntry = normalizedPath ? cacheSnapshot.items[normalizedPath] : null;
 
-    return normalizeText(cacheEntry && cacheEntry.url);
+    return normalizeRemoteUrl(cacheEntry && cacheEntry.url) || normalizeText(cacheEntry && cacheEntry.url);
   }
 
   function isReusableCacheEntry(cacheEntry, fileStat, storageContext, owner, imageUploadMode, imageQuality) {
@@ -1648,7 +1679,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       source,
       fileName: candidate.fileName,
       filePath: candidate.localPath,
-      url: normalizeText(cacheEntry && cacheEntry.url),
+      url: normalizeRemoteUrl(cacheEntry && cacheEntry.url) || normalizeText(cacheEntry && cacheEntry.url),
       key: normalizeText(cacheEntry && cacheEntry.key),
       error: '',
       attemptCount,
@@ -1887,7 +1918,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
   }
 
   function buildR2ObjectUrl(storageContext, objectKey) {
-    const baseUrl = normalizeText(storageContext && storageContext.publicBaseUrl);
+    const baseUrl = normalizeRemoteUrl(storageContext && storageContext.publicBaseUrl, { allowBareDomain: true });
 
     if (!baseUrl) {
       return '';
@@ -2209,11 +2240,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
         return buildCanceledResult(candidate);
       }
 
+      const rawUploadedUrl = normalizeText(uploadResult && (uploadResult.url || uploadResult.Location))
+        || buildR2ObjectUrl(effectiveStorageContext, objectKey)
+        || getPublicUrlForKey(uploadRegion, objectKey);
       const cacheEntry = {
         filePath: candidate.localPath,
-        url: normalizeText(uploadResult && (uploadResult.url || uploadResult.Location))
-          || buildR2ObjectUrl(effectiveStorageContext, objectKey)
-          || getPublicUrlForKey(uploadRegion, objectKey),
+        url: normalizeRemoteUrl(rawUploadedUrl) || rawUploadedUrl,
         key: objectKey,
         etag: normalizeText(uploadResult && (uploadResult.ETag || uploadResult.etag)),
         size: Number(fileStat.size) || 0,

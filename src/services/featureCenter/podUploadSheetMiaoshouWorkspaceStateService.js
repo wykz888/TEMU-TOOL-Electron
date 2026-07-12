@@ -6,10 +6,10 @@ const {
   nowIso
 } = require('../shopManagement/common');
 
-const SERVICE_VERSION = 3;
+const SERVICE_VERSION = 4;
 const DEFAULT_ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
 const STATE_FILE_NAME = 'workspace-state.json';
-const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze(['original', 'jpg', 'webp']);
+const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze(['original', 'png', 'jpg', 'webp']);
 
 function createPodUploadSheetMiaoshouWorkspaceStateService({
   sessionStore,
@@ -77,11 +77,35 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
       updatedAt: '',
       workspace: {
         lastImportDirectoryPath: '',
+        selectedTemplateId: '',
+        templateName: '',
         imageUploadMode: 'original',
+        imageUploadConfig: {
+          storageProvider: 'tencent-cos',
+          imageUploadMode: 'original',
+          concurrency: 8,
+          imageQuality: 90
+        },
         carouselPresetMode: 'selected',
         carouselPresetRandomOrders: '',
+        randomCarouselOnlyFirst: false,
         carouselPresetSelection: [],
-        descriptionPresetSelection: []
+        descriptionPresetSelection: [],
+        batchAiTitleConfig: {
+          aiProvider: 'volcengine',
+          apiBaseUrl: '',
+          model: '',
+          storageProvider: 'tencent-cos',
+          imageCompression: 'jpg',
+          concurrency: 20,
+          targetLength: 250,
+          imageQuality: 84,
+          prefixText: '',
+          suffixText: '',
+          outputLanguage: 'en',
+          useCache: true,
+          extraPrompt: ''
+        }
       }
     };
   }
@@ -151,6 +175,47 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
     return IMAGE_UPLOAD_MODE_OPTIONS.includes(normalizedValue) ? normalizedValue : 'original';
   }
 
+  function normalizeStorageProvider(value) {
+    return normalizeText(value) === 'cloudflare-r2' ? 'cloudflare-r2' : 'tencent-cos';
+  }
+
+  function normalizeAiProvider(value) {
+    return normalizeText(value) || 'volcengine';
+  }
+
+  function normalizeImageCompression(value) {
+    const normalizedValue = normalizeText(value).toLowerCase();
+
+    if (!normalizedValue || normalizedValue === 'smart-jpeg' || normalizedValue === 'high-quality' || normalizedValue === 'jpeg') {
+      return 'jpg';
+    }
+
+    if (normalizedValue === 'original' || normalizedValue === 'png' || normalizedValue === 'jpg' || normalizedValue === 'webp') {
+      return normalizedValue;
+    }
+
+    return 'jpg';
+  }
+
+  function normalizeOutputLanguage(value) {
+    return normalizeText(value) === 'zh' ? 'zh' : 'en';
+  }
+
+  function normalizeBoolean(value, fallback = false) {
+    if (value === true || value === false) {
+      return value;
+    }
+
+    return fallback;
+  }
+
+  function normalizeInteger(value, fallback, minValue, maxValue) {
+    const parsed = Number.parseInt(value, 10);
+    const initialValue = Number.isFinite(parsed) ? parsed : fallback;
+
+    return Math.max(minValue, Math.min(maxValue, initialValue));
+  }
+
   function normalizeTextArray(value) {
     return (Array.isArray(value) ? value : [])
       .map((item) => normalizeText(item))
@@ -177,6 +242,126 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
       source.workspace && typeof source.workspace === 'object' && !Array.isArray(source.workspace)
         ? source.workspace
         : source;
+    const imageUploadConfigSource =
+      workspaceSource.imageUploadConfig && typeof workspaceSource.imageUploadConfig === 'object'
+        ? workspaceSource.imageUploadConfig
+        : workspaceSource;
+    const batchAiTitleConfigSource =
+      workspaceSource.batchAiTitleConfig && typeof workspaceSource.batchAiTitleConfig === 'object'
+        ? workspaceSource.batchAiTitleConfig
+        : workspaceSource;
+    const randomCarouselOnlyFirst = normalizeBoolean(
+      workspaceSource.randomCarouselOnlyFirst,
+      normalizeCarouselPresetMode(
+        workspaceSource.carouselPresetMode
+        || workspaceSource.cachedCarouselPresetMode
+      ) === 'random-first'
+    );
+    const imageUploadConfig = {
+      storageProvider: normalizeStorageProvider(
+        imageUploadConfigSource.storageProvider
+        || workspaceSource.imageUploadStorageProvider
+        || source.imageUploadStorageProvider
+      ),
+      imageUploadMode: normalizeImageUploadMode(
+        imageUploadConfigSource.imageUploadMode
+        || workspaceSource.imageUploadMode
+        || workspaceSource.uploadImageMode
+        || source.imageUploadMode
+        || source.uploadImageMode
+      ),
+      concurrency: normalizeInteger(
+        imageUploadConfigSource.concurrency
+        || workspaceSource.imageUploadConcurrency
+        || source.imageUploadConcurrency,
+        8,
+        1,
+        32
+      ),
+      imageQuality: normalizeInteger(
+        imageUploadConfigSource.imageQuality
+        || workspaceSource.imageUploadQuality
+        || source.imageUploadQuality,
+        90,
+        48,
+        100
+      )
+    };
+    const batchAiTitleConfig = {
+      aiProvider: normalizeAiProvider(
+        batchAiTitleConfigSource.aiProvider
+        || workspaceSource.aiProvider
+        || source.aiProvider
+      ),
+      apiBaseUrl: normalizeText(
+        batchAiTitleConfigSource.apiBaseUrl
+        || workspaceSource.apiBaseUrl
+        || source.apiBaseUrl
+      ),
+      model: normalizeText(
+        batchAiTitleConfigSource.model
+        || workspaceSource.model
+        || source.model
+      ),
+      storageProvider: normalizeStorageProvider(
+        batchAiTitleConfigSource.storageProvider
+        || workspaceSource.storageProvider
+        || source.storageProvider
+      ),
+      imageCompression: normalizeImageCompression(
+        batchAiTitleConfigSource.imageCompression
+        || workspaceSource.imageCompression
+        || source.imageCompression
+      ),
+      concurrency: normalizeInteger(
+        batchAiTitleConfigSource.concurrency
+        || workspaceSource.aiConcurrency
+        || source.aiConcurrency,
+        20,
+        1,
+        100
+      ),
+      targetLength: normalizeInteger(
+        batchAiTitleConfigSource.targetLength
+        || workspaceSource.targetLength
+        || source.targetLength,
+        250,
+        80,
+        255
+      ),
+      imageQuality: normalizeInteger(
+        batchAiTitleConfigSource.imageQuality
+        || workspaceSource.aiImageQuality
+        || source.aiImageQuality,
+        84,
+        48,
+        95
+      ),
+      prefixText: normalizeText(
+        batchAiTitleConfigSource.prefixText
+        || workspaceSource.prefixText
+        || source.prefixText
+      ),
+      suffixText: normalizeText(
+        batchAiTitleConfigSource.suffixText
+        || workspaceSource.suffixText
+        || source.suffixText
+      ),
+      outputLanguage: normalizeOutputLanguage(
+        batchAiTitleConfigSource.outputLanguage
+        || workspaceSource.outputLanguage
+        || source.outputLanguage
+      ),
+      useCache: normalizeBoolean(
+        batchAiTitleConfigSource.useCache,
+        true
+      ),
+      extraPrompt: normalizeText(
+        batchAiTitleConfigSource.extraPrompt
+        || workspaceSource.extraPrompt
+        || source.extraPrompt
+      )
+    };
 
     return {
       lastImportDirectoryPath: normalizeText(
@@ -184,18 +369,24 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         || workspaceSource.lastImportPath
         || workspaceSource.importDirectoryPath
       ),
-      imageUploadMode: normalizeImageUploadMode(
-        workspaceSource.imageUploadMode
-        || workspaceSource.uploadImageMode
+      selectedTemplateId: normalizeText(
+        workspaceSource.selectedTemplateId
+        || workspaceSource.templateId
       ),
-      carouselPresetMode: normalizeCarouselPresetMode(
-        workspaceSource.carouselPresetMode
-        || workspaceSource.cachedCarouselPresetMode
+      templateName: normalizeText(
+        workspaceSource.templateName
+        || workspaceSource.selectedTemplateName
       ),
+      imageUploadMode: imageUploadConfig.imageUploadMode,
+      imageUploadConfig,
+      carouselPresetMode: randomCarouselOnlyFirst
+        ? 'random-first'
+        : normalizeCarouselPresetMode(workspaceSource.carouselPresetMode || workspaceSource.cachedCarouselPresetMode),
       carouselPresetRandomOrders: normalizeSequenceSelection(
         workspaceSource.carouselPresetRandomOrders
         || workspaceSource.cachedCarouselPresetRandomOrders
       ),
+      randomCarouselOnlyFirst,
       carouselPresetSelection: normalizeTextArray(
         workspaceSource.carouselPresetSelection
         || workspaceSource.cachedCarouselPresetSelection
@@ -203,7 +394,8 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
       descriptionPresetSelection: normalizeTextArray(
         workspaceSource.descriptionPresetSelection
         || workspaceSource.cachedDescriptionPresetSelection
-      )
+      ),
+      batchAiTitleConfig
     };
   }
 

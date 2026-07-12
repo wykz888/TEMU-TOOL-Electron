@@ -13,17 +13,46 @@ function showMessage(messageApi, method, content) {
   }
 }
 
+function getValue(source) {
+  return source && typeof source === 'object' && 'value' in source ? source.value : source;
+}
+
+function toTextArray(value) {
+  return Array.isArray(value) ? value.map((item) => normalizeText(item)).filter(Boolean) : [];
+}
+
+function toSequenceText(value) {
+  return toTextArray(value).map((item) => item.replace(/\D+/g, '')).filter(Boolean).join(',');
+}
+
 export function useTemplateWorkspace(options = {}) {
   const featureBridge = options.featureBridge;
   const lastImportDirectoryPath = options.lastImportDirectoryPath;
   const globalForm = options.globalForm;
   const carouselPresetText = options.carouselPresetText;
+  const randomCarouselOnlyFirst = options.randomCarouselOnlyFirst;
+  const randomCarouselSelected = options.randomCarouselSelected;
   const descriptionPresetText = options.descriptionPresetText;
   const getSkuTemplateConfigMap = typeof options.getSkuTemplateConfigMap === 'function'
     ? options.getSkuTemplateConfigMap
     : () => ({});
   const applySkuTemplateConfig = typeof options.applySkuTemplateConfig === 'function'
     ? options.applySkuTemplateConfig
+    : () => undefined;
+  const getImageUploadPreferences = typeof options.getImageUploadPreferences === 'function'
+    ? options.getImageUploadPreferences
+    : () => ({});
+  const applyImageUploadPreferences = typeof options.applyImageUploadPreferences === 'function'
+    ? options.applyImageUploadPreferences
+    : () => undefined;
+  const getBatchAiTitlePreferences = typeof options.getBatchAiTitlePreferences === 'function'
+    ? options.getBatchAiTitlePreferences
+    : () => ({});
+  const applyBatchAiTitlePreferences = typeof options.applyBatchAiTitlePreferences === 'function'
+    ? options.applyBatchAiTitlePreferences
+    : () => undefined;
+  const scheduleStateSave = typeof options.scheduleStateSave === 'function'
+    ? options.scheduleStateSave
     : () => undefined;
   const syncGlobalToProducts = typeof options.syncGlobalToProducts === 'function'
     ? options.syncGlobalToProducts
@@ -51,7 +80,8 @@ export function useTemplateWorkspace(options = {}) {
   })));
 
   async function loadInitialData() {
-    await Promise.allSettled([loadCategories(), loadFormTemplates(), loadWorkspaceState()]);
+    await Promise.allSettled([loadCategories(), loadWorkspaceState()]);
+    await loadFormTemplates();
   }
 
   async function loadCategories() {
@@ -80,7 +110,16 @@ export function useTemplateWorkspace(options = {}) {
       const result = await bridge.getPodUploadSheetMiaoshouFormTemplates();
       formTemplates.value = Array.isArray(result && result.templates) ? result.templates : [];
 
-      if (!selectedTemplateId.value && formTemplates.value.length > 0) {
+      const selectedTemplate = selectedTemplateId.value
+        ? formTemplates.value.find((item) => item.id === selectedTemplateId.value)
+        : null;
+
+      if (selectedTemplate) {
+        applySelectedTemplate(selectedTemplate.id);
+        return;
+      }
+
+      if (formTemplates.value.length > 0) {
         selectedTemplateId.value = formTemplates.value[0].id;
         applySelectedTemplate(selectedTemplateId.value);
       }
@@ -97,24 +136,67 @@ export function useTemplateWorkspace(options = {}) {
     const result = await bridge.getPodUploadSheetMiaoshouWorkspaceState().catch(() => null);
     const workspace = result && result.workspace ? result.workspace : {};
     lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
+    selectedTemplateId.value = normalizeText(workspace.selectedTemplateId || workspace.templateId);
+    templateName.value = normalizeText(workspace.templateName || workspace.selectedTemplateName);
+    carouselPresetText.value = Array.isArray(workspace.carouselPresetSelection)
+      ? workspace.carouselPresetSelection.join('\n')
+      : '';
+    descriptionPresetText.value = Array.isArray(workspace.descriptionPresetSelection)
+      ? workspace.descriptionPresetSelection.join('\n')
+      : '';
+    randomCarouselOnlyFirst.value = workspace.randomCarouselOnlyFirst === true
+      || normalizeText(workspace.carouselPresetMode) === 'random-first';
+    randomCarouselSelected.value = String(workspace.carouselPresetRandomOrders || '')
+      .split(',')
+      .map((item) => Number.parseInt(item, 10))
+      .filter((item) => Number.isFinite(item) && item > 0);
+
+    applyImageUploadPreferences(workspace.imageUploadConfig || workspace);
+    applyBatchAiTitlePreferences(workspace.batchAiTitleConfig || workspace);
   }
 
   function buildTemplatePayload() {
+    const imageUploadConfig = getValue(getImageUploadPreferences()) || {};
+    const batchAiTitleConfig = getValue(getBatchAiTitlePreferences()) || {};
+
     return {
       templateId: selectedTemplateId.value,
       templateName: templateName.value,
       fields: {
         ...globalForm,
-        aiTitlePrefix: '',
-        aiTitleSuffix: '',
-        aiTitleExtraPrompt: '',
-        aiTitleMaxLength: '250'
+        aiTitlePrefix: normalizeText(batchAiTitleConfig.prefixText),
+        aiTitleSuffix: normalizeText(batchAiTitleConfig.suffixText),
+        aiTitleExtraPrompt: normalizeText(batchAiTitleConfig.extraPrompt),
+        aiTitleMaxLength: normalizeText(batchAiTitleConfig.targetLength || '250')
       },
       skuConfigMap: getSkuTemplateConfigMap(),
       batchPreset: {
-        carouselPresetMode: 'selected',
+        carouselPresetMode: randomCarouselOnlyFirst && randomCarouselOnlyFirst.value ? 'random-first' : 'selected',
+        carouselPresetRandomOrders: toSequenceText(randomCarouselSelected && randomCarouselSelected.value),
         carouselPresetSelection: splitLines(carouselPresetText.value),
+        randomCarouselOnlyFirst: !!(randomCarouselOnlyFirst && randomCarouselOnlyFirst.value),
         descriptionPresetSelection: splitLines(descriptionPresetText.value)
+      },
+      imageUploadConfig: {
+        storageProvider: normalizeText(imageUploadConfig.storageProvider),
+        imageUploadMode: normalizeText(imageUploadConfig.imageUploadMode),
+        concurrency: normalizeText(imageUploadConfig.concurrency),
+        imageQuality: normalizeText(imageUploadConfig.imageQuality)
+      },
+      batchAiTitleConfig: {
+        aiProvider: normalizeText(batchAiTitleConfig.aiProvider),
+        apiBaseUrl: normalizeText(batchAiTitleConfig.apiBaseUrl),
+        model: normalizeText(batchAiTitleConfig.model),
+        storageProvider: normalizeText(batchAiTitleConfig.storageProvider),
+        imageCompression: normalizeText(batchAiTitleConfig.imageCompression),
+        concurrency: normalizeText(batchAiTitleConfig.concurrency),
+        targetLength: normalizeText(batchAiTitleConfig.targetLength),
+        imageQuality: normalizeText(batchAiTitleConfig.imageQuality),
+        prefixText: normalizeText(batchAiTitleConfig.prefixText),
+        suffixText: normalizeText(batchAiTitleConfig.suffixText),
+        outputLanguage: normalizeText(batchAiTitleConfig.outputLanguage),
+        useCache: batchAiTitleConfig.useCache === false ? false : true,
+        extraPrompt: normalizeText(batchAiTitleConfig.extraPrompt)
       }
     };
   }
@@ -134,6 +216,8 @@ export function useTemplateWorkspace(options = {}) {
     try {
       const result = await bridge.savePodUploadSheetMiaoshouFormTemplate(buildTemplatePayload());
       formTemplates.value = Array.isArray(result && result.templates) ? result.templates : formTemplates.value;
+      selectedTemplateId.value = normalizeText(result && result.templateId) || selectedTemplateId.value;
+      scheduleStateSave();
       showMessage(messageApi, 'success', '\u6a21\u677f\u5df2\u4fdd\u5b58');
     } catch (error) {
       showMessage(
@@ -151,10 +235,28 @@ export function useTemplateWorkspace(options = {}) {
 
     if (!template) return;
 
+    selectedTemplateId.value = template.id;
     templateName.value = template.name;
     Object.assign(globalForm, template.fields || {});
     applySkuTemplateConfig(template.skuConfigMap);
+    if (template.batchPreset) {
+      carouselPresetText.value = Array.isArray(template.batchPreset.carouselPresetSelection)
+        ? template.batchPreset.carouselPresetSelection.join('\n')
+        : '';
+      descriptionPresetText.value = Array.isArray(template.batchPreset.descriptionPresetSelection)
+        ? template.batchPreset.descriptionPresetSelection.join('\n')
+        : '';
+      randomCarouselOnlyFirst.value = template.batchPreset.randomCarouselOnlyFirst === true
+        || normalizeText(template.batchPreset.carouselPresetMode) === 'random-first';
+      randomCarouselSelected.value = String(template.batchPreset.carouselPresetRandomOrders || '')
+        .split(',')
+        .map((item) => Number.parseInt(item, 10))
+        .filter((item) => Number.isFinite(item) && item > 0);
+    }
+    applyImageUploadPreferences(template.imageUploadConfig || {});
+    applyBatchAiTitlePreferences(template.batchAiTitleConfig || {});
     syncGlobalToProducts();
+    scheduleStateSave();
   }
 
   async function deleteSelectedTemplate() {
@@ -172,6 +274,7 @@ export function useTemplateWorkspace(options = {}) {
         ? result.templates
         : formTemplates.value.filter((item) => item.id !== selectedTemplateId.value);
       selectedTemplateId.value = '';
+      scheduleStateSave();
       showMessage(messageApi, 'success', '\u6a21\u677f\u5df2\u5220\u9664');
     } finally {
       deletingTemplate.value = false;

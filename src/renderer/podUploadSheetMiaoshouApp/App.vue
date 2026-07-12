@@ -53,6 +53,7 @@
         :upload-progress="uploadProgress"
         :upload-progress-text="uploadProgressText"
         :ai-title-progress-text="aiTitleProgressText"
+        :ai-progress="aiProgress"
         :import-products="importProducts"
         :open-carousel-preset="openCarouselPreset"
         :open-random-carousel-preset="openRandomCarouselPreset"
@@ -65,6 +66,10 @@
         :get-product-row-class="getProductRowClass"
         :select-product="selectProduct"
         :handle-product-title-change="handleProductTitleChange"
+        :retry-failed-image-upload="retryFailedImageUpload"
+        :retry-failed-ai-title-generation="retryFailedAiTitleGeneration"
+        :stop-image-upload-task="stopImageUploadTask"
+        :stop-batch-ai-title-generation-task="stopBatchAiTitleGenerationTask"
       />
     </main>
 
@@ -90,8 +95,10 @@
       :apply-carousel-preset="applyCarouselPreset"
       :close-random-carousel-preset="closeRandomCarouselPreset"
       :select-all-random-carousel-items="selectAllRandomCarouselItems"
+      :clear-random-carousel-items="clearRandomCarouselItems"
       :is-random-carousel-selected="isRandomCarouselSelected"
       :toggle-random-carousel-item="toggleRandomCarouselItem"
+      :get-random-carousel-candidate="getRandomCarouselCandidate"
       :get-random-carousel-item-tip="getRandomCarouselItemTip"
       :apply-random-carousel-preset="applyRandomCarouselPreset"
       :close-description-preset="closeDescriptionPreset"
@@ -125,10 +132,10 @@
       :form="batchAiTitleForm"
       :summary="batchAiTitleSummary"
       :status="batchAiTitleStatus"
+      :show-output-language="false"
       :ai-platform-options="batchAiTitleAiPlatformOptions"
       :storage-provider-options="batchAiTitleStorageProviderOptions"
       :image-compression-options="batchAiTitleImageCompressionOptions"
-      :output-language-options="batchAiTitleOutputLanguageOptions"
       :min-concurrency="batchAiTitleMinConcurrency"
       :max-concurrency="batchAiTitleMaxConcurrency"
       :min-target-length="batchAiTitleMinTargetLength"
@@ -233,7 +240,6 @@ const batchAiTitleStatus = batchAiTitleDialog.status;
 const batchAiTitleAiPlatformOptions = batchAiTitleDialog.aiPlatformOptions;
 const batchAiTitleStorageProviderOptions = batchAiTitleDialog.storageProviderOptions;
 const batchAiTitleImageCompressionOptions = batchAiTitleDialog.imageCompressionOptions;
-const batchAiTitleOutputLanguageOptions = batchAiTitleDialog.outputLanguageOptions;
 const batchAiTitleMinConcurrency = batchAiTitleDialog.minConcurrency;
 const batchAiTitleMaxConcurrency = batchAiTitleDialog.maxConcurrency;
 const batchAiTitleMinTargetLength = batchAiTitleDialog.minTargetLength;
@@ -241,7 +247,17 @@ const batchAiTitleMaxTargetLength = batchAiTitleDialog.maxTargetLength;
 const batchAiTitleMinImageQuality = batchAiTitleDialog.minImageQuality;
 const batchAiTitleMaxImageQuality = batchAiTitleDialog.maxImageQuality;
 const closeBatchAiTitleDialog = batchAiTitleDialog.closeDialog;
-const startBatchAiTitleDialogGeneration = batchAiTitleDialog.startGeneration;
+function startBatchAiTitleDialogGenerationFromDialog(retryFailedOnly = false) {
+  return batchAiTitleDialog.startGeneration(retryFailedOnly);
+}
+
+function collectBatchAiTitlePreferences() {
+  return batchAiTitleDialog.collectPayload(false);
+}
+
+function applyBatchAiTitlePreferences(snapshot) {
+  return batchAiTitleDialog.applyPreferences(snapshot);
+}
 
 const featureBridge = computed(() => window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null);
 const activeProduct = computed(() => products.value.find((item) => item.id === activeProductId.value) || products.value[0] || null);
@@ -292,6 +308,8 @@ const {
   isRandomCarouselSelected,
   toggleRandomCarouselItem,
   selectAllRandomCarouselItems,
+  clearRandomCarouselItems,
+  getRandomCarouselCandidate,
   getRandomCarouselItemTip,
   applyRandomCarouselPreset,
   openDescriptionPreset,
@@ -326,33 +344,42 @@ const {
   lastImportDirectoryPath,
   globalForm,
   carouselPresetText,
+  randomCarouselOnlyFirst,
+  randomCarouselSelected,
   descriptionPresetText,
   getSkuTemplateConfigMap,
   applySkuTemplateConfig,
+  getImageUploadPreferences: collectImageUploadPreferences,
+  applyImageUploadPreferences,
+  getBatchAiTitlePreferences: collectBatchAiTitlePreferences,
+  applyBatchAiTitlePreferences,
+  scheduleStateSave,
   syncGlobalToProducts,
   messageApi: Message
 });
-const {
-  importingProducts,
-  uploadingImages,
-  exportingTable,
-  generatingAiTitles,
-  uploadProgress,
-  aiProgress,
-  aiTitleEligibleCount,
-  uploadProgressText,
-  aiTitleProgressText,
+  const {
+    importingProducts,
+    uploadingImages,
+    exportingTable,
+    generatingAiTitles,
+    uploadProgress,
+    uploadFailedFilePaths,
+    aiProgress,
+    aiTitleEligibleCount,
+    uploadProgressText,
+    aiTitleProgressText,
   selectProduct,
   getProductRowClass,
   handleProductTitleChange,
   importProducts,
-  clearProducts,
-  getImageUploadSnapshot,
-  executeImageUpload,
-  getBatchAiTitleSnapshot,
-  openBatchAiTitleDialog,
-  executeBatchAiTitleGeneration,
-  exportTable
+    clearProducts,
+    getImageUploadSnapshot: getImageUploadProgressSnapshot,
+    executeImageUpload,
+    stopImageUpload: stopImageUploadTask,
+    getBatchAiTitleSnapshot: getBatchAiTitleProgressSnapshot,
+    executeBatchAiTitleGeneration,
+    stopBatchAiTitleGeneration: stopBatchAiTitleGenerationTask,
+    exportTable
 } = useProductWorkflowTasks({
   products,
   activeProductId,
@@ -383,20 +410,102 @@ const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
 const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
 const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
 const closeImageUploadDialog = imageUploadDialog.closeDialog;
-const startImageUploadFromDialog = imageUploadDialog.startUploadFromDialog;
+function startImageUploadFromDialogFromDialog(retryFailedOnly = false) {
+  return imageUploadDialog.startUploadFromDialog(retryFailedOnly);
+}
+
 const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
-const productTableBodyHeight = computed(() => Math.max(360, Math.min(520, viewportHeight.value - 520)));
+function collectImageUploadPreferences() {
+  return imageUploadDialog.collectPayload(false);
+}
+
+function applyImageUploadPreferences(snapshot) {
+  return imageUploadDialog.applyPreferences(snapshot);
+}
+const productTableBodyHeight = computed(() => Math.max(580, Math.min(820, Math.round((viewportHeight.value - 500) * 1.55))));
 const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
 const productTableStyle = computed(() => ({
   '--pod-product-table-body-height': `${productTableBodyHeight.value}px`
 }));
 
-function updateViewportHeight() {
-  viewportHeight.value = window.innerHeight || viewportHeight.value;
+function getImageUploadPreferencesSnapshot() {
+  const progressSnapshot = getImageUploadProgressSnapshot();
+  const preferences = collectImageUploadPreferences();
+
+  return {
+    ...progressSnapshot,
+    storageProvider: preferences.storageProvider,
+    imageUploadMode: preferences.imageUploadMode,
+    concurrency: preferences.concurrency,
+    imageQuality: preferences.imageQuality
+  };
+}
+
+function getBatchAiTitlePreferencesSnapshot() {
+  const progressSnapshot = getBatchAiTitleProgressSnapshot();
+  const preferences = collectBatchAiTitlePreferences();
+
+  return {
+    ...progressSnapshot,
+    aiProvider: preferences.aiProvider,
+    apiBaseUrl: preferences.apiBaseUrl,
+    model: preferences.model,
+    storageProvider: preferences.storageProvider,
+    imageCompression: preferences.imageCompression,
+    concurrency: preferences.concurrency,
+    targetLength: preferences.targetLength,
+    imageQuality: preferences.imageQuality,
+    prefixText: preferences.prefixText,
+    suffixText: preferences.suffixText,
+    outputLanguage: preferences.outputLanguage,
+    useCache: preferences.useCache,
+    extraPrompt: preferences.extraPrompt
+  };
 }
 
 function openImageUploadDialog() {
-  return imageUploadDialog.openDialog(getImageUploadSnapshot());
+  return imageUploadDialog.openDialog(getImageUploadPreferencesSnapshot());
+}
+
+function openBatchAiTitleDialog() {
+  return batchAiTitleDialog.openDialog(getBatchAiTitlePreferencesSnapshot());
+}
+
+function startImageUploadFromDialog(retryFailedOnly = false) {
+  scheduleStateSave();
+  return startImageUploadFromDialogFromDialog(retryFailedOnly);
+}
+
+function startBatchAiTitleDialogGeneration(retryFailedOnly = false) {
+  scheduleStateSave();
+  return startBatchAiTitleDialogGenerationFromDialog(retryFailedOnly);
+}
+
+function retryFailedImageUpload() {
+  if (!uploadFailedFilePaths.value.length) {
+    return undefined;
+  }
+
+  return executeImageUpload({
+    ...collectImageUploadPreferences(),
+    retryFailedOnly: true,
+    retryFilePaths: uploadFailedFilePaths.value.slice()
+  });
+}
+
+function retryFailedAiTitleGeneration() {
+  if (!aiProgress.failed) {
+    return undefined;
+  }
+
+  return executeBatchAiTitleGeneration({
+    ...collectBatchAiTitlePreferences(),
+    retryFailedOnly: true
+  });
+}
+
+function updateViewportHeight() {
+  viewportHeight.value = window.innerHeight || viewportHeight.value;
 }
 
 let saveTimer = 0;
@@ -405,10 +514,39 @@ function scheduleStateSave() {
   saveTimer = window.setTimeout(() => {
     saveTimer = 0;
     if (!featureBridge.value || typeof featureBridge.value.savePodUploadSheetMiaoshouWorkspaceState !== 'function') return;
+    const imageUploadPreferences = collectImageUploadPreferences();
+    const batchAiTitlePreferences = collectBatchAiTitlePreferences();
     void featureBridge.value.savePodUploadSheetMiaoshouWorkspaceState({
       lastImportDirectoryPath: lastImportDirectoryPath.value,
+      selectedTemplateId: selectedTemplateId.value,
+      templateName: templateName.value,
+      imageUploadMode: imageUploadPreferences.imageUploadMode,
+      imageUploadConfig: {
+        storageProvider: imageUploadPreferences.storageProvider,
+        imageUploadMode: imageUploadPreferences.imageUploadMode,
+        concurrency: imageUploadPreferences.concurrency,
+        imageQuality: imageUploadPreferences.imageQuality
+      },
+      carouselPresetMode: randomCarouselOnlyFirst.value ? 'random-first' : 'selected',
+      carouselPresetRandomOrders: randomCarouselSelected.value.join(','),
       carouselPresetSelection: splitLines(carouselPresetText.value),
-      descriptionPresetSelection: splitLines(descriptionPresetText.value)
+      randomCarouselOnlyFirst: randomCarouselOnlyFirst.value === true,
+      descriptionPresetSelection: splitLines(descriptionPresetText.value),
+      batchAiTitleConfig: {
+        aiProvider: batchAiTitlePreferences.aiProvider,
+        apiBaseUrl: batchAiTitlePreferences.apiBaseUrl,
+        model: batchAiTitlePreferences.model,
+        storageProvider: batchAiTitlePreferences.storageProvider,
+        imageCompression: batchAiTitlePreferences.imageCompression,
+        concurrency: batchAiTitlePreferences.concurrency,
+        targetLength: batchAiTitlePreferences.targetLength,
+        imageQuality: batchAiTitlePreferences.imageQuality,
+        prefixText: batchAiTitlePreferences.prefixText,
+        suffixText: batchAiTitlePreferences.suffixText,
+        outputLanguage: batchAiTitlePreferences.outputLanguage,
+        useCache: batchAiTitlePreferences.useCache,
+        extraPrompt: batchAiTitlePreferences.extraPrompt
+      }
     }).catch(() => undefined);
   }, 400);
 }
@@ -417,9 +555,9 @@ function installVueBridge() {
   const existingBridge = window[VIEW_BRIDGE_KEY] && typeof window[VIEW_BRIDGE_KEY] === 'object' ? window[VIEW_BRIDGE_KEY] : {};
   const bridge = {
     ...existingBridge,
-    getImageUploadSnapshot,
+    getImageUploadSnapshot: getImageUploadPreferencesSnapshot,
     startImageUpload: executeImageUpload,
-    getBatchAiTitleSnapshot,
+    getBatchAiTitleSnapshot: getBatchAiTitlePreferencesSnapshot,
     startBatchAiTitleGeneration: executeBatchAiTitleGeneration
   };
   window[VIEW_BRIDGE_KEY] = bridge;

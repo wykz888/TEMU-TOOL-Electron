@@ -96,9 +96,8 @@ body.dark-theme .pod-panel {
   padding: 8px 14px;
   margin: 0 0 10px;
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
-  background:
-    linear-gradient(90deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1), rgba(255, 255, 255, 0) 42%),
-    var(--pod-surface);
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .pod-miaoshou-app-header__copy,
@@ -132,11 +131,118 @@ body.dark-theme .pod-panel {
 .pod-actions,
 .pod-modal-footer,
 .pod-summary-pills,
+.pod-progress-stack,
 .pod-progress-line {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.pod-progress-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.pod-progress-card {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px 12px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.04), rgba(255, 255, 255, 0) 44%),
+    var(--pod-surface);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+}
+
+body.dark-theme .pod-progress-card {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb, 247, 181, 0), 0.05), rgba(0, 0, 0, 0) 44%),
+    var(--pod-surface);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+}
+
+.pod-progress-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pod-progress-card-title {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pod-progress-card-title strong {
+  color: var(--pod-text-strong);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.pod-progress-card-title span {
+  color: var(--pod-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pod-progress-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--pod-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.pod-progress-card-meta span {
+  min-width: 0;
+}
+
+.pod-progress-card .arco-progress {
+  width: 100%;
+}
+
+.pod-progress-card .arco-progress-line-wrapper {
+  min-height: 4px;
+}
+
+.pod-progress-card .arco-progress-line-bar {
+  border-radius: 999px;
+}
+
+.pod-progress-card .arco-progress-line-bar-buffer {
+  border-radius: 999px;
+}
+
+.pod-progress-retry-button.arco-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
+  border-radius: 999px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+  color: var(--theme-primary-ink, #7a4a00);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.pod-progress-retry-button.arco-btn:hover,
+.pod-progress-retry-button.arco-btn:focus {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34) !important;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12) !important;
+  color: var(--theme-primary-ink, #7a4a00) !important;
+  box-shadow: none;
 }
 
 .pod-list-head,
@@ -226,8 +332,9 @@ body.dark-theme .pod-panel {
   inset: 0 0 auto;
   height: 3px;
   border-radius: 8px 8px 0 0;
-  background: linear-gradient(90deg, var(--theme-primary-color, #f4bf22), rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16));
-  opacity: 0.82;
+  background: #ffffff;
+  background-color: #ffffff;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -256,6 +363,7 @@ body.dark-theme .pod-panel {
   overflow: hidden;
   background: #ffffff;
   background-color: #ffffff;
+  box-shadow: none;
 }
 
 .pod-template-grid,
@@ -414,10 +522,10 @@ body.dark-theme .pod-field-label {
 .pod-actions .arco-btn,
 .pod-miaoshou-app-header__meta .arco-btn {
   height: 34px;
-  padding: 0 13px;
+  padding: 0 14px;
   border-radius: 8px;
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 780;
   letter-spacing: 0;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
@@ -435,7 +543,7 @@ body.dark-theme .pod-field-label {
 .pod-actions .arco-btn:hover,
 .pod-miaoshou-app-header__meta .arco-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 7px 14px rgba(15, 23, 42, 0.09);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .pod-actions .arco-btn-content,
@@ -532,11 +640,11 @@ body.dark-theme .pod-field-label {
 
 .pod-theme-button.arco-btn-primary,
 .pod-theme-button.arco-btn {
-  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.45);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.36);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22));
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 86%, #ffffff), color-mix(in srgb, var(--theme-primary-color, #f4bf22) 94%, #6b4a00));
   color: var(--theme-primary-contrast, #2f2400);
-  box-shadow: 0 5px 12px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.18);
+  box-shadow: 0 5px 13px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16);
 }
 
 .pod-theme-button.arco-btn:hover,
@@ -545,60 +653,78 @@ body.dark-theme .pod-field-label {
 .pod-theme-button.arco-btn-primary:focus {
   border-color: var(--theme-primary-color, #f4bf22) !important;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 88%, #ffffff), var(--theme-primary-color, #f4bf22)) !important;
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-primary-color, #f4bf22) 90%, #ffffff), color-mix(in srgb, var(--theme-primary-color, #f4bf22) 96%, #6b4a00)) !important;
   color: var(--theme-primary-contrast, #2f2400) !important;
-  filter: saturate(1.08) brightness(1.02);
+  filter: saturate(1.04) brightness(1.02);
 }
 
 .pod-blue-button.arco-btn {
-  border-color: #cddafe;
-  background: #ffffff;
-  color: #2450b8;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(37, 99, 235, 0.025);
+  border-color: #d6e2ff;
+  background:
+    linear-gradient(180deg, #ffffff, #f4f7ff);
+  color: #315da8;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), inset 0 0 0 1px rgba(59, 130, 246, 0.03);
 }
 
 .pod-blue-button.arco-btn:hover,
 .pod-blue-button.arco-btn:focus {
-  border-color: #93b4fd !important;
+  border-color: #b8caf8 !important;
   background:
-    linear-gradient(180deg, #ffffff, #f0f5ff) !important;
-  color: #1d4ed8 !important;
+    linear-gradient(180deg, #ffffff, #eef4ff) !important;
+  color: #264f9d !important;
   filter: none;
 }
 
 .pod-red-button.arco-btn {
-  border-color: #e84a5a;
+  border-color: rgba(225, 29, 72, 0.22);
   background:
-    linear-gradient(180deg, #f85b69, #dc2435);
-  color: #ffffff;
-  box-shadow: 0 5px 12px rgba(220, 36, 53, 0.18);
+    linear-gradient(180deg, #ffffff, #fff3f5);
+  color: #b42318;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(225, 29, 72, 0.03);
 }
 
 .pod-red-button.arco-btn:hover,
 .pod-red-button.arco-btn:focus {
-  border-color: #dc2626 !important;
+  border-color: rgba(225, 29, 72, 0.34) !important;
   background:
-    linear-gradient(180deg, #ff6468, #c91526) !important;
-  color: #ffffff !important;
-  filter: saturate(1.02) brightness(1.01);
+    linear-gradient(180deg, #ffffff, #ffecef) !important;
+  color: #9f1239 !important;
+  filter: none;
+}
+
+.pod-stop-button.arco-btn {
+  border-color: rgba(225, 29, 72, 0.32);
+  background:
+    linear-gradient(180deg, #fffdfd, #fff0f2);
+  color: #a61b2e;
+  box-shadow: 0 5px 13px rgba(225, 29, 72, 0.08), inset 0 0 0 1px rgba(225, 29, 72, 0.04);
+}
+
+.pod-stop-button.arco-btn:hover,
+.pod-stop-button.arco-btn:focus {
+  border-color: rgba(225, 29, 72, 0.46) !important;
+  background:
+    linear-gradient(180deg, #ffffff, #ffe7eb) !important;
+  color: #8f1232 !important;
+  filter: none;
 }
 
 .pod-danger-button.arco-btn {
-  border-color: #dc2626;
-  background: linear-gradient(180deg, #f05252, #dc2626);
+  border-color: #ef4444;
+  background: linear-gradient(180deg, #fb5d5d, #dc2626);
   color: #ffffff;
-  box-shadow: 0 5px 12px rgba(220, 38, 38, 0.18);
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.16);
 }
 
 .pod-danger-button.arco-btn:hover,
 .pod-danger-button.arco-btn:focus {
   border-color: #dc2626 !important;
-  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
+  background: linear-gradient(180deg, #f05252, #c81e1e) !important;
   color: #ffffff !important;
   filter: none;
 }
 
-.pod-miaoshou-app-shell .arco-btn:not(.pod-theme-button):not(.pod-blue-button):not(.pod-red-button):not(.pod-danger-button):not(.arco-btn-disabled):hover {
+.pod-miaoshou-app-shell .arco-btn:not(.pod-theme-button):not(.pod-blue-button):not(.pod-red-button):not(.pod-stop-button):not(.pod-danger-button):not(.pod-progress-retry-button):not(.arco-btn-disabled):hover {
   border-color: var(--pod-border-strong) !important;
   background: var(--pod-hover) !important;
   color: var(--pod-text-strong) !important;
@@ -617,7 +743,8 @@ body.dark-theme .pod-field-label {
 
 body.pod-miaoshou-vue-mounted .arco-select-dropdown,
 body.pod-miaoshou-vue-mounted .arco-trigger-popup {
-  z-index: 3500;
+  z-index: 5000;
+  pointer-events: auto;
   border: 1px solid rgba(203, 213, 225, 0.8);
   border-radius: 8px;
   background: #ffffff;
@@ -738,6 +865,7 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 .pod-product-table {
   min-height: calc(var(--pod-product-table-body-height, 360px) + 45px);
   background-color: #ffffff;
+  box-shadow: none;
 }
 
 .pod-product-table .arco-table,
@@ -780,6 +908,21 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 }
 
 .pod-product-table .arco-scrollbar.arco-scrollbar-type-track.arco-scrollbar-both .arco-scrollbar-track-direction-vertical::after {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-table-container::before,
+.pod-product-table .arco-table-container::after {
+  box-shadow: none !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.pod-product-table .arco-table-footer,
+.pod-product-table .arco-table-tfoot,
+.pod-product-table .arco-table-scroll-y {
   border-color: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
@@ -1270,7 +1413,7 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 .pod-random-carousel-modal .arco-modal,
 .arco-modal.pod-random-carousel-modal,
 .pod-random-carousel-modal {
-  width: min(560px, calc(100vw - 32px));
+  width: min(900px, calc(100vw - 32px));
 }
 
 @media (max-width: 1100px) {

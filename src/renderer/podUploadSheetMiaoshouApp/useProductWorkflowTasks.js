@@ -25,6 +25,14 @@ function showMessage(messageApi, method, content) {
   }
 }
 
+function clonePlainValue(value, fallback) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (_error) {
+    return fallback;
+  }
+}
+
 export function useProductWorkflowTasks(options = {}) {
   const products = options.products;
   const activeProductId = options.activeProductId;
@@ -62,6 +70,8 @@ export function useProductWorkflowTasks(options = {}) {
   });
   const uploadFailedFilePaths = ref([]);
   const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, canceled: 0 });
+  const uploadRunId = ref('');
+  const aiTitleRunId = ref('');
   let uploadProgressPollTimer = 0;
 
   const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
@@ -70,18 +80,11 @@ export function useProductWorkflowTasks(options = {}) {
   }).length);
   const uploadProgressText = computed(() => {
     if (!uploadProgress.total) return '';
-    const stateText = uploadProgress.runState === 'completed'
-      ? '\u5df2\u5b8c\u6210'
-      : uploadProgress.runState === 'failed'
-        ? '\u5931\u8d25'
-        : uploadProgress.runState === 'canceled'
-          ? '\u5df2\u53d6\u6d88'
-          : '\u4e0a\u4f20\u4e2d';
-    return `\u56fe\u7247\u4e0a\u4f20\uff1a${stateText} ${uploadProgress.completed}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
+    return `\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
   });
   const aiTitleProgressText = computed(() => {
-    if (!generatingAiTitles.value || !aiProgress.total) return '';
-    return `AI\u6807\u9898\uff1a${aiProgress.completed}/${aiProgress.total}\uff0c\u6210\u529f ${aiProgress.success}\uff0c\u5931\u8d25 ${aiProgress.failed}`;
+    if (!aiProgress.total) return '';
+    return `\u6210\u529f ${aiProgress.success}\uff0c\u5931\u8d25 ${aiProgress.failed}`;
   });
 
   function buildProductsFromFiles(files) {
@@ -145,6 +148,7 @@ export function useProductWorkflowTasks(options = {}) {
   }
 
   function resetUploadProgress() {
+    uploadRunId.value = '';
     Object.assign(uploadProgress, {
       total: 0,
       completed: 0,
@@ -159,6 +163,17 @@ export function useProductWorkflowTasks(options = {}) {
       imageUploadMode: 'original',
       concurrency: 0,
       imageQuality: 0
+    });
+  }
+
+  function resetAiProgress() {
+    aiTitleRunId.value = '';
+    Object.assign(aiProgress, {
+      total: 0,
+      completed: 0,
+      success: 0,
+      failed: 0,
+      canceled: 0
     });
   }
 
@@ -273,6 +288,9 @@ export function useProductWorkflowTasks(options = {}) {
     if (!modalApi || typeof modalApi.warning !== 'function') {
       products.value = [];
       activeProductId.value = '';
+      uploadFailedFilePaths.value = [];
+      resetUploadProgress();
+      resetAiProgress();
       scheduleStateSave();
       return;
     }
@@ -286,6 +304,7 @@ export function useProductWorkflowTasks(options = {}) {
         activeProductId.value = '';
         uploadFailedFilePaths.value = [];
         resetUploadProgress();
+        resetAiProgress();
         scheduleStateSave();
       }
     });
@@ -347,6 +366,8 @@ export function useProductWorkflowTasks(options = {}) {
 
     uploadingImages.value = true;
     resetUploadProgress();
+    const runId = createId('pod-cos');
+    uploadRunId.value = runId;
     Object.assign(uploadProgress, {
       runState: 'starting',
       storageProvider: normalizeText(options && options.storageProvider) || 'tencent-cos',
@@ -356,8 +377,8 @@ export function useProductWorkflowTasks(options = {}) {
     });
 
     try {
-      const runId = createId('pod-cos');
       startUploadProgressPolling(runId);
+      const uploadProducts = clonePlainValue(products.value, []);
 
       const result = await bridge.uploadPodUploadSheetMiaoshouCosImages({
         runId,
@@ -367,10 +388,10 @@ export function useProductWorkflowTasks(options = {}) {
         imageQuality: Math.max(1, Number(options && options.imageQuality) || 90),
         retryFailedOnly: options && options.retryFailedOnly === true,
         retryFilePaths: Array.isArray(options && options.retryFilePaths) ? options.retryFilePaths.slice() : [],
-        products: products.value,
+        products: uploadProducts,
       });
       applyUploadResult(result);
-      showMessage(messageApi, 'success', '\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
+      showMessage(messageApi, result && result.canceled ? 'warning' : 'success', result && result.canceled ? '\u5df2\u505c\u6b62\u56fe\u7247\u4e0a\u4f20' : '\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
       scheduleStateSave();
     } catch (error) {
       showMessage(
@@ -380,8 +401,22 @@ export function useProductWorkflowTasks(options = {}) {
       );
     } finally {
       stopUploadProgressPolling();
+      if (normalizeText(uploadRunId.value) === runId) {
+        uploadRunId.value = '';
+      }
       uploadingImages.value = false;
     }
+  }
+
+  async function stopImageUpload() {
+    const bridge = getBridge(featureBridge);
+    const runId = normalizeText(uploadRunId.value);
+
+    if (!bridge || typeof bridge.cancelPodUploadSheetMiaoshouCosImages !== 'function' || !runId) {
+      return { canceled: false };
+    }
+
+    return bridge.cancelPodUploadSheetMiaoshouCosImages({ runId });
   }
 
   function getBatchAiTitleSnapshot() {
@@ -461,8 +496,10 @@ export function useProductWorkflowTasks(options = {}) {
       if (targetProducts.some((item) => item.id === product.id)) product.aiTitleStatus = 'processing';
     });
 
+    const runId = createId('pod-ai-title');
+    aiTitleRunId.value = runId;
+
     try {
-      const runId = createId('pod-ai-title');
       const result = await bridge.generatePodUploadSheetMiaoshouAiTitles({
         ...options,
         runId,
@@ -483,7 +520,7 @@ export function useProductWorkflowTasks(options = {}) {
       });
 
       applyAiTitleResults(result);
-      showMessage(messageApi, 'success', '\u6279\u91cf AI \u6807\u9898\u751f\u6210\u5b8c\u6210');
+      showMessage(messageApi, result && result.canceled ? 'warning' : 'success', result && result.canceled ? '\u5df2\u505c\u6b62 AI \u6807\u9898\u751f\u6210' : '\u6279\u91cf AI \u6807\u9898\u751f\u6210\u5b8c\u6210');
       scheduleStateSave();
     } catch (error) {
       products.value = products.value.map((product) => {
@@ -497,8 +534,22 @@ export function useProductWorkflowTasks(options = {}) {
         'AI \u6807\u9898\u751f\u6210\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5')
       );
     } finally {
+      if (normalizeText(aiTitleRunId.value) === runId) {
+        aiTitleRunId.value = '';
+      }
       generatingAiTitles.value = false;
     }
+  }
+
+  async function stopBatchAiTitleGeneration() {
+    const bridge = getBridge(featureBridge);
+    const runId = normalizeText(aiTitleRunId.value);
+
+    if (!bridge || typeof bridge.cancelPodUploadSheetMiaoshouAiTitles !== 'function' || !runId) {
+      return { canceled: false };
+    }
+
+    return bridge.cancelPodUploadSheetMiaoshouAiTitles({ runId });
   }
 
   async function exportTable() {
@@ -511,7 +562,7 @@ export function useProductWorkflowTasks(options = {}) {
     try {
       buildSkuRows();
 
-      const exportProducts = products.value.map((product) => ({
+      const exportProducts = clonePlainValue(products.value, []).map((product) => ({
         ...product,
         ...globalForm,
         skuConfigMap: getSkuConfigMapSnapshot()
@@ -561,9 +612,11 @@ export function useProductWorkflowTasks(options = {}) {
     clearProducts,
     getImageUploadSnapshot,
     executeImageUpload,
+    stopImageUpload,
     getBatchAiTitleSnapshot,
     openBatchAiTitleDialog,
     executeBatchAiTitleGeneration,
+    stopBatchAiTitleGeneration,
     exportTable
   };
 }

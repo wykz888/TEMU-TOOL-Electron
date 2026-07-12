@@ -48,6 +48,7 @@
         :upload-progress="uploadProgress"
         :upload-progress-text="uploadProgressText"
         :ai-title-progress-text="aiTitleProgressText"
+        :ai-progress="aiProgress"
         :import-products="importProducts"
         :open-carousel-preset="openCarouselPreset"
         :open-random-carousel-preset="openRandomCarouselPreset"
@@ -60,6 +61,10 @@
         :get-product-row-class="getProductRowClass"
         :select-product="selectProduct"
         :handle-product-title-change="handleProductTitleChange"
+        :retry-failed-image-upload="retryFailedImageUpload"
+        :retry-failed-ai-title-generation="retryFailedAiTitleGeneration"
+        :stop-image-upload-task="stopImageUploadTask"
+        :stop-batch-ai-title-generation-task="stopBatchAiTitleGenerationTask"
       />
     </main>
 
@@ -85,8 +90,10 @@
       :apply-carousel-preset="applyCarouselPreset"
       :close-random-carousel-preset="closeRandomCarouselPreset"
       :select-all-random-carousel-items="selectAllRandomCarouselItems"
+      :clear-random-carousel-items="clearRandomCarouselItems"
       :is-random-carousel-selected="isRandomCarouselSelected"
       :toggle-random-carousel-item="toggleRandomCarouselItem"
+      :get-random-carousel-candidate="getRandomCarouselCandidate"
       :get-random-carousel-item-tip="getRandomCarouselItemTip"
       :apply-random-carousel-preset="applyRandomCarouselPreset"
       :close-description-preset="closeDescriptionPreset"
@@ -213,6 +220,8 @@ const uploadProgress = reactive({
 });
 const uploadFailedFilePaths = ref([]);
 const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, canceled: 0 });
+const uploadRunId = ref('');
+const aiTitleRunId = ref('');
 const globalForm = reactive({
   sourceCategory: '',
   customAttributes: '',
@@ -249,7 +258,10 @@ const batchAiTitleMaxTargetLength = batchAiTitleDialog.maxTargetLength;
 const batchAiTitleMinImageQuality = batchAiTitleDialog.minImageQuality;
 const batchAiTitleMaxImageQuality = batchAiTitleDialog.maxImageQuality;
 const closeBatchAiTitleDialog = batchAiTitleDialog.closeDialog;
-const startBatchAiTitleDialogGeneration = batchAiTitleDialog.startGeneration;
+function startBatchAiTitleDialogGeneration(retryFailedOnly = false) {
+  scheduleStateSave();
+  return batchAiTitleDialog.startGeneration(retryFailedOnly);
+}
 
 const imageUploadDialog = useImageUploadDialog({
   startUpload: executeImageUpload
@@ -267,8 +279,55 @@ const imageUploadMaxConcurrency = imageUploadDialog.maxConcurrency;
 const imageUploadMinImageQuality = imageUploadDialog.minImageQuality;
 const imageUploadMaxImageQuality = imageUploadDialog.maxImageQuality;
 const closeImageUploadDialog = imageUploadDialog.closeDialog;
-const startImageUploadFromDialog = imageUploadDialog.startUploadFromDialog;
 const handleImageUploadStorageProviderChange = imageUploadDialog.handleStorageProviderChange;
+
+function collectImageUploadPreferences() {
+  return imageUploadDialog.collectPayload(false);
+}
+
+function applyImageUploadPreferences(snapshot) {
+  return imageUploadDialog.applyPreferences(snapshot);
+}
+
+function collectBatchAiTitlePreferences() {
+  return batchAiTitleDialog.collectPayload(false);
+}
+
+function applyBatchAiTitlePreferences(snapshot) {
+  return batchAiTitleDialog.applyPreferences(snapshot);
+}
+
+function startImageUploadFromDialog(retryFailedOnly = false) {
+  scheduleStateSave();
+  return imageUploadDialog.startUploadFromDialog(retryFailedOnly);
+}
+
+function retryFailedImageUpload() {
+  const payload = collectImageUploadPreferences();
+
+  if (!uploadFailedFilePaths.value.length) {
+    return undefined;
+  }
+
+  return executeImageUpload({
+    ...payload,
+    retryFailedOnly: true,
+    retryFilePaths: uploadFailedFilePaths.value.slice()
+  });
+}
+
+function retryFailedAiTitleGeneration() {
+  const payload = collectBatchAiTitlePreferences();
+
+  if (!aiProgress.failed) {
+    return undefined;
+  }
+
+  return executeBatchAiTitleGeneration({
+    ...payload,
+    retryFailedOnly: true
+  });
+}
 
 const featureBridge = computed(() => window.temuApp && window.temuApp.featureCenter ? window.temuApp.featureCenter : null);
 const formTemplateOptions = computed(() => formTemplates.value.map((item) => ({ value: item.id, label: item.name })));
@@ -301,6 +360,8 @@ const {
   isRandomCarouselSelected,
   toggleRandomCarouselItem,
   selectAllRandomCarouselItems,
+  clearRandomCarouselItems,
+  getRandomCarouselCandidate,
   getRandomCarouselItemTip,
   applyRandomCarouselPreset,
   openDescriptionPreset,
@@ -336,11 +397,6 @@ const uploadProgressPercent = computed(() => {
   const completed = Math.max(0, Number(uploadProgress.completed) || 0);
   return total ? Math.max(0, Math.min(1, completed / total)) : 0;
 });
-const uploadProgressStatus = computed(() => {
-  if (uploadProgress.failed > 0 || uploadProgress.runState === 'failed') return 'danger';
-  if (uploadProgress.runState === 'completed') return 'success';
-  return 'normal';
-});
 const uploadProgressStateText = computed(() => {
   if (uploadProgress.runState === 'completed') return '\u5df2\u5b8c\u6210';
   if (uploadProgress.runState === 'failed') return '\u5931\u8d25';
@@ -350,11 +406,11 @@ const uploadProgressStateText = computed(() => {
 });
 const uploadProgressText = computed(() => {
   if (!uploadProgress.total) return '';
-  return `\u56fe\u7247\u4e0a\u4f20\uff1a${uploadProgressStateText.value} ${uploadProgress.completed}/${uploadProgress.total}\uff0c\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
+  return `\u65b0\u4f20 ${uploadProgress.uploaded}\uff0c\u7f13\u5b58 ${uploadProgress.cached}\uff0c\u5931\u8d25 ${uploadProgress.failed}`;
 });
 const aiTitleProgressText = computed(() => {
-  if (!generatingAiTitles.value || !aiProgress.total) return '';
-  return `AI\u6807\u9898\uff1a${aiProgress.completed}/${aiProgress.total}\uff0c\u6210\u529f ${aiProgress.success}\uff0c\u5931\u8d25 ${aiProgress.failed}`;
+  if (!aiProgress.total) return '';
+  return `\u6210\u529f ${aiProgress.success}\uff0c\u5931\u8d25 ${aiProgress.failed}`;
 });
 
 function normalizeText(value) {
@@ -367,6 +423,22 @@ function createId(prefix) {
 
 function splitLines(value) {
   return String(value || '').replace(/\r\n/g, '\n').split(/[\n,;\uFF0C\u3001\uFF1B]+/).map((item) => normalizeText(item)).filter(Boolean);
+}
+
+function toSequenceText(value) {
+  const values = (Array.isArray(value) ? value : [])
+    .map((item) => normalizeText(item).replace(/\D+/g, ''))
+    .filter(Boolean);
+
+  return Array.from(new Set(values)).join(',');
+}
+
+function parseSequenceNumbers(value) {
+  return String(value || '')
+    .replace(/\r\n/g, '\n')
+    .split(/[\n,;\uFF0C\u3001\uFF1B\s]+/)
+    .map((item) => Number.parseInt(item, 10))
+    .filter((item, index, items) => Number.isFinite(item) && item > 0 && items.indexOf(item) === index);
 }
 
 function getFilePath(file) {
@@ -667,6 +739,7 @@ function getImageUploadCandidateCount() {
 }
 
 function resetUploadProgress() {
+  uploadRunId.value = '';
   Object.assign(uploadProgress, {
     total: 0,
     completed: 0,
@@ -681,6 +754,17 @@ function resetUploadProgress() {
     imageUploadMode: imageUploadMode.value || 'original',
     concurrency: 0,
     imageQuality: 0
+  });
+}
+
+function resetAiProgress() {
+  aiTitleRunId.value = '';
+  Object.assign(aiProgress, {
+    total: 0,
+    completed: 0,
+    success: 0,
+    failed: 0,
+    canceled: 0
   });
 }
 
@@ -734,13 +818,16 @@ function startUploadProgressPolling(runId) {
 }
 
 function getImageUploadSnapshot() {
+  const preferences = collectImageUploadPreferences();
+
   return {
     totalCount: getImageUploadCandidateCount(),
     retryCount: uploadFailedFilePaths.value.length,
     retryFilePaths: uploadFailedFilePaths.value.slice(),
-    imageUploadMode: imageUploadMode.value || uploadProgress.imageUploadMode || 'original',
-    concurrency: uploadProgress.concurrency || 8,
-    imageQuality: uploadProgress.imageQuality || 90
+    storageProvider: preferences.storageProvider || uploadProgress.storageProvider,
+    imageUploadMode: preferences.imageUploadMode || imageUploadMode.value || uploadProgress.imageUploadMode || 'original',
+    concurrency: preferences.concurrency || uploadProgress.concurrency || 8,
+    imageQuality: preferences.imageQuality || uploadProgress.imageQuality || 90
   };
 }
 
@@ -783,6 +870,7 @@ function clearProducts() {
       activeProductId.value = '';
       uploadFailedFilePaths.value = [];
       resetUploadProgress();
+      resetAiProgress();
       scheduleStateSave();
     }
   });
@@ -838,6 +926,8 @@ async function executeImageUpload(options = {}) {
   imageUploadMode.value = nextImageUploadMode;
   uploadingImages.value = true;
   resetUploadProgress();
+  const runId = createId('pod-universal-cos');
+  uploadRunId.value = runId;
   Object.assign(uploadProgress, {
     runState: 'starting',
     storageProvider: nextStorageProvider,
@@ -847,7 +937,6 @@ async function executeImageUpload(options = {}) {
   });
 
   try {
-    const runId = createId('pod-universal-cos');
     startUploadProgressPolling(runId);
 
     const result = await featureBridge.value.uploadPodUploadSheetMiaoshouUniversalCosImages({
@@ -862,7 +951,11 @@ async function executeImageUpload(options = {}) {
     });
 
     applyImageUploadResult(result);
-    Message.success('\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
+    if (result && result.canceled) {
+      Message.warning('\u5df2\u505c\u6b62\u56fe\u7247\u4e0a\u4f20');
+    } else {
+      Message.success('\u56fe\u7247\u4e0a\u4f20\u5b8c\u6210');
+    }
     scheduleStateSave();
   } catch (error) {
     Object.assign(uploadProgress, {
@@ -871,19 +964,48 @@ async function executeImageUpload(options = {}) {
     Message.error('\u56fe\u7247\u4e0a\u4f20\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5'));
   } finally {
     stopUploadProgressPolling();
+    if (normalizeText(uploadRunId.value) === runId) {
+      uploadRunId.value = '';
+    }
     uploadingImages.value = false;
   }
 }
 
+async function stopImageUploadTask() {
+  if (!featureBridge.value || typeof featureBridge.value.cancelPodUploadSheetMiaoshouUniversalCosImages !== 'function') {
+    return { canceled: false };
+  }
+
+  const runId = normalizeText(uploadRunId.value);
+
+  if (!runId) {
+    return { canceled: false };
+  }
+
+  return featureBridge.value.cancelPodUploadSheetMiaoshouUniversalCosImages({
+    runId
+  });
+}
+
 function getBatchAiTitleSnapshot() {
+  const preferences = collectBatchAiTitlePreferences();
+
   return {
     totalCount: aiTitleEligibleCount.value,
     retryCount: aiTitleRetryCount.value,
-    prefixText: '',
-    suffixText: '',
-    extraPrompt: '',
-    targetLength: '250',
-    outputLanguage: 'en'
+    aiProvider: preferences.aiProvider,
+    apiBaseUrl: preferences.apiBaseUrl,
+    model: preferences.model,
+    storageProvider: preferences.storageProvider,
+    imageCompression: preferences.imageCompression,
+    concurrency: preferences.concurrency,
+    targetLength: preferences.targetLength || '250',
+    imageQuality: preferences.imageQuality,
+    prefixText: preferences.prefixText,
+    suffixText: preferences.suffixText,
+    outputLanguage: preferences.outputLanguage || 'en',
+    useCache: preferences.useCache,
+    extraPrompt: preferences.extraPrompt
   };
 }
 
@@ -905,10 +1027,12 @@ async function executeBatchAiTitleGeneration(options = {}) {
   generatingAiTitles.value = true;
   Object.assign(aiProgress, { total: targetProducts.length, completed: 0, success: 0, failed: 0, canceled: 0 });
   products.value = products.value.map((product) => targetProducts.some((item) => item.id === product.id) ? { ...product, aiTitleStatus: 'processing' } : product);
+  const runId = createId('pod-universal-ai-title');
+  aiTitleRunId.value = runId;
   try {
     const result = await featureBridge.value.generatePodUploadSheetMiaoshouAiTitles({
       ...options,
-      runId: createId('pod-universal-ai-title'),
+      runId,
       entryId: 'pod-upload-sheet-miaoshou-universal-table',
       products: targetProducts.map((product) => {
         const primaryImage = getPrimaryProductImage(product);
@@ -925,14 +1049,37 @@ async function executeBatchAiTitleGeneration(options = {}) {
       })
     });
     applyAiTitleResults(result);
-    Message.success('\u6279\u91cf AI \u6807\u9898\u751f\u6210\u5b8c\u6210');
+    if (result && result.canceled) {
+      Message.warning('\u5df2\u505c\u6b62 AI \u6807\u9898\u751f\u6210');
+    } else {
+      Message.success('\u6279\u91cf AI \u6807\u9898\u751f\u6210\u5b8c\u6210');
+    }
     scheduleStateSave();
   } catch (error) {
     products.value = products.value.map((product) => product.aiTitleStatus === 'processing' ? { ...product, aiTitleStatus: 'failed', aiTitleError: normalizeText(error && error.message) } : product);
     Message.error('AI \u6807\u9898\u751f\u6210\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5'));
   } finally {
+    if (normalizeText(aiTitleRunId.value) === runId) {
+      aiTitleRunId.value = '';
+    }
     generatingAiTitles.value = false;
   }
+}
+
+async function stopBatchAiTitleGenerationTask() {
+  if (!featureBridge.value || typeof featureBridge.value.cancelPodUploadSheetMiaoshouAiTitles !== 'function') {
+    return { canceled: false };
+  }
+
+  const runId = normalizeText(aiTitleRunId.value);
+
+  if (!runId) {
+    return { canceled: false };
+  }
+
+  return featureBridge.value.cancelPodUploadSheetMiaoshouAiTitles({
+    runId
+  });
 }
 
 function applyAiTitleResults(result) {
@@ -982,7 +1129,16 @@ async function loadFormTemplates() {
   try {
     const result = await featureBridge.value.getPodUploadSheetMiaoshouUniversalFormTemplates();
     formTemplates.value = Array.isArray(result && result.templates) ? result.templates : [];
-    if (!selectedTemplateId.value && formTemplates.value.length > 0) {
+    const selectedTemplate = selectedTemplateId.value
+      ? formTemplates.value.find((item) => item.id === selectedTemplateId.value)
+      : null;
+
+    if (selectedTemplate) {
+      applySelectedTemplate(selectedTemplate.id);
+      return;
+    }
+
+    if (formTemplates.value.length > 0) {
       selectedTemplateId.value = formTemplates.value[0].id;
       applySelectedTemplate(selectedTemplateId.value);
     }
@@ -995,30 +1151,73 @@ async function loadWorkspaceState() {
   if (!featureBridge.value) return;
   const result = await featureBridge.value.getPodUploadSheetMiaoshouUniversalWorkspaceState().catch(() => null);
   const workspace = result && result.workspace ? result.workspace : {};
-  imageUploadMode.value = normalizeText(workspace.imageUploadMode) || 'original';
+  const workspaceImageUploadConfig = workspace.imageUploadConfig && typeof workspace.imageUploadConfig === 'object'
+    ? workspace.imageUploadConfig
+    : workspace;
+  const workspaceBatchAiTitleConfig = workspace.batchAiTitleConfig && typeof workspace.batchAiTitleConfig === 'object'
+    ? workspace.batchAiTitleConfig
+    : workspace;
+
+  selectedTemplateId.value = normalizeText(workspace.selectedTemplateId || workspace.templateId);
+  templateName.value = normalizeText(workspace.templateName || workspace.selectedTemplateName);
+  imageUploadMode.value = normalizeText(workspaceImageUploadConfig.imageUploadMode || workspace.imageUploadMode) || 'original';
   lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
   carouselPresetText.value = Array.isArray(workspace.carouselPresetSelection) ? workspace.carouselPresetSelection.join('\n') : '';
   descriptionPresetText.value = Array.isArray(workspace.descriptionPresetSelection) ? workspace.descriptionPresetSelection.join('\n') : '';
+  randomCarouselOnlyFirst.value = workspace.randomCarouselOnlyFirst === true
+    || normalizeText(workspace.carouselPresetMode) === 'random-first';
+  randomCarouselSelected.value = parseSequenceNumbers(workspace.carouselPresetRandomOrders);
+  applyImageUploadPreferences(workspaceImageUploadConfig);
+  applyBatchAiTitlePreferences(workspaceBatchAiTitleConfig);
 }
 
 async function loadInitialData() {
-  await Promise.allSettled([loadFormTemplates(), loadWorkspaceState()]);
+  await loadWorkspaceState();
+  await loadFormTemplates();
 }
 
 function buildTemplatePayload() {
+  const imageUploadConfig = collectImageUploadPreferences();
+  const batchAiTitleConfig = collectBatchAiTitlePreferences();
+
   return {
     templateId: selectedTemplateId.value,
     templateName: templateName.value,
     fields: {
       ...globalForm,
-      aiTitleExtraPrompt: '',
-      aiTitleMaxLength: '250'
+      aiTitlePrefix: normalizeText(batchAiTitleConfig.prefixText),
+      aiTitleSuffix: normalizeText(batchAiTitleConfig.suffixText),
+      aiTitleExtraPrompt: normalizeText(batchAiTitleConfig.extraPrompt),
+      aiTitleMaxLength: normalizeText(batchAiTitleConfig.targetLength || '250')
     },
     skuConfigMap: cloneSkuMap(skuConfigMap),
     batchPreset: {
-      carouselPresetMode: 'selected',
+      carouselPresetMode: randomCarouselOnlyFirst.value ? 'random-first' : 'selected',
+      carouselPresetRandomOrders: toSequenceText(randomCarouselSelected.value),
       carouselPresetSelection: splitLines(carouselPresetText.value),
+      randomCarouselOnlyFirst: randomCarouselOnlyFirst.value === true,
       descriptionPresetSelection: splitLines(descriptionPresetText.value)
+    },
+    imageUploadConfig: {
+      storageProvider: normalizeText(imageUploadConfig.storageProvider),
+      imageUploadMode: normalizeText(imageUploadConfig.imageUploadMode),
+      concurrency: normalizeText(imageUploadConfig.concurrency),
+      imageQuality: normalizeText(imageUploadConfig.imageQuality)
+    },
+    batchAiTitleConfig: {
+      aiProvider: normalizeText(batchAiTitleConfig.aiProvider),
+      apiBaseUrl: normalizeText(batchAiTitleConfig.apiBaseUrl),
+      model: normalizeText(batchAiTitleConfig.model),
+      storageProvider: normalizeText(batchAiTitleConfig.storageProvider),
+      imageCompression: normalizeText(batchAiTitleConfig.imageCompression),
+      concurrency: normalizeText(batchAiTitleConfig.concurrency),
+      targetLength: normalizeText(batchAiTitleConfig.targetLength),
+      imageQuality: normalizeText(batchAiTitleConfig.imageQuality),
+      prefixText: normalizeText(batchAiTitleConfig.prefixText),
+      suffixText: normalizeText(batchAiTitleConfig.suffixText),
+      outputLanguage: normalizeText(batchAiTitleConfig.outputLanguage),
+      useCache: batchAiTitleConfig.useCache === false ? false : true,
+      extraPrompt: normalizeText(batchAiTitleConfig.extraPrompt)
     }
   };
 }
@@ -1033,6 +1232,8 @@ async function saveCurrentTemplate() {
   try {
     const result = await featureBridge.value.savePodUploadSheetMiaoshouUniversalFormTemplate(buildTemplatePayload());
     formTemplates.value = Array.isArray(result && result.templates) ? result.templates : formTemplates.value;
+    selectedTemplateId.value = normalizeText(result && result.templateId) || selectedTemplateId.value;
+    scheduleStateSave();
     Message.success('\u6a21\u677f\u5df2\u4fdd\u5b58');
   } catch (error) {
     Message.error('\u4fdd\u5b58\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5'));
@@ -1044,6 +1245,7 @@ async function saveCurrentTemplate() {
 function applySelectedTemplate(value) {
   const template = formTemplates.value.find((item) => item.id === value);
   if (!template) return;
+  selectedTemplateId.value = template.id;
   templateName.value = template.name;
   Object.assign(globalForm, {
     sourceCategory: '',
@@ -1058,7 +1260,24 @@ function applySelectedTemplate(value) {
   });
   Object.keys(skuConfigMap).forEach((key) => delete skuConfigMap[key]);
   Object.assign(skuConfigMap, cloneSkuMap(template.skuConfigMap));
+  if (template.batchPreset) {
+    carouselPresetText.value = Array.isArray(template.batchPreset.carouselPresetSelection)
+      ? template.batchPreset.carouselPresetSelection.join('\n')
+      : '';
+    descriptionPresetText.value = Array.isArray(template.batchPreset.descriptionPresetSelection)
+      ? template.batchPreset.descriptionPresetSelection.join('\n')
+      : '';
+    randomCarouselOnlyFirst.value = template.batchPreset.randomCarouselOnlyFirst === true
+      || normalizeText(template.batchPreset.carouselPresetMode) === 'random-first';
+    randomCarouselSelected.value = parseSequenceNumbers(template.batchPreset.carouselPresetRandomOrders);
+  }
+  imageUploadMode.value = normalizeText(template.imageUploadConfig && template.imageUploadConfig.imageUploadMode)
+    || imageUploadMode.value
+    || 'original';
+  applyImageUploadPreferences(template.imageUploadConfig || {});
+  applyBatchAiTitlePreferences(template.batchAiTitleConfig || {});
   syncGlobalToProducts();
+  scheduleStateSave();
 }
 
 async function deleteSelectedTemplate() {
@@ -1079,12 +1298,40 @@ function scheduleStateSave() {
   saveTimer = window.setTimeout(() => {
     saveTimer = 0;
     if (!featureBridge.value || typeof featureBridge.value.savePodUploadSheetMiaoshouUniversalWorkspaceState !== 'function') return;
+    const imageUploadPreferences = collectImageUploadPreferences();
+    const batchAiTitlePreferences = collectBatchAiTitlePreferences();
     void featureBridge.value.savePodUploadSheetMiaoshouUniversalWorkspaceState({
       workspace: {
         lastImportDirectoryPath: lastImportDirectoryPath.value,
-        imageUploadMode: imageUploadMode.value,
+        imageUploadMode: imageUploadPreferences.imageUploadMode,
+        selectedTemplateId: selectedTemplateId.value,
+        templateName: templateName.value,
+        imageUploadConfig: {
+          storageProvider: imageUploadPreferences.storageProvider,
+          imageUploadMode: imageUploadPreferences.imageUploadMode,
+          concurrency: imageUploadPreferences.concurrency,
+          imageQuality: imageUploadPreferences.imageQuality
+        },
+        carouselPresetMode: randomCarouselOnlyFirst.value ? 'random-first' : 'selected',
+        carouselPresetRandomOrders: toSequenceText(randomCarouselSelected.value),
+        randomCarouselOnlyFirst: randomCarouselOnlyFirst.value === true,
         carouselPresetSelection: splitLines(carouselPresetText.value),
-        descriptionPresetSelection: splitLines(descriptionPresetText.value)
+        descriptionPresetSelection: splitLines(descriptionPresetText.value),
+        batchAiTitleConfig: {
+          aiProvider: batchAiTitlePreferences.aiProvider,
+          apiBaseUrl: batchAiTitlePreferences.apiBaseUrl,
+          model: batchAiTitlePreferences.model,
+          storageProvider: batchAiTitlePreferences.storageProvider,
+          imageCompression: batchAiTitlePreferences.imageCompression,
+          concurrency: batchAiTitlePreferences.concurrency,
+          targetLength: batchAiTitlePreferences.targetLength,
+          imageQuality: batchAiTitlePreferences.imageQuality,
+          prefixText: batchAiTitlePreferences.prefixText,
+          suffixText: batchAiTitlePreferences.suffixText,
+          outputLanguage: batchAiTitlePreferences.outputLanguage,
+          useCache: batchAiTitlePreferences.useCache,
+          extraPrompt: batchAiTitlePreferences.extraPrompt
+        }
       }
     }).catch(() => undefined);
   }, 400);
@@ -1096,8 +1343,10 @@ function installVueBridge() {
     ...existingBridge,
     getImageUploadSnapshot,
     startImageUpload: executeImageUpload,
+    stopImageUpload: stopImageUploadTask,
     getBatchAiTitleSnapshot,
-    startBatchAiTitleGeneration: executeBatchAiTitleGeneration
+    startBatchAiTitleGeneration: executeBatchAiTitleGeneration,
+    stopBatchAiTitleGeneration: stopBatchAiTitleGenerationTask
   };
   window[VIEW_BRIDGE_KEY] = bridge;
   return () => {

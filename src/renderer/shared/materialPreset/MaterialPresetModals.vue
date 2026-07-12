@@ -71,41 +71,75 @@
     :visible="randomCarouselVisible"
     :mask-closable="false"
     :footer="false"
-    modal-class="pod-miaoshou-operation-modal pod-random-carousel-modal"
+    modal-class="pod-miaoshou-operation-modal pod-carousel-preset-modal pod-random-carousel-modal"
     @cancel="closeRandomCarouselPreset"
   >
     <template #title>&#x6279;&#x91CF;&#x968F;&#x673A;&#x4E3B;&#x56FE;</template>
-    <div class="pod-random-carousel-body">
-      <label class="pod-random-carousel-only-first">
-        <a-checkbox :model-value="randomCarouselOnlyFirst" @change="(checked) => $emit('update:randomCarouselOnlyFirst', checked)" />
-        <span>&#x53EA;&#x6539;&#x9996;&#x56FE;</span>
-      </label>
-      <section class="pod-random-carousel-panel">
-        <div class="pod-random-carousel-toolbar">
-          <a-button size="small" @click="selectAllRandomCarouselItems">&#x5168;&#x9009;</a-button>
-          <span>{{ randomCarouselCandidates.length }}</span>
+    <div class="pod-carousel-preset-body pod-random-carousel-body">
+      <section class="pod-carousel-preset-panel">
+        <div class="pod-carousel-preset-head">
+          <div>
+            <strong>&#x56FE;&#x7247;&#x6587;&#x4EF6;&#x5217;&#x8868;</strong>
+            <span>&#x52FE;&#x9009;&#x53C2;&#x4E0E;&#x968F;&#x673A;&#x7684;&#x8F6E;&#x64AD;&#x56FE;&#x5E8F;&#x53F7;</span>
+          </div>
+          <a-tag class="pod-carousel-count-tag" bordered>{{ randomCarouselCandidates.length }} &#x5F20;</a-tag>
         </div>
-        <div class="pod-random-carousel-list">
+        <div class="pod-carousel-preset-toolbar">
+          <a-button size="small" @click="clearRandomCarouselItems">&#x53D6;&#x6D88;&#x5168;&#x9009;</a-button>
+          <a-button size="small" @click="selectAllRandomCarouselItems">&#x5168;&#x90E8;&#x52FE;&#x9009;</a-button>
+          <span>{{ randomCarouselSelected.length }} / {{ randomCarouselCandidates.length }}</span>
+        </div>
+        <div class="pod-carousel-candidate-list">
           <label
             v-for="item in randomCarouselCandidates"
             :key="item.order"
-            class="pod-random-carousel-item"
+            class="pod-carousel-candidate-item"
             :class="{ 'is-selected': isRandomCarouselSelected(item.order) }"
           >
             <a-checkbox :model-value="isRandomCarouselSelected(item.order)" @change="(checked) => toggleRandomCarouselItem(item.order, checked)" />
-            <span class="pod-random-carousel-index">{{ item.order }}</span>
-            <a-tooltip :content="getRandomCarouselItemTip(item)">
-              <strong>{{ item.displayName }}</strong>
-            </a-tooltip>
+            <div class="pod-carousel-assigned-file">
+              <span>&#x7B2C; {{ item.order }} &#x4E2A;&#x8F6E;&#x64AD;&#x4F4D;</span>
+              <a-tooltip :content="getRandomCarouselItemTip(item)">
+                <strong>{{ item.displayName }}</strong>
+              </a-tooltip>
+            </div>
             <span class="pod-carousel-file-count">{{ item.count }} &#x4E2A;&#x5546;&#x54C1;</span>
           </label>
           <a-empty v-if="!randomCarouselCandidates.length" class="pod-carousel-empty" description="&#x6682;&#x65E0;&#x8F6E;&#x64AD;&#x56FE;" />
         </div>
       </section>
+      <section class="pod-carousel-preset-panel">
+        <div class="pod-carousel-preset-head">
+          <div>
+            <strong>&#x9009;&#x4E2D;&#x968F;&#x673A;&#x987A;&#x5E8F;</strong>
+            <span>&#x53EA;&#x5BF9;&#x5DF2;&#x52FE;&#x9009;&#x7684;&#x5E8F;&#x53F7;&#x8FDB;&#x884C;&#x4EA4;&#x6362;</span>
+          </div>
+          <label class="pod-random-carousel-only-first">
+            <a-checkbox :model-value="randomCarouselOnlyFirst" @change="(checked) => $emit('update:randomCarouselOnlyFirst', checked)" />
+            <span>&#x53EA;&#x6539;&#x9996;&#x56FE;</span>
+          </label>
+        </div>
+        <div class="pod-carousel-preset-toolbar">
+          <span>{{ randomCarouselSelected.length }} &#x4E2A;&#x5E8F;&#x53F7;&#x5DF2;&#x9009;</span>
+        </div>
+        <div class="pod-carousel-selected-list">
+          <div v-for="order in randomCarouselSelected" :key="order" class="pod-carousel-selected-item">
+            <span class="pod-carousel-order-index">{{ order }}</span>
+            <div class="pod-carousel-assigned-file">
+              <span>&#x53C2;&#x4E0E;&#x968F;&#x673A;</span>
+              <a-tooltip :content="getRandomCarouselItemTip(getRandomCarouselCandidate(order))">
+                <strong>{{ getRandomCarouselCandidate(order) ? getRandomCarouselCandidate(order).displayName : ('#' + order) }}</strong>
+              </a-tooltip>
+            </div>
+            <span class="pod-carousel-file-count">{{ getRandomCarouselCandidate(order) ? getRandomCarouselCandidate(order).count : 0 }} &#x4E2A;&#x5546;&#x54C1;</span>
+          </div>
+          <a-empty v-if="!randomCarouselSelected.length" class="pod-carousel-empty" description="&#x8BF7;&#x5728;&#x5DE6;&#x4FA7;&#x52FE;&#x9009;&#x56FE;&#x7247;" />
+        </div>
+      </section>
     </div>
     <div class="pod-modal-footer pod-random-carousel-footer">
       <a-button @click="closeRandomCarouselPreset">&#x53D6;&#x6D88;</a-button>
-      <a-button class="pod-red-button" type="primary" :disabled="!randomCarouselSelected.length" @click="applyRandomCarouselPreset">&#x5E94;&#x7528;&#x968F;&#x673A;</a-button>
+      <a-button class="pod-theme-button" type="primary" :disabled="!randomCarouselSelected.length" @click="applyRandomCarouselPreset">&#x5E94;&#x7528;&#x968F;&#x673A;</a-button>
     </div>
   </a-modal>
 
@@ -252,11 +286,19 @@ defineProps({
     type: Function,
     required: true
   },
+  clearRandomCarouselItems: {
+    type: Function,
+    required: true
+  },
   isRandomCarouselSelected: {
     type: Function,
     required: true
   },
   toggleRandomCarouselItem: {
+    type: Function,
+    required: true
+  },
+  getRandomCarouselCandidate: {
     type: Function,
     required: true
   },

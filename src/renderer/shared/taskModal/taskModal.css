@@ -121,6 +121,18 @@
   gap: 12px;
 }
 
+.pod-task-modal .pod-batch-ai-title-quality-field {
+  display: grid;
+  gap: 7px;
+}
+
+.pod-task-modal .pod-batch-ai-title-quality-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 12px;
+}
+
 .pod-task-modal .pod-quality-number {
   width: 88px;
 }
@@ -239,6 +251,11 @@
   border-color: rgba(var(--theme-primary-rgb, 239, 68, 68), 0.32);
 }
 
+.pod-batch-ai-title-modal.arco-modal,
+.arco-modal.pod-batch-ai-title-modal {
+  width: min(920px, calc(100vw - 32px));
+}
+
 @media (max-width: 960px) {
   .pod-task-modal .pod-modal-form-grid,
   .pod-task-modal .pod-modal-form-grid--three {
@@ -246,6 +263,10 @@
   }
 
   .pod-task-modal .pod-quality-row-modern {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pod-task-modal .pod-batch-ai-title-quality-control {
     grid-template-columns: minmax(0, 1fr);
   }
 

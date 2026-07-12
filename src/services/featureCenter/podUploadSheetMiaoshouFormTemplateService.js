@@ -9,7 +9,7 @@ const {
   toTimestamp
 } = require('../shopManagement/common');
 
-const SERVICE_VERSION = 1;
+const SERVICE_VERSION = 2;
 const DEFAULT_ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
 const STATE_FILE_NAME = 'form-templates.json';
 const FORM_TEMPLATE_FIELD_NAMES = Object.freeze([
@@ -33,7 +33,8 @@ const FORM_TEMPLATE_FIELD_NAMES = Object.freeze([
   'aiTitlePrefix',
   'aiTitleSuffix',
   'aiTitleExtraPrompt',
-  'aiTitleMaxLength'
+  'aiTitleMaxLength',
+  'aiTitleLanguage'
 ]);
 const SKU_CONFIG_FIELD_NAMES = Object.freeze([
   'declaredPrice',
@@ -237,14 +238,55 @@ function createPodUploadSheetMiaoshouFormTemplateService({
       .filter((item, index, items) => item && items.indexOf(item) === index);
   }
 
+  function normalizeBoolean(value, fallback = false) {
+    if (value === true || value === false) {
+      return value;
+    }
+
+    return fallback;
+  }
+
   function normalizeTemplateBatchPreset(source) {
+    const input = source && typeof source === 'object' && !Array.isArray(source) ? source : {};
+    const carouselPresetMode = normalizeCarouselPresetMode(input.carouselPresetMode || input.cachedCarouselPresetMode);
+
+    return {
+      carouselPresetMode,
+      carouselPresetRandomOrders: normalizeSequenceSelection(input.carouselPresetRandomOrders || input.cachedCarouselPresetRandomOrders),
+      carouselPresetSelection: normalizeTextArray(input.carouselPresetSelection || input.cachedCarouselPresetSelection),
+      randomCarouselOnlyFirst: normalizeBoolean(input.randomCarouselOnlyFirst, carouselPresetMode === 'random-first'),
+      descriptionPresetSelection: normalizeTextArray(input.descriptionPresetSelection || input.cachedDescriptionPresetSelection)
+    };
+  }
+
+  function normalizeImageUploadConfig(source) {
     const input = source && typeof source === 'object' && !Array.isArray(source) ? source : {};
 
     return {
-      carouselPresetMode: normalizeCarouselPresetMode(input.carouselPresetMode || input.cachedCarouselPresetMode),
-      carouselPresetRandomOrders: normalizeSequenceSelection(input.carouselPresetRandomOrders || input.cachedCarouselPresetRandomOrders),
-      carouselPresetSelection: normalizeTextArray(input.carouselPresetSelection || input.cachedCarouselPresetSelection),
-      descriptionPresetSelection: normalizeTextArray(input.descriptionPresetSelection || input.cachedDescriptionPresetSelection)
+      storageProvider: normalizeText(input.storageProvider || input.cachedStorageProvider),
+      imageUploadMode: normalizeText(input.imageUploadMode || input.cachedImageUploadMode),
+      concurrency: normalizeText(input.concurrency || input.cachedConcurrency),
+      imageQuality: normalizeText(input.imageQuality || input.cachedImageQuality)
+    };
+  }
+
+  function normalizeBatchAiTitleConfig(source) {
+    const input = source && typeof source === 'object' && !Array.isArray(source) ? source : {};
+
+    return {
+      aiProvider: normalizeText(input.aiProvider || input.cachedAiProvider),
+      apiBaseUrl: normalizeText(input.apiBaseUrl || input.cachedApiBaseUrl),
+      model: normalizeText(input.model || input.cachedModel),
+      storageProvider: normalizeText(input.storageProvider || input.cachedStorageProvider),
+      imageCompression: normalizeText(input.imageCompression || input.cachedImageCompression),
+      concurrency: normalizeText(input.concurrency || input.cachedConcurrency),
+      targetLength: normalizeText(input.targetLength || input.cachedTargetLength),
+      imageQuality: normalizeText(input.imageQuality || input.cachedImageQuality),
+      prefixText: normalizeText(input.prefixText || input.cachedPrefixText),
+      suffixText: normalizeText(input.suffixText || input.cachedSuffixText),
+      outputLanguage: normalizeText(input.outputLanguage || input.cachedOutputLanguage),
+      useCache: normalizeBoolean(input.useCache, true),
+      extraPrompt: normalizeText(input.extraPrompt || input.cachedExtraPrompt)
     };
   }
 
@@ -266,7 +308,9 @@ function createPodUploadSheetMiaoshouFormTemplateService({
       updatedAt: toTimestamp(source.updatedAt, createdAt),
       fields: normalizeTemplateFields(source.fields),
       skuConfigMap: normalizeSkuConfigMap(source.skuConfigMap),
-      batchPreset: hasBatchPreset ? normalizeTemplateBatchPreset(source.batchPreset) : null
+      batchPreset: hasBatchPreset ? normalizeTemplateBatchPreset(source.batchPreset) : null,
+      imageUploadConfig: normalizeImageUploadConfig(source.imageUploadConfig),
+      batchAiTitleConfig: normalizeBatchAiTitleConfig(source.batchAiTitleConfig)
     };
   }
 
@@ -449,7 +493,9 @@ function createPodUploadSheetMiaoshouFormTemplateService({
       updatedAt: currentTimestamp,
       fields: payload && payload.fields,
       skuConfigMap: payload && payload.skuConfigMap,
-      batchPreset: payload && payload.batchPreset
+      batchPreset: payload && payload.batchPreset,
+      imageUploadConfig: payload && payload.imageUploadConfig,
+      batchAiTitleConfig: payload && payload.batchAiTitleConfig
     });
   }
 

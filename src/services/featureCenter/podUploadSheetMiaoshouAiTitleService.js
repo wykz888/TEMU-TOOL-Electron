@@ -25,7 +25,13 @@ const DEFAULT_OUTPUT_LANGUAGE = 'en';
 const AI_INPUT_IMAGE_BUCKET = 'chunagtao-1251234463';
 const AI_INPUT_IMAGE_REGION = 'ap-guangzhou';
 const AI_INPUT_IMAGE_ROOT = '\u5999\u624bAI\u8bc6\u56fe';
-const AI_INPUT_IMAGE_EXTENSION = '.jpg';
+const AI_INPUT_IMAGE_FORMATS = Object.freeze(['original', 'png', 'jpg', 'webp']);
+const AI_INPUT_IMAGE_SOURCE_EXTENSIONS = Object.freeze({
+  '.jpg': { extension: '.jpg', mimeType: 'image/jpeg' },
+  '.jpeg': { extension: '.jpg', mimeType: 'image/jpeg' },
+  '.png': { extension: '.png', mimeType: 'image/png' },
+  '.webp': { extension: '.webp', mimeType: 'image/webp' }
+});
 const DEFAULT_SETTINGS = Object.freeze({
   apiBaseUrl: DEFAULT_AI_TITLE_CONFIG.apiBaseUrl,
   apiKey: '',
@@ -381,6 +387,16 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return Math.max(48, Math.min(95, normalizeInteger(value, 84, 1)));
   }
 
+  function normalizeImageCompression(value) {
+    const normalizedValue = normalizeText(value).toLowerCase();
+
+    if (!normalizedValue || normalizedValue === 'smart-jpeg' || normalizedValue === 'high-quality' || normalizedValue === 'jpeg') {
+      return 'jpg';
+    }
+
+    return AI_INPUT_IMAGE_FORMATS.includes(normalizedValue) ? normalizedValue : 'jpg';
+  }
+
   function applyPayloadRuntimeSettings(settings, payload) {
     const source = payload && typeof payload === 'object' ? payload : {};
     const hasImageQuality = Object.prototype.hasOwnProperty.call(source, 'imageQuality');
@@ -389,7 +405,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
       ...settings,
       concurrency: normalizeInteger(source.concurrency, settings.concurrency, 1),
       ...(hasImageQuality ? { imageQuality: normalizeImageQuality(source.imageQuality) } : {}),
-      imageCompression: normalizeText(source.imageCompression) || 'smart-jpeg',
+      imageCompression: normalizeImageCompression(source.imageCompression),
       storageProvider: normalizeText(source.storageProvider),
       useCache: normalizeRuntimeBoolean(source.useCache, true)
     };
@@ -501,7 +517,9 @@ function createPodUploadSheetMiaoshouAiTitleService({
           mimeType: 'image/jpeg',
           byteLength: buffer.length,
           quality,
-          maxDimension: dimension
+          maxDimension: dimension,
+          imageCompression: 'jpg',
+          extension: '.jpg'
         };
 
         if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
@@ -540,7 +558,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return {
       width: Math.max(1, Math.round(width * scale)),
       height: Math.max(1, Math.round(height * scale)),
-      fit: 'fill'
+      fit: 'inside',
+      withoutEnlargement: true
     };
   }
 
@@ -585,7 +604,188 @@ function createPodUploadSheetMiaoshouAiTitleService({
           mimeType: 'image/jpeg',
           byteLength: buffer.length,
           quality,
-          maxDimension: dimension
+          maxDimension: dimension,
+          imageCompression: 'jpg',
+          extension: '.jpg'
+        };
+
+        if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
+          if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
+            smallestWithinRange = candidate;
+          }
+          continue;
+        }
+
+        if (candidate.byteLength < minBytes) {
+          if (!largestUnderRange || candidate.byteLength > largestUnderRange.byteLength) {
+            largestUnderRange = candidate;
+          }
+          continue;
+        }
+
+        if (!smallestOverRange || candidate.byteLength < smallestOverRange.byteLength) {
+          smallestOverRange = candidate;
+        }
+      }
+    }
+
+    return smallestWithinRange || largestUnderRange || smallestOverRange;
+  }
+
+  function getAiInputImageFormatInfo(imagePath, imageCompression) {
+    const normalizedCompression = normalizeImageCompression(imageCompression);
+
+    if (normalizedCompression === 'png') {
+      return {
+        extension: '.png',
+        mimeType: 'image/png',
+        imageCompression: 'png'
+      };
+    }
+
+    if (normalizedCompression === 'webp') {
+      return {
+        extension: '.webp',
+        mimeType: 'image/webp',
+        imageCompression: 'webp'
+      };
+    }
+
+    if (normalizedCompression === 'jpg') {
+      return {
+        extension: '.jpg',
+        mimeType: 'image/jpeg',
+        imageCompression: 'jpg'
+      };
+    }
+
+    const sourceExtension = normalizeText(path.extname(imagePath)).toLowerCase();
+    const sourceFormat = AI_INPUT_IMAGE_SOURCE_EXTENSIONS[sourceExtension];
+
+    return sourceFormat
+      ? {
+        extension: sourceFormat.extension,
+        mimeType: sourceFormat.mimeType,
+        imageCompression: 'original'
+      }
+      : {
+        extension: '.jpg',
+        mimeType: 'image/jpeg',
+        imageCompression: 'jpg'
+      };
+  }
+
+  async function readOriginalImageCandidate(imagePath, fileStat) {
+    const formatInfo = getAiInputImageFormatInfo(imagePath, 'original');
+
+    if (formatInfo.imageCompression !== 'original') {
+      return null;
+    }
+
+    const buffer = await fs.promises.readFile(imagePath);
+
+    return {
+      buffer,
+      mimeType: formatInfo.mimeType,
+      byteLength: buffer.length,
+      quality: 0,
+      maxDimension: 0,
+      imageCompression: 'original',
+      extension: formatInfo.extension,
+      fileStat: {
+        size: Number(fileStat && fileStat.size) || 0,
+        mtimeMs: Number(fileStat && fileStat.mtimeMs) || 0
+      }
+    };
+  }
+
+  async function selectFormattedImageCandidateWithSharp(imagePath, settings, imageCompression) {
+    const formatInfo = getAiInputImageFormatInfo(imagePath, imageCompression);
+    const normalizedCompression = formatInfo.imageCompression;
+    const minBytes = Math.min(settings.minImageBytes, settings.maxImageBytes);
+    const maxBytes = Math.max(settings.maxImageBytes, settings.minImageBytes);
+    const qualityOptions = normalizedCompression === 'png'
+      ? [null]
+      : getImageJpegQualities(settings);
+    const metadata = await sharp(imagePath, {
+      failOnError: false,
+      animated: false,
+      limitInputPixels: false
+    }).metadata();
+    let smallestWithinRange = null;
+    let largestUnderRange = null;
+    let smallestOverRange = null;
+
+    for (const dimension of IMAGE_MAX_DIMENSIONS) {
+      const resizeOptions = getSharpResizeOptions(metadata, dimension);
+
+      for (const quality of qualityOptions) {
+        let pipeline = sharp(imagePath, {
+          failOnError: false,
+          animated: false,
+          limitInputPixels: false
+        }).rotate();
+
+        if (resizeOptions) {
+          pipeline = pipeline.resize(resizeOptions);
+        }
+
+        if (normalizedCompression === 'png') {
+          const buffer = await pipeline
+            .png({
+              compressionLevel: 9,
+              adaptiveFiltering: true,
+              force: true
+            })
+            .toBuffer();
+          const candidate = {
+            buffer,
+            mimeType: 'image/png',
+            byteLength: buffer.length,
+            quality: 0,
+            maxDimension: dimension,
+            imageCompression: 'png',
+            extension: '.png'
+          };
+
+          if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
+            if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
+              smallestWithinRange = candidate;
+            }
+            continue;
+          }
+
+          if (candidate.byteLength < minBytes) {
+            if (!largestUnderRange || candidate.byteLength > largestUnderRange.byteLength) {
+              largestUnderRange = candidate;
+            }
+            continue;
+          }
+
+          if (!smallestOverRange || candidate.byteLength < smallestOverRange.byteLength) {
+            smallestOverRange = candidate;
+          }
+          continue;
+        }
+
+        const normalizedQuality = Math.max(42, Math.min(95, Number(quality) || 84));
+        const buffer = await pipeline
+          .flatten({
+            background: '#ffffff'
+          })
+          .webp({
+            quality: normalizedQuality,
+            effort: 4
+          })
+          .toBuffer();
+        const candidate = {
+          buffer,
+          mimeType: normalizedCompression === 'webp' ? 'image/webp' : 'image/jpeg',
+          byteLength: buffer.length,
+          quality: normalizedQuality,
+          maxDimension: dimension,
+          imageCompression: normalizedCompression,
+          extension: normalizedCompression === 'webp' ? '.webp' : '.jpg'
         };
 
         if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
@@ -621,21 +821,43 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const fileStat = await fs.promises.stat(imagePath);
     let candidate = null;
     let sourceImage = null;
-
-    try {
-      sourceImage = nativeImage.createFromPath(imagePath);
-    } catch (_error) {
-      sourceImage = null;
-    }
-
-    if (sourceImage && !sourceImage.isEmpty()) {
-      candidate = selectCompressedImageCandidate(sourceImage, settings);
-    } else {
+    const imageCompression = normalizeImageCompression(settings && settings.imageCompression);
+    const selectJpegCandidate = async () => {
       try {
-        candidate = await selectCompressedImageCandidateWithSharp(imagePath, settings);
+        sourceImage = nativeImage.createFromPath(imagePath);
+      } catch (_error) {
+        sourceImage = null;
+      }
+
+      if (sourceImage && !sourceImage.isEmpty()) {
+        return selectCompressedImageCandidate(sourceImage, settings);
+      }
+
+      try {
+        return await selectCompressedImageCandidateWithSharp(imagePath, settings);
+      } catch (_error) {
+        return null;
+      }
+    };
+
+    if (imageCompression === 'original') {
+      try {
+        candidate = await readOriginalImageCandidate(imagePath, fileStat);
       } catch (_error) {
         candidate = null;
       }
+    } else if (imageCompression === 'png' || imageCompression === 'webp') {
+      try {
+        candidate = await selectFormattedImageCandidateWithSharp(imagePath, settings, imageCompression);
+      } catch (_error) {
+        candidate = null;
+      }
+    } else {
+      candidate = await selectJpegCandidate();
+    }
+
+    if (!candidate && imageCompression !== 'jpg') {
+      candidate = await selectJpegCandidate();
     }
 
     if (!candidate || !candidate.buffer || !candidate.buffer.length) {
@@ -687,10 +909,12 @@ function createPodUploadSheetMiaoshouAiTitleService({
       Number(compressedImage && compressedImage.fileStat && compressedImage.fileStat.mtimeMs) || 0,
       Number(compressedImage && compressedImage.byteLength) || 0,
       Number(compressedImage && compressedImage.maxDimension) || 0,
-      Number(compressedImage && compressedImage.quality) || 0
+      Number(compressedImage && compressedImage.quality) || 0,
+      normalizeText(compressedImage && compressedImage.imageCompression),
+      normalizeText(compressedImage && compressedImage.extension)
     ].join('|'), 16);
 
-    return `${AI_INPUT_IMAGE_ROOT}/${appFolder}/${ownerFolder}/${dateFolder}/${productFolder}/${fileSlug}-${uniqueHash}${AI_INPUT_IMAGE_EXTENSION}`;
+    return `${AI_INPUT_IMAGE_ROOT}/${appFolder}/${ownerFolder}/${dateFolder}/${productFolder}/${fileSlug}-${uniqueHash}${normalizeText(compressedImage && compressedImage.extension) || '.jpg'}`;
   }
 
   async function uploadCompressedImageForAi(owner, entryId, product, compressedImage, settings, job) {
@@ -717,7 +941,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
       Key: objectKey,
       Body: compressedImage.buffer,
       ContentLength: Number(compressedImage && compressedImage.byteLength) || compressedImage.buffer.length,
-      ContentType: 'image/jpeg',
+      ContentType: normalizeText(compressedImage && compressedImage.mimeType) || 'image/jpeg',
       ACL: 'public-read',
       CacheControl: 'public, max-age=31536000, immutable'
     });
@@ -1088,6 +1312,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const suffixHint = splitLocalizedTitleHint(suffixText);
     const resolvedOutputLanguage = getLengthControlLanguage(entryId, outputLanguage);
     const lengthTarget = normalizeRequestedTitleLength(targetLength);
+    const limitBothTitles = getResolvedEntryId(entryId) === ENTRY_ID;
+    const secondaryTitleMaxLength = limitBothTitles ? lengthTarget : TITLE_MAX_LENGTH;
     const strictLengthRules = resolvedOutputLanguage === 'zh'
       ? [
         'zhTitle composition rules:',
@@ -1097,7 +1323,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
         `- zhTitle MUST NOT exceed ${lengthTarget} characters.`,
         `- Count every visible character in zhTitle, including Chinese characters, English letters, spaces, punctuation, slashes, hyphens, symbols, and digits.`,
         `- Make zhTitle as close as possible to ${lengthTarget} characters without exceeding it.`,
-        '- enTitle: faithful natural English translation of zhTitle, same product meaning, and MUST NOT exceed 255 characters.'
+        `- enTitle: faithful natural English translation of zhTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
       ]
       : [
         'enTitle composition rules:',
@@ -1108,7 +1334,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
         `- Count every visible character in enTitle, including letters, spaces, punctuation, slashes, hyphens, symbols, and digits.`,
         `- Make enTitle as close as possible to ${lengthTarget} characters without exceeding it.`,
         '- Use enough truthful pattern, style, and usage keywords to get close to the target length. Do not stop too short if accurate keywords are still available.',
-        '- zhTitle: faithful natural Chinese translation of enTitle, same product meaning, and MUST NOT exceed 255 characters.'
+        `- zhTitle: faithful natural Chinese translation of enTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
       ];
 
     const parts = [
@@ -1176,6 +1402,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const suffixHint = splitLocalizedTitleHint(suffixText);
     const resolvedOutputLanguage = getLengthControlLanguage(entryId, outputLanguage);
     const resolvedTargetLength = normalizeRequestedTitleLength(targetLength);
+    const limitBothTitles = getResolvedEntryId(entryId) === ENTRY_ID;
+    const secondaryTitleMaxLength = limitBothTitles ? resolvedTargetLength : TITLE_MAX_LENGTH;
     const enMiddleText = resolvedOutputLanguage === 'en'
       ? buildLengthOptimizedEnglishMiddleText(
         titleResult,
@@ -1192,18 +1420,18 @@ function createPodUploadSheetMiaoshouAiTitleService({
       normalizeMiddleTitlePart(titleResult.zhTitle, prefixHint.zhText, suffixHint.zhText) || titleResult.zhTitle,
       suffixHint.zhText,
       {
-        maxLength: resolvedOutputLanguage === 'zh' ? resolvedTargetLength : TITLE_MAX_LENGTH
+        maxLength: resolvedOutputLanguage === 'zh' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength
       }
-    ) || trimTitleLength(titleResult.zhTitle, resolvedOutputLanguage === 'zh' ? resolvedTargetLength : TITLE_MAX_LENGTH);
+    ) || trimTitleLength(titleResult.zhTitle, resolvedOutputLanguage === 'zh' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength);
     const enTitle = fitTitlePartsToLength(
       prefixHint.enText,
       enMiddleText,
       suffixHint.enText,
       {
         preferSpace: true,
-        maxLength: resolvedOutputLanguage === 'en' ? resolvedTargetLength : TITLE_MAX_LENGTH
+        maxLength: resolvedOutputLanguage === 'en' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength
       }
-    ) || trimTitleLength(titleResult.enTitle, resolvedOutputLanguage === 'en' ? resolvedTargetLength : TITLE_MAX_LENGTH);
+    ) || trimTitleLength(titleResult.enTitle, resolvedOutputLanguage === 'en' || limitBothTitles ? resolvedTargetLength : secondaryTitleMaxLength);
 
     if (!zhTitle || !enTitle) {
       throw new Error('AI returned incomplete titles.');

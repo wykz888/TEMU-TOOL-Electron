@@ -289,7 +289,12 @@ export function useMaterialPresetDialogs(options = {}) {
   }
 
   function openRandomCarouselPreset() {
-    randomCarouselSelected.value = randomCarouselCandidates.value.map((item) => item.order);
+    const candidateOrders = randomCarouselCandidates.value.map((item) => item.order);
+    const savedOrders = randomCarouselSelected.value
+      .map((item) => Number(item))
+      .filter((item, index, items) => candidateOrders.includes(item) && items.indexOf(item) === index);
+
+    randomCarouselSelected.value = savedOrders.length ? savedOrders : candidateOrders;
     randomCarouselVisible.value = true;
   }
 
@@ -316,6 +321,16 @@ export function useMaterialPresetDialogs(options = {}) {
 
   function selectAllRandomCarouselItems() {
     randomCarouselSelected.value = randomCarouselCandidates.value.map((item) => item.order);
+  }
+
+  function clearRandomCarouselItems() {
+    randomCarouselSelected.value = [];
+  }
+
+  function getRandomCarouselCandidate(order) {
+    const nextOrder = Number(order);
+
+    return randomCarouselCandidates.value.find((item) => item.order === nextOrder) || null;
   }
 
   function getRandomCarouselItemTip(item) {
@@ -483,6 +498,8 @@ export function useMaterialPresetDialogs(options = {}) {
     isRandomCarouselSelected,
     toggleRandomCarouselItem,
     selectAllRandomCarouselItems,
+    clearRandomCarouselItems,
+    getRandomCarouselCandidate,
     getRandomCarouselItemTip,
     applyRandomCarouselPreset,
     openDescriptionPreset,

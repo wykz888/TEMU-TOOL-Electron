@@ -19,7 +19,7 @@ const STORAGE_PROVIDER_OPTIONS = Object.freeze([
   })
 ]);
 
-const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze([
+export const IMAGE_UPLOAD_MODE_OPTIONS = Object.freeze([
   Object.freeze({
     value: 'original',
     label: '\u539f\u6587\u4ef6'
@@ -52,7 +52,7 @@ function normalizeStorageProvider(value) {
   return value === 'cloudflare-r2' ? 'cloudflare-r2' : 'tencent-cos';
 }
 
-function normalizeImageUploadMode(value) {
+export function normalizeImageUploadMode(value) {
   const normalizedValue = normalizeText(value).toLowerCase();
   return IMAGE_UPLOAD_MODE_OPTIONS.some((item) => item.value === normalizedValue)
     ? normalizedValue
@@ -147,6 +147,13 @@ export function useImageUploadDialog(options = {}) {
     summary.retryFilePaths = Array.isArray(source.retryFilePaths)
       ? source.retryFilePaths.map((item) => normalizeText(item)).filter(Boolean)
       : [];
+    applyPreferences(source);
+  }
+
+  function applyPreferences(preferences) {
+    const source = preferences && typeof preferences === 'object' ? preferences : {};
+
+    form.storageProvider = normalizeStorageProvider(source.storageProvider || form.storageProvider);
     form.imageUploadMode = normalizeImageUploadMode(source.imageUploadMode || form.imageUploadMode);
     form.concurrency = normalizeInteger(
       source.concurrency,
@@ -160,6 +167,7 @@ export function useImageUploadDialog(options = {}) {
       MIN_IMAGE_QUALITY,
       MAX_IMAGE_QUALITY
     );
+    updateStorageWarning();
   }
 
   function updateStorageWarning() {
@@ -200,6 +208,7 @@ export function useImageUploadDialog(options = {}) {
 
     try {
       await loadGlobalConfig();
+      applySnapshot(snapshot);
       setStatus('');
     } catch (error) {
       setStatus(
@@ -328,6 +337,7 @@ export function useImageUploadDialog(options = {}) {
     openDialog,
     closeDialog,
     collectPayload,
+    applyPreferences,
     startUploadFromDialog,
     handleStorageProviderChange,
     installGlobalBridge
