@@ -38,6 +38,17 @@ const STORAGE_PROVIDER_OPTIONS = Object.freeze([
   })
 ]);
 
+const OUTPUT_LANGUAGE_OPTIONS = Object.freeze([
+  Object.freeze({
+    value: 'en',
+    label: '\u82f1\u6587'
+  }),
+  Object.freeze({
+    value: 'zh',
+    label: '\u4e2d\u6587'
+  })
+]);
+
 function normalizeText(value) {
   return String(value === undefined || value === null ? '' : value).trim();
 }
@@ -66,6 +77,10 @@ function normalizeImageCompression(value) {
   return IMAGE_UPLOAD_MODE_OPTIONS.some((item) => item.value === normalizedValue)
     ? normalizedValue
     : 'jpg';
+}
+
+function normalizeOutputLanguage(value) {
+  return value === 'zh' ? 'zh' : 'en';
 }
 
 function hasOwnValue(source, key) {
@@ -200,7 +215,9 @@ export function useBatchAiTitleDialog() {
     );
     form.prefixText = hasOwnValue(source, 'prefixText') ? normalizeText(source.prefixText) : form.prefixText;
     form.suffixText = hasOwnValue(source, 'suffixText') ? normalizeText(source.suffixText) : form.suffixText;
-    form.outputLanguage = 'en';
+    form.outputLanguage = normalizeOutputLanguage(
+      hasOwnValue(source, 'outputLanguage') ? source.outputLanguage || form.outputLanguage : form.outputLanguage
+    );
     form.useCache = hasOwnValue(source, 'useCache') ? source.useCache === true : form.useCache === true;
     form.extraPrompt = hasOwnValue(source, 'extraPrompt') ? normalizeText(source.extraPrompt) : form.extraPrompt;
     summary.storageName = getStorageProviderLabel(form.storageProvider);
@@ -284,7 +301,7 @@ export function useBatchAiTitleDialog() {
       imageQuality: normalizeInteger(form.imageQuality, DEFAULT_IMAGE_QUALITY, MIN_IMAGE_QUALITY, MAX_IMAGE_QUALITY),
       prefixText: normalizeText(form.prefixText),
       suffixText: normalizeText(form.suffixText),
-      outputLanguage: 'en',
+      outputLanguage: normalizeOutputLanguage(form.outputLanguage),
       useCache: form.useCache === true,
       extraPrompt: normalizeText(form.extraPrompt),
       retryFailedOnly: retryFailedOnly === true
@@ -373,6 +390,7 @@ export function useBatchAiTitleDialog() {
     aiPlatformOptions: AI_PLATFORM_OPTIONS,
     storageProviderOptions: STORAGE_PROVIDER_OPTIONS,
     imageCompressionOptions: IMAGE_UPLOAD_MODE_OPTIONS,
+    outputLanguageOptions: OUTPUT_LANGUAGE_OPTIONS,
     modelOptions: AI_MODEL_OPTIONS,
     apiBaseOptions: AI_BASE_URL_OPTIONS,
     minConcurrency: MIN_CONCURRENCY,

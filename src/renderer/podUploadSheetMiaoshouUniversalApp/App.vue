@@ -1240,11 +1240,14 @@ async function stopBatchAiTitleGenerationTask() {
 function applyAiTitleResults(result) {
   const items = Array.isArray(result && result.items) ? result.items : [];
   const itemMap = new Map(items.map((item) => [normalizeText(item && item.id), item]));
+  const resolvedOutputLanguage = normalizeText(result && result.outputLanguage) === 'en' ? 'en' : 'zh';
   products.value = products.value.map((product) => {
     const item = itemMap.get(product.id);
     if (!item) return product.aiTitleStatus === 'processing' ? { ...product, aiTitleStatus: 'failed' } : product;
     if (item.status === 'success') {
-      const title = normalizeText(item.enTitle || item.zhTitle);
+      const title = resolvedOutputLanguage === 'en'
+        ? normalizeText(item.enTitle || item.zhTitle)
+        : normalizeText(item.zhTitle || item.enTitle);
       return { ...product, title: title || product.title, aiTitleZh: normalizeText(item.zhTitle), aiTitleEn: normalizeText(item.enTitle), aiTitleStatus: 'success', aiTitleError: '', aiTitlePatternSummary: normalizeText(item.patternSummary), aiTitleUpdatedAt: normalizeText(result && result.updatedAt) };
     }
     return { ...product, aiTitleStatus: item.status === 'canceled' ? 'canceled' : 'failed', aiTitleError: normalizeText(item.error), aiTitleUpdatedAt: normalizeText(result && result.updatedAt) };

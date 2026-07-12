@@ -104,10 +104,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return ENTRY_ID;
   }
 
-  function getLengthControlLanguage(entryId, outputLanguage) {
-    return getResolvedEntryId(entryId) === ENTRY_ID
-      ? 'en'
-      : normalizeOutputLanguage(outputLanguage, DEFAULT_OUTPUT_LANGUAGE);
+  function getLengthControlLanguage(_entryId, outputLanguage) {
+    return normalizeOutputLanguage(outputLanguage, DEFAULT_OUTPUT_LANGUAGE);
   }
 
   function formatDateFolder(date = new Date()) {
@@ -1313,19 +1311,25 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const resolvedOutputLanguage = getLengthControlLanguage(entryId, outputLanguage);
     const lengthTarget = normalizeRequestedTitleLength(targetLength);
     const secondaryTitleMaxLength = lengthTarget;
+    const selectedTitleField = resolvedOutputLanguage === 'zh' ? 'zhTitle' : 'enTitle';
+    const selectedLanguageLabel = resolvedOutputLanguage === 'zh' ? 'Chinese' : 'English';
     const strictLengthRules = resolvedOutputLanguage === 'zh'
       ? [
         'zhTitle composition rules:',
+        '- zhTitle must be written in natural Simplified Chinese only.',
+        '- zhTitle must stay fully in Chinese; do not let it drift into English or mixed language.',
         '- The "Front title hint" below MUST appear at the beginning of zhTitle.',
         '- The "End title hint" below MUST appear at the end of zhTitle.',
         '- Build the rest of zhTitle around these two fixed parts.',
         `- zhTitle MUST NOT exceed ${lengthTarget} characters.`,
         `- Count every visible character in zhTitle, including Chinese characters, English letters, spaces, punctuation, slashes, hyphens, symbols, and digits.`,
         `- Make zhTitle as close as possible to ${lengthTarget} characters without exceeding it.`,
-        `- enTitle: faithful natural English translation of zhTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
+        `- enTitle must be a faithful natural English translation of zhTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
       ]
       : [
         'enTitle composition rules:',
+        '- enTitle must be written in natural English only.',
+        '- enTitle must stay fully in English; do not let it drift into Chinese or mixed language.',
         '- The "Front title English hint" below MUST appear at the beginning of enTitle.',
         '- The "End title English hint" below MUST appear at the end of enTitle.',
         '- Build the rest of enTitle around these two fixed parts.',
@@ -1333,16 +1337,16 @@ function createPodUploadSheetMiaoshouAiTitleService({
         `- Count every visible character in enTitle, including letters, spaces, punctuation, slashes, hyphens, symbols, and digits.`,
         `- Make enTitle as close as possible to ${lengthTarget} characters without exceeding it.`,
         '- Use enough truthful pattern, style, and usage keywords to get close to the target length. Do not stop too short if accurate keywords are still available.',
-        `- zhTitle: faithful natural Chinese translation of enTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
+        `- zhTitle must be a faithful natural Chinese translation of enTitle, same product meaning, and MUST NOT exceed ${secondaryTitleMaxLength} characters.`
       ];
 
     const parts = [
       'You are an expert e-commerce listing copywriter for TEMU, Amazon, and Mercado Libre.',
       'Look at the product image and create matching Chinese (zhTitle) and English (enTitle) product titles. Both MUST describe the exact same product content — same pattern, colors, style, features, and usage — just in different languages.',
       '',
-      'CRITICAL: enTitle MUST be written in ENGLISH only. If enTitle contains Chinese characters, the entire output will be rejected. zhTitle MUST be in Chinese.',
+      'CRITICAL: zhTitle must be Chinese only. enTitle must be English only. Never swap the two fields or mix languages inside them.',
       '',
-      `Primary output language for strict length control: ${resolvedOutputLanguage === 'zh' ? 'Chinese (zhTitle)' : 'English (enTitle)'}.`,
+      `Selected primary title field for strict length control: ${selectedTitleField} (${selectedLanguageLabel}).`,
       ...strictLengthRules,
       '- Include: pattern details, product type, colors, style, usage scenarios, relevant keywords.',
       '',
@@ -1442,7 +1446,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
         ? titleResult.usageScenarios.slice()
         : [],
       patternSummary: normalizeTitlePart(titleResult.patternSummary),
-      confidence: titleResult.confidence
+      confidence: titleResult.confidence,
+      outputLanguage: resolvedOutputLanguage
     };
   }
 
@@ -1733,6 +1738,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
           entryId,
           requestedModel,
           resolvedModel,
+          outputLanguage,
           canceled: false,
           totalCount: 0,
           successCount: 0,
@@ -1898,6 +1904,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
           entryId,
           requestedModel,
           resolvedModel,
+          outputLanguage,
           canceled: job.canceled,
           totalCount: items.length,
           successCount,
