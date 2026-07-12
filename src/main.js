@@ -126,6 +126,7 @@ const globalConfigService = createGlobalConfigService({
   sessionStore,
   featureCenterProfileService
 });
+const runtimeLogger = createRuntimeLogger({ app });
 const appUpdateService = createAppUpdateService({
   app,
   getUpdateSettings: () => globalConfigService.getUpdateSettings(),
@@ -135,7 +136,6 @@ const promotionManagerSettingsService = createPromotionManagerSettingsService({
   sessionStore,
   featureCenterProfileService
 });
-const runtimeLogger = createRuntimeLogger({ app });
 const operationsActivityBackgroundLogService = createOperationsActivityBackgroundLogService({
   app,
   runtimeLogger
