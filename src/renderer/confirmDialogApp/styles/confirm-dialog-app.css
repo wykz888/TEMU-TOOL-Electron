@@ -8,8 +8,6 @@
   --confirm-dialog-text: #172033;
   --confirm-dialog-muted: #667085;
   --confirm-dialog-shadow: 0 22px 48px rgba(15, 23, 42, 0.16);
-  --confirm-dialog-warning: #d97706;
-  --confirm-dialog-warning-rgb: 217, 119, 6;
   --confirm-dialog-danger: #e5484d;
   --confirm-dialog-danger-rgb: 229, 72, 77;
 }
@@ -78,7 +76,11 @@ body.dark-theme {
 }
 
 .confirm-dialog-shell[data-tone="warning"] .confirm-dialog-accent {
-  background: var(--confirm-dialog-warning);
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary-color, #d4a038),
+    var(--theme-primary-color-deep, #a8771f)
+  );
 }
 
 .confirm-dialog-shell[data-tone="danger"] .confirm-dialog-accent {
@@ -107,9 +109,9 @@ body.dark-theme {
 }
 
 .confirm-dialog-icon.is-warning {
-  color: var(--confirm-dialog-warning);
-  background: rgba(var(--confirm-dialog-warning-rgb), 0.1);
-  border-color: rgba(var(--confirm-dialog-warning-rgb), 0.18);
+  color: var(--theme-primary-color-deep, #a8771f);
+  background: rgba(var(--theme-primary-rgb, 212, 160, 56), 0.11);
+  border-color: rgba(var(--theme-primary-rgb, 212, 160, 56), 0.18);
 }
 
 .confirm-dialog-icon.is-danger {
@@ -141,9 +143,9 @@ body.dark-theme {
 }
 
 .confirm-dialog-shell[data-tone="warning"] .confirm-dialog-badge {
-  color: var(--confirm-dialog-warning);
-  background: rgba(var(--confirm-dialog-warning-rgb), 0.1);
-  border-color: rgba(var(--confirm-dialog-warning-rgb), 0.16);
+  color: var(--theme-primary-ink, #7f5f20);
+  background: rgba(var(--theme-primary-rgb, 212, 160, 56), 0.1);
+  border-color: rgba(var(--theme-primary-rgb, 212, 160, 56), 0.15);
 }
 
 .confirm-dialog-shell[data-tone="danger"] .confirm-dialog-badge {
@@ -254,10 +256,14 @@ body.dark-theme .confirm-dialog-button.is-secondary.arco-btn {
 }
 
 .confirm-dialog-shell[data-tone="warning"] .confirm-dialog-button.is-primary.arco-btn-primary {
-  color: #ffffff;
-  border-color: rgba(var(--confirm-dialog-warning-rgb), 0.32);
-  background: var(--confirm-dialog-warning);
-  box-shadow: 0 10px 20px rgba(var(--confirm-dialog-warning-rgb), 0.2);
+  color: var(--theme-primary-contrast, #172233);
+  border-color: rgba(var(--theme-primary-rgb, 212, 160, 56), 0.34);
+  background: linear-gradient(
+    135deg,
+    var(--theme-primary-color, #d4a038),
+    var(--theme-primary-color-deep, #a8771f)
+  );
+  box-shadow: 0 10px 20px rgba(var(--theme-primary-rgb, 212, 160, 56), 0.2);
 }
 
 .confirm-dialog-shell[data-tone="danger"] .confirm-dialog-button.is-primary.arco-btn-primary {

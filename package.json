@@ -1,6 +1,6 @@
 {
   "name": "temu-toolbox-electron",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "TEMU 工具箱 Electron 应用。",
   "main": "src/main.js",
@@ -73,7 +73,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "TEMU \u5de5\u5177\u7bb1",
+      "shortcutName": "TEMU 工具箱",
       "deleteAppDataOnUninstall": false,
       "differentialPackage": true
     }
