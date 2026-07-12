@@ -226,7 +226,7 @@ const templateName = ref('');
 const imageUploadMode = ref('original');
 const lastImportDirectoryPath = ref('');
 const lastExportDirectoryPath = ref('');
-const viewportHeight = ref(typeof window === 'undefined' ? 760 : window.innerHeight);
+const viewportHeight = ref(typeof window === 'undefined' ? 920 : window.innerHeight);
 const imageUploadPreferenceCache = ref({});
 const batchAiTitlePreferenceCache = ref({});
 const importingProducts = ref(false);
@@ -475,7 +475,7 @@ const skuImageOptions = computed(() => {
 });
 const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
 const aiTitleRetryCount = computed(() => products.value.filter((item) => item.aiTitleStatus === 'failed' && getPrimaryProductImage(item)).length);
-const productTableBodyHeight = computed(() => Math.max(380, Math.min(560, viewportHeight.value - 460)));
+const productTableBodyHeight = computed(() => Math.max(580, Math.min(820, Math.round((viewportHeight.value - 500) * 1.55))));
 const productTableScroll = computed(() => ({ x: 1280, y: productTableBodyHeight.value }));
 const productTableStyle = computed(() => ({
   '--pod-product-table-body-height': `${productTableBodyHeight.value}px`

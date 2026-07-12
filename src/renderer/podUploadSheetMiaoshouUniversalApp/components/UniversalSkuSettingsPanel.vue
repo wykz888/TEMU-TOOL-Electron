@@ -112,10 +112,13 @@ const props = defineProps({
 });
 
 const skuTableScroll = computed(() => {
-  const rowCount = Math.max(3, Math.min(8, props.skuRows.length || 3));
-  return {
-    x: 1104,
-    y: rowCount * 48
-  };
+  const rowCount = props.skuRows.length;
+  const scroll = { x: 1104 };
+
+  if (rowCount > 8) {
+    scroll.y = 8 * 48;
+  }
+
+  return scroll;
 });
 </script>

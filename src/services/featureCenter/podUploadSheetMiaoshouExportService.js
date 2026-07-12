@@ -28,6 +28,47 @@ function createPodUploadSheetMiaoshouExportService({
     return String(value || '').trim();
   }
 
+  async function fileExists(filePath) {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  async function resolveTemplateFilePath(templateId, { required = false } = {}) {
+    const normalizedTemplateId = normalizeText(templateId);
+    const fallbackTemplateFilePath =
+      templateService && typeof templateService.getTemplateLocalFilePath === 'function'
+        ? normalizeText(templateService.getTemplateLocalFilePath(normalizedTemplateId))
+        : '';
+
+    if (fallbackTemplateFilePath && (await fileExists(fallbackTemplateFilePath))) {
+      return fallbackTemplateFilePath;
+    }
+
+    if (templateService && typeof templateService.ensureTemplateFile === 'function') {
+      try {
+        const ensuredFilePath = normalizeText(await templateService.ensureTemplateFile(normalizedTemplateId));
+
+        if (ensuredFilePath && (await fileExists(ensuredFilePath))) {
+          return ensuredFilePath;
+        }
+      } catch (_error) {
+        if (required) {
+          throw new Error('\u5bfc\u51fa\u6a21\u677f\u672a\u540c\u6b65\u6210\u529f\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u540e\u91cd\u8bd5\u5bfc\u51fa\u3002');
+        }
+      }
+    }
+
+    if (required) {
+      throw new Error('\u5bfc\u51fa\u6a21\u677f\u4e0d\u5b58\u5728\uff0c\u8bf7\u5148\u91cd\u542f\u8f6f\u4ef6\u6216\u91cd\u8bd5\u5bfc\u51fa\u3002');
+    }
+
+    return fallbackTemplateFilePath;
+  }
+
   function trimTitleTail(value) {
     let result = normalizeText(value).replace(/[\s,\uFF0C\u3001;\uFF1B:\uFF1A/|\\\-\u2013\u2014_+()[\]{}<>\u300A\u300B"'\u201C\u201D\u2018\u2019]+$/u, '');
     const tailMatch = result.match(/([A-Za-z]{1,2})$/u);
@@ -681,10 +722,7 @@ function createPodUploadSheetMiaoshouExportService({
   async function resolveTemplateHeaderRows(templateId, fallbackColumns) {
     const fallbackHeaderRow = fallbackColumns.map((column) => column.header);
     const fallbackNoteRow = fallbackColumns.map((_column, index) => (index === 0 ? ROW_TWO_NOTE : ''));
-    const templateFilePath =
-      templateService && typeof templateService.getTemplateLocalFilePath === 'function'
-        ? normalizeText(templateService.getTemplateLocalFilePath(templateId))
-        : '';
+    const templateFilePath = await resolveTemplateFilePath(templateId);
 
     if (!templateFilePath) {
       return {
@@ -1027,10 +1065,7 @@ function createPodUploadSheetMiaoshouExportService({
   }
 
   async function buildWorkbookBufferFromTemplate(templateId, dataRows) {
-    const templateFilePath =
-      templateService && typeof templateService.getTemplateLocalFilePath === 'function'
-        ? normalizeText(templateService.getTemplateLocalFilePath(templateId))
-        : '';
+    const templateFilePath = await resolveTemplateFilePath(templateId, { required: true });
 
     if (!templateFilePath) {
       throw new Error('Template xlsx file is unavailable.');
@@ -1317,6 +1352,7 @@ function createPodUploadSheetMiaoshouExportService({
       || normalizeText(products[0] && products[0].templateId)
       || 'non-fashion';
     const resolvedProducts = await resolveProductsForExport(products);
+    await resolveTemplateFilePath(templateId, { required: true });
     const downloadsDirectory = app && typeof app.getPath === 'function'
       ? app.getPath('downloads')
       : process.cwd();
