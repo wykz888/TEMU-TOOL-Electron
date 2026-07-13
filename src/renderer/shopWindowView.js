@@ -1,13 +1,4 @@
 ﻿(() => {
-  const EMPTY_STATE_HTML = `
-    <div class="shop-window-empty">
-      <p class="shop-window-empty-title">\u6682\u65E0\u5E97\u94FA</p>
-      <p class="shop-window-empty-text">
-        \u8BF7\u5148\u5728\u5E97\u94FA\u7BA1\u7406\u91CC\u65B0\u589E\u5E97\u94FA\u3002
-      </p>
-    </div>
-  `;
-
   const TAB_LABELS = Object.freeze({
     'seller-center': '\u5356\u5BB6\u4E2D\u5FC3',
     'product-promotion': '\u5546\u54C1\u63A8\u5E7F'
@@ -20,7 +11,6 @@
 
   const DEFAULT_BROWSER_TAB_ID = 'default';
   const MAX_BROWSER_TABS = 10;
-  const UNGROUPED_FILTER_VALUE = '__ungrouped__';
   const STORAGE_TYPE_LABELS = Object.freeze({
     cookies: 'Cookies',
     localStorage: 'Local Storage',
@@ -68,18 +58,11 @@
   let stylesheetPromise = null;
   let syncFrameId = 0;
   let resizeObserver = null;
-  let tabStatusTimer = 0;
-  let lastTabStatusMessage = '';
-  let lastTabStatusPersistent = false;
-  let lastTabStatusShownAt = 0;
   let deferredWorkspaceSyncTimer = 0;
   let lastVisibleWorkspacePayload = null;
   let lastDispatchedWorkspacePayload = null;
   let bridgeDisposers = [];
-  let urlModalController = null;
-  let workspaceController = null;
-  let shopListController = null;
-  let storageSyncViewController = null;
+  let shopWindowAppController = null;
   let autoStorageSyncHeartbeatTimer = 0;
   let autoStorageSyncKickoffTimer = 0;
   let autoStorageSyncKickoffDelayMs = 0;
@@ -137,7 +120,9 @@
             throw new Error('\u5e97\u94fa\u7a97\u53e3\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002');
           }
 
-          return module.mountShopWindowApp('#shopWindowApp');
+          shopWindowAppController = module.mountShopWindowApp('#shopWindowApp');
+          configureShopWindowAppController();
+          return shopWindowAppController;
         });
     }
 
@@ -246,40 +231,6 @@
     }
 
     return autoStorageSyncRuntimeByShopId[normalizedShopId];
-  }
-
-  function ensureShopListController() {
-    if (shopListController) {
-      return shopListController;
-    }
-
-    if (typeof window.createShopWindowShopListController !== 'function') {
-      throw new Error('\u5E97\u94FA\u7A97\u53E3\u5E97\u94FA\u5217\u8868\u63A7\u5236\u6A21\u5757\u52A0\u8F7D\u5931\u8D25\u3002');
-    }
-
-    shopListController = window.createShopWindowShopListController({
-      getElements: () => elements,
-      getViewState: () => viewState,
-      getVisibleShops,
-      normalizeText,
-      escapeHtml,
-      ensurePageBrowserState,
-      ensureActiveBrowserTab,
-      getBrowserTabById,
-      isAutoLoginEnabled,
-      clearBrowserStorageAutoSyncUploadTimer,
-      clearBrowserStorageAutoSyncRetryTimer,
-      clearBrowserStorageAutoSyncDeferredRestoreTimer,
-      hideTabStatus,
-      render,
-      refreshBrowserStorageSyncState,
-      kickOffAutoBrowserStorageSync,
-      emptyStateHtml: EMPTY_STATE_HTML,
-      ungroupedFilterValue: UNGROUPED_FILTER_VALUE,
-      tabLabels: TAB_LABELS
-    });
-
-    return shopListController;
   }
 
   function clearBrowserStorageAutoSyncUploadTimer(shopId = '') {
@@ -614,19 +565,39 @@
   }
 
   function renderBrowserStorageSyncState() {
-    ensureStorageSyncViewController().render();
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.renderStorageSyncStatus === 'function'
+    ) {
+      shopWindowAppController.renderStorageSyncStatus();
+    }
   }
 
   function renderWorkspaceTabs() {
-    ensureWorkspaceController().renderWorkspaceTabs();
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.renderWorkspaceTabs === 'function'
+    ) {
+      shopWindowAppController.renderWorkspaceTabs();
+    }
   }
 
   function renderBrowserTabs() {
-    ensureWorkspaceController().renderBrowserTabs();
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.renderBrowserTabs === 'function'
+    ) {
+      shopWindowAppController.renderBrowserTabs();
+    }
   }
 
   function renderBrowserHosts() {
-    ensureWorkspaceController().renderBrowserHosts();
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.renderBrowserHosts === 'function'
+    ) {
+      shopWindowAppController.renderBrowserHosts();
+    }
   }
 
   function renderBrowserStorageSyncUi() {
@@ -650,86 +621,101 @@
   }
 
   function hideTabStatus() {
-    if (tabStatusTimer) {
-      window.clearTimeout(tabStatusTimer);
-      tabStatusTimer = 0;
-    }
-
     if (
-      elements.tabStatus.classList.contains('is-empty')
-      && elements.tabStatus.getAttribute('aria-hidden') === 'true'
-      && !elements.tabStatus.textContent
+      shopWindowAppController
+      && typeof shopWindowAppController.hideTabStatus === 'function'
     ) {
-      lastTabStatusMessage = '';
-      lastTabStatusPersistent = false;
-      lastTabStatusShownAt = 0;
+      shopWindowAppController.hideTabStatus();
+    }
+  }
+
+  function configureShopWindowAppController() {
+    if (!shopWindowAppController) {
       return;
     }
 
-    elements.tabStatus.textContent = '';
-    elements.tabStatus.title = '';
-    elements.tabStatus.classList.add('is-empty');
-    elements.tabStatus.setAttribute('aria-hidden', 'true');
-    lastTabStatusMessage = '';
-    lastTabStatusPersistent = false;
-    lastTabStatusShownAt = 0;
-    scheduleDeferredWorkspaceSync(40);
-  }
-
-  function ensureUrlModalController() {
-    if (urlModalController) {
-      return urlModalController;
+    if (typeof shopWindowAppController.configureWorkspace === 'function') {
+      shopWindowAppController.configureWorkspace({
+        ensureActiveBrowserTab,
+        ensurePageBrowserState,
+        getBridge,
+        getBrowserStorageBusyActionForShop,
+        getSelectedShop,
+        getViewState: () => viewState,
+        hideTabStatus,
+        kickOffAutoBrowserStorageSync,
+        isPageBrowserOpened,
+        normalizeText,
+        openWorkspaceAfterStorageRestore,
+        createDefaultBrowserTab,
+        defaultBrowserTabId: DEFAULT_BROWSER_TAB_ID,
+        maxBrowserTabs: MAX_BROWSER_TABS,
+        scheduleAutoBrowserStorageUpload,
+        render,
+        tabLabels: TAB_LABELS,
+        updateClosableState,
+        showTabStatus
+      });
     }
 
-    if (typeof window.createShopWindowUrlModalController !== 'function') {
-      throw new Error('\u5e97\u94fa\u7a97\u53e3\u7f51\u5740\u5f39\u7a97\u6a21\u5757\u52a0\u8f7d\u5931\u8d25\u3002');
+    if (typeof shopWindowAppController.configureShopList === 'function') {
+      shopWindowAppController.configureShopList({
+        clearBrowserStorageAutoSyncDeferredRestoreTimer,
+        clearBrowserStorageAutoSyncRetryTimer,
+        clearBrowserStorageAutoSyncUploadTimer,
+        ensureActiveBrowserTab,
+        ensurePageBrowserState,
+        getBrowserTabById,
+        getViewState: () => viewState,
+        getVisibleShops,
+        hideTabStatus,
+        isAutoLoginEnabled,
+        kickOffAutoBrowserStorageSync,
+        normalizeText,
+        refreshBrowserStorageSyncState,
+        render,
+        scheduleWorkspaceSync,
+        setAutoLoginPreference(shopId, pageType, enabled) {
+          return getAutoLoginStore().setPreference(shopId, pageType, enabled);
+        },
+        showTabStatus,
+        tabLabels: TAB_LABELS
+      });
     }
 
-    urlModalController = window.createShopWindowUrlModalController({
-      getElements: () => elements,
-      getBridge,
-      scheduleWorkspaceSync,
-      showTabStatus
-    });
-
-    return urlModalController;
-  }
-
-  function ensureWorkspaceController() {
-    if (workspaceController) {
-      return workspaceController;
+    if (typeof shopWindowAppController.configureUrlModal === 'function') {
+      shopWindowAppController.configureUrlModal({
+        openBrowserUrlInNewTab(payload) {
+          return getBridge().openBrowserUrlInNewTab(payload);
+        },
+        onOpenStateChange() {
+          scheduleWorkspaceSync();
+        },
+        showTabStatus
+      });
     }
 
-    if (typeof window.createShopWindowWorkspaceController !== 'function') {
-      throw new Error('\u5E97\u94FA\u7A97\u53E3\u5DE5\u4F5C\u533A\u63A7\u5236\u6A21\u5757\u52A0\u8F7D\u5931\u8D25\u3002');
+    if (typeof shopWindowAppController.configureStorageSyncStatus === 'function') {
+      shopWindowAppController.configureStorageSyncStatus({
+        getSelectedShop,
+        getCurrentBrowserStorageSyncState,
+        getBrowserStorageAutoSyncRuntime,
+        createEmptyBrowserStorageAutoSyncRuntime,
+        isBrowserStorageAutoSyncEnabled,
+        getBrowserStorageBusyActionForShop,
+        isBrowserStorageSyncStateLoading,
+        formatTimestamp,
+        scheduleDeferredWorkspaceSync,
+        storageTypeLabels: STORAGE_TYPE_LABELS
+      });
     }
 
-    workspaceController = window.createShopWindowWorkspaceController({
-      getElements: () => elements,
-      getViewState: () => viewState,
-      getSelectedShop,
-      getBridge,
-      escapeHtml,
-      ensureActiveBrowserTab,
-      ensurePageBrowserState,
-      isPageBrowserOpened,
-      createDefaultBrowserTab,
-      updateClosableState,
-      getBrowserStorageBusyActionForShop,
-      openWorkspaceAfterStorageRestore,
-      scheduleAutoBrowserStorageUpload,
-      onWorkspaceTabChanged: () => {
-        void kickOffAutoBrowserStorageSync('workspace-tab-changed');
-      },
-      showTabStatus,
-      hideTabStatus,
-      render,
-      tabLabels: TAB_LABELS,
-      defaultBrowserTabId: DEFAULT_BROWSER_TAB_ID,
-      maxBrowserTabs: MAX_BROWSER_TABS
-    });
-
-    return workspaceController;
+    if (typeof shopWindowAppController.configureTabStatus === 'function') {
+      shopWindowAppController.configureTabStatus({
+        messageDedupMs: TAB_STATUS_MESSAGE_DEDUP_MS,
+        scheduleDeferredWorkspaceSync
+      });
+    }
   }
 
   function isBrowserStorageSyncStateLoading(shopId = '') {
@@ -742,86 +728,41 @@
     return Boolean(viewState.browserStorageSync.loadingByShopId[normalizedShopId]);
   }
 
-  function ensureStorageSyncViewController() {
-    if (storageSyncViewController) {
-      return storageSyncViewController;
+  function ensureShopListController() {
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.getSelectedShop === 'function'
+      && typeof shopWindowAppController.renderShopList === 'function'
+    ) {
+      return shopWindowAppController;
     }
 
-    if (typeof window.createShopWindowStorageSyncViewController !== 'function') {
-      throw new Error('\u5E97\u94FA\u7A97\u53E3\u5B58\u50A8\u540C\u6B65\u72B6\u6001\u6A21\u5757\u52A0\u8F7D\u5931\u8D25\u3002');
-    }
-
-    storageSyncViewController = window.createShopWindowStorageSyncViewController({
-      getElements: () => elements,
-      getSelectedShop,
-      getCurrentBrowserStorageSyncState,
-      getBrowserStorageAutoSyncRuntime,
-      createEmptyBrowserStorageAutoSyncRuntime,
-      isBrowserStorageAutoSyncEnabled,
-      getBrowserStorageBusyActionForShop,
-      isBrowserStorageSyncStateLoading,
-      formatTimestamp,
-      scheduleDeferredWorkspaceSync,
-      storageTypeLabels: STORAGE_TYPE_LABELS
-    });
-
-    return storageSyncViewController;
+    throw new Error('\u5E97\u94FA\u7A97\u53E3\u5E97\u94FA\u5217\u8868\u63A7\u5236\u6A21\u5757\u52A0\u8F7D\u5931\u8D25\u3002');
   }
 
   function openBrowserUrlModal(payload) {
-    ensureUrlModalController().open(payload);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.openBrowserUrlModal === 'function'
+    ) {
+      void shopWindowAppController.openBrowserUrlModal(payload);
+    }
   }
 
-  function closeBrowserUrlModal() {
-    ensureUrlModalController().close();
+  function isBrowserUrlModalOpen() {
+    return Boolean(
+      shopWindowAppController
+      && typeof shopWindowAppController.isBrowserUrlModalOpen === 'function'
+      && shopWindowAppController.isBrowserUrlModalOpen()
+    );
   }
 
   function showTabStatus(payload) {
-    const options =
-      payload && typeof payload === 'object'
-        ? payload
-        : {
-          message: payload
-        };
-    const normalizedMessage = String(options && options.message || '').trim();
-    const persistent = Boolean(options && options.persistent);
-    const durationMs = Math.max(1200, Number(options && options.durationMs) || 3600);
-    const now = Date.now();
-
-    if (!normalizedMessage) {
-      hideTabStatus();
-      return;
-    }
-
-    const isVisible = elements.tabStatus.getAttribute('aria-hidden') !== 'true';
-    const isSameStatus = (
-      isVisible
-      && lastTabStatusMessage === normalizedMessage
-      && lastTabStatusPersistent === persistent
-      && elements.tabStatus.textContent === normalizedMessage
-    );
-
-    if (tabStatusTimer) {
-      window.clearTimeout(tabStatusTimer);
-      tabStatusTimer = 0;
-    }
-
-    if (!isSameStatus || now - lastTabStatusShownAt >= TAB_STATUS_MESSAGE_DEDUP_MS) {
-      elements.tabStatus.textContent = normalizedMessage;
-      elements.tabStatus.title = normalizedMessage;
-      elements.tabStatus.classList.remove('is-empty');
-      elements.tabStatus.setAttribute('aria-hidden', 'false');
-      scheduleDeferredWorkspaceSync(40);
-    }
-
-    lastTabStatusMessage = normalizedMessage;
-    lastTabStatusPersistent = persistent;
-    lastTabStatusShownAt = now;
-
-    if (!persistent) {
-      tabStatusTimer = window.setTimeout(() => {
-        hideTabStatus();
-      }, durationMs);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.showTabStatus === 'function'
+    ) {
+      shopWindowAppController.showTabStatus(payload);
     }
   }
 
@@ -963,7 +904,7 @@
     const selectedShop = getSelectedShop();
     const isSectionActive = viewState.activeSection === 'shop-window';
     const activeHost = getActiveBrowserHost();
-    const isUrlModalOpen = Boolean(elements && elements.urlModal && elements.urlModal.hidden === false);
+    const isUrlModalOpen = isBrowserUrlModalOpen();
 
     if (!isSectionActive || !selectedShop || !activeHost) {
       lastVisibleWorkspacePayload = null;
@@ -1903,74 +1844,40 @@
     }, AUTO_STORAGE_SYNC_HEARTBEAT_MS);
   }
 
-  function handleShopListClick(event) {
-    ensureShopListController().handleShopListClick(event);
-  }
-
-  function handleWorkspaceButtonClick(button) {
-    ensureWorkspaceController().handleWorkspaceButtonClick(button);
-    void kickOffAutoBrowserStorageSync('workspace-tab-changed');
-  }
-
-  async function handleWorkspaceButtonDoubleClick(button) {
-    await ensureWorkspaceController().handleWorkspaceButtonDoubleClick(button);
-  }
-
-  function handleGroupFilterChange() {
-    ensureShopListController().handleGroupFilterChange();
-  }
-
-  function bindWorkspaceButtons() {
-    ensureWorkspaceController().bindWorkspaceButtons();
-  }
-
-  function handleAutoLoginToggleChange() {
-    const selectedShop = getSelectedShop();
-
-    if (!selectedShop) {
-      elements.autoLoginCheckbox.checked = true;
-      elements.autoLoginCheckbox.disabled = true;
-      return;
-    }
-
-    const enabled = getAutoLoginStore().setPreference(
-      selectedShop.id,
-      viewState.activeWorkspaceTab,
-      elements.autoLoginCheckbox.checked === true
-    );
-
-    elements.autoLoginCheckbox.checked = enabled;
-    showTabStatus({
-      message: enabled
-        ? '\u5DF2\u5F00\u542F\u5F53\u524D\u5E97\u94FA\u4E0E\u5165\u53E3\u7684\u81EA\u52A8\u767B\u5F55\u3002'
-        : '\u5DF2\u5173\u95ED\u5F53\u524D\u5E97\u94FA\u4E0E\u5165\u53E3\u7684\u81EA\u52A8\u767B\u5F55\u3002',
-      durationMs: 2200
-    });
-    scheduleWorkspaceSync();
-  }
-
-  async function handleBrowserTabListClick(event) {
-    await ensureWorkspaceController().handleBrowserTabListClick(event);
-  }
-
-  async function handleBrowserHostClick(event) {
-    await ensureWorkspaceController().handleBrowserHostClick(event);
-  }
-
   function handleBrowserTabCreated(payload) {
-    ensureWorkspaceController().handleBrowserTabCreated(payload);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.handleBrowserTabCreated === 'function'
+    ) {
+      shopWindowAppController.handleBrowserTabCreated(payload);
+    }
   }
 
   function handleBrowserTabClosed(payload) {
-    ensureWorkspaceController().handleBrowserTabClosed(payload);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.handleBrowserTabClosed === 'function'
+    ) {
+      shopWindowAppController.handleBrowserTabClosed(payload);
+    }
   }
 
   function handleBrowserTabUpdated(payload) {
-    ensureWorkspaceController().handleBrowserTabUpdated(payload);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.handleBrowserTabUpdated === 'function'
+    ) {
+      shopWindowAppController.handleBrowserTabUpdated(payload);
+    }
   }
 
   function handleBrowserTabReset(payload) {
-    ensureWorkspaceController().handleBrowserTabReset(payload);
+    if (
+      shopWindowAppController
+      && typeof shopWindowAppController.handleBrowserTabReset === 'function'
+    ) {
+      shopWindowAppController.handleBrowserTabReset(payload);
+    }
   }
 
   function handleBrowserTabMessage(payload) {
@@ -2057,35 +1964,9 @@
     ];
   }
 
-  async function handleUrlFormSubmit(event) {
-    await ensureUrlModalController().handleSubmit(event);
-  }
-
-  function handleUrlModalClick(event) {
-    ensureUrlModalController().handleModalClick(event);
-  }
-
-  function handleWindowKeydown(event) {
-    ensureUrlModalController().handleWindowKeydown(event);
-  }
-
   function bindEvents() {
-    ensureUrlModalController();
-    elements.list.addEventListener('click', handleShopListClick);
-    elements.groupFilterSelect.addEventListener('change', handleGroupFilterChange);
-    elements.autoLoginCheckbox.addEventListener('change', handleAutoLoginToggleChange);
-    elements.urlForm.addEventListener('submit', handleUrlFormSubmit);
-    elements.urlModal.addEventListener('click', handleUrlModalClick);
-    bindWorkspaceButtons();
     bindResizeTracking();
     bindBridgeEvents();
-
-    Object.values(elements.browserTabLists).forEach((tabList) => {
-      tabList.addEventListener('click', handleBrowserTabListClick);
-    });
-    Object.values(elements.browserHosts).forEach((host) => {
-      host.addEventListener('click', handleBrowserHostClick);
-    });
 
     window.addEventListener('shop-management:state-changed', (event) => {
       applyState(event.detail);
@@ -2168,7 +2049,6 @@
         autoStorageSyncHeartbeatTimer = 0;
       }
     });
-    window.addEventListener('keydown', handleWindowKeydown);
   }
 
   async function init() {

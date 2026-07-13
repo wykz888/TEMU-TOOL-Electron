@@ -1,0 +1,233 @@
+{
+  "$schema": "nexus-mapper/concept-model/v1",
+  "generated_at": "2026-07-13T13:37:57+08:00",
+  "repo_path": "D:\\AI\u5f00\u53d1\u9879\u76ee\\VS CODE \u5f00\u53d1\\TEMU \u5de5\u5177\u7bb1 Electron\u7248",
+  "generator": "nexus-mapper v2",
+  "nodes": [
+    {
+      "id": "electron-main-orchestrator",
+      "type": "System",
+      "label": "Electron Main Orchestrator",
+      "responsibility": "Owns app lifecycle, sessions, windows, lazy services, progress broadcasts, and IPC registration.",
+      "implementation_status": "implemented",
+      "code_path": "src/main.js",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["electron", "javascript"],
+      "related_reqs": [],
+      "complexity": "high",
+      "hotspot": true
+    },
+    {
+      "id": "window-browser-automation",
+      "type": "System",
+      "label": "Window And Browser Automation",
+      "responsibility": "Creates app windows and manages TEMU seller, ads, login, session probe, browser storage, and popup automation.",
+      "implementation_status": "implemented",
+      "code_path": "src/windows",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["electron", "javascript"],
+      "related_reqs": [],
+      "complexity": "high",
+      "hotspot": false
+    },
+    {
+      "id": "ipc-registration",
+      "type": "System",
+      "label": "IPC Registration",
+      "responsibility": "Defines channel constants and registers renderer to main handlers by feature domain.",
+      "implementation_status": "implemented",
+      "code_path": "src/ipc",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["electron", "javascript"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": false
+    },
+    {
+      "id": "preload-bridge",
+      "type": "System",
+      "label": "Preload Bridge",
+      "responsibility": "Exposes the safe window.temuApp API surface used by renderer modules.",
+      "implementation_status": "implemented",
+      "code_path": "src/preload",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["electron", "javascript"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": false
+    },
+    {
+      "id": "renderer-shell-apps",
+      "type": "System",
+      "label": "Renderer Shell And Apps",
+      "responsibility": "Provides the main UI shell, Vue renderer bundles, catalog pages, and legacy renderer workbenches.",
+      "implementation_status": "implemented",
+      "code_path": "src/renderer",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["vue", "arco-design-vue", "vite", "javascript"],
+      "related_reqs": [],
+      "complexity": "high",
+      "hotspot": true
+    },
+    {
+      "id": "catalog-profile-metadata",
+      "type": "System",
+      "label": "Catalog And Profile Metadata",
+      "responsibility": "Defines feature and creation cards, module entries, action ids, code paths, and storage profiles.",
+      "implementation_status": "implemented",
+      "code_path": "src/features",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["javascript"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": false
+    },
+    {
+      "id": "feature-services",
+      "type": "System",
+      "label": "Feature Services",
+      "responsibility": "Implements operations, marketing, promotion, POD MiaoShou, category, upload, export, and shared feature workflows.",
+      "implementation_status": "implemented",
+      "code_path": "src/services/featureCenter",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["javascript", "electron"],
+      "related_reqs": [],
+      "complexity": "high",
+      "hotspot": true
+    },
+    {
+      "id": "creation-services",
+      "type": "System",
+      "label": "Creation Services",
+      "responsibility": "Implements Jimeng settings, POD suite image generation, PSD smart object rendering, masks, templates, and slicing.",
+      "implementation_status": "implemented",
+      "code_path": "src/services/creationCenter",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["javascript", "sharp"],
+      "related_reqs": [],
+      "complexity": "high",
+      "hotspot": false
+    },
+    {
+      "id": "shop-management",
+      "type": "System",
+      "label": "Shop Management",
+      "responsibility": "Stores shop groups, shop records, visibility, fingerprint profiles, and browser workspace shop metadata.",
+      "implementation_status": "implemented",
+      "code_path": "src/services/shopManagement",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["javascript"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": false
+    },
+    {
+      "id": "build-validation-tooling",
+      "type": "System",
+      "label": "Build And Validation Tooling",
+      "responsibility": "Builds renderer bundles, validates catalog and IPC surfaces, checks pricing logic, and packages releases.",
+      "implementation_status": "implemented",
+      "code_path": "scripts",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["node", "vite", "electron-builder"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": true
+    },
+    {
+      "id": "persistence-scope",
+      "type": "Domain",
+      "label": "Persistence Scope",
+      "responsibility": "Defines TEMU_Data_Electron root and account-scoped storage rules for config, state, and cache.",
+      "implementation_status": "implemented",
+      "code_path": "src/utils/persistenceRoots.js",
+      "evidence_path": null,
+      "evidence_gap": null,
+      "tech_stack": ["javascript"],
+      "related_reqs": [],
+      "complexity": "medium",
+      "hotspot": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "renderer-shell-apps",
+      "target": "preload-bridge",
+      "type": "depends_on",
+      "description": "Renderer modules call window.temuApp methods exposed by preload."
+    },
+    {
+      "source": "preload-bridge",
+      "target": "ipc-registration",
+      "type": "depends_on",
+      "description": "Preload methods invoke IPC channels defined and registered under src/ipc."
+    },
+    {
+      "source": "ipc-registration",
+      "target": "electron-main-orchestrator",
+      "type": "depends_on",
+      "description": "IPC registration is composed by src/main.js at app startup."
+    },
+    {
+      "source": "electron-main-orchestrator",
+      "target": "feature-services",
+      "type": "depends_on",
+      "description": "Main process constructs and passes feature services into IPC handlers."
+    },
+    {
+      "source": "electron-main-orchestrator",
+      "target": "creation-services",
+      "type": "depends_on",
+      "description": "Main process constructs creation services and routes creation IPC."
+    },
+    {
+      "source": "electron-main-orchestrator",
+      "target": "window-browser-automation",
+      "type": "depends_on",
+      "description": "Main process creates app windows and shop browser automation controllers."
+    },
+    {
+      "source": "feature-services",
+      "target": "window-browser-automation",
+      "type": "depends_on",
+      "description": "Several feature services use the shop window browser controller for TEMU session-backed workflows."
+    },
+    {
+      "source": "catalog-profile-metadata",
+      "target": "persistence-scope",
+      "type": "depends_on",
+      "description": "Profile services derive local and cloud storage paths from catalog storage keys and the app data root."
+    },
+    {
+      "source": "build-validation-tooling",
+      "target": "catalog-profile-metadata",
+      "type": "depends_on",
+      "description": "Validation scripts assert catalog shape, uniqueness, and code paths."
+    },
+    {
+      "source": "build-validation-tooling",
+      "target": "preload-bridge",
+      "type": "depends_on",
+      "description": "Validation scripts check preload methods against IPC channel constants and registrations."
+    }
+  ],
+  "metadata": {
+    "total_files": 356,
+    "total_lines": 183724,
+    "languages": ["javascript", "vue"],
+    "git_commits_analyzed": 48,
+    "analysis_days": 90,
+    "ast_truncated": true,
+    "vue_coverage": "module-only"
+  }
+}

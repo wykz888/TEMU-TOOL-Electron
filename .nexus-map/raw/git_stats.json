@@ -1,0 +1,231 @@
+{
+  "analysis_period_days": 90,
+  "stats": {
+    "total_commits": 48,
+    "total_authors": 2
+  },
+  "hotspots": [
+    {
+      "path": "package.json",
+      "changes": 14,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "changes": 13,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "changes": 11,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshou.html",
+      "changes": 8,
+      "risk": "medium"
+    },
+    {
+      "path": "src/main.js",
+      "changes": 7,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/psdSmartSuiteApp/App.vue",
+      "changes": 7,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouApp/useProductWorkflowTasks.js",
+      "changes": 6,
+      "risk": "medium"
+    },
+    {
+      "path": "scripts/buildRendererBundle.js",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/services/featureCenter/podUploadSheetMiaoshouAiTitleService.js",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouUniversal.html",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouView.js",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/windows/createPodUploadSheetMiaoshouWindow.js",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/index.css",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "src/renderer/globalCategorySyncApp/App.vue",
+      "changes": 5,
+      "risk": "medium"
+    },
+    {
+      "path": "package-lock.json",
+      "changes": 4,
+      "risk": "low"
+    },
+    {
+      "path": "src/services/featureCenter/podUploadSheetMiaoshouExportService.js",
+      "changes": 4,
+      "risk": "low"
+    },
+    {
+      "path": "src/services/featureCenter/podUploadSheetMiaoshouWorkspaceStateService.js",
+      "changes": 4,
+      "risk": "low"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouUniversalView.js",
+      "changes": 4,
+      "risk": "low"
+    },
+    {
+      "path": "src/renderer/catalogCenterShared/CatalogCenterPanel.vue",
+      "changes": 4,
+      "risk": "low"
+    },
+    {
+      "path": "src/renderer/podUploadSheetMiaoshouApp/styles/pod-miaoshou-app.css",
+      "changes": 4,
+      "risk": "low"
+    }
+  ],
+  "coupling_pairs": [
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "co_changes": 6,
+      "coupling_score": 0.545
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshou.html",
+      "file_b": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "co_changes": 6,
+      "coupling_score": 0.75
+    },
+    {
+      "file_a": "package.json",
+      "file_b": "scripts/buildRendererBundle.js",
+      "co_changes": 5,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "file_b": "src/renderer/podUploadSheetMiaoshouApp/useProductWorkflowTasks.js",
+      "co_changes": 5,
+      "coupling_score": 0.833
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshou.html",
+      "file_b": "src/renderer/podUploadSheetMiaoshouView.js",
+      "co_changes": 5,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshou.html",
+      "file_b": "src/windows/createPodUploadSheetMiaoshouWindow.js",
+      "co_changes": 5,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "package-lock.json",
+      "file_b": "package.json",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/useProductWorkflowTasks.js",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "co_changes": 4,
+      "coupling_score": 0.667
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "file_b": "src/services/featureCenter/podUploadSheetMiaoshouAiTitleService.js",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshou.html",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversal.html",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouUniversal.html",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouUniversal.html",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversalView.js",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouUniversalApp/App.vue",
+      "file_b": "src/renderer/podUploadSheetMiaoshouUniversalView.js",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouView.js",
+      "file_b": "src/windows/createPodUploadSheetMiaoshouWindow.js",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "file_b": "src/renderer/podUploadSheetMiaoshouApp/styles/pod-miaoshou-app.css",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/styles/pod-miaoshou-app.css",
+      "file_b": "src/renderer/podUploadSheetMiaoshouApp/useProductWorkflowTasks.js",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    },
+    {
+      "file_a": "package.json",
+      "file_b": "src/renderer/podUploadSheetMiaoshou.html",
+      "co_changes": 4,
+      "coupling_score": 0.5
+    },
+    {
+      "file_a": "src/renderer/podUploadSheetMiaoshouApp/App.vue",
+      "file_b": "src/renderer/podUploadSheetMiaoshouView.js",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/index.css",
+      "file_b": "src/renderer/psdSmartSuiteApp/App.vue",
+      "co_changes": 4,
+      "coupling_score": 0.8
+    },
+    {
+      "file_a": "src/renderer/globalCategorySyncWindow.html",
+      "file_b": "src/renderer/globalCategorySyncWindow.js",
+      "co_changes": 4,
+      "coupling_score": 1.0
+    }
+  ]
+}

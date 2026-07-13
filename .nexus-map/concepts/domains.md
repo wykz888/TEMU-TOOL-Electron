@@ -1,0 +1,45 @@
+> generated_by: nexus-mapper v2
+> verified_at: 2026-07-13
+> provenance: AST-backed file inventory plus manual inspection of catalogs, services, windows, renderer shell, and docs.
+
+# Domains
+
+## Auth And Session
+
+Session state is held in `src/state/sessionStore.js` and login account cache in `src/state/loginAccountCache.js`. Main process switches between auth and main areas through `openAuthenticatedArea` and `returnToAuthArea` in `src/main.js`.
+
+## Shop Management
+
+Shop records, groups, fingerprint profiles, visibility, and shop detail services live under `src/services/shopManagement/`. Renderer state is exposed through `src/renderer/shopManagementApp/` and older helpers such as `src/renderer/shopManagementStore.js`.
+
+## Shop Window And TEMU Browser Automation
+
+The shop browser workspace is controlled by `src/windows/shopWindowBrowserController.js` with helpers for login autofill, seller-center landing, mall switching, region context requests, seller session probes, popup messages, and storage sync. Docs record login and automation performance rules.
+
+## Feature Center
+
+Feature cards live in `src/features/featureCenter/`. The catalog currently covers global category sync, operations activity, traffic boost, price declaration, new product lifecycle, marketing tools, promotion master, POD MiaoShou TEMU, and POD MiaoShou universal.
+
+## Creation Center
+
+Creation cards live in `src/features/creationCenter/`. Current catalog entries include Jimeng image and POD suite tool. Rendering and generation services live under `src/services/creationCenter/`.
+
+## Operations Workbenches
+
+Operations activity management, traffic boost, price declaration, and new product lifecycle have large renderer workbench files and large feature-center services. Shared category, shop selection, and cost state are service-backed and should be reused instead of duplicated.
+
+## POD MiaoShou
+
+POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Git hotspots show this is the most active current area.
+
+## Promotion Master And Monitor
+
+Promotion management uses `src/renderer/promotionManagerApp/`, `src/services/featureCenter/promotionMasterSessionService.js`, `promotionMonitorService.js`, and related promotion IPC handlers. It depends on shop sessions and browser automation.
+
+## Global Config, Theme, And Update
+
+Global config is served by `src/services/globalConfig/` and exposed through preload. Theme preference is managed by `src/services/theme/themePreferenceService.js` and `src/renderer/themeSync.js`. Update behavior lives under `src/services/update/updateService.js` and main-window update dialog components.
+
+## Persistence Scope
+
+`src/utils/persistenceRoots.js` defines the app data root `TEMU_Data_Electron`. `docs/persistence-scope.md` states that account-tied state should use `users/{userKey}/{config|state|cache}` under each feature root.
