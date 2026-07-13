@@ -4,14 +4,14 @@
     "vue"
   ],
   "stats": {
-    "total_files": 358,
-    "total_lines": 184111,
-    "parse_errors": 652,
+    "total_files": 345,
+    "total_lines": 175602,
+    "parse_errors": 624,
     "truncated": true,
-    "truncated_nodes": 5753,
+    "truncated_nodes": 5444,
     "supported_file_counts": {
-      "javascript": 326,
-      "vue": 32
+      "javascript": 312,
+      "vue": 33
     },
     "languages_with_structural_queries": [
       "c",
@@ -35,7 +35,7 @@
     ],
     "languages_with_custom_queries": [],
     "module_only_file_counts": {
-      "vue": 32
+      "vue": 33
     },
     "known_unsupported_file_counts": {},
     "configured_but_unavailable_file_counts": {},
@@ -55,7 +55,7 @@
       "type": "Module",
       "label": "buildRendererBundle",
       "path": "scripts/buildRendererBundle.js",
-      "lines": 290,
+      "lines": 298,
       "lang": "javascript"
     },
     {
@@ -127,7 +127,7 @@
       "type": "Module",
       "label": "validatePreloadIpcSurface",
       "path": "scripts/validatePreloadIpcSurface.js",
-      "lines": 261,
+      "lines": 260,
       "lang": "javascript"
     },
     {
@@ -183,54 +183,6 @@
       "type": "Module",
       "label": "catalog",
       "path": "src/features/creationCenter/catalog.js",
-      "lines": 17,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.jimengImage.imageToImage",
-      "type": "Module",
-      "label": "imageToImage",
-      "path": "src/features/creationCenter/jimengImage/imageToImage.js",
-      "lines": 15,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.jimengImage.index",
-      "type": "Module",
-      "label": "index",
-      "path": "src/features/creationCenter/jimengImage/index.js",
-      "lines": 24,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.jimengImage.textToImage",
-      "type": "Module",
-      "label": "textToImage",
-      "path": "src/features/creationCenter/jimengImage/textToImage.js",
-      "lines": 15,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.podImage.imageSelection",
-      "type": "Module",
-      "label": "imageSelection",
-      "path": "src/features/creationCenter/podImage/imageSelection.js",
-      "lines": 15,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.podImage.index",
-      "type": "Module",
-      "label": "index",
-      "path": "src/features/creationCenter/podImage/index.js",
-      "lines": 22,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.features.creationCenter.podImage.promptWorkbench",
-      "type": "Module",
-      "label": "promptWorkbench",
-      "path": "src/features/creationCenter/podImage/promptWorkbench.js",
       "lines": 15,
       "lang": "javascript"
     },
@@ -447,7 +399,7 @@
       "type": "Module",
       "label": "creationCenterChannels",
       "path": "src/ipc/creationCenterChannels.js",
-      "lines": 11,
+      "lines": 10,
       "lang": "javascript"
     },
     {
@@ -571,14 +523,6 @@
       "lang": "javascript"
     },
     {
-      "id": "src.ipc.jimengImageChannels",
-      "type": "Module",
-      "label": "jimengImageChannels",
-      "path": "src/ipc/jimengImageChannels.js",
-      "lines": 22,
-      "lang": "javascript"
-    },
-    {
       "id": "src.ipc.podSuiteToolChannels",
       "type": "Module",
       "label": "podSuiteToolChannels",
@@ -599,7 +543,7 @@
       "type": "Module",
       "label": "registerCreationCenterIpc",
       "path": "src/ipc/registerCreationCenterIpc.js",
-      "lines": 59,
+      "lines": 49,
       "lang": "javascript"
     },
     {
@@ -707,14 +651,6 @@
       "lang": "javascript"
     },
     {
-      "id": "src.ipc.registerJimengImageIpc",
-      "type": "Module",
-      "label": "registerJimengImageIpc",
-      "path": "src/ipc/registerJimengImageIpc.js",
-      "lines": 213,
-      "lang": "javascript"
-    },
-    {
       "id": "src.ipc.registerPodSuiteToolIpc",
       "type": "Module",
       "label": "registerPodSuiteToolIpc",
@@ -791,7 +727,7 @@
       "type": "Module",
       "label": "main",
       "path": "src/main.js",
-      "lines": 3637,
+      "lines": 3535,
       "lang": "javascript"
     },
     {
@@ -799,7 +735,7 @@
       "type": "Module",
       "label": "appPreload",
       "path": "src/preload/appPreload.js",
-      "lines": 211,
+      "lines": 182,
       "lang": "javascript"
     },
     {
@@ -863,7 +799,7 @@
       "type": "Module",
       "label": "catalogCenterActions",
       "path": "src/renderer/catalogCenterShared/catalogCenterActions.js",
-      "lines": 65,
+      "lines": 64,
       "lang": "javascript"
     },
     {
@@ -887,7 +823,7 @@
       "type": "Module",
       "label": "CatalogCenterPanel",
       "path": "src/renderer/catalogCenterShared/CatalogCenterPanel.vue",
-      "lines": 556,
+      "lines": 553,
       "lang": "vue"
     },
     {
@@ -943,7 +879,7 @@
       "type": "Module",
       "label": "confirmDialogView",
       "path": "src/renderer/confirmDialogView.js",
-      "lines": 98,
+      "lines": 33,
       "lang": "javascript"
     },
     {
@@ -975,7 +911,39 @@
       "type": "Module",
       "label": "exitProgress",
       "path": "src/renderer/exitProgress.js",
-      "lines": 150,
+      "lines": 23,
+      "lang": "javascript"
+    },
+    {
+      "id": "src.renderer.exitProgressApp.App",
+      "type": "Module",
+      "label": "App",
+      "path": "src/renderer/exitProgressApp/App.vue",
+      "lines": 66,
+      "lang": "vue"
+    },
+    {
+      "id": "src.renderer.exitProgressApp.bridge",
+      "type": "Module",
+      "label": "bridge",
+      "path": "src/renderer/exitProgressApp/bridge.js",
+      "lines": 12,
+      "lang": "javascript"
+    },
+    {
+      "id": "src.renderer.exitProgressApp.main",
+      "type": "Module",
+      "label": "main",
+      "path": "src/renderer/exitProgressApp/main.js",
+      "lines": 34,
+      "lang": "javascript"
+    },
+    {
+      "id": "src.renderer.exitProgressApp.viewState",
+      "type": "Module",
+      "label": "viewState",
+      "path": "src/renderer/exitProgressApp/viewState.js",
+      "lines": 81,
       "lang": "javascript"
     },
     {
@@ -1023,7 +991,7 @@
       "type": "Module",
       "label": "main",
       "path": "src/renderer/globalCategorySyncApp/main.js",
-      "lines": 8,
+      "lines": 33,
       "lang": "javascript"
     },
     {
@@ -1031,7 +999,7 @@
       "type": "Module",
       "label": "globalCategorySyncWindow",
       "path": "src/renderer/globalCategorySyncWindow.js",
-      "lines": 27,
+      "lines": 23,
       "lang": "javascript"
     },
     {
@@ -1079,7 +1047,7 @@
       "type": "Module",
       "label": "globalConfigView",
       "path": "src/renderer/globalConfigView.js",
-      "lines": 43,
+      "lines": 44,
       "lang": "javascript"
     },
     {
@@ -1088,14 +1056,6 @@
       "label": "index",
       "path": "src/renderer/index.js",
       "lines": 216,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.renderer.jimengImage",
-      "type": "Module",
-      "label": "jimengImage",
-      "path": "src/renderer/jimengImage.js",
-      "lines": 1186,
       "lang": "javascript"
     },
     {
@@ -1168,14 +1128,6 @@
       "label": "operationsActivityManagementView",
       "path": "src/renderer/operationsActivityManagementView.js",
       "lines": 11553,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.renderer.operationsGlobalCategorySyncView",
-      "type": "Module",
-      "label": "operationsGlobalCategorySyncView",
-      "path": "src/renderer/operationsGlobalCategorySyncView.js",
-      "lines": 423,
       "lang": "javascript"
     },
     {
@@ -1423,7 +1375,7 @@
       "type": "Module",
       "label": "podUploadSheetMiaoshouUniversalView",
       "path": "src/renderer/podUploadSheetMiaoshouUniversalView.js",
-      "lines": 74,
+      "lines": 63,
       "lang": "javascript"
     },
     {
@@ -1431,7 +1383,7 @@
       "type": "Module",
       "label": "podUploadSheetMiaoshouView",
       "path": "src/renderer/podUploadSheetMiaoshouView.js",
-      "lines": 74,
+      "lines": 63,
       "lang": "javascript"
     },
     {
@@ -1527,7 +1479,7 @@
       "type": "Module",
       "label": "promotionManagerView",
       "path": "src/renderer/promotionManagerView.js",
-      "lines": 67,
+      "lines": 54,
       "lang": "javascript"
     },
     {
@@ -1567,7 +1519,7 @@
       "type": "Module",
       "label": "psdSmartSuiteView",
       "path": "src/renderer/psdSmartSuiteView.js",
-      "lines": 65,
+      "lines": 54,
       "lang": "javascript"
     },
     {
@@ -1679,7 +1631,7 @@
       "type": "Module",
       "label": "shopManagementView",
       "path": "src/renderer/shopManagementView.js",
-      "lines": 43,
+      "lines": 44,
       "lang": "javascript"
     },
     {
@@ -1767,7 +1719,7 @@
       "type": "Module",
       "label": "shopWindowView",
       "path": "src/renderer/shopWindowView.js",
-      "lines": 2080,
+      "lines": 2044,
       "lang": "javascript"
     },
     {
@@ -1783,7 +1735,7 @@
       "type": "Module",
       "label": "vueBundleViewLoader",
       "path": "src/renderer/vueBundleViewLoader.js",
-      "lines": 210,
+      "lines": 276,
       "lang": "javascript"
     },
     {
@@ -1856,22 +1808,6 @@
       "label": "imageMetadataSource",
       "path": "src/services/creationCenter/imageMetadataSource.js",
       "lines": 917,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.services.creationCenter.jimengImageDedupService",
-      "type": "Module",
-      "label": "jimengImageDedupService",
-      "path": "src/services/creationCenter/jimengImageDedupService.js",
-      "lines": 397,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.services.creationCenter.jimengImageSettingsService",
-      "type": "Module",
-      "label": "jimengImageSettingsService",
-      "path": "src/services/creationCenter/jimengImageSettingsService.js",
-      "lines": 202,
       "lang": "javascript"
     },
     {
@@ -2525,14 +2461,6 @@
       "lang": "javascript"
     },
     {
-      "id": "src.windows.createJimengImageWindow",
-      "type": "Module",
-      "label": "createJimengImageWindow",
-      "path": "src/windows/createJimengImageWindow.js",
-      "lines": 39,
-      "lang": "javascript"
-    },
-    {
       "id": "src.windows.createMainWindow",
       "type": "Module",
       "label": "createMainWindow",
@@ -2642,46 +2570,6 @@
       "label": "installWebContentsDebugShortcuts",
       "path": "src/windows/installWebContentsDebugShortcuts.js",
       "lines": 99,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.windows.jimengImage.batchRunner",
-      "type": "Module",
-      "label": "batchRunner",
-      "path": "src/windows/jimengImage/batchRunner.js",
-      "lines": 1937,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.windows.jimengImage.fileStore",
-      "type": "Module",
-      "label": "fileStore",
-      "path": "src/windows/jimengImage/fileStore.js",
-      "lines": 241,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.windows.jimengImage.networkTracker",
-      "type": "Module",
-      "label": "networkTracker",
-      "path": "src/windows/jimengImage/networkTracker.js",
-      "lines": 1198,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.windows.jimengImage.pageScripts",
-      "type": "Module",
-      "label": "pageScripts",
-      "path": "src/windows/jimengImage/pageScripts.js",
-      "lines": 1929,
-      "lang": "javascript"
-    },
-    {
-      "id": "src.windows.jimengImageWindowController",
-      "type": "Module",
-      "label": "jimengImageWindowController",
-      "path": "src/windows/jimengImageWindowController.js",
-      "lines": 516,
       "lang": "javascript"
     },
     {
@@ -2845,6 +2733,14 @@
       "lang": "javascript"
     },
     {
+      "id": "vite.exit-progress.config",
+      "type": "Module",
+      "label": "config",
+      "path": "vite.exit-progress.config.mjs",
+      "lines": 34,
+      "lang": "javascript"
+    },
+    {
       "id": "vite.feature-center.config",
       "type": "Module",
       "label": "config",
@@ -2857,7 +2753,7 @@
       "type": "Module",
       "label": "config",
       "path": "vite.global-category-sync.config.mjs",
-      "lines": 35,
+      "lines": 34,
       "lang": "javascript"
     },
     {
@@ -2957,8 +2853,8 @@
       "label": "resolveWorkspacePath",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 113,
-      "end_line": 115
+      "start_line": 121,
+      "end_line": 123
     },
     {
       "id": "scripts.buildRendererBundle.getEntryMtimeMs",
@@ -2966,8 +2862,8 @@
       "label": "getEntryMtimeMs",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 117,
-      "end_line": 145
+      "start_line": 125,
+      "end_line": 153
     },
     {
       "id": "scripts.buildRendererBundle.getLatestSourceMtimeMs",
@@ -2975,8 +2871,8 @@
       "label": "getLatestSourceMtimeMs",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 147,
-      "end_line": 154
+      "start_line": 155,
+      "end_line": 162
     },
     {
       "id": "scripts.buildRendererBundle.getOldestOutputMtimeMs",
@@ -2984,8 +2880,8 @@
       "label": "getOldestOutputMtimeMs",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 156,
-      "end_line": 174
+      "start_line": 164,
+      "end_line": 182
     },
     {
       "id": "scripts.buildRendererBundle.runViteBuild",
@@ -2993,8 +2889,8 @@
       "label": "runViteBuild",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 176,
-      "end_line": 187
+      "start_line": 184,
+      "end_line": 195
     },
     {
       "id": "scripts.buildRendererBundle.hasNonAsciiPath",
@@ -3002,8 +2898,8 @@
       "label": "hasNonAsciiPath",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 189,
-      "end_line": 191
+      "start_line": 197,
+      "end_line": 199
     },
     {
       "id": "scripts.buildRendererBundle.pickFallbackDriveLetter",
@@ -3011,8 +2907,8 @@
       "label": "pickFallbackDriveLetter",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 193,
-      "end_line": 201
+      "start_line": 201,
+      "end_line": 209
     },
     {
       "id": "scripts.buildRendererBundle.tryWindowsAsciiPathFallback",
@@ -3020,8 +2916,8 @@
       "label": "tryWindowsAsciiPathFallback",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 203,
-      "end_line": 234
+      "start_line": 211,
+      "end_line": 242
     },
     {
       "id": "scripts.buildRendererBundle.runBuild",
@@ -3029,8 +2925,8 @@
       "label": "runBuild",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 236,
-      "end_line": 271
+      "start_line": 244,
+      "end_line": 279
     },
     {
       "id": "scripts.buildRendererBundle.main",
@@ -3038,8 +2934,8 @@
       "label": "main",
       "path": "scripts/buildRendererBundle.js",
       "parent": "scripts.buildRendererBundle",
-      "start_line": 273,
-      "end_line": 287
+      "start_line": 281,
+      "end_line": 295
     },
     {
       "id": "scripts.devPodUploadSheetMiaoshou.hasNonAsciiPath",
@@ -3569,8 +3465,8 @@
       "label": "assert",
       "path": "scripts/validatePreloadIpcSurface.js",
       "parent": "scripts.validatePreloadIpcSurface",
-      "start_line": 153,
-      "end_line": 157
+      "start_line": 152,
+      "end_line": 156
     },
     {
       "id": "scripts.validatePreloadIpcSurface.assertMethodInPreload",
@@ -3578,8 +3474,8 @@
       "label": "assertMethodInPreload",
       "path": "scripts/validatePreloadIpcSurface.js",
       "parent": "scripts.validatePreloadIpcSurface",
-      "start_line": 159,
-      "end_line": 162
+      "start_line": 158,
+      "end_line": 161
     },
     {
       "id": "scripts.validatePreloadIpcSurface.assertChannelUsage",
@@ -3587,8 +3483,8 @@
       "label": "assertChannelUsage",
       "path": "scripts/validatePreloadIpcSurface.js",
       "parent": "scripts.validatePreloadIpcSurface",
-      "start_line": 164,
-      "end_line": 177
+      "start_line": 163,
+      "end_line": 176
     },
     {
       "id": "scripts.validatePreloadIpcSurface.validatePairs",
@@ -3596,8 +3492,8 @@
       "label": "validatePairs",
       "path": "scripts/validatePreloadIpcSurface.js",
       "parent": "scripts.validatePreloadIpcSurface",
-      "start_line": 179,
-      "end_line": 190
+      "start_line": 178,
+      "end_line": 189
     },
     {
       "id": "scripts.validatePreloadIpcSurface.main",
@@ -3605,8 +3501,8 @@
       "label": "main",
       "path": "scripts/validatePreloadIpcSurface.js",
       "parent": "scripts.validatePreloadIpcSurface",
-      "start_line": 192,
-      "end_line": 258
+      "start_line": 191,
+      "end_line": 257
     },
     {
       "id": "src.features.creationCenter.catalog.getCreationCenterFeatureById",
@@ -3614,8 +3510,8 @@
       "label": "getCreationCenterFeatureById",
       "path": "src/features/creationCenter/catalog.js",
       "parent": "src.features.creationCenter.catalog",
-      "start_line": 9,
-      "end_line": 11
+      "start_line": 7,
+      "end_line": 9
     },
     {
       "id": "src.features.featureCenter.catalog.getFeatureCenterFeatureById",
@@ -4183,6 +4079,123 @@
       "parent": "src.ipc.featureCenterPromotionFallbacks",
       "start_line": 5,
       "end_line": 9
+    },
+    {
+      "id": "src.ipc.ipcRegistration.registerInvokeHandler",
+      "type": "Function",
+      "label": "registerInvokeHandler",
+      "path": "src/ipc/ipcRegistration.js",
+      "parent": "src.ipc.ipcRegistration",
+      "start_line": 1,
+      "end_line": 4
+    },
+    {
+      "id": "src.ipc.ipcRegistration.registerInvokeHandlers",
+      "type": "Function",
+      "label": "registerInvokeHandlers",
+      "path": "src/ipc/ipcRegistration.js",
+      "parent": "src.ipc.ipcRegistration",
+      "start_line": 6,
+      "end_line": 12
+    },
+    {
+      "id": "src.ipc.ipcRegistration.registerSendListener",
+      "type": "Function",
+      "label": "registerSendListener",
+      "path": "src/ipc/ipcRegistration.js",
+      "parent": "src.ipc.ipcRegistration",
+      "start_line": 14,
+      "end_line": 17
+    },
+    {
+      "id": "src.ipc.ipcRegistration.registerSendListeners",
+      "type": "Function",
+      "label": "registerSendListeners",
+      "path": "src/ipc/ipcRegistration.js",
+      "parent": "src.ipc.ipcRegistration",
+      "start_line": 19,
+      "end_line": 25
+    },
+    {
+      "id": "src.ipc.registerAuthIpc.registerAuthIpc",
+      "type": "Function",
+      "label": "registerAuthIpc",
+      "path": "src/ipc/registerAuthIpc.js",
+      "parent": "src.ipc.registerAuthIpc",
+      "start_line": 6,
+      "end_line": 50
+    },
+    {
+      "id": "src.ipc.registerCreationCenterIpc.registerCreationCenterIpc",
+      "type": "Function",
+      "label": "registerCreationCenterIpc",
+      "path": "src/ipc/registerCreationCenterIpc.js",
+      "parent": "src.ipc.registerCreationCenterIpc",
+      "start_line": 5,
+      "end_line": 43
+    },
+    {
+      "id": "src.ipc.registerDialogIpc.registerDialogIpc",
+      "type": "Function",
+      "label": "registerDialogIpc",
+      "path": "src/ipc/registerDialogIpc.js",
+      "parent": "src.ipc.registerDialogIpc",
+      "start_line": 5,
+      "end_line": 22
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterIpc.handle",
+      "type": "Function",
+      "label": "handle",
+      "path": "src/ipc/registerFeatureCenterIpc.js",
+      "parent": "src.ipc.registerFeatureCenterIpc",
+      "start_line": 11,
+      "end_line": 13
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterIpc.registerFeatureCenterIpc",
+      "type": "Function",
+      "label": "registerFeatureCenterIpc",
+      "path": "src/ipc/registerFeatureCenterIpc.js",
+      "parent": "src.ipc.registerFeatureCenterIpc",
+      "start_line": 15,
+      "end_line": 46
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterIpc.log",
+      "type": "Function",
+      "label": "log",
+      "path": "src/ipc/registerFeatureCenterIpc.js",
+      "parent": "src.ipc.registerFeatureCenterIpc",
+      "start_line": 18,
+      "end_line": 22
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterIpc.logError",
+      "type": "Function",
+      "label": "logError",
+      "path": "src/ipc/registerFeatureCenterIpc.js",
+      "parent": "src.ipc.registerFeatureCenterIpc",
+      "start_line": 24,
+      "end_line": 28
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterMarketingToolsIpc.registerFeatureCenterMarketingToolsIpc",
+      "type": "Function",
+      "label": "registerFeatureCenterMarketingToolsIpc",
+      "path": "src/ipc/registerFeatureCenterMarketingToolsIpc.js",
+      "parent": "src.ipc.registerFeatureCenterMarketingToolsIpc",
+      "start_line": 1,
+      "end_line": 81
+    },
+    {
+      "id": "src.ipc.registerFeatureCenterOpenIpc.registerFeatureCenterOpenIpc",
+      "type": "Function",
+      "label": "registerFeatureCenterOpenIpc",
+      "path": "src/ipc/registerFeatureCenterOpenIpc.js",
+      "parent": "src.ipc.registerFeatureCenterOpenIpc",
+      "start_line": 1,
+      "end_line": 98
     }
   ],
   "edges": [
@@ -4997,16 +5010,6 @@
       "type": "contains"
     },
     {
-      "source": "src.ipc.registerJimengImageIpc",
-      "target": "src.ipc.registerJimengImageIpc.resolveController",
-      "type": "contains"
-    },
-    {
-      "source": "src.ipc.registerJimengImageIpc",
-      "target": "src.ipc.registerJimengImageIpc.registerJimengImageIpc",
-      "type": "contains"
-    },
-    {
       "source": "src.ipc.registerPodSuiteToolIpc",
       "target": "src.ipc.registerPodSuiteToolIpc.registerPodSuiteToolIpc",
       "type": "contains"
@@ -5168,11 +5171,6 @@
     },
     {
       "source": "src.main",
-      "target": "src.main.bindJimengImageWindow",
-      "type": "contains"
-    },
-    {
-      "source": "src.main",
       "target": "src.main.bindMainWindow",
       "type": "contains"
     },
@@ -5268,11 +5266,6 @@
     },
     {
       "source": "src.main",
-      "target": "src.main.selectJimengImageSaveDirectory",
-      "type": "contains"
-    },
-    {
-      "source": "src.main",
       "target": "src.main.resolvePodSuiteToolParentWindow",
       "type": "contains"
     },
@@ -5349,11 +5342,6 @@
     {
       "source": "src.main",
       "target": "src.main.showMainWindow",
-      "type": "contains"
-    },
-    {
-      "source": "src.main",
-      "target": "src.main.showJimengImageWindow",
       "type": "contains"
     },
     {
@@ -5498,32 +5486,12 @@
     },
     {
       "source": "src.preload.appPreload",
-      "target": "src.preload.appPreload.openJimengImage",
-      "type": "contains"
-    },
-    {
-      "source": "src.preload.appPreload",
       "target": "src.preload.appPreload.openPodUploadSheetMiaoshou",
       "type": "contains"
     },
     {
       "source": "src.preload.appPreload",
       "target": "src.preload.appPreload.openPodSuiteTool",
-      "type": "contains"
-    },
-    {
-      "source": "src.preload.appPreload",
-      "target": "src.preload.appPreload.onBrowserStateChanged",
-      "type": "contains"
-    },
-    {
-      "source": "src.preload.appPreload",
-      "target": "src.preload.appPreload.onWorkspaceSyncRequested",
-      "type": "contains"
-    },
-    {
-      "source": "src.preload.appPreload",
-      "target": "src.preload.appPreload.onTaskEvent",
       "type": "contains"
     },
     {
@@ -6558,12 +6526,7 @@
     },
     {
       "source": "src.renderer.confirmDialogView",
-      "target": "src.renderer.confirmDialogView.ensureVueProcessShim",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.confirmDialogView",
-      "target": "src.renderer.confirmDialogView.ensureStylesheet",
+      "target": "src.renderer.confirmDialogView.getErrorDetail",
       "type": "contains"
     },
     {
@@ -6573,12 +6536,7 @@
     },
     {
       "source": "src.renderer.confirmDialogView",
-      "target": "src.renderer.confirmDialogView.escapeHtml",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.confirmDialogView",
-      "target": "src.renderer.confirmDialogView.ensureMount",
+      "target": "src.renderer.confirmDialogView.init",
       "type": "contains"
     },
     {
@@ -6638,42 +6596,57 @@
     },
     {
       "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.normalizeText",
+      "target": "src.renderer.exitProgress.init",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.normalizeTheme",
+      "source": "src.renderer.exitProgressApp.bridge",
+      "target": "src.renderer.exitProgressApp.bridge.getExitProgressBridge",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.normalizeStatus",
+      "source": "src.renderer.exitProgressApp.main",
+      "target": "src.renderer.exitProgressApp.main.createController",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.clampPercent",
+      "source": "src.renderer.exitProgressApp.main",
+      "target": "src.renderer.exitProgressApp.main.mountExitProgressApp",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.getBridge",
+      "source": "src.renderer.exitProgressApp.main",
+      "target": "vue",
+      "type": "imports"
+    },
+    {
+      "source": "src.renderer.exitProgressApp.main",
+      "target": "src.renderer.exitProgressApp.styles.exit-progress-app",
+      "type": "imports"
+    },
+    {
+      "source": "src.renderer.exitProgressApp.main",
+      "target": "src.renderer.exitProgressApp.App",
+      "type": "imports"
+    },
+    {
+      "source": "src.renderer.exitProgressApp.viewState",
+      "target": "src.renderer.exitProgressApp.viewState.normalizeText",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.getElement",
+      "source": "src.renderer.exitProgressApp.viewState",
+      "target": "src.renderer.exitProgressApp.viewState.normalizeTheme",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.buildViewState",
+      "source": "src.renderer.exitProgressApp.viewState",
+      "target": "src.renderer.exitProgressApp.viewState.clampPercent",
       "type": "contains"
     },
     {
-      "source": "src.renderer.exitProgress",
-      "target": "src.renderer.exitProgress.renderState",
+      "source": "src.renderer.exitProgressApp.viewState",
+      "target": "src.renderer.exitProgressApp.viewState.buildExitProgressViewState",
       "type": "contains"
     },
     {
@@ -6748,6 +6721,16 @@
     },
     {
       "source": "src.renderer.globalCategorySyncApp.main",
+      "target": "src.renderer.globalCategorySyncApp.main.createController",
+      "type": "contains"
+    },
+    {
+      "source": "src.renderer.globalCategorySyncApp.main",
+      "target": "src.renderer.globalCategorySyncApp.main.mountGlobalCategorySyncApp",
+      "type": "contains"
+    },
+    {
+      "source": "src.renderer.globalCategorySyncApp.main",
       "target": "vue",
       "type": "imports"
     },
@@ -6758,7 +6741,7 @@
     },
     {
       "source": "src.renderer.globalCategorySyncWindow",
-      "target": "src.renderer.globalCategorySyncWindow.mount",
+      "target": "src.renderer.globalCategorySyncWindow.init",
       "type": "contains"
     },
     {
@@ -6914,291 +6897,6 @@
     {
       "source": "src.renderer.index",
       "target": "src.renderer.index.showRuntimeError",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.normalizeUserError",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getBridge",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getElement",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.collectElements",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getSelectedMode",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.updateButtonsBusyState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderBrowserState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.escapeHtml",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.normalizeQueueTaskLimit",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.normalizeStartTaskOffset",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.compactRunLogMessage",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.formatLogTime",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderRunLogs",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.appendRunLog",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.clearRunLogs",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderSaveDirectory",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.buildDefaultBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.normalizeBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.isActiveBatchStatus",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getBatchStatusLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getBatchStateSummary",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.applyBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderBatchActionState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.applyPersistedSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.loadPersistedSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.loadBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.savePersistedSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.schedulePersistedSettingsSave",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getBatchPromptLines",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getBatchPromptStats",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderPromptCountSummary",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getPromptAffixSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.formatAffixSummary",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.buildBatchPayload",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.formatFileSize",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderImportedImages",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.renderModeContent",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.resolveFilePath",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleImageImportChange",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.clearImportedImages",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.getWorkspaceBounds",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.canSyncWorkspace",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.syncWorkspace",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.scheduleWorkspaceSync",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.scheduleScrollWorkspaceSync",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.bindWorkspaceTracking",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.bindBridgeEvents",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleReloadClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleGoHomeClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleOpenExternalClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleSelectSaveDirectoryClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleBatchGenerateClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleBatchPauseClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleBatchResumeClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.handleBatchStopClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.bindUiEvents",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.jimengImage",
-      "target": "src.renderer.jimengImage.init",
       "type": "contains"
     },
     {
@@ -9944,126 +9642,6 @@
     {
       "source": "src.renderer.operationsActivityManagementView",
       "target": "src.renderer.operationsActivityManagementView.mount",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.getFeatureCenterBridge",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.escapeHtml",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.normalizeText",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.toUserFacingErrorMessage",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.normalizeIntegerValue",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.buildEmptySnapshot",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.normalizeSnapshot",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.createState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.getState",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.clearNoticeTimer",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.showNotice",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.formatTimestamp",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.getSourceLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.getSyncStatusLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.getCloudStatusLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.renderMetricCard",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.renderDetailRow",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.render",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.loadSnapshot",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.syncNow",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.handleClick",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.mount",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.activate",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.operationsGlobalCategorySyncView",
-      "target": "src.renderer.operationsGlobalCategorySyncView.deactivate",
       "type": "contains"
     },
     {
@@ -14503,7 +14081,7 @@
     },
     {
       "source": "src.renderer.podUploadSheetMiaoshouUniversalView",
-      "target": "src.renderer.podUploadSheetMiaoshouUniversalView.ensureStylesheet",
+      "target": "src.renderer.podUploadSheetMiaoshouUniversalView.getErrorDetail",
       "type": "contains"
     },
     {
@@ -14518,7 +14096,7 @@
     },
     {
       "source": "src.renderer.podUploadSheetMiaoshouView",
-      "target": "src.renderer.podUploadSheetMiaoshouView.ensureStylesheet",
+      "target": "src.renderer.podUploadSheetMiaoshouView.getErrorDetail",
       "type": "contains"
     },
     {
@@ -14598,27 +14176,12 @@
     },
     {
       "source": "src.renderer.promotionManagerView",
-      "target": "src.renderer.promotionManagerView.ensureVueProcessShim",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.promotionManagerView",
-      "target": "src.renderer.promotionManagerView.ensureStylesheet",
+      "target": "src.renderer.promotionManagerView.getErrorDetail",
       "type": "contains"
     },
     {
       "source": "src.renderer.promotionManagerView",
       "target": "src.renderer.promotionManagerView.ensureMount",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.promotionManagerView",
-      "target": "src.renderer.promotionManagerView.init",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.promotionManagerView",
-      "target": "src.renderer.promotionManagerView.refresh",
       "type": "contains"
     },
     {
@@ -14748,7 +14311,7 @@
     },
     {
       "source": "src.renderer.psdSmartSuiteView",
-      "target": "src.renderer.psdSmartSuiteView.ensureStylesheet",
+      "target": "src.renderer.psdSmartSuiteView.getErrorDetail",
       "type": "contains"
     },
     {
@@ -16043,16 +15606,6 @@
     },
     {
       "source": "src.renderer.shopWindowView",
-      "target": "src.renderer.shopWindowView.ensureVueProcessShim",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.shopWindowView",
-      "target": "src.renderer.shopWindowView.ensureStylesheet",
-      "type": "contains"
-    },
-    {
-      "source": "src.renderer.shopWindowView",
       "target": "src.renderer.shopWindowView.ensureMount",
       "type": "contains"
     },
@@ -16668,6 +16221,11 @@
     },
     {
       "source": "src.renderer.vueBundleViewLoader",
+      "target": "src.renderer.vueBundleViewLoader.renderFallbackCardNode",
+      "type": "contains"
+    },
+    {
+      "source": "src.renderer.vueBundleViewLoader",
       "target": "src.renderer.vueBundleViewLoader.createVueBundleViewLoader",
       "type": "contains"
     },
@@ -16679,6 +16237,11 @@
     {
       "source": "src.renderer.vueBundleViewLoader",
       "target": "src.renderer.vueBundleViewLoader.ensureMount",
+      "type": "contains"
+    },
+    {
+      "source": "src.renderer.vueBundleViewLoader",
+      "target": "src.renderer.vueBundleViewLoader.renderFallbackCard",
       "type": "contains"
     },
     {
@@ -17224,166 +16787,6 @@
     {
       "source": "src.services.creationCenter.imageMetadataSource",
       "target": "src.services.creationCenter.imageMetadataSource.encodeSharpWithOptionalMetadata",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.createJimengImageDedupService",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.getOwner",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.getFeatureEntry",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.getHistoryFilePath",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.buildDefaultHistory",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.normalizeHash",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.normalizePromptText",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.createMd5",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.readJsonFile",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.writeJsonFile",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.normalizeTaskRecord",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.compareRecordByUpdatedAtDesc",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.normalizeHistoryPayload",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.updateCachedHistory",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.getHistory",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.buildTextTaskIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.buildImageTaskIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.filterNewTaskEntries",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageDedupService",
-      "target": "src.services.creationCenter.jimengImageDedupService.markTaskEntriesUsed",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.normalizeQueueTaskLimit",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.normalizeStartTaskOffset",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.createJimengImageSettingsService",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.getOwner",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.getFeatureEntry",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.getLocalSettingsFilePath",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.buildDefaultSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.readJsonFile",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.writeJsonFile",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.normalizeSettingsPayload",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.updateCachedSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.getSettings",
-      "type": "contains"
-    },
-    {
-      "source": "src.services.creationCenter.jimengImageSettingsService",
-      "target": "src.services.creationCenter.jimengImageSettingsService.saveSettings",
       "type": "contains"
     },
     {
@@ -30597,11 +30000,6 @@
       "type": "contains"
     },
     {
-      "source": "src.windows.createJimengImageWindow",
-      "target": "src.windows.createJimengImageWindow.createJimengImageWindow",
-      "type": "contains"
-    },
-    {
       "source": "src.windows.createMainWindow",
       "target": "src.windows.createMainWindow.createMainWindow",
       "type": "contains"
@@ -30744,856 +30142,6 @@
     {
       "source": "src.windows.installWebContentsDebugShortcuts",
       "target": "src.windows.installWebContentsDebugShortcuts.installWebContentsDebugShortcuts",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.normalizeText",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.normalizeHash",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.normalizeQueueTaskLimit",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.normalizeStartTaskOffset",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.createIdSet",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.appendUniqueValues",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.dedupeImageRecords",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildBufferHash",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.nowIso",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.delay",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.summarizeNetworkEvent",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.formatCurrentDateFolderName",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildStoppedError",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.isControlActiveStatus",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.createJimengImageBatchRunner",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getAutomationHelperState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.bindAutomationHelperLifecycle",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.emitLog",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildIdleStatePayload",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildBatchStatePayload",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.emitState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.flushResumeWaiters",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.ensureActiveRun",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.waitForControl",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.waitWithControl",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.ensureBrowserView",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.executeInPage",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.waitForPageReady",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.finish",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.ensureAutomationHelper",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.executeHelperScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getPageSnapshot",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.setMode",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.setPrompt",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.setFileInputFiles",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.prepareUploadInput",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.clickGenerate",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.probeResultState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getLatestNetworkEventId",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getNetworkSignalsAfter",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getNetworkTaskGroupsAfter",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.createTrackedNetworkTask",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.appendTrackedTaskIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.hasTrackedTaskIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.hasTrackedTaskReference",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.hasSharedIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.selectTrackedTaskGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getPreferredTaskIdentity",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getTargetImageCount",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.isTaskGroupComplete",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildTaskGroupProgressKey",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.emitTrackedTaskProgress",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.tryGetTrackedTaskCompletion",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.isTrackedTaskTimedOut",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.waitForAnyTrackedTaskCompletion",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.waitForSubmissionSignal",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.downloadNetworkImage",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildTaskPrompt",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildTaskDedupPrompt",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildTaskLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildTasks",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.buildPreparedTaskEntry",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.prepareTasksForRun",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.markTaskEntryUsed",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.updateRunProgress",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.submitSingleTask",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.saveTaskResult",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.flushCompletedTrackedTasks",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.getBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.pauseBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.resumeBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.stopBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.batchRunner",
-      "target": "src.windows.jimengImage.batchRunner.startBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.sanitizeFileNameSegment",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.sanitizeIdSegment",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.shortenIdSegment",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.gcd",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.deriveRatioLabel",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.ensureDirectory",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.resolveUniqueFilePath",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.buildImageBaseName",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.deriveExtension",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.fileStore",
-      "target": "src.windows.jimengImage.fileStore.saveDownloadedImage",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.normalizeText",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.normalizeLowerText",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.safeParseJson",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.looksLikeImageUrl",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.pathLooksRelevant",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.isIgnoredImageFieldName",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.isPreferredImageFieldName",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.trimText",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.toPositiveNumber",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.normalizeRatioValue",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildImageRecordKey",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildImageRecord",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.shouldReplaceImageRecord",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.looksLikeImageContainer",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.extractImageRecordKeyFromObject",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.extractRatioValueFromObject",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.pickPreferredLargeImage",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.pickFirstImageUrl",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.createIdSet",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.appendUniqueValues",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildTaskGroupSnapshot",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.collectJsonInsights",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.addImageRecord",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.visit",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildSignalEvent",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.createJimengImageNetworkTracker",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.getWebContents",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.getDebugger",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildAliasKeysFromEntity",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.buildAliasKeysFromGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.registerTaskGroupAliases",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.unregisterTaskGroupAliases",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.removeTaskGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.trimTaskGroups",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.createTaskGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.mergeTaskGroupInto",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.applySignalToTaskGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.trackTaskGroup",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.pushSignalEvent",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.inspectResponseBody",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.handleDebuggerMessage",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.ensureAttached",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.getLatestEventId",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.getSignalsAfter",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.getTaskGroupsAfter",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.networkTracker",
-      "target": "src.windows.jimengImage.networkTracker.destroy",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.getHelperSource",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildEnsureHelperScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildHelperReadyCheckScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildSetModeScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildSetPromptScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildPrepareUploadInputScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildClickGenerateScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildGetResultStateScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImage.pageScripts",
-      "target": "src.windows.jimengImage.pageScripts.buildPageSnapshotScript",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.createJimengImageWindowController",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.buildDefaultBrowserState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.normalizeText",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.log",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.logError",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.isWindowAlive",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.isBrowserViewUsable",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.notifyRenderer",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.emitTaskEvent",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.clearWorkspaceSyncTimer",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.requestRendererWorkspaceSync",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.handleWindowLayoutChange",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.removeViewFromWindow",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.hideView",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.destroyView",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.areBoundsEqual",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.normalizeBounds",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.syncBrowserState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.loadUrl",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.bindBrowserViewEvents",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.ensureViewAttached",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.ensureBrowserView",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.updateWorkspace",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.reloadBrowser",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.navigateHome",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.openCurrentUrlExternal",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.startBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.getBatchState",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.pauseBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.resumeBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.stopBatchGeneration",
-      "type": "contains"
-    },
-    {
-      "source": "src.windows.jimengImageWindowController",
-      "target": "src.windows.jimengImageWindowController.destroy",
       "type": "contains"
     },
     {
@@ -34082,6 +32630,26 @@
       "type": "imports"
     },
     {
+      "source": "vite.exit-progress.config",
+      "target": "node:path",
+      "type": "imports"
+    },
+    {
+      "source": "vite.exit-progress.config",
+      "target": "node:url",
+      "type": "imports"
+    },
+    {
+      "source": "vite.exit-progress.config",
+      "target": "@vitejs/plugin-vue",
+      "type": "imports"
+    },
+    {
+      "source": "vite.exit-progress.config",
+      "target": "vite",
+      "type": "imports"
+    },
+    {
       "source": "vite.feature-center.config",
       "target": "node:path",
       "type": "imports"
@@ -34283,29 +32851,29 @@
     }
   ],
   "_errors": [
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\afterPackSetWindowsIcon.cjs: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\afterPackSetWindowsIcon.cjs: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\buildRendererBundle.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\buildRendererBundle.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\devPodUploadSheetMiaoshou.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\devPodUploadSheetMiaoshou.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\gitBackup.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\gitBackup.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\upload-update-release-to-cos.cjs: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\upload-update-release-to-cos.cjs: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateAuthBridge.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateAuthBridge.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateAuthBridgeRunner.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateAuthBridgeRunner.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateFeatureCatalog.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateFeatureCatalog.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateOperationsPricingLogic.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validateOperationsPricingLogic.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validatePodSuiteToolService.js: require() regex error: name '_re' is not defined",
-    "D:\\AI������Ŀ\\VS CODE ����\\TEMU ������ Electron��\\scripts\\validatePodSuiteToolService.js: require() regex error: name '_re' is not defined"
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\afterPackSetWindowsIcon.cjs: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\afterPackSetWindowsIcon.cjs: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\buildRendererBundle.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\buildRendererBundle.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\devPodUploadSheetMiaoshou.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\devPodUploadSheetMiaoshou.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\gitBackup.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\gitBackup.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\upload-update-release-to-cos.cjs: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\upload-update-release-to-cos.cjs: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateAuthBridge.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateAuthBridge.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateAuthBridgeRunner.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateAuthBridgeRunner.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateFeatureCatalog.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateFeatureCatalog.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateOperationsPricingLogic.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validateOperationsPricingLogic.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validatePodSuiteToolService.js: require() regex error: name '_re' is not defined",
+    "D:\\AI开发项目\\VS CODE 开发\\TEMU 工具箱 Electron版\\scripts\\validatePodSuiteToolService.js: require() regex error: name '_re' is not defined"
   ],
   "warnings": [
     "gitignore rules applied from: .gitignore",
-    "some languages were parsed with module-only coverage because no structural query template is bundled: vue (32 files)"
+    "some languages were parsed with module-only coverage because no structural query template is bundled: vue (33 files)"
   ]
 }

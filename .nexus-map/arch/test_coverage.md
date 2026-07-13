@@ -28,6 +28,7 @@ Renderer bundles are built one target at a time by `scripts/buildRendererBundle.
 - `npm run build:renderer:main-window`
 - `npm run build:renderer:feature-center`
 - `npm run build:renderer:shop-management`
+- `npm run build:renderer:exit-progress`
 - `npm run build:renderer:pod-upload-sheet-miaoshou`
 - `npm run build:renderer:promotion-manager`
 

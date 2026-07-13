@@ -423,8 +423,7 @@ export function useProductWorkflowTasks(options = {}) {
       prefixText: preferences.prefixText,
       suffixText: preferences.suffixText,
       extraPrompt: preferences.extraPrompt,
-      targetLength: preferences.targetLength || '250',
-      outputLanguage: preferences.outputLanguage || 'en'
+      targetLength: preferences.targetLength || '250'
     };
   }
 
@@ -435,7 +434,6 @@ export function useProductWorkflowTasks(options = {}) {
   function applyAiTitleResults(result) {
     const items = Array.isArray(result && result.items) ? result.items : [];
     const itemMap = new Map(items.map((item) => [normalizeText(item && item.id), item]));
-    const resolvedOutputLanguage = normalizeText(result && result.outputLanguage) === 'en' ? 'en' : 'zh';
 
     products.value = products.value.map((product) => {
       const item = itemMap.get(product.id);
@@ -445,13 +443,9 @@ export function useProductWorkflowTasks(options = {}) {
       }
 
       if (item.status === 'success') {
-        const primaryTitle = resolvedOutputLanguage === 'en'
-          ? normalizeText(item.enTitle)
-          : normalizeText(item.zhTitle);
-
         return {
           ...product,
-          title: primaryTitle || product.title,
+          title: normalizeText(item.zhTitle) || product.title,
           englishTitle: normalizeText(item.enTitle) || product.englishTitle,
           aiTitleStatus: 'success',
           aiTitleError: '',

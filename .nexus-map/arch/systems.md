@@ -28,7 +28,8 @@
 
 - Code: `src/renderer/`
 - Responsibility: user-facing UI. The main window shell uses `src/renderer/index.html` plus Vue bundles. Newer workbenches are independent Vue apps under `*App/`; older operations workbenches are large plain JS/CSS files.
-- Key shell files: `src/renderer/index.html`, `src/renderer/index.js`, `src/renderer/mainWindowApp/`, `src/renderer/mainWindowShellView.js`.
+- Key shell files: `src/renderer/index.html`, `src/renderer/index.js`, `src/renderer/mainWindowApp/`, `src/renderer/mainWindowShellView.js`, `src/renderer/vueBundleViewLoader.js`.
+- Shared bundle loader: `src/renderer/vueBundleViewLoader.js` centralizes Vue app mounting, stylesheet loading, and fallback rendering for thin HTML/JS shells such as shop management, global config, confirm dialog, exit progress, global category sync, POD upload sheets, promotion manager, PSD smart suite, and the shop window shell.
 - Keep-alive behavior: main sections are hidden and shown instead of destroyed. `src/renderer/operationsModuleKeepAlive.js` provides first-activation and resume contracts for legacy operations pages.
 
 ## Catalog And Profile Metadata
@@ -47,7 +48,7 @@
 ## Creation Services
 
 - Code: `src/services/creationCenter/`
-- Responsibility: Jimeng image settings/dedup, POD suite tool, PSD smart object rendering, white mockup template rendering, template stores, image metadata, slicing/export helpers.
+- Responsibility: POD suite tool, PSD smart object rendering, white mockup template rendering, template stores, image metadata, slicing/export helpers.
 - Validation: `npm run validate:pod-suite-tool` covers image rendering, template handling, mask/region behavior, and slice export logic.
 
 ## Shop Management And Persistence

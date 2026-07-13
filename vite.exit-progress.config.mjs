@@ -18,16 +18,16 @@ export default defineConfig({
   plugins: [vue()],
   build: {
     emptyOutDir: true,
-    outDir: path.resolve(__dirname, 'src/renderer/globalCategorySyncApp/dist'),
+    outDir: path.resolve(__dirname, 'src/renderer/exitProgressApp/dist'),
     cssCodeSplit: false,
     minify: false,
     reportCompressedSize: false,
     codeSplitting: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/renderer/globalCategorySyncApp/main.js'),
+      entry: path.resolve(__dirname, 'src/renderer/exitProgressApp/main.js'),
       formats: ['es'],
-      fileName: () => 'global-category-sync-app.js',
-      cssFileName: 'global-category-sync-app'
+      fileName: () => 'exit-progress-app.js',
+      cssFileName: 'exit-progress-app'
     }
   }
 });

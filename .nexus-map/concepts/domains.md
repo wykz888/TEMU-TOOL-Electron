@@ -22,7 +22,7 @@ Feature cards live in `src/features/featureCenter/`. The catalog currently cover
 
 ## Creation Center
 
-Creation cards live in `src/features/creationCenter/`. Current catalog entries include Jimeng image and POD suite tool. Rendering and generation services live under `src/services/creationCenter/`.
+Creation cards live in `src/features/creationCenter/`. Current catalog entries include POD suite tool. Rendering and generation services live under `src/services/creationCenter/`.
 
 ## Operations Workbenches
 

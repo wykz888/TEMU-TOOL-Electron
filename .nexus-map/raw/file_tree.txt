@@ -45,14 +45,6 @@ src/features/creationCenter/aiTitle/batchTitleGenerator.js
 src/features/creationCenter/aiTitle/index.js
 src/features/creationCenter/aiTitle/titleTemplate.js
 src/features/creationCenter/catalog.js
-src/features/creationCenter/jimengImage/
-src/features/creationCenter/jimengImage/imageToImage.js
-src/features/creationCenter/jimengImage/index.js
-src/features/creationCenter/jimengImage/textToImage.js
-src/features/creationCenter/podImage/
-src/features/creationCenter/podImage/imageSelection.js
-src/features/creationCenter/podImage/index.js
-src/features/creationCenter/podImage/promptWorkbench.js
 src/features/creationCenter/podSuiteTool/
 src/features/creationCenter/podSuiteTool/index.js
 src/features/featureCenter/
@@ -108,7 +100,6 @@ src/ipc/featureCenterPromotionFallbacks.js
 src/ipc/featureChannels.js
 src/ipc/globalConfigChannels.js
 src/ipc/ipcRegistration.js
-src/ipc/jimengImageChannels.js
 src/ipc/podSuiteToolChannels.js
 src/ipc/registerAuthIpc.js
 src/ipc/registerCreationCenterIpc.js
@@ -125,7 +116,6 @@ src/ipc/registerFeatureCenterOperationsTrafficBoostIpc.js
 src/ipc/registerFeatureCenterPodUploadIpc.js
 src/ipc/registerFeatureCenterPromotionIpc.js
 src/ipc/registerGlobalConfigIpc.js
-src/ipc/registerJimengImageIpc.js
 src/ipc/registerPodSuiteToolIpc.js
 src/ipc/registerShopManagementIpc.js
 src/ipc/registerShopWindowIpc.js
@@ -171,9 +161,15 @@ src/renderer/creationCenterApp/
 src/renderer/creationCenterApp/App.vue
 src/renderer/creationCenterApp/main.js
 src/renderer/creationCenterView.js
-src/renderer/exitProgress.css
 src/renderer/exitProgress.html
 src/renderer/exitProgress.js
+src/renderer/exitProgressApp/
+src/renderer/exitProgressApp/App.vue
+src/renderer/exitProgressApp/bridge.js
+src/renderer/exitProgressApp/main.js
+src/renderer/exitProgressApp/styles/
+src/renderer/exitProgressApp/styles/exit-progress-app.css
+src/renderer/exitProgressApp/viewState.js
 src/renderer/featureCenterApp/
 src/renderer/featureCenterApp/App.vue
 src/renderer/featureCenterApp/main.js
@@ -195,9 +191,6 @@ src/renderer/globalConfigView.js
 src/renderer/index.css
 src/renderer/index.html
 src/renderer/index.js
-src/renderer/jimengImage.css
-src/renderer/jimengImage.html
-src/renderer/jimengImage.js
 src/renderer/mainWindowApp/
 src/renderer/mainWindowApp/App.vue
 src/renderer/mainWindowApp/bridge.js
@@ -213,8 +206,6 @@ src/renderer/modules/domReady.js
 src/renderer/operationsActivityManagement.css
 src/renderer/operationsActivityManagement.html
 src/renderer/operationsActivityManagementView.js
-src/renderer/operationsGlobalCategorySync.css
-src/renderer/operationsGlobalCategorySyncView.js
 src/renderer/operationsModuleKeepAlive.js
 src/renderer/operationsNewProductLifecycle.css
 src/renderer/operationsNewProductLifecycle.html
@@ -342,8 +333,6 @@ src/services/cos/loginUserStore.js
 src/services/creationCenter/
 src/services/creationCenter/creationCenterProfileService.js
 src/services/creationCenter/imageMetadataSource.js
-src/services/creationCenter/jimengImageDedupService.js
-src/services/creationCenter/jimengImageSettingsService.js
 src/services/creationCenter/photopeaSmartObjectRenderer.js
 src/services/creationCenter/photopeaWrapperPreload.js
 src/services/creationCenter/podSuitePsdTemplateStore.js
@@ -432,7 +421,6 @@ src/windows/browserStorageSyncScripts.js
 src/windows/createAuthWindow.js
 src/windows/createExitSyncProgressWindow.js
 src/windows/createGlobalCategorySyncWindow.js
-src/windows/createJimengImageWindow.js
 src/windows/createMainWindow.js
 src/windows/createMarketingToolsWindow.js
 src/windows/createOperationsActivityManagementWindow.js
@@ -447,12 +435,6 @@ src/windows/createPromotionManagerWindow.js
 src/windows/fingerprintRuntimeUtils.js
 src/windows/getAdaptiveMainWindowBounds.js
 src/windows/installWebContentsDebugShortcuts.js
-src/windows/jimengImage/
-src/windows/jimengImage/batchRunner.js
-src/windows/jimengImage/fileStore.js
-src/windows/jimengImage/networkTracker.js
-src/windows/jimengImage/pageScripts.js
-src/windows/jimengImageWindowController.js
 src/windows/resolveAppIconPath.js
 src/windows/resolveWindowTitle.js
 src/windows/shopFingerprintPreload.js
@@ -471,8 +453,10 @@ src/windows/shopWindowSellerRegionSwitch.js
 src/windows/shopWindowSellerSessionProbe.js
 src/windows/showConfirmDialog.js
 src/windows/windowUtils.js
+TEMU_Data_Electron/
 vite.confirm-dialog.config.mjs
 vite.creation-center.config.mjs
+vite.exit-progress.config.mjs
 vite.feature-center.config.mjs
 vite.global-category-sync.config.mjs
 vite.global-config.config.mjs

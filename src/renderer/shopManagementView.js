@@ -2,6 +2,7 @@
   const bundleView = global.createVueBundleViewLoader({
     fallbackMessage: '\u5e97\u94fa\u7ba1\u7406\u52a0\u8f7d\u5931\u8d25\u3002',
     missingExportMessage: '\u5e97\u94fa\u7ba1\u7406\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002',
+    moduleHref: './shopManagementApp/dist/shop-management-app.js',
     mountExportName: 'mountShopManagementApp',
     mountTarget: '#shopManagementApp',
     stylesheetErrorMessage: '\u5e97\u94fa\u7ba1\u7406\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',

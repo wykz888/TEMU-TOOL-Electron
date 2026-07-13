@@ -2,58 +2,47 @@
   'use strict';
 
   var ASSET_VERSION = '20260712-pod-dialog-fix-1';
+  var controller = null;
 
   function withVersion(assetPath) {
     return assetPath + '?v=' + encodeURIComponent(ASSET_VERSION);
   }
 
-  function ensureStylesheet() {
-    return new Promise(function (resolve, reject) {
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = withVersion('./podUploadSheetMiaoshouUniversalApp/dist/pod-upload-sheet-miaoshou-universal-app.css');
-      link.onload = resolve;
-      link.onerror = reject;
-      document.head.appendChild(link);
-    });
+  function getErrorDetail(error) {
+    return error && error.message ? String(error.message) : '';
   }
 
-  var mountPromise = null;
-  var controller = null;
+  var bundleView = global.createVueBundleViewLoader({
+    fallbackMessage: 'POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)\u52a0\u8f7d\u5931\u8d25\u3002',
+    missingExportMessage: 'POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)\u6a21\u5757\u7f3a\u5c11 mountPodUploadSheetMiaoshouUniversalApp \u5bfc\u51fa\u3002',
+    moduleHref: function () {
+      return withVersion('./podUploadSheetMiaoshouUniversalApp/dist/pod-upload-sheet-miaoshou-universal-app.js');
+    },
+    mountExportName: 'mountPodUploadSheetMiaoshouUniversalApp',
+    mountTarget: '#pod-upload-sheet-miaoshou-universal-root',
+    renderFallback: function (payload) {
+      payload.renderFallbackCard(
+        'POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)\u52a0\u8f7d\u5931\u8d25',
+        getErrorDetail(payload.error)
+      );
+    },
+    stylesheetErrorMessage: 'POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',
+    stylesheetHref: function () {
+      return withVersion('./podUploadSheetMiaoshouUniversalApp/dist/pod-upload-sheet-miaoshou-universal-app.css');
+    },
+    stylesheetSelector: 'link[data-pod-upload-sheet-miaoshou-universal-app-style="true"]'
+  });
 
   function ensureMount() {
-    if (mountPromise) {
-      return mountPromise;
-    }
-
-    mountPromise = ensureStylesheet()
-      .then(function () {
-        return import(withVersion('./podUploadSheetMiaoshouUniversalApp/dist/pod-upload-sheet-miaoshou-universal-app.js'));
-      })
-      .then(function (module) {
-        if (typeof module.mountPodUploadSheetMiaoshouUniversalApp === 'function') {
-          controller = module.mountPodUploadSheetMiaoshouUniversalApp();
-        } else {
-          throw new Error('POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)\u6a21\u5757\u7f3a\u5c11 mountPodUploadSheetMiaoshouUniversalApp \u5bfc\u51fa');
-        }
-
+    return bundleView.ensureMount()
+      .then(function (activeController) {
+        controller = activeController;
         return controller;
       })
       .catch(function (error) {
         console.error('[POD\u4e0a\u8d27\u8868\u683c(\u5999\u624b\u901a\u7528\u7248)] \u521d\u59cb\u5316\u5931\u8d25', error);
-        var mountTarget = document.getElementById('pod-upload-sheet-miaoshou-universal-root');
-
-        if (mountTarget) {
-          mountTarget.innerHTML = '<div style="padding:24px;color:#e11d48;font-size:14px;">'
-            + '<strong>POD&#x4E0A;&#x8D27;&#x8868;&#x683C;(&#x5999;&#x624B;&#x901A;&#x7528;&#x7248;)&#x52A0;&#x8F7D;&#x5931;&#x8D25;</strong>'
-            + '<p style="margin:8px 0 0;color:#64748b;font-size:12px;">' + (error.message || '') + '</p>'
-            + '</div>';
-        }
-
         throw error;
       });
-
-    return mountPromise;
   }
 
   global.podUploadSheetMiaoshouUniversalView = {

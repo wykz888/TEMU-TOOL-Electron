@@ -4,7 +4,6 @@ const { registerInvokeHandlers } = require('./ipcRegistration');
 
 function registerCreationCenterIpc({
   getCreationCatalog,
-  onOpenJimengImage,
   onOpenPodUploadSheetMiaoshou,
   onOpenPodSuiteTool
 }) {
@@ -15,15 +14,6 @@ function registerCreationCenterIpc({
       }
 
       return getCreationCatalog();
-    },
-    [CREATION_CHANNELS.OPEN_JIMENG_IMAGE]: async (_event, payload) => {
-      if (typeof onOpenJimengImage === 'function') {
-        await onOpenJimengImage(payload);
-      }
-
-      return {
-        success: true
-      };
     },
     [CREATION_CHANNELS.OPEN_POD_UPLOAD_SHEET_MIAOSHOU]: async (event, payload) => {
       if (typeof onOpenPodUploadSheetMiaoshou === 'function') {

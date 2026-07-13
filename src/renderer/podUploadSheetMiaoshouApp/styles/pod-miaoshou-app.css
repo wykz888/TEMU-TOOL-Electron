@@ -458,14 +458,22 @@ body.dark-theme .pod-panel {
   font-weight: 700;
 }
 
+.pod-field-label,
+.pod-field-label *,
+.pod-field-label .arco-trigger-wrapper,
 .pod-field-label--clean,
 .pod-field-label--clean *,
 .pod-field-label--clean .arco-trigger-wrapper {
   border-bottom: 0 !important;
   box-shadow: none !important;
+  background-image: none !important;
   text-decoration: none !important;
 }
 
+.pod-field-label::before,
+.pod-field-label::after,
+.pod-field-label *::before,
+.pod-field-label *::after,
 .pod-field-label--clean::before,
 .pod-field-label--clean::after,
 .pod-field-label--clean *::before,
@@ -604,12 +612,40 @@ body.dark-theme .pod-field-label {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
+.pod-miaoshou-app-shell .arco-input-wrapper::before,
+.pod-miaoshou-app-shell .arco-input-wrapper::after,
+.pod-miaoshou-app-shell .arco-select-view::before,
+.pod-miaoshou-app-shell .arco-select-view::after,
+.pod-miaoshou-app-shell .arco-select-view-single::before,
+.pod-miaoshou-app-shell .arco-select-view-single::after,
+.pod-miaoshou-app-shell .arco-textarea-wrapper::before,
+.pod-miaoshou-app-shell .arco-textarea-wrapper::after {
+  content: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
 .pod-miaoshou-app-shell .arco-input,
 .pod-miaoshou-app-shell .arco-select-view-value,
+.pod-miaoshou-app-shell .arco-select-view-placeholder,
 .pod-miaoshou-app-shell .arco-textarea {
   color: var(--pod-text-strong) !important;
   font-size: 13px;
   font-weight: 650;
+}
+
+.pod-miaoshou-app-shell .arco-select-view,
+.pod-miaoshou-app-shell .arco-select-view-single {
+  overflow: hidden !important;
+}
+
+.pod-miaoshou-app-shell .arco-select-view-value,
+.pod-miaoshou-app-shell .arco-select-view-placeholder {
+  min-width: 0;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pod-miaoshou-app-shell .arco-select-view-suffix,
@@ -619,17 +655,33 @@ body.dark-theme .pod-field-label {
 }
 
 .pod-miaoshou-app-shell .arco-input-wrapper:hover,
-.pod-miaoshou-app-shell .arco-select-view:hover,
 .pod-miaoshou-app-shell .arco-textarea-wrapper:hover {
   border-color: var(--pod-primary-border) !important;
   background: #ffffff !important;
 }
 
+.pod-miaoshou-app-shell .arco-select-view:hover,
+.pod-miaoshou-app-shell .arco-select-view-single:hover {
+  border-color: var(--pod-border-strong) !important;
+  background: var(--pod-surface) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .pod-miaoshou-app-shell .arco-input-wrapper:focus-within,
-.pod-miaoshou-app-shell .arco-select-view-focus,
 .pod-miaoshou-app-shell .arco-textarea-wrapper:focus-within {
   border-color: var(--theme-primary-color, #f4bf22) !important;
   box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16), 0 6px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+.pod-miaoshou-app-shell .arco-select-view:focus-within,
+.pod-miaoshou-app-shell .arco-select-view-focus,
+.pod-miaoshou-app-shell .arco-select-view-opened,
+.pod-miaoshou-app-shell .arco-select-view-single:focus-within {
+  border-color: var(--pod-border-strong) !important;
+  background: var(--pod-surface) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .pod-miaoshou-app-shell .arco-btn-disabled,
@@ -762,6 +814,7 @@ body.pod-miaoshou-vue-mounted .arco-select-dropdown,
 body.pod-miaoshou-vue-mounted .arco-trigger-popup {
   z-index: 5000;
   pointer-events: auto;
+  overflow-x: hidden !important;
   border: 1px solid rgba(203, 213, 225, 0.8);
   border-radius: 8px;
   background: #ffffff;
@@ -777,6 +830,8 @@ body.pod-miaoshou-vue-mounted .pod-sku-table .arco-table-body,
 body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-wrapper {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.72) transparent;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 body.pod-miaoshou-vue-mounted .pod-miaoshou-app-shell::-webkit-scrollbar,
@@ -824,10 +879,22 @@ body.pod-miaoshou-vue-mounted .arco-select-dropdown .arco-select-dropdown-list-w
 }
 
 body.pod-miaoshou-vue-mounted .arco-select-option {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   border-radius: 6px;
   color: var(--pod-text, #1d2533);
   font-size: 13px;
   font-weight: 650;
+}
+
+body.pod-miaoshou-vue-mounted .arco-select-option-content {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 body.pod-miaoshou-vue-mounted .arco-select-option-hover,
@@ -1067,15 +1134,21 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 
 .pod-chip-list {
   display: flex;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 3px;
   flex-wrap: wrap;
-  max-height: 52px;
+  max-height: 44px;
   overflow: hidden;
 }
 
 .pod-chip-list .arco-tag {
-  max-width: 96px;
+  max-width: 76px;
+  min-width: 0;
+  height: 20px;
+  padding: 0 5px;
   overflow: hidden;
+  font-size: 10px;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1085,6 +1158,14 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
   background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
   color: var(--theme-primary-ink, #7a4a00);
   font-weight: 700;
+}
+
+.pod-material-chip.arco-tag .arco-tag-content {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pod-material-chip-more.arco-tag {
@@ -1197,7 +1278,8 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
   height: 100%;
   min-height: 0;
   padding: 10px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--pod-surface-soft);
 }
 
@@ -1382,7 +1464,8 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
   gap: 8px;
   min-height: 0;
   padding: 10px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--pod-surface);
 }
 

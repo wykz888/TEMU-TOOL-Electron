@@ -33,7 +33,6 @@ const FEATURE_ACTION_HANDLERS = Object.freeze({
 });
 
 const CREATION_ACTION_HANDLERS = Object.freeze({
-  'open-jimeng-image': (bridge) => bridge.openJimengImage(),
   'open-pod-upload-sheet-miaoshou': (bridge) => bridge.openPodUploadSheetMiaoshou({
     promptForNewWindow: true
   }),

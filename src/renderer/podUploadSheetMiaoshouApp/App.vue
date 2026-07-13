@@ -132,11 +132,10 @@
       :form="batchAiTitleForm"
       :summary="batchAiTitleSummary"
       :status="batchAiTitleStatus"
-      :show-output-language="true"
+      :show-output-language="false"
       :ai-platform-options="batchAiTitleAiPlatformOptions"
       :storage-provider-options="batchAiTitleStorageProviderOptions"
       :image-compression-options="batchAiTitleImageCompressionOptions"
-      :output-language-options="batchAiTitleOutputLanguageOptions"
       :min-concurrency="batchAiTitleMinConcurrency"
       :max-concurrency="batchAiTitleMaxConcurrency"
       :min-target-length="batchAiTitleMinTargetLength"
@@ -217,15 +216,13 @@ const BATCH_AI_TITLE_PREFERENCE_KEYS = Object.freeze([
   'imageQuality',
   'prefixText',
   'suffixText',
-  'outputLanguage',
   'useCache',
   'extraPrompt'
 ]);
 const BATCH_AI_TITLE_EMPTY_TEXT_KEYS = Object.freeze([
   'prefixText',
   'suffixText',
-  'extraPrompt',
-  'outputLanguage'
+  'extraPrompt'
 ]);
 const products = ref([]);
 const activeProductId = ref('');
@@ -275,7 +272,6 @@ const batchAiTitleStatus = batchAiTitleDialog.status;
 const batchAiTitleAiPlatformOptions = batchAiTitleDialog.aiPlatformOptions;
 const batchAiTitleStorageProviderOptions = batchAiTitleDialog.storageProviderOptions;
 const batchAiTitleImageCompressionOptions = batchAiTitleDialog.imageCompressionOptions;
-const batchAiTitleOutputLanguageOptions = batchAiTitleDialog.outputLanguageOptions;
 const batchAiTitleMinConcurrency = batchAiTitleDialog.minConcurrency;
 const batchAiTitleMaxConcurrency = batchAiTitleDialog.maxConcurrency;
 const batchAiTitleMinTargetLength = batchAiTitleDialog.minTargetLength;
@@ -612,7 +608,6 @@ function scheduleStateSave() {
         imageQuality: batchAiTitlePreferences.imageQuality,
         prefixText: batchAiTitlePreferences.prefixText,
         suffixText: batchAiTitlePreferences.suffixText,
-        outputLanguage: batchAiTitlePreferences.outputLanguage,
         useCache: batchAiTitlePreferences.useCache,
         extraPrompt: batchAiTitlePreferences.extraPrompt
       }

@@ -202,7 +202,6 @@ export function useTemplateWorkspace(options = {}) {
         imageQuality: normalizeText(batchAiTitleConfig.imageQuality),
         prefixText: normalizeText(batchAiTitleConfig.prefixText),
         suffixText: normalizeText(batchAiTitleConfig.suffixText),
-        outputLanguage: normalizeText(batchAiTitleConfig.outputLanguage),
         useCache: batchAiTitleConfig.useCache === false ? false : true,
         extraPrompt: normalizeText(batchAiTitleConfig.extraPrompt)
       }

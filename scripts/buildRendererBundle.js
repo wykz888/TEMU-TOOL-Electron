@@ -22,6 +22,14 @@ const TARGETS = Object.freeze({
       'src/renderer/confirmDialogApp/dist/confirm-dialog-app.css'
     ]
   },
+  'exit-progress': {
+    config: 'vite.exit-progress.config.mjs',
+    sourceDirs: ['src/renderer/exitProgressApp'],
+    outputFiles: [
+      'src/renderer/exitProgressApp/dist/exit-progress-app.js',
+      'src/renderer/exitProgressApp/dist/exit-progress-app.css'
+    ]
+  },
   'shop-management': {
     config: 'vite.shop-management.config.mjs',
     sourceDirs: ['src/renderer/shopManagementApp'],

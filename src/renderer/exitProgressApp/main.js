@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import './styles/exit-progress-app.css';
 import App from './App.vue';
 
 let controllerInstance = null;
@@ -11,7 +12,7 @@ function createController(app, vm, root) {
   };
 }
 
-export function mountGlobalCategorySyncApp(target = '#globalCategorySyncRoot') {
+export function mountExitProgressApp(target = '#exitProgressApp') {
   if (controllerInstance) {
     return controllerInstance;
   }
@@ -21,7 +22,7 @@ export function mountGlobalCategorySyncApp(target = '#globalCategorySyncRoot') {
     : target;
 
   if (!mountTarget) {
-    throw new Error('\u5168\u91cf\u540c\u6b65\u7c7b\u76ee\u6302\u8f7d\u70b9\u672a\u627e\u5230\u3002');
+    throw new Error('\u9000\u51fa\u4fdd\u5b58\u6302\u8f7d\u70b9\u672a\u627e\u5230\u3002');
   }
 
   const app = createApp(App);

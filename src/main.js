@@ -7,13 +7,10 @@ const { registerDialogIpc } = require('./ipc/registerDialogIpc');
 const { registerFeatureCenterIpc } = require('./ipc/registerFeatureCenterIpc');
 const { registerGlobalConfigIpc } = require('./ipc/registerGlobalConfigIpc');
 const { registerUpdaterIpc } = require('./ipc/registerUpdaterIpc');
-const { registerJimengImageIpc } = require('./ipc/registerJimengImageIpc');
 const { registerPodSuiteToolIpc } = require('./ipc/registerPodSuiteToolIpc');
 const { registerShopManagementIpc } = require('./ipc/registerShopManagementIpc');
 const { registerShopWindowIpc } = require('./ipc/registerShopWindowIpc');
 const { createCreationCenterProfileService } = require('./services/creationCenter/creationCenterProfileService');
-const { createJimengImageDedupService } = require('./services/creationCenter/jimengImageDedupService');
-const { createJimengImageSettingsService } = require('./services/creationCenter/jimengImageSettingsService');
 const { createFeatureCenterProfileService } = require('./services/featureCenter/featureCenterProfileService');
 const { createGlobalConfigService } = require('./services/globalConfig/globalConfigService');
 const { createGlobalAiTitleConfigAdapter } = require('./services/globalConfig/globalAiTitleConfigAdapter');
@@ -36,7 +33,6 @@ const {
 const { createLoginAccountCache } = require('./state/loginAccountCache');
 const { createSessionStore } = require('./state/sessionStore');
 const { createAuthWindow } = require('./windows/createAuthWindow');
-const { createJimengImageWindow } = require('./windows/createJimengImageWindow');
 const { createMainWindow } = require('./windows/createMainWindow');
 const {
   createPodUploadSheetMiaoshouWindow
@@ -113,14 +109,6 @@ app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'disable_non_pro
 const sessionStore = createSessionStore();
 const loginAccountCache = createLoginAccountCache({ app, safeStorage });
 const creationCenterProfileService = createCreationCenterProfileService({ app });
-const jimengImageSettingsService = createJimengImageSettingsService({
-  sessionStore,
-  creationCenterProfileService
-});
-const jimengImageDedupService = createJimengImageDedupService({
-  sessionStore,
-  creationCenterProfileService
-});
 const featureCenterProfileService = createFeatureCenterProfileService({ app });
 const globalConfigService = createGlobalConfigService({
   sessionStore,
@@ -143,7 +131,6 @@ const operationsActivityBackgroundLogService = createOperationsActivityBackgroun
 const themePreferenceService = createThemePreferenceService({ app });
 
 let authWindow = null;
-let jimengImageWindow = null;
 let mainWindow = null;
 let globalCategorySyncWindow = null;
 let marketingToolsWindow = null;
@@ -166,7 +153,6 @@ const podSuiteToolWindows = new Set();
 let exitSyncProgressWindow = null;
 let shopWindowBrowserController = null;
 let shopWindowBrowserStorageSyncService = null;
-let jimengImageWindowController = null;
 let shopManagementService = null;
 let promotionMasterSessionService = null;
 let promotionMonitorService = null;
@@ -373,7 +359,6 @@ function broadcastToManagedSubWindows(windowSet, channel, payload, errorEventNam
 function getOpenWindows() {
   return [
     authWindow,
-    jimengImageWindow,
     mainWindow,
     globalCategorySyncWindow,
     ...getOpenManagedSubWindows(marketingToolsWindows),
@@ -613,27 +598,6 @@ function bindAuthWindow(windowInstance) {
   });
 }
 
-function bindJimengImageWindow(windowInstance) {
-  jimengImageWindow = windowInstance;
-  applyThemeToWindow(jimengImageWindow, currentTheme);
-  installWebContentsDebugShortcuts(jimengImageWindow);
-  const { createJimengImageWindowController } = require('./windows/jimengImageWindowController');
-
-  jimengImageWindowController = createJimengImageWindowController(jimengImageWindow, {
-    runtimeLogger,
-    dedupService: jimengImageDedupService
-  });
-
-  return bindWindowCleanup(jimengImageWindow, () => {
-    if (jimengImageWindowController) {
-      jimengImageWindowController.destroy();
-      jimengImageWindowController = null;
-    }
-
-    jimengImageWindow = null;
-  });
-}
-
 function bindMainWindow(windowInstance) {
   mainWindow = windowInstance;
   applyThemeToWindow(mainWindow, currentTheme);
@@ -799,10 +763,6 @@ function bindMainWindow(windowInstance) {
 
     if (promotionManagerWindow && !promotionManagerWindow.isDestroyed()) {
       promotionManagerWindow.close();
-    }
-
-    if (jimengImageWindow && !jimengImageWindow.isDestroyed()) {
-      jimengImageWindow.close();
     }
 
     if (shopWindowBrowserController) {
@@ -1022,47 +982,6 @@ async function selectPodUploadSheetMiaoshouImportDirectory(payload, context = {}
         sensitivity: 'base'
       });
     })
-  };
-}
-
-async function selectJimengImageSaveDirectory(payload) {
-  const currentSettingsResult = await jimengImageSettingsService.getSettings().catch(() => null);
-  const currentSettings = currentSettingsResult && currentSettingsResult.settings
-    ? currentSettingsResult.settings
-    : null;
-  const defaultPath = normalizeDirectoryDialogPath(
-    (payload && payload.defaultPath) || (currentSettings && currentSettings.saveDirectoryPath)
-  );
-  const parentWindow =
-    jimengImageWindow && !jimengImageWindow.isDestroyed()
-      ? jimengImageWindow
-      : mainWindow && !mainWindow.isDestroyed()
-        ? mainWindow
-        : null;
-  const result = await dialog.showOpenDialog(parentWindow, {
-    title: '\u9009\u62E9\u751F\u56FE\u4FDD\u5B58\u76EE\u5F55',
-    defaultPath: defaultPath || undefined,
-    properties: ['openDirectory', 'dontAddToRecent'],
-    buttonLabel: '\u4F7F\u7528\u6B64\u76EE\u5F55'
-  });
-
-  if (!result || result.canceled === true || !Array.isArray(result.filePaths) || result.filePaths.length === 0) {
-    return {
-      canceled: true,
-      directoryPath: normalizeDirectoryDialogPath(currentSettings && currentSettings.saveDirectoryPath),
-      settings: currentSettings
-    };
-  }
-
-  const selectedDirectoryPath = path.resolve(String(result.filePaths[0] || ''));
-  const savedSettingsResult = await jimengImageSettingsService.saveSettings({
-    saveDirectoryPath: selectedDirectoryPath
-  });
-
-  return {
-    canceled: false,
-    directoryPath: selectedDirectoryPath,
-    settings: savedSettingsResult && savedSettingsResult.settings ? savedSettingsResult.settings : currentSettings
   };
 }
 
@@ -1408,20 +1327,6 @@ function showMainWindow() {
   }
 
   return presentWindow(bindMainWindow(createMainWindow({
-    backgroundColor: getThemeBackgroundColor(currentTheme)
-  })));
-}
-
-function showJimengImageWindow() {
-  if (jimengImageWindow && !jimengImageWindow.isDestroyed()) {
-    if (jimengImageWindowController && typeof jimengImageWindowController.requestRendererWorkspaceSync === 'function') {
-      jimengImageWindowController.requestRendererWorkspaceSync('window-reopened');
-    }
-
-    return presentWindow(jimengImageWindow);
-  }
-
-  return presentWindow(bindJimengImageWindow(createJimengImageWindow({
     backgroundColor: getThemeBackgroundColor(currentTheme)
   })));
 }
@@ -3334,7 +3239,6 @@ app.whenReady().then(() => {
   });
   registerCreationCenterIpc({
     getCreationCatalog: () => creationCenterProfileService.getCatalog(),
-    onOpenJimengImage: showJimengImageWindow,
     onOpenPodUploadSheetMiaoshou: (payload, context = {}) => {
       return showPodUploadSheetMiaoshouWindow(mergeWindowOpenPayload(payload, context));
     },
@@ -3348,12 +3252,6 @@ app.whenReady().then(() => {
       theme: currentTheme,
       appearance: currentThemeAppearance
     })
-  });
-  registerJimengImageIpc({
-    getController: () => jimengImageWindowController,
-    getSettings: () => jimengImageSettingsService.getSettings(),
-    saveSettings: (payload) => jimengImageSettingsService.saveSettings(payload),
-    selectSaveDirectory: (payload) => selectJimengImageSaveDirectory(payload)
   });
   registerPodSuiteToolIpc({
     selectWhiteMockupFile: (payload, context = {}) => selectPodSuiteToolWhiteMockupFile(payload, context),

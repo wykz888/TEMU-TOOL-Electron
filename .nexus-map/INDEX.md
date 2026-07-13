@@ -9,7 +9,7 @@ This repository is a TEMU Toolbox Electron app. The repo rules require Vue 3, Ty
 ## Cold Start Summary
 
 - Main process orchestration lives in `src/main.js`. It owns app startup, session/profile/theme/update services, window lifecycle, lazy feature services, and IPC registration.
-- Renderer UI is split between a main HTML shell at `src/renderer/index.html`, Vue bundles under `src/renderer/*App/`, and older large renderer scripts such as `operationsActivityManagementView.js`.
+- Renderer UI is split between a main HTML shell at `src/renderer/index.html`, Vue bundles under `src/renderer/*App/`, thin bundle loaders such as `src/renderer/vueBundleViewLoader.js`, and older large renderer scripts such as `operationsActivityManagementView.js`.
 - Public renderer access goes through `window.temuApp` from `src/preload/appPreload.js`, with domain APIs composed from `src/preload/*PreloadApi.js`.
 - Feature and creation cards are metadata-driven in `src/features/featureCenter/catalog.js` and `src/features/creationCenter/catalog.js`. Storage boundaries are derived by profile services.
 - Shop browser automation is a major main-process side system under `src/windows/`, especially `shopWindowBrowserController.js`, login autofill, seller session probes, and seller-center landing logic.

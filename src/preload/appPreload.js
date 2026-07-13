@@ -4,7 +4,6 @@ const { CREATION_CHANNELS } = require('../ipc/creationCenterChannels');
 const { DIALOG_CHANNELS } = require('../ipc/dialogChannels');
 const { FEATURE_CHANNELS } = require('../ipc/featureChannels');
 const { GLOBAL_CONFIG_CHANNELS } = require('../ipc/globalConfigChannels');
-const { JIMENG_IMAGE_CHANNELS } = require('../ipc/jimengImageChannels');
 const { POD_SUITE_TOOL_CHANNELS } = require('../ipc/podSuiteToolChannels');
 const { UPDATE_CHANNELS } = require('../ipc/updateChannels');
 const { SHOP_CHANNELS } = require('../ipc/shopChannels');
@@ -101,39 +100,11 @@ contextBridge.exposeInMainWorld('temuApp', {
     getCreationCatalog() {
       return ipcRenderer.invoke(CREATION_CHANNELS.GET_CREATION_CATALOG);
     },
-    openJimengImage(payload) {
-      return ipcRenderer.invoke(CREATION_CHANNELS.OPEN_JIMENG_IMAGE, payload);
-    },
     openPodUploadSheetMiaoshou(payload) {
       return ipcRenderer.invoke(CREATION_CHANNELS.OPEN_POD_UPLOAD_SHEET_MIAOSHOU, payload);
     },
     openPodSuiteTool(payload) {
       return ipcRenderer.invoke(CREATION_CHANNELS.OPEN_POD_SUITE_TOOL, payload);
-    }
-  },
-  jimengImage: {
-    ...createInvokeApi(ipcRenderer, {
-      updateWorkspace: JIMENG_IMAGE_CHANNELS.UPDATE_WORKSPACE,
-      getSettings: JIMENG_IMAGE_CHANNELS.GET_SETTINGS,
-      saveSettings: JIMENG_IMAGE_CHANNELS.SAVE_SETTINGS,
-      selectSaveDirectory: JIMENG_IMAGE_CHANNELS.SELECT_SAVE_DIRECTORY,
-      getBatchState: JIMENG_IMAGE_CHANNELS.GET_BATCH_STATE,
-      startBatchGeneration: JIMENG_IMAGE_CHANNELS.START_BATCH_GENERATION,
-      pauseBatchGeneration: JIMENG_IMAGE_CHANNELS.PAUSE_BATCH_GENERATION,
-      resumeBatchGeneration: JIMENG_IMAGE_CHANNELS.RESUME_BATCH_GENERATION,
-      stopBatchGeneration: JIMENG_IMAGE_CHANNELS.STOP_BATCH_GENERATION,
-      reloadBrowser: JIMENG_IMAGE_CHANNELS.RELOAD_BROWSER,
-      navigateHome: JIMENG_IMAGE_CHANNELS.NAVIGATE_HOME,
-      openCurrentUrlExternal: JIMENG_IMAGE_CHANNELS.OPEN_CURRENT_URL_EXTERNAL
-    }),
-    onBrowserStateChanged(listener) {
-      return subscribe(JIMENG_IMAGE_CHANNELS.BROWSER_STATE_CHANGED, listener);
-    },
-    onWorkspaceSyncRequested(listener) {
-      return subscribe(JIMENG_IMAGE_CHANNELS.REQUEST_WORKSPACE_SYNC, listener);
-    },
-    onTaskEvent(listener) {
-      return subscribe(JIMENG_IMAGE_CHANNELS.TASK_EVENT, listener);
     }
   },
   podSuiteTool: {

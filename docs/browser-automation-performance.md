@@ -23,9 +23,6 @@
 - 登录 helper
   - `src/windows/shopWindowLoginAutofill.js`
   - `src/windows/shopWindowBrowserController.js`
-- 即梦 helper
-  - `src/windows/jimengImage/pageScripts.js`
-  - `src/windows/jimengImage/batchRunner.js`
 
 ## 2. 同一轮页面事件保留更早的任务，不要反复重排
 

@@ -2,6 +2,7 @@
   const bundleView = global.createVueBundleViewLoader({
     fallbackMessage: '\u5168\u5c40\u914d\u7f6e\u52a0\u8f7d\u5931\u8d25\u3002',
     missingExportMessage: '\u5168\u5c40\u914d\u7f6e\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002',
+    moduleHref: './globalConfigApp/dist/global-config-app.js',
     mountExportName: 'mountGlobalConfigApp',
     mountTarget: '#globalConfigApp',
     stylesheetErrorMessage: '\u5168\u5c40\u914d\u7f6e\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',

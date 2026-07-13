@@ -1,8 +1,6 @@
-const { jimengImageFeature } = require('./jimengImage');
 const { podSuiteToolFeature } = require('./podSuiteTool');
 
 const CREATION_CENTER_CATALOG = Object.freeze([
-  jimengImageFeature,
   podSuiteToolFeature
 ]);
 

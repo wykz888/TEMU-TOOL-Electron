@@ -106,7 +106,7 @@
       "id": "creation-services",
       "type": "System",
       "label": "Creation Services",
-      "responsibility": "Implements Jimeng settings, POD suite image generation, PSD smart object rendering, masks, templates, and slicing.",
+      "responsibility": "Implements POD suite image generation, PSD smart object rendering, masks, templates, and slicing.",
       "implementation_status": "implemented",
       "code_path": "src/services/creationCenter",
       "evidence_path": null,

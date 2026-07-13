@@ -201,9 +201,6 @@ function getEntryIcon(entry) {
   if (source.includes('pod') && source.includes('表格')) {
     return IconFile;
   }
-  if (source.includes('即梦') || source.includes('生图')) {
-    return IconImage;
-  }
   if (source.includes('标题') || source.includes('文案')) {
     return IconCommand;
   }

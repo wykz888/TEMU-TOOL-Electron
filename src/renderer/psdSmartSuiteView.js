@@ -1,50 +1,39 @@
 (function initPsdSmartSuiteView(global) {
   'use strict';
 
-  function ensureStylesheet() {
-    return new Promise(function (resolve, reject) {
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = './psdSmartSuiteApp/dist/psd-smart-suite-app.css';
-      link.onload = resolve;
-      link.onerror = reject;
-      document.head.appendChild(link);
-    });
-  }
-
-  var mountPromise = null;
   var controller = null;
 
-  function ensureMount() {
-    if (mountPromise) {
-      return mountPromise;
-    }
+  function getErrorDetail(error) {
+    return error && error.message ? String(error.message) : '';
+  }
 
-    mountPromise = ensureStylesheet()
-      .then(function () {
-        return import('./psdSmartSuiteApp/dist/psd-smart-suite-app.js');
-      })
-      .then(function (module) {
-        if (typeof module.mountPsdSmartSuiteApp === 'function') {
-          controller = module.mountPsdSmartSuiteApp();
-        } else {
-          throw new Error('PSD智能套图模块缺少 mountPsdSmartSuiteApp 导出');
-        }
+  var bundleView = global.createVueBundleViewLoader({
+    fallbackMessage: 'PSD\u667a\u80fd\u5957\u56fe\u52a0\u8f7d\u5931\u8d25\u3002',
+    missingExportMessage: 'PSD\u667a\u80fd\u5957\u56fe\u6a21\u5757\u7f3a\u5c11 mountPsdSmartSuiteApp \u5bfc\u51fa\u3002',
+    moduleHref: './psdSmartSuiteApp/dist/psd-smart-suite-app.js',
+    mountExportName: 'mountPsdSmartSuiteApp',
+    mountTarget: '#psd-smart-suite-root',
+    renderFallback: function (payload) {
+      payload.renderFallbackCard(
+        'PSD\u667a\u80fd\u5957\u56fe\u52a0\u8f7d\u5931\u8d25',
+        getErrorDetail(payload.error)
+      );
+    },
+    stylesheetErrorMessage: 'PSD\u667a\u80fd\u5957\u56fe\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',
+    stylesheetHref: './psdSmartSuiteApp/dist/psd-smart-suite-app.css',
+    stylesheetSelector: 'link[data-psd-smart-suite-app-style="true"]'
+  });
+
+  function ensureMount() {
+    return bundleView.ensureMount()
+      .then(function (activeController) {
+        controller = activeController;
         return controller;
       })
       .catch(function (error) {
-        console.error('[PSD智能套图] 初始化失败:', error);
-        var mountTarget = document.getElementById('psd-smart-suite-root');
-        if (mountTarget) {
-          mountTarget.innerHTML = '<div style="padding:24px;color:#e11d48;font-size:14px;">'
-            + '<strong>PSD智能套图加载失败</strong>'
-            + '<p style="margin:8px 0 0;color:#64748b;font-size:12px;">' + (error.message || '') + '</p>'
-            + '</div>';
-        }
+        console.error('[PSD\u667a\u80fd\u5957\u56fe] \u521d\u59cb\u5316\u5931\u8d25:', error);
         throw error;
       });
-
-    return mountPromise;
   }
 
   global.psdSmartSuiteView = {
@@ -55,10 +44,10 @@
       if (controller && typeof controller.refresh === 'function') {
         return controller.refresh();
       }
+
       return Promise.resolve(null);
     }
   };
 
-  // 自动初始化
   ensureMount();
 })(window);

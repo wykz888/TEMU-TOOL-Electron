@@ -39,7 +39,8 @@ flowchart TD
 flowchart LR
   ViteConfigs[vite.*.config.mjs] --> BuildHelper[scripts/buildRendererBundle.js]
   BuildHelper --> DistBundles[src/renderer/*App/dist]
-  HtmlShell[src/renderer/*.html and *View.js] --> DistBundles
+  HtmlShell[src/renderer/*.html and *View.js] --> SharedHelper[src/renderer/vueBundleViewLoader.js]
+  SharedHelper --> DistBundles
   DistBundles --> BrowserWindows[src/windows/create*Window.js]
 ```
 

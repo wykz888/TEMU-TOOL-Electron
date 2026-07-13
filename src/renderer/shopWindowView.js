@@ -54,8 +54,6 @@
 
   let elements = null;
   let initialized = false;
-  let mountPromise = null;
-  let stylesheetPromise = null;
   let syncFrameId = 0;
   let resizeObserver = null;
   let deferredWorkspaceSyncTimer = 0;
@@ -63,6 +61,7 @@
   let lastDispatchedWorkspacePayload = null;
   let bridgeDisposers = [];
   let shopWindowAppController = null;
+  let shopWindowAppControllerConfigured = false;
   let autoStorageSyncHeartbeatTimer = 0;
   let autoStorageSyncKickoffTimer = 0;
   let autoStorageSyncKickoffDelayMs = 0;
@@ -70,63 +69,28 @@
   let pendingAutoStorageSyncReason = '';
   const autoStorageSyncRuntimeByShopId = Object.create(null);
 
-  function ensureVueProcessShim() {
-    if (!window.process || typeof window.process !== 'object') {
-      window.process = {};
-    }
-
-    if (!window.process.env || typeof window.process.env !== 'object') {
-      window.process.env = {};
-    }
-
-    if (typeof window.process.env.NODE_ENV !== 'string') {
-      window.process.env.NODE_ENV = 'production';
-    }
-  }
-
-  function ensureStylesheet() {
-    if (stylesheetPromise) {
-      return stylesheetPromise;
-    }
-
-    stylesheetPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector('link[data-shop-window-app-style="true"]');
-
-      if (existing) {
-        resolve(existing);
-        return;
-      }
-
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = './shopWindowApp/dist/shop-window-app.css';
-      link.dataset.shopWindowAppStyle = 'true';
-      link.onload = () => resolve(link);
-      link.onerror = () => reject(new Error('\u5e97\u94fa\u7a97\u53e3\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002'));
-      document.head.appendChild(link);
-    });
-
-    return stylesheetPromise;
-  }
+  const bundleView = window.createVueBundleViewLoader({
+    fallbackMessage: '\u5e97\u94fa\u7a97\u53e3\u52a0\u8f7d\u5931\u8d25\u3002',
+    missingExportMessage: '\u5e97\u94fa\u7a97\u53e3\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002',
+    moduleHref: './shopWindowApp/dist/shop-window-app.js',
+    mountExportName: 'mountShopWindowApp',
+    mountTarget: '#shopWindowApp',
+    stylesheetErrorMessage: '\u5e97\u94fa\u7a97\u53e3\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',
+    stylesheetHref: './shopWindowApp/dist/shop-window-app.css',
+    stylesheetSelector: 'link[data-shop-window-app-style="true"]'
+  });
 
   function ensureMount() {
-    if (!mountPromise) {
-      ensureVueProcessShim();
+    return bundleView.ensureMount().then((controller) => {
+      shopWindowAppController = controller;
 
-      mountPromise = ensureStylesheet()
-        .then(() => import('./shopWindowApp/dist/shop-window-app.js'))
-        .then((module) => {
-          if (!module || typeof module.mountShopWindowApp !== 'function') {
-            throw new Error('\u5e97\u94fa\u7a97\u53e3\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002');
-          }
+      if (!shopWindowAppControllerConfigured) {
+        configureShopWindowAppController();
+        shopWindowAppControllerConfigured = true;
+      }
 
-          shopWindowAppController = module.mountShopWindowApp('#shopWindowApp');
-          configureShopWindowAppController();
-          return shopWindowAppController;
-        });
-    }
-
-    return mountPromise;
+      return shopWindowAppController;
+    });
   }
 
   function getStore() {

@@ -64,6 +64,53 @@
     mountNode.textContent = message || fallbackMessage || '\u52A0\u8F7D\u5931\u8D25\u3002';
   }
 
+  function renderFallbackCardNode(mountTarget, title, detail) {
+    const mountNode = getMountNode(mountTarget);
+
+    if (!mountNode) {
+      return;
+    }
+
+    mountNode.textContent = '';
+
+    const shell = document.createElement('div');
+    shell.style.cssText = [
+      'box-sizing:border-box',
+      'min-height:100vh',
+      'display:grid',
+      'place-items:center',
+      'padding:18px'
+    ].join(';');
+
+    const card = document.createElement('div');
+    card.style.cssText = [
+      'box-sizing:border-box',
+      'width:100%',
+      'max-width:420px',
+      'border:1px solid rgba(225,29,72,.22)',
+      'border-radius:8px',
+      'background:#fff',
+      'padding:22px',
+      'color:#172033',
+      'font-family:Microsoft YaHei UI, sans-serif'
+    ].join(';');
+
+    const heading = document.createElement('strong');
+    heading.style.cssText = 'color:#e11d48;';
+    heading.textContent = title || '\u52A0\u8F7D\u5931\u8D25';
+    card.appendChild(heading);
+
+    if (detail) {
+      const paragraph = document.createElement('p');
+      paragraph.style.cssText = 'margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.7;';
+      paragraph.textContent = String(detail);
+      card.appendChild(paragraph);
+    }
+
+    shell.appendChild(card);
+    mountNode.appendChild(shell);
+  }
+
   function createVueBundleViewLoader(options = {}) {
     const mountTarget = options.mountTarget;
     const mountExportName = String(options.mountExportName || '').trim();
@@ -90,6 +137,9 @@
       : null;
     const onBeforeReset = typeof options.onBeforeReset === 'function'
       ? options.onBeforeReset
+      : null;
+    const renderFallback = typeof options.renderFallback === 'function'
+      ? options.renderFallback
       : null;
     let controller = null;
     let moduleRef = null;
@@ -157,11 +207,27 @@
             return controller;
           })
           .catch((error) => {
-            renderFallbackMessage(
-              mountTarget,
-              normalizeError(error, fallbackMessage),
-              fallbackMessage
-            );
+            const message = normalizeError(error, fallbackMessage);
+
+            if (renderFallback) {
+              try {
+                renderFallback({
+                  error,
+                  fallbackMessage,
+                  message,
+                  mountNode: getMountNode(mountTarget),
+                  mountTarget,
+                  renderFallbackCard(title, detail) {
+                    renderFallbackCardNode(mountTarget, title, detail);
+                  }
+                });
+              } catch (fallbackError) {
+                renderFallbackMessage(mountTarget, message, fallbackMessage);
+              }
+            } else {
+              renderFallbackMessage(mountTarget, message, fallbackMessage);
+            }
+
             throw error;
           });
       }

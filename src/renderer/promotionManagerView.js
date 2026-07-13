@@ -1,66 +1,53 @@
 (function initPromotionManagerView(global) {
   'use strict';
 
-  function ensureVueProcessShim() {
-    if (typeof process === 'undefined') {
-      global.process = { env: { NODE_ENV: 'production' } };
-    }
+  var controller = null;
+
+  function getErrorDetail(error) {
+    return error && error.message ? String(error.message) : '';
   }
 
-  function ensureStylesheet() {
-    return new Promise((resolve, reject) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = './promotionManagerApp/dist/promotion-manager-app.css';
-      link.onload = resolve;
-      link.onerror = reject;
-      document.head.appendChild(link);
-    });
-  }
-
-  let mountPromise = null;
-  let controller = null;
+  var bundleView = global.createVueBundleViewLoader({
+    fallbackMessage: '\u63a8\u5e7f\u5927\u5e08\u52a0\u8f7d\u5931\u8d25\u3002',
+    missingExportMessage: '\u63a8\u5e7f\u5927\u5e08\u754c\u9762\u52a0\u8f7d\u4e0d\u5b8c\u6574\u3002',
+    moduleHref: './promotionManagerApp/dist/promotion-manager-app.js',
+    mountExportName: 'mountPromotionManagerApp',
+    mountTarget: '#promotionManagerApp',
+    renderFallback: function (payload) {
+      payload.renderFallbackCard(
+        '\u63a8\u5e7f\u5927\u5e08\u52a0\u8f7d\u5931\u8d25',
+        getErrorDetail(payload.error)
+      );
+    },
+    stylesheetErrorMessage: '\u63a8\u5e7f\u5927\u5e08\u6837\u5f0f\u52a0\u8f7d\u5931\u8d25\u3002',
+    stylesheetHref: './promotionManagerApp/dist/promotion-manager-app.css',
+    stylesheetSelector: 'link[data-promotion-manager-app-style="true"]'
+  });
 
   function ensureMount() {
-    if (mountPromise) {
-      return mountPromise;
-    }
-
-    mountPromise = ensureStylesheet()
-      .then(() => import('./promotionManagerApp/dist/promotion-manager-app.js'))
-      .then((module) => {
-        controller = module.mountPromotionManagerApp('#promotionManagerApp');
+    return bundleView.ensureMount()
+      .then(function (activeController) {
+        controller = activeController;
         return controller;
       })
-      .catch((error) => {
-        console.error('[推广大师] 初始化失败:', error);
-        const mountTarget = document.getElementById('promotionManagerApp');
-        if (mountTarget) {
-          mountTarget.innerHTML = '<div style="padding:24px;color:#e11d48;font-size:14px;">'
-            + '<strong>推广大师加载失败</strong>'
-            + '<p style="margin:8px 0 0;color:#64748b;font-size:12px;">' + (error.message || '') + '</p>'
-            + '</div>';
-        }
+      .catch(function (error) {
+        console.error('[\u63a8\u5e7f\u5927\u5e08] \u521d\u59cb\u5316\u5931\u8d25:', error);
         throw error;
       });
-
-    return mountPromise;
   }
 
-  ensureVueProcessShim();
-
   global.promotionManagerView = {
-    init() {
+    init: function () {
       return ensureMount();
     },
-    refresh() {
+    refresh: function () {
       if (controller && typeof controller.refresh === 'function') {
         return controller.refresh();
       }
+
       return Promise.resolve(null);
     }
   };
 
-  // 自动初始化
   ensureMount();
 })(window);

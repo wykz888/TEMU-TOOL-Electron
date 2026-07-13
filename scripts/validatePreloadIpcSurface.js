@@ -74,7 +74,6 @@ const EXPECTED_FEATURE_EVENTS = Object.freeze([
 
 const EXPECTED_CREATION_INVOKES = Object.freeze([
   ['getCreationCatalog', 'GET_CREATION_CATALOG'],
-  ['openJimengImage', 'OPEN_JIMENG_IMAGE'],
   ['openPodUploadSheetMiaoshou', 'OPEN_POD_UPLOAD_SHEET_MIAOSHOU'],
   ['openPodSuiteTool', 'OPEN_POD_SUITE_TOOL']
 ]);
