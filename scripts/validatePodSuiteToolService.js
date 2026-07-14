@@ -638,6 +638,35 @@ async function main() {
     psdCancelAliasResult.message === '\u5f53\u524d\u6ca1\u6709\u6b63\u5728\u8fdb\u884c\u7684PSD\u5957\u56fe\u4efb\u52a1\u3002',
     'service should accept PSD window run id alias for cancel'
   );
+  const psdAliasProgress = [];
+  const psdMockupAliasResult = await psdTemplateService.generatePsdSmartObjectMockups({
+    runId: 'psd_mockup_alias',
+    imageDirectoryPath: inputDir,
+    sourceFiles: [{
+      filePath: designAPath,
+      relativePath: path.basename(designAPath),
+      fileName: path.basename(designAPath)
+    }],
+    mockups: [{
+      psdPath: path.join(tempRoot, 'missing.psd'),
+      smartObjectName: 'mock',
+      outputDirectoryPath: outputDir,
+      outputSubdirName: 'alias-mockup'
+    }],
+    engineConcurrency: 1
+  }, {
+    emitProgress(payload) {
+      psdAliasProgress.push(payload);
+    }
+  });
+  assert(psdMockupAliasResult.success === true, 'service should accept PSD mockups alias payload');
+  assert(psdMockupAliasResult.mockupCount === 1, 'service should use mockups alias as PSD mockup list');
+  assert(psdMockupAliasResult.totalInputCount === 1, 'service should reuse provided PSD source file list');
+  assert(psdMockupAliasResult.failedCount === 1, 'missing PSD should fail the mockup without blocking the task');
+  assert(
+    psdAliasProgress.some((payload) => payload.phase === 'sources-ready' && payload.totalInputCount === 1),
+    'service should report source count from provided PSD source files'
+  );
   const psdTemplateSaveResult = await psdTemplateService.savePsdSmartObjectTemplate({
     template: {
       name: 'PSD template',

@@ -1056,17 +1056,20 @@ async function openMockupOutputDirectory(mockupId) {
 
 function buildRunPayload() {
   ensureMockups();
+  const normalizedMockups = mockups.value.map((item) => normalizeMockup(item));
 
   return {
     runId: bridge.getWindowRunId(),
     imageDirectoryPath: config.psdImageDirectoryPath,
+    sourceFiles: psdImageFiles.value,
     metadataSourcePath: config.psdMetadataSourcePath,
     metadataSourceDirectoryPath: config.psdMetadataSourceDirectoryPath,
     showEngineWindow: config.psdEngineWindowMode === 'visible',
     engineWindowMode: config.psdEngineWindowMode,
     engineConcurrency: clampConcurrency(config.psdEngineConcurrency),
     skipExistingOutputs: config.psdSkipExistingOutputs,
-    mockups: mockups.value.map((item) => normalizeMockup(item))
+    psdMockups: normalizedMockups,
+    mockups: normalizedMockups
   };
 }
 
@@ -1173,12 +1176,31 @@ function handlePsdProgress(progress) {
     message += ` 素材${progress.itemIndex + 1}/${progress.totalItems}`;
   }
 
+  if (progress.sourceIndex != null && progress.sourceCount != null) {
+    message += ` \u7D20\u6750${progress.sourceIndex}/${progress.sourceCount}`;
+  }
+
   if (progress.smartObjectName) {
     message += ` (${progress.smartObjectName})`;
   }
 
   if (progress.message) {
     message += ` ${progress.message}`;
+  }
+
+  const nextTotal = Number(progress.sourceCount || progress.totalInputCount || 0);
+
+  if (nextTotal > 0 && progress.totalItems == null) {
+    const generatedCount = Number(progress.generatedCount) || 0;
+    const skippedCount = Number(progress.skippedCount) || 0;
+    const failedCount = Number(progress.failedCount) || 0;
+    const nextCurrent = progress.sourceIndex != null
+      ? Number(progress.sourceIndex) || 0
+      : generatedCount + skippedCount + failedCount;
+
+    progressTotal.value = nextTotal;
+    progressCurrent.value = Math.max(0, Math.min(nextCurrent, progressTotal.value));
+    psdProgressSummary.value = `\u603B\u8FDB\u5EA6 ${progressCurrent.value}/${progressTotal.value}`;
   }
 
   if (progress.totalItems != null) {

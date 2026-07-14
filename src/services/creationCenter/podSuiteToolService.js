@@ -60,6 +60,84 @@ function normalizePsdEngineWindowVisible(payload) {
     || normalizeText(source.mode) === 'visible';
 }
 
+function getPsdMockupPayloads(sourcePayload) {
+  const source = sourcePayload && typeof sourcePayload === 'object' ? sourcePayload : {};
+
+  if (Array.isArray(source.psdMockups) && source.psdMockups.length) {
+    return source.psdMockups;
+  }
+
+  if (Array.isArray(source.mockups) && source.mockups.length) {
+    return source.mockups;
+  }
+
+  return [source];
+}
+
+function getProvidedPsdSourceFiles(sourcePayload) {
+  const source = sourcePayload && typeof sourcePayload === 'object' ? sourcePayload : {};
+
+  if (Array.isArray(source.sourceFiles)) {
+    return source.sourceFiles;
+  }
+
+  if (Array.isArray(source.psdSourceFiles)) {
+    return source.psdSourceFiles;
+  }
+
+  return [];
+}
+
+function isPathInsideDirectory(directoryPath, filePath) {
+  const directory = normalizeAbsolutePath(directoryPath);
+  const targetPath = normalizeAbsolutePath(filePath);
+
+  if (!directory || !targetPath) {
+    return false;
+  }
+
+  const relativePath = path.relative(directory, targetPath);
+  return Boolean(
+    relativePath
+    && relativePath !== '..'
+    && !relativePath.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relativePath)
+  );
+}
+
+function normalizeProvidedPsdSourceFiles(imageDirectoryPath, sourceFiles) {
+  const rootDirectoryPath = normalizeAbsolutePath(imageDirectoryPath);
+  const seenPaths = new Set();
+
+  if (!rootDirectoryPath || !Array.isArray(sourceFiles) || !sourceFiles.length) {
+    return [];
+  }
+
+  return sourceFiles.reduce((result, item) => {
+    const source = item && typeof item === 'object' ? item : {};
+    const filePath = normalizeAbsolutePath(source.filePath || source.path || source.sourcePath || source.absolutePath);
+    const extension = path.extname(filePath).toLowerCase();
+
+    if (!filePath || !IMAGE_EXTENSION_SET.has(extension) || !isPathInsideDirectory(rootDirectoryPath, filePath)) {
+      return result;
+    }
+
+    const identity = process.platform === 'win32' ? filePath.toLowerCase() : filePath;
+
+    if (seenPaths.has(identity)) {
+      return result;
+    }
+
+    seenPaths.add(identity);
+    result.push({
+      filePath,
+      relativePath: normalizeText(source.relativePath) || path.relative(rootDirectoryPath, filePath).split(path.sep).join('/'),
+      fileName: normalizeText(source.fileName) || path.basename(filePath)
+    });
+    return result;
+  }, []);
+}
+
 function getIsoTimestamp() {
   return new Date().toISOString();
 }
@@ -275,16 +353,22 @@ function createPsdTaskSignal(options = {}) {
 }
 
 async function collectPsdSourceFiles({
-  imageDirectoryPath
+  imageDirectoryPath,
+  sourceFiles
 }) {
   await assertDirectory(imageDirectoryPath, '\u8bf7\u5148\u9009\u62e9\u6709\u6548\u7684PSD\u7d20\u6750\u56fe\u7247\u6587\u4ef6\u5939\u3002');
 
-  const sourceFiles = await collectImageFiles(imageDirectoryPath);
-  if (!sourceFiles.length) {
+  const providedSourceFiles = normalizeProvidedPsdSourceFiles(imageDirectoryPath, sourceFiles);
+  if (providedSourceFiles.length) {
+    return providedSourceFiles;
+  }
+
+  const collectedSourceFiles = await collectImageFiles(imageDirectoryPath);
+  if (!collectedSourceFiles.length) {
     throw new Error('\u7d20\u6750\u6587\u4ef6\u5939\u4e2d\u6ca1\u6709\u53ef\u7528\u56fe\u7247\u3002');
   }
 
-  return sourceFiles;
+  return collectedSourceFiles;
 }
 
 async function resolvePsdMetadataSourceConfig(sourcePayload) {
@@ -1018,9 +1102,7 @@ function createPodSuiteToolService({
         emitProgress({
           phase: 'start'
         });
-        const mockups = Array.isArray(sourcePayload.psdMockups) && sourcePayload.psdMockups.length
-          ? sourcePayload.psdMockups
-          : [sourcePayload];
+        const mockups = getPsdMockupPayloads(sourcePayload);
         const imageDirectoryPath = normalizeAbsolutePath(sourcePayload.imageDirectoryPath);
         const outputRootDirectoryPath = normalizeAbsolutePath(sourcePayload.outputDirectoryPath);
         const outputFormat = normalizePsdOutputFormat(sourcePayload.outputFormat);
@@ -1051,7 +1133,8 @@ function createPodSuiteToolService({
           engineConcurrency
         });
         const collectedSourceFiles = await collectPsdSourceFiles({
-          imageDirectoryPath
+          imageDirectoryPath,
+          sourceFiles: getProvidedPsdSourceFiles(sourcePayload)
         });
         await Promise.all(normalizedMockups.map((mockup) => {
           return assertDirectory(mockup.outputDirectoryPath, '\u8bf7\u5148\u9009\u62e9\u6bcf\u4e2aPSD\u6837\u673a\u7684\u5bfc\u51fa\u4e3b\u76ee\u5f55\u3002');
