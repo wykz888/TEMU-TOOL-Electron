@@ -57,6 +57,44 @@ function sortByImportOrder(candidates, items) {
   return candidates.map((item) => item.name).filter((name) => selectedSet.has(name));
 }
 
+function getAlignedCarouselImportOrder(product) {
+  const carousel = getCarouselItems(product);
+  const importOrderItems = getMaterialImportOrderItems(product, 'carousel');
+
+  return carousel.map((item, index) => normalizeText(importOrderItems[index]) || normalizeText(item));
+}
+
+function reorderCompanionItems(sourceItems, companionItems, nextSourceItems) {
+  const usedIndexes = new Set();
+
+  return nextSourceItems.map((item) => {
+    const itemName = normalizeText(item);
+    const sourceIndex = sourceItems.findIndex((sourceItem, index) => {
+      return !usedIndexes.has(index) && normalizeText(sourceItem) === itemName;
+    });
+
+    if (sourceIndex < 0) {
+      return itemName;
+    }
+
+    usedIndexes.add(sourceIndex);
+    return normalizeText(companionItems[sourceIndex]) || itemName;
+  });
+}
+
+function getDescriptionImageSelectionNames(product) {
+  const explicitNames = splitLines(product && product.descriptionImageNames);
+
+  if (explicitNames.length) {
+    return explicitNames;
+  }
+
+  return getDescriptionImageItems(product)
+    .map((item) => getMaterialDisplayName(product, 'carousel', item))
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+}
+
 export function useMaterialPresetDialogs(options = {}) {
   const products = options.products;
   const activeProduct = options.activeProduct;
@@ -272,12 +310,23 @@ export function useMaterialPresetDialogs(options = {}) {
         ...values.filter((item) => carousel.includes(item)),
         ...carousel.filter((item) => !values.includes(item))
       ];
+      const nextImportOrder = reorderCompanionItems(
+        carousel,
+        getAlignedCarouselImportOrder(product),
+        nextCarousel
+      );
 
       return {
         ...product,
         materials: {
           ...product.materials,
           carousel: nextCarousel
+        },
+        materialImportOrderMap: {
+          ...(product.materialImportOrderMap && typeof product.materialImportOrderMap === 'object'
+            ? product.materialImportOrderMap
+            : {}),
+          carousel: nextImportOrder
         }
       };
     });
@@ -355,17 +404,25 @@ export function useMaterialPresetDialogs(options = {}) {
       }
 
       const nextCarousel = carousel.slice();
+      const nextImportOrder = getAlignedCarouselImportOrder(product).slice();
 
       if (randomCarouselOnlyFirst.value) {
         const targetOrder = availableOrders[Math.floor(Math.random() * availableOrders.length)];
         const targetIndex = targetOrder - 1;
         const currentFirst = nextCarousel[0];
+        const currentFirstImportName = nextImportOrder[0];
         nextCarousel[0] = nextCarousel[targetIndex];
         nextCarousel[targetIndex] = currentFirst;
+        nextImportOrder[0] = nextImportOrder[targetIndex];
+        nextImportOrder[targetIndex] = currentFirstImportName;
       } else {
-        const shuffledItems = shuffleItems(availableOrders.map((order) => nextCarousel[order - 1]));
+        const shuffledPairs = shuffleItems(availableOrders.map((order) => ({
+          item: nextCarousel[order - 1],
+          importName: nextImportOrder[order - 1]
+        })));
         availableOrders.forEach((order, index) => {
-          nextCarousel[order - 1] = shuffledItems[index];
+          nextCarousel[order - 1] = shuffledPairs[index].item;
+          nextImportOrder[order - 1] = shuffledPairs[index].importName;
         });
       }
 
@@ -374,6 +431,12 @@ export function useMaterialPresetDialogs(options = {}) {
         materials: {
           ...product.materials,
           carousel: nextCarousel
+        },
+        materialImportOrderMap: {
+          ...(product.materialImportOrderMap && typeof product.materialImportOrderMap === 'object'
+            ? product.materialImportOrderMap
+            : {}),
+          carousel: nextImportOrder
         }
       };
     });
@@ -387,9 +450,7 @@ export function useMaterialPresetDialogs(options = {}) {
     const candidateNames = descriptionPresetCandidates.value.map((item) => item.name);
     const savedSelection = splitLines(descriptionPresetText.value).filter((item) => candidateNames.includes(item));
     const currentProduct = resolveValue(activeProduct);
-    const activeSelection = currentProduct
-      ? getDescriptionImageItems(currentProduct).map((item) => normalizeText(item)).filter(Boolean)
-      : [];
+    const activeSelection = currentProduct ? getDescriptionImageSelectionNames(currentProduct) : [];
 
     descriptionPresetSelected.value = sortByImportOrder(
       descriptionPresetCandidates.value,
@@ -451,15 +512,17 @@ export function useMaterialPresetDialogs(options = {}) {
     }
 
     products.value = getProductsList(products).map((product) => {
-      const carousel = getCarouselItems(product);
-      const orders = values
+      const carousel = getMaterialImportOrderItems(product, 'carousel');
+      const selectedNames = values.filter((item) => carousel.includes(item));
+      const orders = selectedNames
         .map((item) => carousel.indexOf(item))
         .filter((index) => index >= 0)
         .map((index) => String(index + 1));
 
       return {
         ...product,
-        descriptionImageOrders: orders.join(',')
+        descriptionImageOrders: orders.join(','),
+        descriptionImageNames: selectedNames.join('\n')
       };
     });
 

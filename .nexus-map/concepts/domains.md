@@ -30,7 +30,7 @@ Operations activity management, traffic boost, price declaration, and new produc
 
 ## POD MiaoShou
 
-POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Git hotspots show this is the most active current area.
+POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Both variants now preserve material import order maps for carousel items, use description image name fields as the first-class selection source before falling back to legacy order numbers, and share the persistent AI title result cache boundary under `users/{userKey}/cache/ai-title-results`. Git hotspots show this is the most active current area.
 
 ## Promotion Master And Monitor
 

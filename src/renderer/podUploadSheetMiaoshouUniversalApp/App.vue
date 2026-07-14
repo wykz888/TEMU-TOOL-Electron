@@ -159,6 +159,10 @@ import { useMaterialPresetDialogs } from '../shared/materialPreset/useMaterialPr
 import {
   pickPreferenceFields
 } from '../shared/dialogPreferenceCache.js';
+import {
+  createEmptyImportOrderMap,
+  createImportOrderMap
+} from '../shared/podUploadSheet/podUploadSheetDisplayData.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 import UniversalProductDataTable from './components/UniversalProductDataTable.vue';
 import UniversalSkuSettingsPanel from './components/UniversalSkuSettingsPanel.vue';
@@ -208,6 +212,7 @@ const DEFAULT_PRODUCT_FIELDS = Object.freeze({
   sizeChart: '',
   description: '',
   descriptionImageOrders: '',
+  descriptionImageNames: '',
   title: '',
   specValueOne: '',
   specValueTwo: '',
@@ -667,6 +672,7 @@ function cloneSkuMap(source = {}) {
 
 function createProduct(overrides = {}) {
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
+  const materialImportOrderMap = createImportOrderMap(materials, overrides.materialImportOrderMap);
   return {
     id: normalizeText(overrides.id) || createId('pod-universal-product'),
     ...DEFAULT_PRODUCT_FIELDS,
@@ -679,6 +685,7 @@ function createProduct(overrides = {}) {
       preview: Array.isArray(materials.preview) ? materials.preview.slice() : []
     },
     materialPathMap: clonePathMap(overrides.materialPathMap),
+    materialImportOrderMap,
     skuConfigMap: cloneSkuMap(overrides.skuConfigMap)
   };
 }
@@ -722,7 +729,8 @@ function buildProductsFromFiles(files) {
         localName: groupInfo.productKey,
         sourceFolder: groupInfo.sourceFolder,
         materials: { carousel: [], assets: [], preview: [] },
-        materialPathMap: createEmptyPathMap()
+        materialPathMap: createEmptyPathMap(),
+        materialImportOrderMap: createEmptyImportOrderMap()
       });
     }
 
@@ -732,6 +740,7 @@ function buildProductsFromFiles(files) {
     const itemKey = getMaterialNameKey(itemName);
     const filePath = getFilePath(file);
     group.materials[sectionId].push(itemName);
+    group.materialImportOrderMap[sectionId].push(itemName);
     if (itemKey && filePath) group.materialPathMap[sectionId][itemKey] = filePath;
   });
 

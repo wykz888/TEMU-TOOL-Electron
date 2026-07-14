@@ -43,6 +43,7 @@
 
 - Code: `src/services/featureCenter/`
 - Responsibility: operations activity management, traffic boost, price declaration, new product lifecycle, promotion master/monitor, marketing tools, POD MiaoShou export/upload/template/title services, shared cost/shop/category services.
+- Notes: POD MiaoShou export now uses a shared pure helper for material item selection and description image resolution so the TEMU and universal export services stay aligned on the same rule set. POD MiaoShou AI title generation now also persists per-user, per-entry result cache files under the feature storage cache root so `useCache` can skip both upload and generation work on repeated inputs.
 - Risk: several services are thousands of lines and should be changed carefully with focused validation.
 
 ## Creation Services

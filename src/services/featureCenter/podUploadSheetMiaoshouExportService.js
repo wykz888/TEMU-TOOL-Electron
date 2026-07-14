@@ -1,6 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
+const {
+  getSelectedDescriptionImageItems
+} = require('./podUploadSheetMiaoshouExportMaterialUtils');
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const ROW_TWO_NOTE = '字段说明（请勿删除第一列和第二行）';
@@ -402,28 +405,9 @@ function createPodUploadSheetMiaoshouExportService({
     return rewriteExportImageDomain(getCarouselItems(product)[0] || '');
   }
 
-  function getSelectedCarouselItemsByOrders(product, value) {
-    const carouselItems = getCarouselItems(product);
-    const selectedOrders = normalizeSequenceSelection(value)
-      .split(',')
-      .map((item) => normalizePositiveIntegerString(item))
-      .filter(Boolean);
-
-    return selectedOrders.reduce((result, orderText) => {
-      const itemName = carouselItems[Number.parseInt(orderText, 10) - 1];
-
-      if (!itemName) {
-        return result;
-      }
-
-      result.push(itemName);
-      return result;
-    }, []);
-  }
-
   function getProductDescriptionValue(product) {
     const descriptionText = normalizeText(product && product.description);
-    const selectedItems = getSelectedCarouselItemsByOrders(product, product && product.descriptionImageOrders);
+    const selectedItems = getSelectedDescriptionImageItems(product);
     const descriptionImageValue = selectedItems.length
       ? rewriteExportImageDomain(selectedItems.join('\n'))
       : '';

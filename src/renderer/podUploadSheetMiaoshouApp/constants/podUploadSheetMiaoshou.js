@@ -10,6 +10,7 @@ const DEFAULT_PRODUCT_FIELDS = Object.freeze({
   sourceLink: '',
   description: '',
   descriptionImageOrders: '',
+  descriptionImageNames: '',
   title: '',
   englishTitle: '',
   specNameOne: '',

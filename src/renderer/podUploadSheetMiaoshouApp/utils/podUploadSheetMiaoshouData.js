@@ -65,7 +65,7 @@ function getMaterialImportOrderItems(product, sectionId) {
     ? product.materialImportOrderMap[sectionId]
     : null;
 
-  if (source) return source;
+  if (source && source.length) return source;
   return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
 }
 
@@ -147,7 +147,37 @@ function getMaterialDisplayName(product, sectionId, item) {
   return getFileNameWithExtension(getMaterialPathByName(product, sectionId, name) || name);
 }
 
+function resolveMaterialItemByName(product, sectionId, itemName) {
+  const selectedName = normalizeText(itemName);
+  const currentItems = product && product.materials && Array.isArray(product.materials[sectionId])
+    ? product.materials[sectionId].map((item) => normalizeText(item)).filter(Boolean)
+    : [];
+
+  if (!selectedName) {
+    return '';
+  }
+
+  const directItem = currentItems.find((item) => normalizeText(item) === selectedName);
+
+  if (directItem) {
+    return directItem;
+  }
+
+  const importOrderItems = getMaterialImportOrderItems(product, sectionId);
+  const importOrderIndex = importOrderItems.findIndex((item) => normalizeText(item) === selectedName);
+
+  return importOrderIndex >= 0 ? currentItems[importOrderIndex] || '' : '';
+}
+
 function getDescriptionImageItems(product) {
+  const selectedNames = splitLines(String(product && product.descriptionImageNames || '').replace(/[,\uff0c]/g, '\n'));
+
+  if (selectedNames.length) {
+    return selectedNames
+      .map((item) => resolveMaterialItemByName(product, 'carousel', item))
+      .filter(Boolean);
+  }
+
   const carouselItems = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
   return splitLines(String(product && product.descriptionImageOrders || '').replace(/[,\uff0c]/g, '\n'))
     .map((orderText) => Number.parseInt(orderText, 10))

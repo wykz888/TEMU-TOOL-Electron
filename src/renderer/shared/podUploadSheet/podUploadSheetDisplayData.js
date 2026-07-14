@@ -10,6 +10,31 @@ function splitLines(value) {
     .filter(Boolean);
 }
 
+const MATERIAL_SECTION_IDS = Object.freeze(['carousel', 'assets', 'preview']);
+
+function normalizeTextArray(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+}
+
+function createEmptyImportOrderMap() {
+  return MATERIAL_SECTION_IDS.reduce((result, sectionId) => {
+    result[sectionId] = [];
+    return result;
+  }, {});
+}
+
+function createImportOrderMap(materials = {}, source = {}) {
+  return MATERIAL_SECTION_IDS.reduce((result, sectionId) => {
+    const sourceItems = source && Array.isArray(source[sectionId])
+      ? source[sectionId]
+      : materials && materials[sectionId];
+    result[sectionId] = normalizeTextArray(sourceItems);
+    return result;
+  }, createEmptyImportOrderMap());
+}
+
 function getFileBaseName(fileName) {
   return normalizeText(fileName).replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
 }
@@ -26,13 +51,19 @@ function getMaterialNameKey(value) {
   return (/^\d{1,3}$/.test(suffix) ? suffix : base).toLowerCase();
 }
 
+function getMaterialItems(product, sectionId) {
+  return product && product.materials && Array.isArray(product.materials[sectionId])
+    ? normalizeTextArray(product.materials[sectionId])
+    : [];
+}
+
 function getMaterialImportOrderItems(product, sectionId) {
   const source = product && product.materialImportOrderMap && Array.isArray(product.materialImportOrderMap[sectionId])
     ? product.materialImportOrderMap[sectionId]
     : null;
 
-  if (source) return source;
-  return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
+  if (source && source.length) return normalizeTextArray(source);
+  return getMaterialItems(product, sectionId);
 }
 
 function getMaterialDisplayName(product, sectionId, item) {
@@ -44,8 +75,36 @@ function getMaterialDisplayName(product, sectionId, item) {
   return getFileNameWithExtension((key && pathMap[key]) || name);
 }
 
+function resolveMaterialItemByName(product, sectionId, itemName) {
+  const selectedName = normalizeText(itemName);
+  const currentItems = getMaterialItems(product, sectionId);
+
+  if (!selectedName) {
+    return '';
+  }
+
+  const directItem = currentItems.find((item) => normalizeText(item) === selectedName);
+
+  if (directItem) {
+    return directItem;
+  }
+
+  const importOrderItems = getMaterialImportOrderItems(product, sectionId);
+  const importOrderIndex = importOrderItems.findIndex((item) => normalizeText(item) === selectedName);
+
+  return importOrderIndex >= 0 ? currentItems[importOrderIndex] || '' : '';
+}
+
 function getDescriptionImageItems(product) {
-  const carouselItems = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+  const selectedNames = splitLines(product && product.descriptionImageNames);
+
+  if (selectedNames.length) {
+    return selectedNames
+      .map((item) => resolveMaterialItemByName(product, 'carousel', item))
+      .filter(Boolean);
+  }
+
+  const carouselItems = getMaterialItems(product, 'carousel');
   return splitLines(product && product.descriptionImageOrders)
     .map((orderText) => Number.parseInt(orderText, 10))
     .filter((orderNumber) => orderNumber > 0 && carouselItems[orderNumber - 1])
@@ -85,6 +144,8 @@ function getAiStatusColor(status) {
 }
 
 export {
+  createEmptyImportOrderMap,
+  createImportOrderMap,
   getAiStatusColor,
   getAiStatusText,
   getDescriptionImageItems,
@@ -93,6 +154,7 @@ export {
   getFileBaseName,
   getFileNameWithExtension,
   getMaterialDisplayName,
+  getMaterialItems,
   getMaterialImportOrderItems,
   getMaterialNameKey,
   getPreviewItems,

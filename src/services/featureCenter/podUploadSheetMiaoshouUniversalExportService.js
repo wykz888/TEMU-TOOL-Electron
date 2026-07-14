@@ -1,6 +1,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
+const {
+  getMaterialItems: getExportMaterialItems,
+  getSelectedDescriptionImageItems
+} = require('./podUploadSheetMiaoshouExportMaterialUtils');
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
@@ -367,31 +371,11 @@ function createPodUploadSheetMiaoshouUniversalExportService({
   }
 
   function getMaterialItems(product, sectionId) {
-    return product && product.materials && Array.isArray(product.materials[sectionId])
-      ? product.materials[sectionId].map((item) => normalizeText(item)).filter(Boolean)
-      : [];
+    return getExportMaterialItems(product, sectionId);
   }
 
   function getCarouselItems(product) {
     return getMaterialItems(product, 'carousel');
-  }
-
-  function getSelectedCarouselItemsByOrders(product, value) {
-    const carouselItems = getCarouselItems(product);
-    const selectedOrders = normalizeSequenceSelection(value)
-      .split(',')
-      .map((item) => normalizePositiveIntegerString(item))
-      .filter(Boolean);
-
-    return selectedOrders.reduce((result, orderText) => {
-      const itemName = carouselItems[Number.parseInt(orderText, 10) - 1];
-
-      if (itemName) {
-        result.push(itemName);
-      }
-
-      return result;
-    }, []);
   }
 
   function joinChineseComma(items) {
@@ -407,7 +391,7 @@ function createPodUploadSheetMiaoshouUniversalExportService({
 
   function getDetailImageValue(product) {
     return rewriteExportImageDomain(
-      joinChineseComma(getSelectedCarouselItemsByOrders(product, product && product.descriptionImageOrders))
+      joinChineseComma(getSelectedDescriptionImageItems(product))
     );
   }
 
