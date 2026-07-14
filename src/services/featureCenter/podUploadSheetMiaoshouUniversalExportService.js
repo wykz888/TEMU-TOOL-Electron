@@ -345,19 +345,9 @@ function createPodUploadSheetMiaoshouUniversalExportService({
   }
 
   function getDetailImageValue(product) {
-    const selectedItems = getSelectedCarouselItemsByOrders(product, product && product.descriptionImageOrders);
-
-    if (selectedItems.length) {
-      return rewriteExportImageDomain(joinChineseComma(selectedItems));
-    }
-
-    const assetItems = getMaterialItems(product, 'assets');
-
-    if (assetItems.length) {
-      return rewriteExportImageDomain(joinChineseComma(assetItems));
-    }
-
-    return rewriteExportImageDomain(joinChineseComma(getMaterialItems(product, 'preview')));
+    return rewriteExportImageDomain(
+      joinChineseComma(getSelectedCarouselItemsByOrders(product, product && product.descriptionImageOrders))
+    );
   }
 
   function getSizeChartValue(product) {

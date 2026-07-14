@@ -810,12 +810,17 @@ body.dark-theme .pod-field-label {
   box-shadow: none !important;
 }
 
-body.pod-miaoshou-vue-mounted .arco-select-dropdown,
 body.pod-miaoshou-vue-mounted .arco-trigger-popup {
   z-index: 5000;
   pointer-events: auto;
   overflow-x: hidden !important;
-  border: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+body.pod-miaoshou-vue-mounted .arco-select-dropdown {
+  z-index: 5000;
+  pointer-events: auto;
+  overflow-x: hidden !important;
+  border: 0;
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
@@ -1209,6 +1214,10 @@ body.pod-miaoshou-vue-mounted .arco-modal-title {
 
 .pod-carousel-preset-panel:last-child {
   grid-template-rows: auto minmax(0, 1fr);
+}
+
+.pod-random-carousel-modal .pod-carousel-preset-panel:last-child {
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .pod-carousel-preset-head {

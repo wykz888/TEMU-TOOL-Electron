@@ -1,7 +1,7 @@
 (function initPodUploadSheetMiaoshouUniversalView(global) {
   'use strict';
 
-  var ASSET_VERSION = '20260712-pod-dialog-fix-1';
+  var ASSET_VERSION = '20260714-select-popup-shell-1';
   var controller = null;
 
   function withVersion(assetPath) {

@@ -6,7 +6,7 @@ const {
   podUploadSheetMiaoshouUniversalFeature
 } = require('../features/featureCenter/podUploadSheetMiaoshouUniversal');
 
-const POD_UPLOAD_SHEET_MIAOSHOU_UNIVERSAL_ASSET_VERSION = '20260712-pod-dialog-fix-1';
+const POD_UPLOAD_SHEET_MIAOSHOU_UNIVERSAL_ASSET_VERSION = '20260714-select-popup-shell-1';
 
 function createPodUploadSheetMiaoshouUniversalWindow(options = {}) {
   const {
