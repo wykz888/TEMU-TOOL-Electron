@@ -7,8 +7,8 @@ const ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
 const ZIP_CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50;
 const ZIP_LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const UNIVERSAL_TEMPLATE_ID = 'universal';
-const HEADER_ROW_NUMBER = 9;
-const DATA_START_ROW_NUMBER = 10;
+const FALLBACK_HEADER_ROW_NUMBER = 9;
+const MIN_TEMPLATE_HEADER_MATCH_COUNT = 3;
 const CURRENCY_VALUE = 'CNY';
 const TITLE_MAX_LENGTH = 255;
 const FILE_LINK_FIELD_NAMES = Object.freeze(['mainVideo', 'certificate']);
@@ -21,6 +21,9 @@ const PRODUCT_LEVEL_SINGLE_ROW_HEADERS = Object.freeze([
   '货源ID',
   '详情描述',
   '详情图',
+  '\u63cf\u8ff0\u56fe',
+  '\u8be6\u60c5\u56fe\u7247',
+  '\u4ea7\u54c1\u63cf\u8ff0\u56fe',
   '货源类目',
   '自定义属性',
   '产品视频',
@@ -40,6 +43,29 @@ function createPodUploadSheetMiaoshouUniversalExportService({
 
   function normalizeText(value) {
     return String(value || '').trim();
+  }
+
+  function getTemplateColumnHeaderKeys(column) {
+    return [
+      column && column.header,
+      ...(Array.isArray(column && column.aliases) ? column.aliases : [])
+    ]
+      .map((header) => normalizeTemplateHeader(header))
+      .filter(Boolean);
+  }
+
+  function buildTemplateColumnMap(columns) {
+    const columnMap = new Map();
+
+    (Array.isArray(columns) ? columns : []).forEach((column) => {
+      getTemplateColumnHeaderKeys(column).forEach((headerKey) => {
+        if (!columnMap.has(headerKey)) {
+          columnMap.set(headerKey, column);
+        }
+      });
+    });
+
+    return columnMap;
   }
 
   async function fileExists(filePath) {
@@ -214,6 +240,41 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       .filter(Boolean);
 
     return Array.from(new Set(values)).join(',');
+  }
+
+  function getWorksheetRowNumbers(sheetXml) {
+    const rowNumberSet = new Set();
+    const rowMatches = String(sheetXml || '').matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>|<row\b([^>]*)\/>/gi);
+
+    for (const match of rowMatches) {
+      const attributes = match[1] || match[3] || '';
+      const rowNumberMatch = /\br="(\d+)"/i.exec(attributes);
+      const rowNumber = rowNumberMatch ? Number.parseInt(rowNumberMatch[1], 10) : 0;
+
+      if (rowNumber > 0) {
+        rowNumberSet.add(rowNumber);
+      }
+    }
+
+    return Array.from(rowNumberSet).sort((left, right) => left - right);
+  }
+
+  function scoreTemplateHeaderRow(rowValues, columnMap) {
+    const matchedKeys = new Set();
+    let score = 0;
+
+    (Array.isArray(rowValues) ? rowValues : []).forEach((value) => {
+      const headerKey = normalizeTemplateHeader(value);
+
+      if (!headerKey || matchedKeys.has(headerKey) || !columnMap.has(headerKey)) {
+        return;
+      }
+
+      matchedKeys.add(headerKey);
+      score += 1;
+    });
+
+    return score;
   }
 
   function getSkuValueItems(value) {
@@ -439,12 +500,7 @@ function createPodUploadSheetMiaoshouUniversalExportService({
   }
 
   function buildColumnsByTemplateOrder(columns, headerRow) {
-    const columnMap = new Map(
-      (Array.isArray(columns) ? columns : []).map((column) => [
-        normalizeTemplateHeader(column && column.header),
-        column
-      ])
-    );
+    const columnMap = buildTemplateColumnMap(columns);
 
     return (Array.isArray(headerRow) ? headerRow : []).map((header) => {
       const normalizedHeader = normalizeTemplateHeader(header);
@@ -654,6 +710,41 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     return Array.from({ length: maxColumn }, (_item, index) => cellValues.get(index + 1) || '');
   }
 
+  function findTemplateHeaderRowInfo(sheetXml, sharedStrings, columns) {
+    const columnMap = buildTemplateColumnMap(columns);
+    const rowNumbers = getWorksheetRowNumbers(sheetXml);
+    let bestRowNumber = 0;
+    let bestHeaderRow = [];
+    let bestScore = 0;
+
+    rowNumbers.forEach((rowNumber) => {
+      const headerRow = parseSheetRow(sheetXml, rowNumber, sharedStrings);
+      const score = scoreTemplateHeaderRow(headerRow, columnMap);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestRowNumber = rowNumber;
+        bestHeaderRow = headerRow;
+      }
+    });
+
+    if (bestScore >= MIN_TEMPLATE_HEADER_MATCH_COUNT && bestHeaderRow.length) {
+      return {
+        headerRowNumber: bestRowNumber,
+        headerRow: bestHeaderRow
+      };
+    }
+
+    const fallbackHeaderRow = parseSheetRow(sheetXml, FALLBACK_HEADER_ROW_NUMBER, sharedStrings);
+
+    return {
+      headerRowNumber: FALLBACK_HEADER_ROW_NUMBER,
+      headerRow: fallbackHeaderRow.length
+        ? fallbackHeaderRow
+        : (Array.isArray(columns) ? columns.map((column) => column.header) : [])
+    };
+  }
+
   function extractSheetRowXml(sheetXml, rowNumber) {
     const match = new RegExp(
       `<row\\b[^>]*\\br="${rowNumber}"[^>]*>([\\s\\S]*?)<\\/row>|<row\\b[^>]*\\br="${rowNumber}"[^>]*/>`,
@@ -780,9 +871,9 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       : `<c r="${cellReference}" t="inlineStr"><is><t${preserveSpace}>${escapeXmlText(text)}</t></is></c>`;
   }
 
-  function buildWorksheetDataRowsXml(dataRows, rowTemplateAttributes, columnTemplateMap, columnCount) {
+  function buildWorksheetDataRowsXml(dataRows, rowTemplateAttributes, columnTemplateMap, columnCount, dataStartRowNumber) {
     return (Array.isArray(dataRows) ? dataRows : []).map((row, rowIndex) => {
-      const rowNumber = rowIndex + DATA_START_ROW_NUMBER;
+      const rowNumber = rowIndex + dataStartRowNumber;
       const rowAttributes = updateRowAttributes(rowTemplateAttributes, rowNumber, columnCount);
       const cellXmlList = [];
 
@@ -808,9 +899,9 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     }).join('');
   }
 
-  function replaceWorksheetDimension(sheetXml, columnCount, lastRowNumber) {
+  function replaceWorksheetDimension(sheetXml, columnCount, lastRowNumber, headerRowNumber) {
     const lastColumnLabel = getColumnLabelFromNumber(columnCount);
-    const nextDimension = `A1:${lastColumnLabel}${Math.max(HEADER_ROW_NUMBER, lastRowNumber)}`;
+    const nextDimension = `A1:${lastColumnLabel}${Math.max(headerRowNumber, lastRowNumber)}`;
 
     if (/<dimension\b[^>]*ref="[^"]*"[^/]*\/>/.test(sheetXml)) {
       return sheetXml.replace(/<dimension\b([^>]*)ref="[^"]*"([^/]*)\/>/, `<dimension$1ref="${nextDimension}"$2/>`);
@@ -826,26 +917,38 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     );
   }
 
-  function buildWorksheetXmlFromTemplate(sheetXml, dataRows, columnCount) {
-    const preservedRowsXml = Array.from({ length: HEADER_ROW_NUMBER }, (_item, index) => (
-      extractSheetRowXml(sheetXml, index + 1)
-    )).join('');
-    const sampleRowXmlList = [10, 11, 12, 13]
+  function buildWorksheetXmlFromTemplate(sheetXml, dataRows, columnCount, headerRowNumber) {
+    const normalizedHeaderRowNumber = normalizePositiveInteger(headerRowNumber) || FALLBACK_HEADER_ROW_NUMBER;
+    const dataStartRowNumber = normalizedHeaderRowNumber + 1;
+    const rowNumbers = getWorksheetRowNumbers(sheetXml);
+    const preservedRowsXml = rowNumbers
+      .filter((rowNumber) => rowNumber <= normalizedHeaderRowNumber)
+      .map((rowNumber) => extractSheetRowXml(sheetXml, rowNumber))
+      .join('');
+    const sampleRowXmlList = rowNumbers
+      .filter((rowNumber) => rowNumber > normalizedHeaderRowNumber)
+      .slice(0, 4)
       .map((rowNumber) => extractSheetRowXml(sheetXml, rowNumber))
       .filter(Boolean);
-    const headerRowXml = extractSheetRowXml(sheetXml, HEADER_ROW_NUMBER);
+    const headerRowXml = extractSheetRowXml(sheetXml, normalizedHeaderRowNumber);
     const rowTemplateAttributes = extractRowAttributes(sampleRowXmlList[0] || headerRowXml);
     const columnTemplateMap = buildColumnCellTemplateMap(sampleRowXmlList.concat(headerRowXml), columnCount);
     const dataRowsXml = buildWorksheetDataRowsXml(
       dataRows,
       rowTemplateAttributes,
       columnTemplateMap,
-      columnCount
+      columnCount,
+      dataStartRowNumber
     );
     let nextSheetXml = replaceWorksheetSheetData(sheetXml, preservedRowsXml, dataRowsXml);
 
     nextSheetXml = nextSheetXml.replace(/<mergeCells[\s\S]*?<\/mergeCells>/g, '');
-    nextSheetXml = replaceWorksheetDimension(nextSheetXml, columnCount, Math.max(HEADER_ROW_NUMBER, dataRows.length + HEADER_ROW_NUMBER));
+    nextSheetXml = replaceWorksheetDimension(
+      nextSheetXml,
+      columnCount,
+      Math.max(normalizedHeaderRowNumber, dataRows.length + normalizedHeaderRowNumber),
+      normalizedHeaderRowNumber
+    );
     return nextSheetXml;
   }
 
@@ -964,8 +1067,11 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     ]);
   }
 
-  async function buildWorkbookBufferFromTemplate(dataRows) {
-    const templateFilePath = await resolveUniversalTemplateFilePath({ required: true });
+  async function buildWorkbookBufferFromTemplate(dataRows, templateLayout) {
+    const templateFilePath = normalizeText(templateLayout && templateLayout.templateFilePath)
+      || await resolveUniversalTemplateFilePath({ required: true });
+    const headerRowNumber = normalizePositiveInteger(templateLayout && templateLayout.headerRowNumber)
+      || FALLBACK_HEADER_ROW_NUMBER;
 
     if (!templateFilePath) {
       throw new Error('通用版模板文件不可用。');
@@ -990,18 +1096,24 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       : getTemplateColumns().length;
 
     worksheetEntry.data = Buffer.from(
-      buildWorksheetXmlFromTemplate(worksheetEntry.data.toString('utf8'), dataRows, columnCount),
+      buildWorksheetXmlFromTemplate(worksheetEntry.data.toString('utf8'), dataRows, columnCount, headerRowNumber),
       'utf8'
     );
 
     return buildZipArchiveBuffer(entryList);
   }
 
-  async function readTemplateHeaderRow() {
-    const templateFilePath = await resolveUniversalTemplateFilePath();
+  async function readTemplateLayout({ required = false } = {}) {
+    const fallbackColumns = getTemplateColumns();
+    const fallbackHeaderRow = fallbackColumns.map((column) => column.header);
+    const templateFilePath = await resolveUniversalTemplateFilePath({ required });
 
     if (!templateFilePath) {
-      return getTemplateColumns().map((column) => column.header);
+      return {
+        templateFilePath: '',
+        headerRowNumber: FALLBACK_HEADER_ROW_NUMBER,
+        headerRow: fallbackHeaderRow
+      };
     }
 
     try {
@@ -1009,9 +1121,13 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       const zipEntries = readZipEntries(templateBuffer);
       const sharedStrings = parseSharedStringsXml(readZipEntryText(templateBuffer, zipEntries, 'xl/sharedStrings.xml'));
       const sheetXml = readZipEntryText(templateBuffer, zipEntries, 'xl/worksheets/sheet1.xml');
-      const headerRow = parseSheetRow(sheetXml, HEADER_ROW_NUMBER, sharedStrings);
+      const headerInfo = findTemplateHeaderRowInfo(sheetXml, sharedStrings, fallbackColumns);
 
-      return headerRow.length ? headerRow : getTemplateColumns().map((column) => column.header);
+      return {
+        templateFilePath,
+        headerRowNumber: headerInfo.headerRowNumber,
+        headerRow: headerInfo.headerRow.length ? headerInfo.headerRow : fallbackHeaderRow
+      };
     } catch (error) {
       if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
         runtimeLogger.logError('pod_upload_sheet_universal_template_header_read_failed', error, {
@@ -1019,12 +1135,19 @@ function createPodUploadSheetMiaoshouUniversalExportService({
         });
       }
 
-      return getTemplateColumns().map((column) => column.header);
+      return {
+        templateFilePath,
+        headerRowNumber: FALLBACK_HEADER_ROW_NUMBER,
+        headerRow: fallbackHeaderRow
+      };
     }
   }
 
-  async function buildExportRows(products) {
-    const headerRow = await readTemplateHeaderRow();
+  async function buildExportRows(products, templateLayout) {
+    const layout = templateLayout || await readTemplateLayout();
+    const headerRow = Array.isArray(layout && layout.headerRow)
+      ? layout.headerRow
+      : getTemplateColumns().map((column) => column.header);
     const columns = buildColumnsByTemplateOrder(getTemplateColumns(), headerRow);
     const dataRows = [];
 
@@ -1181,7 +1304,7 @@ function createPodUploadSheetMiaoshouUniversalExportService({
     }
 
     const resolvedProducts = await resolveUniversalProductsForExport(products);
-    await resolveUniversalTemplateFilePath({ required: true });
+    const templateLayout = await readTemplateLayout({ required: true });
     const downloadsDirectory = app && typeof app.getPath === 'function'
       ? app.getPath('downloads')
       : process.cwd();
@@ -1202,8 +1325,8 @@ function createPodUploadSheetMiaoshouUniversalExportService({
       };
     }
 
-    const exportPayload = await buildExportRows(resolvedProducts);
-    const workbookBuffer = await buildWorkbookBufferFromTemplate(exportPayload.dataRows);
+    const exportPayload = await buildExportRows(resolvedProducts, templateLayout);
+    const workbookBuffer = await buildWorkbookBufferFromTemplate(exportPayload.dataRows, templateLayout);
     await fs.promises.writeFile(selectedFilePath, workbookBuffer);
     const selectedDirectoryPath = path.dirname(selectedFilePath);
 
