@@ -95,7 +95,9 @@ export function usePsdSmartSuiteRuntime(options = {}) {
       psdProgressSummary.value = progressState.summary;
     }
 
-    addLog(progressState.message, progressState.tone);
+    if (progressState.shouldLog) {
+      addLog(progressState.message, progressState.tone);
+    }
 
     if (progressState.complete && progressState.summary) {
       progressCurrent.value = progressTotal.value;

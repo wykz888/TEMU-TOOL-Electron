@@ -2,6 +2,17 @@ import { PSD_PROGRESS_PHASE_LABELS } from '../constants.js';
 
 const FAILED_PHASES = Object.freeze(['item-failed', 'mockup-failed']);
 const COMPLETE_PHASE = 'complete';
+const NOISY_LOG_PHASES = Object.freeze(new Set([
+  'cleanup',
+  'export',
+  'post-process',
+  'post-process-drain',
+  'post-process-wait',
+  'replace',
+  'slice',
+  'smart-open',
+  'write-output'
+]));
 
 function toNumber(value, fallback = 0) {
   const nextValue = Number(value);
@@ -59,6 +70,12 @@ export function getPsdProgressTone(progress) {
   return phase === COMPLETE_PHASE ? 'success' : '';
 }
 
+export function shouldLogPsdProgress(progress) {
+  const phase = progress && progress.phase;
+
+  return !NOISY_LOG_PHASES.has(phase);
+}
+
 export function resolvePsdProgressState(progress) {
   if (!progress || typeof progress !== 'object') {
     return null;
@@ -70,6 +87,7 @@ export function resolvePsdProgressState(progress) {
     current: null,
     message: buildPsdProgressLogMessage(progress, phaseLabel),
     phaseLabel,
+    shouldLog: shouldLogPsdProgress(progress),
     summary: '',
     tone: getPsdProgressTone(progress),
     total: null

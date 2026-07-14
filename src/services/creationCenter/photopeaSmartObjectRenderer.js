@@ -1,13 +1,74 @@
 const fs = require('node:fs');
-const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { BrowserWindow } = require('electron');
 const { parsePsdLayerMetadata } = require('./psdLayerMetadataParser');
 const {
-  encodeSharpWithOptionalMetadata
-} = require('./imageMetadataSource');
+  PhotopeaLocalFileServer,
+  makePhotopeaWrapperHtml
+} = require('./photopeaLocalFileServer');
+const {
+  emitPhotopeaDebug: emitDebug
+} = require('./photopeaRuntimeLogger');
+const {
+  appendPhotopeaConsoleError,
+  bufferFromMessage,
+  encodeScriptForExecute,
+  findPhotopeaConsoleErrorSince,
+  getPhotopeaErrorMessage,
+  isDoneMessage,
+  isEchoMessage,
+  isErrorMessage
+} = require('./photopeaMessageRuntime');
+const {
+  convertExportBuffer,
+  getPhotopeaSourceExportFormat,
+  normalizeOutputFormat,
+  normalizeSourceRotation,
+  preparePhotopeaInputImage,
+  resolvePhotopeaTempRootDir
+} = require('./photopeaImagePipeline');
+const {
+  ECHO_ACTIVE_DOCUMENT,
+  ECHO_ACTIVE_DOCUMENT_INFO,
+  ECHO_ACTIVE_LAYER,
+  ECHO_MAIN_ACTIVATED,
+  ECHO_MAIN_READY,
+  ECHO_MEMORY_PURGED,
+  ECHO_SMART_CLOSE_REQUESTED,
+  ECHO_SMART_DUPLICATED,
+  ECHO_SMART_LAYER_CLEANED,
+  ECHO_SMART_LAYER_FIT,
+  ECHO_SMART_LAYER_READY,
+  ECHO_SMART_OPEN_REQUESTED,
+  ECHO_SMART_SAVED,
+  ECHO_SMART_SELECTED,
+  MAIN_READY_WAIT_TIMEOUT,
+  buildActivateMainScript,
+  buildActiveDocumentEchoScript,
+  buildActiveDocumentStateScript,
+  buildActiveLayerStateScript,
+  buildCleanSmartDesignLayersScript,
+  buildCloseSmartDocumentScript,
+  buildCloseSourceImageDocumentScript,
+  buildDocumentInfoScript,
+  buildDuplicateImageLayerIntoSmartDocumentScript,
+  buildExportDocumentScript,
+  buildFitSmartDesignLayerScript,
+  buildLayerIndexCandidates,
+  buildOpenSelectedSmartObjectScript,
+  buildPrepareSmartDesignLayerScript,
+  buildPurgeMemoryScript,
+  buildSaveSmartDocumentScript,
+  buildSelectSmartObjectLayerByActionIndexScript,
+  buildSelectSmartObjectLayerByActionNameScript,
+  buildSelectSmartObjectLayerByDomScript,
+  documentNamesEqual,
+  parseJsonEchoValue,
+  sortSelectionAttemptsByPreferredMode,
+  wrapPhotopeaScript
+} = require('./photopeaSmartObjectScripts');
 const sharp = require('sharp');
 
 sharp.cache({
@@ -16,8 +77,6 @@ sharp.cache({
   items: 100
 });
 
-const PHOTOPEA_URL = 'https://www.photopea.com';
-const PHOTOPEA_TEMP_INPUT_PREFIX = 'pod-suite-photopea-input-';
 const READY_TIMEOUT_MS = 120000;
 const OPEN_TIMEOUT_MS = 300000;
 const SCRIPT_TIMEOUT_MS = 120000;
@@ -32,33 +91,7 @@ const PHOTOPEA_PURGE_EVERY_ITEMS = 5;
 const PHOTOPEA_PURGE_MIN_INTERVAL_MS = 45000;
 const SHARP_CACHE_RESET_MIN_INTERVAL_MS = 45000;
 const PHOTOPEA_SESSION_PARTITION_PREFIX = 'pod-suite-photopea';
-const DIRECT_PHOTOPEA_INPUT_EXTENSIONS = new Set([
-  '.png',
-  '.webp'
-]);
-const JPEG_PHOTOPEA_INPUT_EXTENSIONS = new Set([
-  '.jpg',
-  '.jpeg'
-]);
-const DESIGN_LAYER_NAME = '__POD_SUITE_DESIGN_LAYER__';
 const RECOVERABLE_ITEM_TIMEOUT_PATTERN = /(?:\u5728\u7ebfPSD\u5f15\u64ce(?:\u6267\u884c|\u542f\u52a8|\u6e05\u7406\u5185\u5b58)?\u8d85\u65f6|\u7d20\u6750\u56fe\u6253\u5f00\u8d85\u65f6|\u6837\u673a\u5bfc\u51fa\u8d85\u65f6|\u6587\u4ef6\u6253\u5f00\u8d85\u65f6|\u672a\u56de\u5230PSD\u4e3b\u6587\u6863|\u672a\u56de\u5230\u667a\u80fd\u5bf9\u8c61\u6587\u6863|\u672a\u80fd\u786e\u8ba4\u5f53\u524d\u6587\u6863)/;
-const ECHO_MAIN_READY = '__POD_SUITE_MAIN_READY__';
-const ECHO_MAIN_ACTIVATED = '__POD_SUITE_MAIN_ACTIVATED__';
-const ECHO_SMART_OPEN_REQUESTED = '__POD_SUITE_SMART_OPEN_REQUESTED__';
-const ECHO_SMART_SELECTED = '__POD_SUITE_SMART_SELECTED__';
-const ECHO_SMART_DUPLICATED = '__POD_SUITE_SMART_DUPLICATED__';
-const ECHO_SOURCE_CLOSE_REQUESTED = '__POD_SUITE_SOURCE_CLOSE_REQUESTED__';
-const ECHO_SMART_LAYER_READY = '__POD_SUITE_SMART_LAYER_READY__';
-const ECHO_SMART_LAYER_FIT = '__POD_SUITE_SMART_LAYER_FIT__';
-const ECHO_SMART_LAYER_CLEANED = '__POD_SUITE_SMART_LAYER_CLEANED__';
-const ECHO_SMART_SAVED = '__POD_SUITE_SMART_SAVED__';
-const ECHO_SMART_CLOSE_REQUESTED = '__POD_SUITE_SMART_CLOSE_REQUESTED__';
-const ECHO_ACTIVE_DOCUMENT = '__POD_SUITE_ACTIVE_DOCUMENT__';
-const ECHO_ACTIVE_DOCUMENT_INFO = '__POD_SUITE_ACTIVE_DOCUMENT_INFO__';
-const ECHO_ACTIVE_LAYER = '__POD_SUITE_ACTIVE_LAYER__';
-const ECHO_MEMORY_PURGED = '__POD_SUITE_MEMORY_PURGED__';
-const ECHO_ERROR = '__POD_SUITE_ERROR__';
-const MAIN_READY_WAIT_TIMEOUT = '__POD_SUITE_MAIN_READY_WAIT_TIMEOUT__';
 
 function delay(ms) {
   return new Promise((resolve) => {
@@ -110,20 +143,6 @@ function emitRenderProgress(onProgress, payload) {
   } catch (_error) {}
 }
 
-function resolvePhotopeaTempRootDir(tempRootDir) {
-  const normalizedPath = normalizeText(tempRootDir);
-  return normalizedPath ? path.resolve(normalizedPath) : os.tmpdir();
-}
-
-async function createPhotopeaTempDirectory(tempRootDir, prefix) {
-  const rootDir = resolvePhotopeaTempRootDir(tempRootDir);
-  await fs.promises.mkdir(rootDir, {
-    recursive: true
-  });
-
-  return fs.promises.mkdtemp(path.join(rootDir, prefix));
-}
-
 function createAsyncSlotLimiter(limit) {
   const normalizedLimit = Math.max(1, Math.round(Number(limit) || 1));
   const waiters = [];
@@ -153,277 +172,6 @@ function createAsyncSlotLimiter(limit) {
   };
 }
 
-function decodeDocumentName(value) {
-  const text = String(value == null ? '' : value);
-  try {
-    return decodeURIComponent(text);
-  } catch (_error) {
-    return text;
-  }
-}
-
-function normalizeDocumentName(value) {
-  return decodeDocumentName(value).trim();
-}
-
-function documentNamesEqual(left, right) {
-  return normalizeDocumentName(left) === normalizeDocumentName(right);
-}
-
-function isIgnorablePhotopeaConsoleError(record) {
-  const message = String(record && record.message || '');
-
-  return /Cannot read properties of null \(reading ['"][A-Za-z_$][\w$]{0,3}['"]\)/.test(message);
-}
-
-function createPhotopeaConfig(overrides = {}) {
-  return {
-    environment: {
-      intro: false,
-      ...(overrides.environment && typeof overrides.environment === 'object' ? overrides.environment : {})
-    },
-    ...Object.fromEntries(
-      Object.entries(overrides).filter(([key]) => key !== 'environment')
-    )
-  };
-}
-
-function makePhotopeaWrapperHtml(configOverrides = {}) {
-  const config = createPhotopeaConfig(configOverrides);
-  const iframeUrl = `${PHOTOPEA_URL}#${encodeURIComponent(JSON.stringify(config))}`;
-
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    html, body, iframe {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      overflow: hidden;
-      background: #111;
-    }
-  </style>
-</head>
-<body>
-  <iframe id="photopea" src="${iframeUrl}"></iframe>
-</body>
-</html>`;
-}
-
-function getContentTypeForFile(filePath) {
-  const extension = path.extname(filePath).toLowerCase();
-  const contentTypes = {
-    '.avif': 'image/avif',
-    '.bmp': 'image/bmp',
-    '.gif': 'image/gif',
-    '.heic': 'image/heic',
-    '.heif': 'image/heif',
-    '.jpeg': 'image/jpeg',
-    '.jpg': 'image/jpeg',
-    '.png': 'image/png',
-    '.psb': 'application/octet-stream',
-    '.psd': 'image/vnd.adobe.photoshop',
-    '.tif': 'image/tiff',
-    '.tiff': 'image/tiff',
-    '.webp': 'image/webp'
-  };
-
-  return contentTypes[extension] || 'application/octet-stream';
-}
-
-function applyCorsHeaders(response) {
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Access-Control-Request-Private-Network');
-  response.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
-  response.setHeader('Access-Control-Allow-Private-Network', 'true');
-}
-
-class PhotopeaLocalFileServer {
-  constructor({ runtimeLogger } = {}) {
-    this.runtimeLogger = runtimeLogger || null;
-    this.server = null;
-    this.port = 0;
-    this.files = new Map();
-    this.wrapperHtml = '';
-  }
-
-  async ensureStarted() {
-    if (this.server && this.port) {
-      return;
-    }
-
-    this.server = http.createServer((request, response) => {
-      this.handleRequest(request, response);
-    });
-
-    await new Promise((resolve, reject) => {
-      const handleError = (error) => {
-        this.server.removeListener('listening', handleListening);
-        reject(error);
-      };
-      const handleListening = () => {
-        this.server.removeListener('error', handleError);
-        const address = this.server.address();
-        this.port = address && typeof address === 'object' ? Number(address.port) : 0;
-        resolve();
-      };
-
-      this.server.once('error', handleError);
-      this.server.once('listening', handleListening);
-      this.server.listen(0, '127.0.0.1');
-    });
-
-    await emitDebug(this.runtimeLogger, 'local-file-server-started', {
-      port: this.port
-    });
-  }
-
-  async addFile(filePath) {
-    await this.ensureStarted();
-
-    const absolutePath = path.resolve(String(filePath || ''));
-    const stat = await fs.promises.stat(absolutePath);
-    const token = crypto.randomBytes(16).toString('hex');
-    const fileName = path.basename(absolutePath);
-
-    this.files.set(token, {
-      filePath: absolutePath,
-      size: stat.size,
-      contentType: getContentTypeForFile(absolutePath)
-    });
-
-    return `http://127.0.0.1:${this.port}/files/${token}/${encodeURIComponent(fileName)}`;
-  }
-
-  async setWrapperHtml(html) {
-    await this.ensureStarted();
-    this.wrapperHtml = String(html || '');
-
-    return `http://127.0.0.1:${this.port}/wrapper`;
-  }
-
-  handleRequest(request, response) {
-    applyCorsHeaders(response);
-
-    if (request.method === 'OPTIONS') {
-      response.writeHead(204);
-      response.end();
-      return;
-    }
-
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      response.writeHead(405);
-      response.end();
-      return;
-    }
-
-    let parsedUrl = null;
-    try {
-      parsedUrl = new URL(request.url || '/', `http://${request.headers.host || '127.0.0.1'}`);
-    } catch (_error) {
-      parsedUrl = null;
-    }
-
-    if (parsedUrl && parsedUrl.pathname === '/wrapper') {
-      const body = this.wrapperHtml || '<!doctype html><html><body></body></html>';
-      const buffer = Buffer.from(body, 'utf8');
-
-      response.writeHead(200, {
-        'Cache-Control': 'no-store',
-        'Content-Length': buffer.length,
-        'Content-Type': 'text/html; charset=utf-8'
-      });
-
-      if (request.method === 'HEAD') {
-        response.end();
-        return;
-      }
-
-      response.end(buffer);
-      return;
-    }
-
-    const parts = parsedUrl ? parsedUrl.pathname.split('/').filter(Boolean) : [];
-    const token = parts[0] === 'files' ? parts[1] : '';
-    const record = token ? this.files.get(token) : null;
-    if (!record) {
-      response.writeHead(404);
-      response.end();
-      return;
-    }
-
-    const headers = {
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': 'no-store',
-      'Content-Type': record.contentType
-    };
-    const rangeHeader = String(request.headers.range || '');
-    const rangeMatch = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
-    let start = 0;
-    let end = Math.max(0, record.size - 1);
-    let statusCode = 200;
-
-    if (rangeMatch) {
-      const requestedStart = rangeMatch[1] ? Number(rangeMatch[1]) : 0;
-      const requestedEnd = rangeMatch[2] ? Number(rangeMatch[2]) : end;
-
-      if (
-        Number.isFinite(requestedStart)
-        && Number.isFinite(requestedEnd)
-        && requestedStart >= 0
-        && requestedStart <= requestedEnd
-        && requestedStart < record.size
-      ) {
-        start = requestedStart;
-        end = Math.min(requestedEnd, record.size - 1);
-        statusCode = 206;
-        headers['Content-Range'] = `bytes ${start}-${end}/${record.size}`;
-      }
-    }
-
-    headers['Content-Length'] = Math.max(0, end - start + 1);
-    response.writeHead(statusCode, headers);
-
-    if (request.method === 'HEAD') {
-      response.end();
-      return;
-    }
-
-    const stream = fs.createReadStream(record.filePath, {
-      start,
-      end
-    });
-
-    stream.on('error', (error) => {
-      if (this.runtimeLogger && typeof this.runtimeLogger.logError === 'function') {
-        this.runtimeLogger.logError('pod_suite_tool_photopea_file_server_failed', error);
-      }
-      response.destroy(error);
-    });
-    stream.pipe(response);
-  }
-
-  async close() {
-    if (!this.server) {
-      return;
-    }
-
-    const server = this.server;
-    this.server = null;
-    this.port = 0;
-    this.files.clear();
-
-    await new Promise((resolve) => {
-      server.close(() => resolve());
-    });
-  }
-}
-
 async function captureDebugWindow(windowInstance, label, runtimeLogger) {
   if (process.env.POD_SUITE_PHOTOPEA_DEBUG_CAPTURE !== '1' || !windowInstance || windowInstance.isDestroyed()) {
     return;
@@ -445,34 +193,6 @@ async function captureDebugWindow(windowInstance, label, runtimeLogger) {
   }
 }
 
-function encodeScriptForExecute(script) {
-  return JSON.stringify(script);
-}
-
-function bufferFromMessage(message) {
-  if (message && message.bytes instanceof Uint8Array) {
-    return Buffer.from(message.bytes);
-  }
-
-  if (message && message.bytes && Array.isArray(message.bytes)) {
-    return Buffer.from(message.bytes);
-  }
-
-  return Buffer.from(String(message.base64 || ''), 'base64');
-}
-
-function isDoneMessage(message) {
-  return message && message.kind === 'string' && message.value === 'done';
-}
-
-function isEchoMessage(message, prefix) {
-  return message && message.kind === 'string' && String(message.value || '').startsWith(prefix);
-}
-
-function isErrorMessage(message) {
-  return isEchoMessage(message, ECHO_ERROR);
-}
-
 function getSourceProgressIndex(sourceFile, fallbackIndex) {
   const sourceIndex = Math.round(Number(sourceFile && sourceFile.sourceIndex) || 0);
   return sourceIndex > 0 ? sourceIndex : fallbackIndex + 1;
@@ -487,650 +207,9 @@ function getSourceProgressName(sourceFile) {
   return sourceFile && sourceFile.fileName ? sourceFile.fileName : path.basename(sourceFile && sourceFile.filePath || '');
 }
 
-function getErrorMessage(message) {
-  return String(message && message.value || '').slice(ECHO_ERROR.length).trim();
-}
-
 function isRecoverablePhotopeaItemError(error) {
   const message = String(error && error.message || error || '');
   return RECOVERABLE_ITEM_TIMEOUT_PATTERN.test(message);
-}
-
-async function emitDebug(runtimeLogger, message, details = {}) {
-  if (!runtimeLogger) {
-    return;
-  }
-
-  try {
-    const payload = {
-      message,
-      ...details
-    };
-
-    if (typeof runtimeLogger.log === 'function') {
-      runtimeLogger.log('pod_suite_tool_photopea_debug', payload);
-      return;
-    }
-
-    if (typeof runtimeLogger.logInfo === 'function') {
-      runtimeLogger.logInfo('pod_suite_tool_photopea_debug', payload);
-    }
-  } catch (_error) {
-    // Debug logging must never affect rendering.
-  }
-}
-
-function wrapPhotopeaScript(script) {
-  return `
-try {
-${script}
-} catch (__podSuiteError) {
-  var __podSuiteErrorMessage = __podSuiteError && __podSuiteError.message
-    ? __podSuiteError.message
-    : String(__podSuiteError);
-  app.echoToOE(${JSON.stringify(ECHO_ERROR)} + __podSuiteErrorMessage);
-}
-`;
-}
-
-function buildDocumentScriptPrelude() {
-  return `
-function __podDecodeName(value) {
-  var text = String(value == null ? '' : value);
-  try {
-    return decodeURIComponent(text);
-  } catch (_decodeError) {
-    return text;
-  }
-}
-function __podNormalizeName(value) {
-  return __podDecodeName(value).replace(/^\\s+|\\s+$/g, '');
-}
-function __podNamesEqual(left, right) {
-  return __podNormalizeName(left) === __podNormalizeName(right);
-}
-function __podFindDocumentByName(name) {
-  var exactName = String(name == null ? '' : name);
-  for (var exactIndex = 0; exactIndex < app.documents.length; exactIndex += 1) {
-    var exactDoc = app.documents[exactIndex];
-    if (exactDoc && String(exactDoc.name || '') === exactName) return exactDoc;
-  }
-  for (var index = 0; index < app.documents.length; index += 1) {
-    var doc = app.documents[index];
-    if (doc && __podNamesEqual(doc.name, name)) return doc;
-  }
-  return null;
-}
-function __podGetActiveDocument() {
-  try {
-    return app.activeDocument || null;
-  } catch (_activeError) {
-    return null;
-  }
-}
-function __podActivateDocumentByName(name) {
-  var activeDoc = __podGetActiveDocument();
-  if (activeDoc && __podNamesEqual(activeDoc.name, name)) return activeDoc;
-  var doc = __podFindDocumentByName(name);
-  if (!doc) throw new Error('Document not found: ' + name);
-  app.activeDocument = doc;
-  return doc;
-}
-`;
-}
-
-function buildValueScriptPrelude() {
-  return `
-function __podValueToPx(value) {
-  var direct = Number(value);
-  if (!isNaN(direct)) return direct;
-  if (value && value.value !== undefined) {
-    var unitValue = Number(value.value);
-    if (!isNaN(unitValue)) return unitValue;
-  }
-  var parsed = parseFloat(String(value));
-  return isNaN(parsed) ? 0 : parsed;
-}
-`;
-}
-
-function buildFitScriptPrelude() {
-  return `
-${buildDocumentScriptPrelude()}
-${buildValueScriptPrelude()}
-function __podGetLayerBounds(layer) {
-  var bounds = layer.bounds;
-  return {
-    left: __podValueToPx(bounds[0]),
-    top: __podValueToPx(bounds[1]),
-    right: __podValueToPx(bounds[2]),
-    bottom: __podValueToPx(bounds[3])
-  };
-}
-function __podFitLayerToCanvas(documentRef, layer) {
-  var docWidth = __podValueToPx(documentRef.width);
-  var docHeight = __podValueToPx(documentRef.height);
-  var bounds = __podGetLayerBounds(layer);
-  var layerWidth = Math.max(1, bounds.right - bounds.left);
-  var layerHeight = Math.max(1, bounds.bottom - bounds.top);
-  var scale = Math.max(docWidth / layerWidth, docHeight / layerHeight) * 100;
-  layer.resize(scale, scale);
-  bounds = __podGetLayerBounds(layer);
-  var dx = (docWidth / 2) - ((bounds.left + bounds.right) / 2);
-  var dy = (docHeight / 2) - ((bounds.top + bounds.bottom) / 2);
-  layer.translate(dx, dy);
-}
-function __podFitLayerContainCanvas(documentRef, layer) {
-  var docWidth = __podValueToPx(documentRef.width);
-  var docHeight = __podValueToPx(documentRef.height);
-  var bounds = __podGetLayerBounds(layer);
-  var layerWidth = Math.max(1, bounds.right - bounds.left);
-  var layerHeight = Math.max(1, bounds.bottom - bounds.top);
-  var scale = Math.min(docWidth / layerWidth, docHeight / layerHeight) * 100;
-  layer.resize(scale, scale);
-  bounds = __podGetLayerBounds(layer);
-  var dx = (docWidth / 2) - ((bounds.left + bounds.right) / 2);
-  var dy = (docHeight / 2) - ((bounds.top + bounds.bottom) / 2);
-  layer.translate(dx, dy);
-}
-function __podStretchLayerToBounds(layer, targetBounds) {
-  var bounds = __podGetLayerBounds(layer);
-  var layerWidth = Math.max(1, bounds.right - bounds.left);
-  var layerHeight = Math.max(1, bounds.bottom - bounds.top);
-  var targetWidth = Math.max(1, targetBounds.right - targetBounds.left);
-  var targetHeight = Math.max(1, targetBounds.bottom - targetBounds.top);
-  layer.resize((targetWidth / layerWidth) * 100, (targetHeight / layerHeight) * 100);
-  bounds = __podGetLayerBounds(layer);
-  layer.translate(targetBounds.left - bounds.left, targetBounds.top - bounds.top);
-}
-function __podFindReplacementTargetBounds(documentRef, keepLayer) {
-  for (var index = 0; index < documentRef.layers.length; index += 1) {
-    var layer = documentRef.layers[index];
-    if (!layer || layer === keepLayer || layer.name === ${JSON.stringify(DESIGN_LAYER_NAME)}) continue;
-    try {
-      if (layer.visible === false) continue;
-    } catch (_visibleError) {}
-    try {
-      var bounds = __podGetLayerBounds(layer);
-      if (bounds.right > bounds.left && bounds.bottom > bounds.top) {
-        return bounds;
-      }
-    } catch (_boundsError) {}
-  }
-  return {
-    left: 0,
-    top: 0,
-    right: __podValueToPx(documentRef.width),
-    bottom: __podValueToPx(documentRef.height)
-  };
-}
-`;
-}
-
-function buildActiveDocumentEchoScript(prefix) {
-  return `
-var __podActiveName = '';
-try {
-  __podActiveName = app.activeDocument ? app.activeDocument.name : '';
-} catch (_activeError) {
-  __podActiveName = '';
-}
-app.echoToOE(${JSON.stringify(prefix)} + __podActiveName);
-`;
-}
-
-function buildActiveLayerStateScript() {
-  return `
-var __podLayerState = {
-  documentName: '',
-  layerName: '',
-  layerId: 0,
-  itemIndex: 0
-};
-try {
-  var __podDocument = app.activeDocument || null;
-  __podLayerState.documentName = __podDocument ? String(__podDocument.name || '') : '';
-  var __podLayer = __podDocument && __podDocument.activeLayer ? __podDocument.activeLayer : null;
-  __podLayerState.layerName = __podLayer ? String(__podLayer.name || '') : '';
-  __podLayerState.layerId = __podLayer && __podLayer.id ? Number(__podLayer.id) : 0;
-  __podLayerState.itemIndex = __podLayer && __podLayer.itemIndex ? Number(__podLayer.itemIndex) : 0;
-} catch (__podLayerStateError) {
-  __podLayerState.error = __podLayerStateError && __podLayerStateError.message
-    ? __podLayerStateError.message
-    : String(__podLayerStateError);
-}
-app.echoToOE(${JSON.stringify(ECHO_ACTIVE_LAYER)} + JSON.stringify(__podLayerState));
-`;
-}
-
-function buildDocumentInfoScript(documentName) {
-  return `
-${buildDocumentScriptPrelude()}
-${buildValueScriptPrelude()}
-var __podInfoDocument = __podActivateDocumentByName(${JSON.stringify(documentName)});
-var __podDocumentInfo = {
-  documentName: __podInfoDocument ? String(__podInfoDocument.name || '') : '',
-  width: __podInfoDocument ? Math.max(1, Math.round(__podValueToPx(__podInfoDocument.width))) : 0,
-  height: __podInfoDocument ? Math.max(1, Math.round(__podValueToPx(__podInfoDocument.height))) : 0
-};
-app.echoToOE(${JSON.stringify(ECHO_ACTIVE_DOCUMENT_INFO)} + JSON.stringify(__podDocumentInfo));
-`;
-}
-
-function parseJsonEchoValue(message, prefix) {
-  const rawText = String(message && message.value || '').slice(String(prefix || '').length);
-
-  try {
-    const parsed = JSON.parse(rawText);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (_error) {
-    return {};
-  }
-}
-
-function buildLayerIndexCandidates(layerIndex, layerCount) {
-  const candidates = [];
-  const localIndex = Number(layerIndex);
-  const totalCount = Number(layerCount);
-
-  function addCandidate(value) {
-    const numericValue = Number(value);
-    if (!Number.isFinite(numericValue) || numericValue <= 0) {
-      return;
-    }
-    const normalizedValue = Math.floor(numericValue);
-    if (!candidates.includes(normalizedValue)) {
-      candidates.push(normalizedValue);
-    }
-  }
-
-  if (Number.isFinite(localIndex) && localIndex >= 0) {
-    if (Number.isFinite(totalCount) && totalCount > 0) {
-      addCandidate(totalCount - localIndex);
-    }
-    addCandidate(localIndex + 1);
-  }
-
-  return candidates;
-}
-
-function sortSelectionAttemptsByPreferredMode(selectionAttempts, preferredMode) {
-  const normalizedMode = normalizeText(preferredMode);
-  if (!normalizedMode || !Array.isArray(selectionAttempts) || selectionAttempts.length < 2) {
-    return selectionAttempts;
-  }
-
-  const preferredIndex = selectionAttempts.findIndex((attempt) => attempt && attempt.mode === normalizedMode);
-  if (preferredIndex <= 0) {
-    return selectionAttempts;
-  }
-
-  return [
-    selectionAttempts[preferredIndex],
-    ...selectionAttempts.slice(0, preferredIndex),
-    ...selectionAttempts.slice(preferredIndex + 1)
-  ];
-}
-
-function buildSelectSmartObjectLayerByDomScript(smartObjectName) {
-  return `
-var __podSmartLayer = app.activeDocument.layers.getByName(${JSON.stringify(smartObjectName)});
-if (!__podSmartLayer) throw new Error('Smart object layer not found: ' + ${JSON.stringify(smartObjectName)});
-app.activeDocument.activeLayer = __podSmartLayer;
-app.echoToOE(${JSON.stringify(ECHO_SMART_SELECTED)} + 'dom-name');
-`;
-}
-
-function buildSelectSmartObjectLayerByActionNameScript(smartObjectName) {
-  return `
-var __podSelectRef = new ActionReference();
-var __podSelectDesc = new ActionDescriptor();
-__podSelectRef.putName(charIDToTypeID('Lyr '), ${JSON.stringify(smartObjectName)});
-__podSelectDesc.putReference(charIDToTypeID('null'), __podSelectRef);
-executeAction(charIDToTypeID('slct'), __podSelectDesc);
-app.echoToOE(${JSON.stringify(ECHO_SMART_SELECTED)} + 'action-name');
-`;
-}
-
-function buildSelectSmartObjectLayerByActionIndexScript(layerIndex) {
-  const normalizedLayerIndex = Number(layerIndex);
-  const safeLayerIndex = Number.isFinite(normalizedLayerIndex) && normalizedLayerIndex > 0
-    ? Math.floor(normalizedLayerIndex)
-    : 0;
-
-  return `
-var __podSelectRef = new ActionReference();
-var __podSelectDesc = new ActionDescriptor();
-__podSelectRef.putIndex(charIDToTypeID('Lyr '), ${safeLayerIndex});
-__podSelectDesc.putReference(charIDToTypeID('null'), __podSelectRef);
-executeAction(charIDToTypeID('slct'), __podSelectDesc);
-app.echoToOE(${JSON.stringify(ECHO_SMART_SELECTED)} + 'action-index:${safeLayerIndex}');
-`;
-}
-
-function buildOpenSelectedSmartObjectScript() {
-  return `
-executeAction(stringIDToTypeID('placedLayerEditContents'));
-app.echoToOE(${JSON.stringify(ECHO_SMART_OPEN_REQUESTED)});
-`;
-}
-
-function buildActiveDocumentStateScript() {
-  return `
-var __podActiveName = '';
-try {
-  __podActiveName = app.activeDocument ? app.activeDocument.name : '';
-} catch (_activeError) {
-  __podActiveName = '';
-}
-app.echoToOE(${JSON.stringify(ECHO_ACTIVE_DOCUMENT)} + __podActiveName);
-`;
-}
-
-function buildDuplicateImageLayerIntoSmartDocumentScript(smartDocumentName) {
-  return `
-var smartName = ${JSON.stringify(smartDocumentName)};
-var imageDoc = app.activeDocument;
-if (!imageDoc) throw new Error('Source image document is not active.');
-var sourceLayer = imageDoc.activeLayer;
-if (!sourceLayer) throw new Error('Source image layer is missing.');
-var found = null;
-for (var i = 0; i < app.documents.length; i += 1) {
-  var d = app.documents[i];
-  if (d && d.name === smartName) found = d;
-}
-if (!found) throw new Error('Smart object document not found: ' + smartName);
-sourceLayer.duplicate(found);
-app.activeDocument = found;
-app.echoToOE(${JSON.stringify(ECHO_SMART_DUPLICATED)});
-`;
-}
-
-function buildCloseSourceImageDocumentScript(imageDocumentName, smartDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-var __podImageDocument = __podFindDocumentByName(${JSON.stringify(imageDocumentName)});
-if (__podImageDocument) {
-  app.activeDocument = __podImageDocument;
-  app.echoToOE(${JSON.stringify(ECHO_SOURCE_CLOSE_REQUESTED)});
-  __podImageDocument.close(0);
-}
-__podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-`;
-}
-
-function buildPrepareSmartDesignLayerScript(smartDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-var __podSmartDocument = __podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-var __podNewLayer = __podSmartDocument.layers.length
-  ? __podSmartDocument.layers[0]
-  : __podSmartDocument.activeLayer;
-if (!__podNewLayer) throw new Error('Source image could not be duplicated into smart object.');
-__podNewLayer.name = ${JSON.stringify(DESIGN_LAYER_NAME)};
-__podSmartDocument.activeLayer = __podNewLayer;
-app.echoToOE(${JSON.stringify(ECHO_SMART_LAYER_READY)});
-`;
-}
-
-function buildFitSmartDesignLayerScript(smartDocumentName, replacementMode) {
-  const normalizedMode = ['cover-canvas', 'contain-canvas', 'layer-bounds-transform', 'native-canvas'].includes(normalizeText(replacementMode))
-    ? normalizeText(replacementMode)
-    : 'cover-canvas';
-  return `
-${buildFitScriptPrelude()}
-var __podSmartDocument = __podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-var __podNewLayer = __podSmartDocument.layers.length
-  ? __podSmartDocument.layers[0]
-  : __podSmartDocument.activeLayer;
-if (!__podNewLayer) throw new Error('Source image layer is missing in smart object.');
-__podNewLayer.name = ${JSON.stringify(DESIGN_LAYER_NAME)};
-__podSmartDocument.activeLayer = __podNewLayer;
-var __podReplacementMode = ${JSON.stringify(normalizedMode)};
-if (__podReplacementMode === 'native-canvas') {
-  // The source image was pre-rendered to the smart-object canvas size.
-} else if (__podReplacementMode === 'contain-canvas') {
-  __podFitLayerContainCanvas(__podSmartDocument, __podNewLayer);
-} else if (__podReplacementMode === 'layer-bounds-transform') {
-  __podStretchLayerToBounds(__podNewLayer, __podFindReplacementTargetBounds(__podSmartDocument, __podNewLayer));
-} else {
-  __podFitLayerToCanvas(__podSmartDocument, __podNewLayer);
-}
-app.echoToOE(${JSON.stringify(ECHO_SMART_LAYER_FIT)});
-`;
-}
-
-function buildCleanSmartDesignLayersScript(smartDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-var __podSmartDocument = __podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-var __podKeepLayer = __podSmartDocument.layers.length
-  ? __podSmartDocument.layers[0]
-  : __podSmartDocument.activeLayer;
-if (!__podKeepLayer) throw new Error('Source image layer is missing in smart object.');
-__podKeepLayer.name = ${JSON.stringify(DESIGN_LAYER_NAME)};
-__podSmartDocument.activeLayer = __podKeepLayer;
-for (var __podLayerIndex = __podSmartDocument.layers.length - 1; __podLayerIndex >= 1; __podLayerIndex -= 1) {
-  var __podLayer = __podSmartDocument.layers[__podLayerIndex];
-  if (!__podLayer) continue;
-  try {
-    __podLayer.remove();
-  } catch (_removeError) {
-    try {
-      __podLayer.visible = false;
-    } catch (_hideError) {}
-  }
-}
-app.echoToOE(${JSON.stringify(ECHO_SMART_LAYER_CLEANED)});
-`;
-}
-
-function buildSaveSmartDocumentScript(smartDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-var __podSmartDocument = __podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-__podSmartDocument.save();
-app.echoToOE(${JSON.stringify(ECHO_SMART_SAVED)});
-`;
-}
-
-function buildCloseSmartDocumentScript(smartDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-var __podSmartDocument = __podActivateDocumentByName(${JSON.stringify(smartDocumentName)});
-app.echoToOE(${JSON.stringify(ECHO_SMART_CLOSE_REQUESTED)});
-__podSmartDocument.close();
-`;
-}
-
-function buildActivateMainScript(mainDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-__podActivateDocumentByName(${JSON.stringify(mainDocumentName)});
-app.echoToOE(${JSON.stringify(ECHO_MAIN_ACTIVATED)});
-`;
-}
-
-function buildPurgeMemoryScript(mainDocumentName) {
-  return `
-${buildDocumentScriptPrelude()}
-try {
-  __podActivateDocumentByName(${JSON.stringify(mainDocumentName)});
-} catch (_activateError) {}
-try {
-  if (typeof app.purge === 'function' && typeof PurgeTarget !== 'undefined') {
-    app.purge(PurgeTarget.ALLCACHES);
-  }
-} catch (_purgeError) {}
-app.echoToOE(${JSON.stringify(ECHO_MEMORY_PURGED)});
-`;
-}
-
-function buildExportDocumentScript(mainDocumentName, format) {
-  const normalizedFormat = normalizeText(format) || 'png';
-  return `
-${buildDocumentScriptPrelude()}
-var __podDocument = __podActivateDocumentByName(${JSON.stringify(mainDocumentName)});
-if (!__podDocument) throw new Error('Export document is not active.');
-__podDocument.saveToOE(${JSON.stringify(normalizedFormat)});
-`;
-}
-
-function normalizeOutputFormat(value) {
-  const format = normalizeText(value).toLowerCase();
-  return ['png', 'jpg', 'webp'].includes(format) ? format : 'png';
-}
-
-function normalizeImageQuality(value) {
-  const quality = Math.round(Number(value) || 100);
-  return Math.max(60, Math.min(100, quality));
-}
-
-function getPhotopeaSourceExportFormat(outputFormat) {
-  return normalizeOutputFormat(outputFormat) === 'jpg' ? 'jpg' : 'png';
-}
-
-async function convertExportBuffer(sourceBuffer, outputFormat, options = {}) {
-  const normalizedFormat = normalizeOutputFormat(outputFormat);
-  const sourceFormat = normalizeOutputFormat(options.sourceFormat || normalizedFormat);
-
-  if (!normalizeText(options.metadataSourcePath)
-    && sourceFormat === normalizedFormat
-    && normalizedFormat === 'png') {
-    return sourceBuffer;
-  }
-
-  return encodeSharpWithOptionalMetadata({
-    createPipeline() {
-      return sharp(sourceBuffer, {
-        failOnError: false,
-        limitInputPixels: false
-      });
-    },
-    outputFormat: normalizedFormat,
-    metadataSourcePath: options.metadataSourcePath,
-    jpegQuality: normalizeImageQuality(options.imageQuality)
-  });
-}
-
-function normalizeTargetImageSize(value) {
-  const source = value && typeof value === 'object' ? value : {};
-  const width = Math.max(0, Math.round(Number(source.width) || 0));
-  const height = Math.max(0, Math.round(Number(source.height) || 0));
-
-  return width > 0 && height > 0
-    ? { width, height }
-    : null;
-}
-
-function normalizeSourceRotation(value) {
-  const mode = normalizeText(value);
-  return ['left', 'right'].includes(mode) ? mode : 'none';
-}
-
-function getSourceRotationAngle(value) {
-  const mode = normalizeSourceRotation(value);
-  if (mode === 'left') {
-    return -90;
-  }
-  if (mode === 'right') {
-    return 90;
-  }
-
-  return 0;
-}
-
-async function preparePhotopeaInputImage(imagePath, runtimeLogger, options = {}) {
-  const sourcePath = path.resolve(String(imagePath || ''));
-  const targetSize = normalizeTargetImageSize(options.targetSize);
-  const sourceRotation = normalizeSourceRotation(options.sourceRotation);
-  const sourceRotationAngle = getSourceRotationAngle(sourceRotation);
-  const sourceExtension = path.extname(sourcePath).toLowerCase();
-  const hasSourceRotation = sourceRotationAngle !== 0;
-  let canUseDirectInput = !targetSize && !hasSourceRotation && DIRECT_PHOTOPEA_INPUT_EXTENSIONS.has(sourceExtension);
-
-  if (!targetSize && !hasSourceRotation && JPEG_PHOTOPEA_INPUT_EXTENSIONS.has(sourceExtension)) {
-    const metadata = await sharp(sourcePath, {
-      failOnError: false,
-      limitInputPixels: false
-    }).metadata().catch(() => null);
-    canUseDirectInput = !metadata || !metadata.orientation || metadata.orientation === 1;
-  }
-
-  if (canUseDirectInput) {
-    await emitDebug(runtimeLogger, 'input-image-direct', {
-      sourcePath
-    });
-
-    return {
-      filePath: sourcePath,
-      targetSizeApplied: false,
-      async cleanup() {}
-    };
-  }
-
-  const tempDirectoryPath = await createPhotopeaTempDirectory(options.tempRootDir, PHOTOPEA_TEMP_INPUT_PREFIX);
-  const tempFilePath = path.join(tempDirectoryPath, `source-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}.png`);
-
-  try {
-    let imagePipeline = sharp(sourcePath, {
-      failOnError: false,
-      limitInputPixels: false
-    })
-      .rotate();
-
-    if (hasSourceRotation) {
-      imagePipeline = imagePipeline.rotate(sourceRotationAngle);
-    }
-
-    if (targetSize) {
-      imagePipeline = imagePipeline.resize({
-        width: targetSize.width,
-        height: targetSize.height,
-        fit: 'fill'
-      });
-    }
-
-    await imagePipeline
-      .png({
-        compressionLevel: 6,
-        adaptiveFiltering: true
-      })
-      .toFile(tempFilePath);
-
-    await emitDebug(runtimeLogger, 'input-image-prepared', {
-      sourcePath,
-      tempFilePath,
-      targetSize,
-      sourceRotation
-    });
-
-    return {
-      filePath: tempFilePath,
-      targetSizeApplied: Boolean(targetSize),
-      async cleanup() {
-        await fs.promises.rm(tempDirectoryPath, {
-          recursive: true,
-          force: true
-        }).catch(() => {});
-      }
-    };
-  } catch (error) {
-    await fs.promises.rm(tempDirectoryPath, {
-      recursive: true,
-      force: true
-    }).catch(() => {});
-    await emitDebug(runtimeLogger, 'input-image-prepare-failed', {
-      sourcePath,
-      message: String(error && error.message || error || '')
-    });
-
-    return {
-      filePath: sourcePath,
-      targetSizeApplied: false,
-      async cleanup() {}
-    };
-  }
 }
 
 class PhotopeaSmartObjectSession {
@@ -1232,16 +311,12 @@ class PhotopeaSmartObjectSession {
     });
     this.window.webContents.on('console-message', (_event, level, message, line, sourceId) => {
       if (level >= 3 || /^Uncaught\b/.test(String(message || ''))) {
-        this.consoleErrors.push({
-          time: Date.now(),
+        appendPhotopeaConsoleError(this.consoleErrors, {
           level,
-          message: String(message || ''),
+          message,
           line,
-          sourceId: String(sourceId || '')
+          sourceId
         });
-        if (this.consoleErrors.length > 20) {
-          this.consoleErrors.splice(0, this.consoleErrors.length - 20);
-        }
       }
       void emitDebug(this.runtimeLogger, 'console-message', {
         level,
@@ -1350,22 +425,13 @@ class PhotopeaSmartObjectSession {
     }
   }
 
-  getConsoleErrorSince(startedAt) {
-    const threshold = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : 0;
-    return this.consoleErrors.find((record) => (
-      record
-      && record.time >= threshold
-      && !isIgnorablePhotopeaConsoleError(record)
-    )) || null;
-  }
-
   async waitForMessage(predicate, timeoutMs, timeoutMessage, { rejectConsoleErrorsSince = 0 } = {}) {
     const startedAt = Date.now();
 
     while (Date.now() - startedAt < timeoutMs) {
       this.throwIfCanceled();
       if (rejectConsoleErrorsSince) {
-        const consoleError = this.getConsoleErrorSince(rejectConsoleErrorsSince);
+        const consoleError = findPhotopeaConsoleErrorSince(this.consoleErrors, rejectConsoleErrorsSince);
         if (consoleError) {
           throw new Error(consoleError.message || '\u5728\u7ebfPSD\u5f15\u64ce\u6267\u884c\u5931\u8d25\u3002');
         }
@@ -1377,7 +443,7 @@ class PhotopeaSmartObjectSession {
         const message = messages[index];
         if (isErrorMessage(message)) {
           this.pendingMessages = unmatchedMessages.concat(messages.slice(index + 1), this.pendingMessages);
-          throw new Error(getErrorMessage(message) || '\u5728\u7ebfPSD\u5f15\u64ce\u6267\u884c\u5931\u8d25\u3002');
+          throw new Error(getPhotopeaErrorMessage(message) || '\u5728\u7ebfPSD\u5f15\u64ce\u6267\u884c\u5931\u8d25\u3002');
         }
 
         if (predicate(message)) {

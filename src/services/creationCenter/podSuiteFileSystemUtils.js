@@ -24,7 +24,16 @@ async function assertFile(filePath, message) {
   }
 }
 
-async function collectImageFiles(directoryPath, currentPath = directoryPath, result = []) {
+function sortImageFiles(files) {
+  return files.sort((left, right) => {
+    return String(left.relativePath || '').localeCompare(String(right.relativePath || ''), 'zh-CN', {
+      numeric: true,
+      sensitivity: 'base'
+    });
+  });
+}
+
+async function collectImageFileEntries(directoryPath, currentPath, result) {
   const entries = await fs.promises.readdir(currentPath, {
     withFileTypes: true
   });
@@ -33,7 +42,7 @@ async function collectImageFiles(directoryPath, currentPath = directoryPath, res
     const absolutePath = path.join(currentPath, entry.name);
 
     if (entry.isDirectory()) {
-      await collectImageFiles(directoryPath, absolutePath, result);
+      await collectImageFileEntries(directoryPath, absolutePath, result);
       continue;
     }
 
@@ -49,12 +58,14 @@ async function collectImageFiles(directoryPath, currentPath = directoryPath, res
     });
   }
 
-  return result.sort((left, right) => {
-    return String(left.relativePath || '').localeCompare(String(right.relativePath || ''), 'zh-CN', {
-      numeric: true,
-      sensitivity: 'base'
-    });
-  });
+  return result;
+}
+
+async function collectImageFiles(directoryPath) {
+  const result = [];
+  await collectImageFileEntries(directoryPath, directoryPath, result);
+
+  return sortImageFiles(result);
 }
 
 async function pathExists(targetPath) {

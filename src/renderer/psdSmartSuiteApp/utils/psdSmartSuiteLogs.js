@@ -1,4 +1,6 @@
-import { computed, nextTick, ref } from 'vue';
+import { nextTick, ref } from 'vue';
+
+const MAX_LOG_ENTRIES = 500;
 
 function padTimeSegment(value) {
   return String(value).padStart(2, '0');
@@ -28,29 +30,52 @@ export function getPsdSmartSuiteLogToneLabel(tone) {
 export function usePsdSmartSuiteLogs() {
   const logs = ref([]);
   const logContainer = ref(null);
-  const successLogCount = computed(() => (
-    logs.value.filter((entry) => entry.tone === 'success').length
-  ));
-  const errorLogCount = computed(() => (
-    logs.value.filter((entry) => entry.tone === 'error').length
-  ));
+  const successLogCount = ref(0);
+  const errorLogCount = ref(0);
+  let pendingScroll = false;
 
-  function addLog(text, tone = '') {
-    logs.value.push({
-      text: String(text || ''),
-      tone,
-      time: formatLogTime()
-    });
+  function scheduleScrollToBottom() {
+    if (pendingScroll) {
+      return;
+    }
 
+    pendingScroll = true;
     nextTick(() => {
+      pendingScroll = false;
       if (logContainer.value) {
         logContainer.value.scrollTop = logContainer.value.scrollHeight;
       }
     });
   }
 
+  function trimLogs() {
+    const overflowCount = logs.value.length - MAX_LOG_ENTRIES;
+
+    if (overflowCount > 0) {
+      logs.value.splice(0, overflowCount);
+    }
+  }
+
+  function addLog(text, tone = '') {
+    if (tone === 'success') {
+      successLogCount.value += 1;
+    } else if (tone === 'error') {
+      errorLogCount.value += 1;
+    }
+
+    logs.value.push({
+      text: String(text || ''),
+      tone,
+      time: formatLogTime()
+    });
+    trimLogs();
+    scheduleScrollToBottom();
+  }
+
   function clearLog() {
     logs.value = [];
+    successLogCount.value = 0;
+    errorLogCount.value = 0;
   }
 
   return {
