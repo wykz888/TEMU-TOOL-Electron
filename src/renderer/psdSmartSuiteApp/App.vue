@@ -1058,10 +1058,11 @@ function buildRunPayload() {
   ensureMockups();
 
   return {
-    windowRunId: bridge.getWindowRunId(),
+    runId: bridge.getWindowRunId(),
     imageDirectoryPath: config.psdImageDirectoryPath,
     metadataSourcePath: config.psdMetadataSourcePath,
     metadataSourceDirectoryPath: config.psdMetadataSourceDirectoryPath,
+    showEngineWindow: config.psdEngineWindowMode === 'visible',
     engineWindowMode: config.psdEngineWindowMode,
     engineConcurrency: clampConcurrency(config.psdEngineConcurrency),
     skipExistingOutputs: config.psdSkipExistingOutputs,
@@ -1103,6 +1104,7 @@ async function startRun() {
 
   try {
     await bridge.setPsdEngineWindowVisible({
+      runId: bridge.getWindowRunId(),
       visible: config.psdEngineWindowMode === 'visible'
     });
 
@@ -1139,7 +1141,7 @@ async function cancelRun() {
 
   try {
     await bridge.cancelPsdSmartObjectMockups({
-      windowRunId: bridge.getWindowRunId()
+      runId: bridge.getWindowRunId()
     });
     currentProgressLabel.value = '正在取消';
     addLog('已发送取消请求...');
@@ -1199,6 +1201,7 @@ function handlePsdProgress(progress) {
 async function syncEngineWindowMode() {
   try {
     await bridge.setPsdEngineWindowVisible({
+      runId: bridge.getWindowRunId(),
       visible: config.psdEngineWindowMode === 'visible'
     });
   } catch (_) {

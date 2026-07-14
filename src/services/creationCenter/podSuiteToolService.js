@@ -47,6 +47,19 @@ function normalizeAbsolutePath(value) {
   return text ? path.resolve(text) : '';
 }
 
+function normalizePsdTaskRunId(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  return normalizeText(source.runId || source.windowRunId);
+}
+
+function normalizePsdEngineWindowVisible(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  return source.showEngineWindow === true
+    || source.visible === true
+    || normalizeText(source.engineWindowMode) === 'visible'
+    || normalizeText(source.mode) === 'visible';
+}
+
 function getIsoTimestamp() {
   return new Date().toISOString();
 }
@@ -991,7 +1004,7 @@ function createPodSuiteToolService({
     generatePsdSmartObjectMockups(payload, context = {}) {
       return withErrorBoundary('pod_suite_tool_psd_smart_object_generate_failed', async () => {
         const sourcePayload = payload && typeof payload === 'object' ? payload : {};
-        const runId = normalizeText(sourcePayload.runId) || `psd_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`;
+        const runId = normalizePsdTaskRunId(sourcePayload) || `psd_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`;
         const emitProgress = (progressPayload) => {
           emitPsdProgress(context && context.emitProgress, {
             runId,
@@ -1029,7 +1042,7 @@ function createPodSuiteToolService({
         } = await resolvePsdMetadataSourceConfig(sourcePayload);
         const sliceOptions = normalizePsdSliceOptions(sourcePayload.sliceOptions);
         const engineConcurrency = normalizePsdEngineConcurrency(sourcePayload.engineConcurrency || sourcePayload.psdEngineConcurrency);
-        const showEngineWindow = sourcePayload.showEngineWindow === true;
+        const showEngineWindow = normalizePsdEngineWindowVisible(sourcePayload);
         const skipExistingOutputs = sourcePayload.skipExistingOutputs === true || sourcePayload.psdSkipExistingOutputs === true;
         const photopeaTempRootDir = normalizeAbsolutePath(tempRootDir);
         emitProgress({
@@ -1289,7 +1302,7 @@ function createPodSuiteToolService({
     },
     cancelPsdSmartObjectMockups(payload) {
       return withErrorBoundary('pod_suite_tool_psd_smart_object_cancel_failed', async () => {
-        const runId = normalizeText(payload && payload.runId);
+        const runId = normalizePsdTaskRunId(payload);
         if (!runId) {
           return {
             success: true,
@@ -1326,8 +1339,8 @@ function createPodSuiteToolService({
     },
     setPsdEngineWindowVisible(payload) {
       return withErrorBoundary('pod_suite_tool_psd_engine_window_mode_failed', async () => {
-        const runId = normalizeText(payload && payload.runId);
-        const visible = normalizeText(payload && payload.mode) === 'visible' || payload && payload.visible === true;
+        const runId = normalizePsdTaskRunId(payload);
+        const visible = normalizePsdEngineWindowVisible(payload);
         const taskGroups = runId
           ? [activePsdTaskGroups.get(runId)].filter(Boolean)
           : [];

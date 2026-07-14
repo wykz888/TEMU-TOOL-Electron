@@ -623,6 +623,21 @@ async function main() {
       }
     }
   });
+  const psdEngineModeAliasResult = await psdTemplateService.setPsdEngineWindowVisible({
+    windowRunId: 'psd_window_alias',
+    engineWindowMode: 'visible'
+  });
+  assert(
+    psdEngineModeAliasResult.success === true && psdEngineModeAliasResult.visible === true,
+    'service should accept PSD engine window mode alias'
+  );
+  const psdCancelAliasResult = await psdTemplateService.cancelPsdSmartObjectMockups({
+    windowRunId: 'psd_window_alias'
+  });
+  assert(
+    psdCancelAliasResult.message === '\u5f53\u524d\u6ca1\u6709\u6b63\u5728\u8fdb\u884c\u7684PSD\u5957\u56fe\u4efb\u52a1\u3002',
+    'service should accept PSD window run id alias for cancel'
+  );
   const psdTemplateSaveResult = await psdTemplateService.savePsdSmartObjectTemplate({
     template: {
       name: 'PSD template',
