@@ -1,6 +1,7 @@
 import { createApp, h } from 'vue';
 import ArcoVue from '@arco-design/web-vue';
 import '@arco-design/web-vue/dist/arco.css';
+import './styles/psd-smart-suite-app.css';
 import App from './App.vue';
 
 let controllerInstance = null;

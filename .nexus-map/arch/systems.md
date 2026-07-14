@@ -30,6 +30,13 @@
 - Responsibility: user-facing UI. The main window shell uses `src/renderer/index.html` plus Vue bundles. Newer workbenches are independent Vue apps under `*App/`; older operations workbenches are large plain JS/CSS files.
 - Key shell files: `src/renderer/index.html`, `src/renderer/index.js`, `src/renderer/mainWindowApp/`, `src/renderer/mainWindowShellView.js`, `src/renderer/vueBundleViewLoader.js`.
 - Shared bundle loader: `src/renderer/vueBundleViewLoader.js` centralizes Vue app mounting, stylesheet loading, and fallback rendering for thin HTML/JS shells such as shop management, global config, confirm dialog, exit progress, global category sync, POD upload sheets, promotion manager, PSD smart suite, and the shop window shell.
+- PSD smart suite renderer rules: `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteModels.js` owns mockup normalization and run-payload shaping; `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteProgress.js` owns progress event labels, log text, tone, and counters so `App.vue` remains focused on UI state wiring.
+- PSD smart suite local settings persistence lives in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteSettings.js` so storage parsing and serialization stay separate from the Vue view entry.
+- PSD smart suite renderer state composables live in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteLogs.js` and `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteMockups.js` so log scrolling and mockup list editing stay isolated from the page shell.
+- PSD smart suite source selection and metadata state live in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteSources.js` so image-directory and metadata-directory flows stay isolated from the page shell.
+- PSD smart suite template workspace logic lives in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteTemplateWorkspace.js` so template fetch/save/delete flow stays separate from page orchestration.
+- PSD smart suite run/runtime logic lives in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteRuntime.js` so task start/cancel/progress and engine-window sync stay separate from the page shell.
+- PSD smart suite presentational styles live in `src/renderer/psdSmartSuiteApp/styles/psd-smart-suite-app.css` and are loaded from `src/renderer/psdSmartSuiteApp/main.js` so the Vue entry no longer carries the full stylesheet.
 - Keep-alive behavior: main sections are hidden and shown instead of destroyed. `src/renderer/operationsModuleKeepAlive.js` provides first-activation and resume contracts for legacy operations pages.
 
 ## Catalog And Profile Metadata
@@ -50,6 +57,7 @@
 
 - Code: `src/services/creationCenter/`
 - Responsibility: POD suite tool, PSD smart object rendering, white mockup template rendering, template stores, image metadata, slicing/export helpers.
+- Notes: PSD smart suite payload compatibility and provided-source-list normalization live in `podSuitePsdPayloadUtils.js`; pure PSD runtime rules such as output format, slice mode, output identity, source decoration, and work-unit splitting live in `podSuitePsdRuntimeRules.js`; PSD failure and partial-result assembly lives in `podSuitePsdResultFactory.js`; task signals, cancellation checks, concurrency limiters, and recoverable-open retry constants live in `podSuitePsdTaskRuntime.js` so `podSuiteToolService.js` can stay focused on task orchestration, filesystem checks, progress emission, and render-loop IO.
 - Validation: `npm run validate:pod-suite-tool` covers image rendering, template handling, mask/region behavior, and slice export logic.
 
 ## Shop Management And Persistence
