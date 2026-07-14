@@ -111,6 +111,8 @@ export function usePsdSmartSuiteRuntime(options = {}) {
     ensureMockups();
 
     const hasValidMockup = mockups.value.some((item) => item.psdPath);
+    const allMockupsReady = mockups.value.length > 0
+      && mockups.value.every((item) => item.psdPath && item.outputDirectoryPath);
 
     if (!config.psdImageDirectoryPath || !hasValidMockup) {
       const message = '\u8BF7\u5148\u9009\u62E9\u7D20\u6750\u76EE\u5F55\u548C\u81F3\u5C11\u4E00\u4E2A PSD \u6837\u673A\u6587\u4EF6\u3002';
@@ -119,8 +121,8 @@ export function usePsdSmartSuiteRuntime(options = {}) {
       return;
     }
 
-    if (!mockups.value.every((item) => item.outputDirectoryPath)) {
-      const message = '\u8BF7\u4E3A\u6BCF\u4E2A\u6837\u673A\u8BBE\u7F6E\u5BFC\u51FA\u76EE\u5F55\u3002';
+    if (!allMockupsReady) {
+      const message = '\u8BF7\u8865\u5168\u6BCF\u4E2A\u6837\u673A\u7684 PSD \u6587\u4EF6\u548C\u5BFC\u51FA\u76EE\u5F55\uFF0C\u6216\u5220\u9664\u672A\u4F7F\u7528\u7684\u6837\u673A\u3002';
       addLog(message, 'error');
       showMessage(messageApi, 'error', message);
       return;
@@ -145,14 +147,23 @@ export function usePsdSmartSuiteRuntime(options = {}) {
 
       const result = await bridge.generatePsdSmartObjectMockups(buildRunPayload());
 
-      if (result && result.success !== false) {
-        progressTotal.value = Number(result.totalInputCount || 0);
-        progressCurrent.value = progressTotal.value;
-        psdProgressSummary.value = buildCompletionSummary(result);
-        currentProgressLabel.value = '\u4EFB\u52A1\u5B8C\u6210';
-        addLog(psdProgressSummary.value, result.failedCount ? '' : 'success');
-        showMessage(messageApi, 'success', 'PSD \u5957\u56FE\u5DF2\u5B8C\u6210');
+      if (!result || result.success === false) {
+        const message = result && result.message
+          ? String(result.message)
+          : 'PSD \u5957\u56FE\u6267\u884C\u5931\u8D25\u3002';
+        currentProgressLabel.value = '\u6267\u884C\u5931\u8D25';
+        psdProgressSummary.value = message;
+        addLog(message, 'error');
+        showMessage(messageApi, 'error', message);
+        return;
       }
+
+      progressTotal.value = Number(result.totalInputCount || 0);
+      progressCurrent.value = progressTotal.value;
+      psdProgressSummary.value = buildCompletionSummary(result);
+      currentProgressLabel.value = '\u4EFB\u52A1\u5B8C\u6210';
+      addLog(psdProgressSummary.value, result.failedCount ? '' : 'success');
+      showMessage(messageApi, 'success', 'PSD \u5957\u56FE\u5DF2\u5B8C\u6210');
     } catch (error) {
       const message = getErrorMessage(error);
       addLog(message, 'error');

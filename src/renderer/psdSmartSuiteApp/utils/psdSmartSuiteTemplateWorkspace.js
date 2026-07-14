@@ -1,5 +1,5 @@
 import { onBeforeUnmount, ref, watch } from 'vue';
-import { clampConcurrency } from './psdSmartSuiteModels.js';
+import { clampConcurrency, normalizeMockupList } from './psdSmartSuiteModels.js';
 
 function noop() {
   return undefined;
@@ -116,7 +116,7 @@ export function usePsdSmartSuiteTemplateWorkspace(options = {}) {
         engineConcurrency: clampConcurrency(config.psdEngineConcurrency),
         engineWindowMode: config.psdEngineWindowMode,
         skipExistingOutputs: config.psdSkipExistingOutputs,
-        mockups: mockups.value
+        mockups: normalizeMockupList(mockups.value)
       });
 
       if (result && Array.isArray(result.templates)) {

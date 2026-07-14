@@ -1,20 +1,7 @@
 const path = require('node:path');
-
-const PSD_IMAGE_EXTENSIONS = Object.freeze([
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.webp',
-  '.gif',
-  '.bmp',
-  '.tif',
-  '.tiff',
-  '.avif',
-  '.heic',
-  '.heif'
-]);
-
-const PSD_IMAGE_EXTENSION_SET = new Set(PSD_IMAGE_EXTENSIONS);
+const {
+  IMAGE_EXTENSION_SET
+} = require('./podSuiteImageExtensions');
 
 function normalizeText(value) {
   return String(value == null ? '' : value).trim();
@@ -96,7 +83,7 @@ function normalizeProvidedPsdSourceFiles(imageDirectoryPath, sourceFiles) {
     const filePath = normalizeAbsolutePath(source.filePath || source.path || source.sourcePath || source.absolutePath);
     const extension = path.extname(filePath).toLowerCase();
 
-    if (!filePath || !PSD_IMAGE_EXTENSION_SET.has(extension) || !isPathInsideDirectory(rootDirectoryPath, filePath)) {
+    if (!filePath || !IMAGE_EXTENSION_SET.has(extension) || !isPathInsideDirectory(rootDirectoryPath, filePath)) {
       return result;
     }
 

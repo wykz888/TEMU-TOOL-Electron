@@ -27,7 +27,7 @@ export function buildPsdProgressLogMessage(progress, phaseLabel) {
   let message = `[${label}]`;
 
   if (source.mockupIndex != null) {
-    message += ` \u6837\u673A${source.mockupIndex + 1}`;
+    message += ` \u6837\u673A${source.mockupIndex}`;
   }
 
   if (source.itemIndex != null && source.totalItems != null) {

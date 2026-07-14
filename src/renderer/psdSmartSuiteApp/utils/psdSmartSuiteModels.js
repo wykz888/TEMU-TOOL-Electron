@@ -43,7 +43,7 @@ export function normalizeMockup(mockup) {
   const source = mockup && typeof mockup === 'object' ? mockup : {};
 
   return {
-    id: source.id ? source.id : createEntityId('psd_mockup'),
+    id: source.id ? String(source.id) : createEntityId('psd_mockup'),
     psdPath: source.psdPath ? String(source.psdPath) : '',
     smartObjectName: source.smartObjectName ? String(source.smartObjectName) : DEFAULT_SMART_OBJECT_NAME,
     sourceRotation: PSD_SOURCE_ROTATIONS.includes(source.sourceRotation)
@@ -65,6 +65,35 @@ export function normalizeMockupList(mockups) {
   return source.map((item) => normalizeMockup(item));
 }
 
+function getFileNameFromPath(filePath) {
+  return normalizeText(filePath).split(/[\\/]/).filter(Boolean).pop() || '';
+}
+
+export function normalizeSourceFile(sourceFile) {
+  const source = sourceFile && typeof sourceFile === 'object' ? sourceFile : {};
+  const filePath = normalizeText(source.filePath || source.path || source.sourcePath || source.absolutePath);
+
+  if (!filePath) {
+    return null;
+  }
+
+  return {
+    filePath,
+    relativePath: normalizeText(source.relativePath) || getFileNameFromPath(filePath),
+    fileName: normalizeText(source.fileName) || getFileNameFromPath(filePath)
+  };
+}
+
+export function normalizeSourceFileList(sourceFiles) {
+  if (!Array.isArray(sourceFiles) || !sourceFiles.length) {
+    return [];
+  }
+
+  return sourceFiles
+    .map((item) => normalizeSourceFile(item))
+    .filter(Boolean);
+}
+
 export function buildPsdSmartSuiteRunPayload({
   runId,
   config,
@@ -77,7 +106,7 @@ export function buildPsdSmartSuiteRunPayload({
   return {
     runId,
     imageDirectoryPath: runtimeConfig.psdImageDirectoryPath || '',
-    sourceFiles: Array.isArray(sourceFiles) ? sourceFiles : [],
+    sourceFiles: normalizeSourceFileList(sourceFiles),
     metadataSourcePath: runtimeConfig.psdMetadataSourcePath || '',
     metadataSourceDirectoryPath: runtimeConfig.psdMetadataSourceDirectoryPath || '',
     showEngineWindow: runtimeConfig.psdEngineWindowMode === 'visible',
