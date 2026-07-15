@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { clampConcurrency, normalizeMockupList } from './psdSmartSuiteModels.js';
 
 function noop() {
@@ -95,6 +95,21 @@ export function usePsdSmartSuiteTemplateWorkspace(options = {}) {
     } finally {
       busy.value = false;
     }
+  }
+
+  async function handleTemplateSelectionChange(templateId) {
+    const nextTemplateId = typeof templateId === 'string' ? templateId : '';
+
+    if (selectedTemplateId.value !== nextTemplateId) {
+      selectedTemplateId.value = nextTemplateId;
+    }
+
+    if (!nextTemplateId) {
+      return;
+    }
+
+    await nextTick();
+    await loadSelectedTemplate();
   }
 
   async function saveTemplate() {
@@ -234,7 +249,7 @@ export function usePsdSmartSuiteTemplateWorkspace(options = {}) {
   return {
     deleteTemplateConfirmId,
     handleDeleteTemplate,
-    loadSelectedTemplate,
+    handleTemplateSelectionChange,
     loadTemplates,
     psdTemplates,
     saveTemplate,

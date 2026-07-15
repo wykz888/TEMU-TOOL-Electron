@@ -13,12 +13,8 @@
               <p>&#x7EDF;&#x4E00;&#x7BA1;&#x7406;&#x7D20;&#x6750;&#x76EE;&#x5F55;&#x3001;PSD&#x6837;&#x673A;&#x548C;&#x5BFC;&#x51FA;&#x89C4;&#x5219;&#xFF0C;&#x6309;&#x5F53;&#x524D;&#x5F15;&#x64CE;&#x914D;&#x7F6E;&#x6279;&#x91CF;&#x6267;&#x884C;&#x5957;&#x56FE;&#x3002;</p>
             </div>
           </div>
-        </div>
 
-        <div class="psd-smart-suite-panel-divider"></div>
-
-        <div class="psd-smart-suite-toolbar-grid">
-          <div class="psd-smart-suite-toolbar-block psd-smart-suite-toolbar-block--template">
+          <div class="psd-smart-suite-panel-actions">
             <div class="psd-smart-suite-inline-head psd-smart-suite-inline-head--template">
               <strong>&#x6A21;&#x677F;&#x7BA1;&#x7406;</strong>
               <span>&#x590D;&#x7528;&#x5DF2;&#x4FDD;&#x5B58;&#x7684;&#x5957;&#x56FE;&#x914D;&#x7F6E;&#x3002;</span>
@@ -30,6 +26,7 @@
                 class="psd-smart-suite-flex-input psd-smart-suite-template-select"
                 placeholder="&#x9009;&#x62E9;&#x5DF2;&#x4FDD;&#x5B58;&#x6A21;&#x677F;"
                 allow-clear
+                @change="handleTemplateSelectionChange"
               >
                 <a-option value="">&#x65B0;&#x5EFA;&#x6A21;&#x677F;</a-option>
                 <a-option
@@ -40,9 +37,6 @@
                   {{ tpl.name || '\u672A\u547D\u540D\u6A21\u677F' }}
                 </a-option>
               </a-select>
-              <a-button :disabled="!selectedTemplateId" @click="loadSelectedTemplate">
-                &#x5957;&#x7528;&#x6A21;&#x677F;
-              </a-button>
               <a-button :loading="busy" @click="syncCloudTemplates">
                 &#x540C;&#x6B65;&#x4E91;&#x7AEF;
               </a-button>
@@ -64,7 +58,11 @@
               </a-button>
             </div>
           </div>
+        </div>
 
+        <div class="psd-smart-suite-panel-divider"></div>
+
+        <div class="psd-smart-suite-toolbar-grid">
           <div class="psd-smart-suite-toolbar-block">
             <div class="psd-smart-suite-inline-head">
               <strong>&#x7D20;&#x6750;&#x8BBE;&#x7F6E;</strong>
@@ -575,7 +573,7 @@ const {
 const {
   deleteTemplateConfirmId,
   handleDeleteTemplate,
-  loadSelectedTemplate,
+  handleTemplateSelectionChange,
   loadTemplates,
   psdTemplates,
   saveTemplate,
