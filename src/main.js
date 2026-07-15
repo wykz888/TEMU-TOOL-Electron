@@ -58,6 +58,7 @@ const {
   createOperationsTrafficBoostWindow
 } = require('./windows/createOperationsTrafficBoostWindow');
 const { createPromotionManagerWindow } = require('./windows/createPromotionManagerWindow');
+const { createPromotionManagerNewWindow } = require('./windows/createPromotionManagerNewWindow');
 const { createExitSyncProgressWindow } = require('./windows/createExitSyncProgressWindow');
 const {
   installWebContentsDebugShortcuts,
@@ -144,6 +145,7 @@ const operationsPriceDeclarationWindows = new Set();
 let operationsNewProductLifecycleWindow = null;
 const operationsNewProductLifecycleWindows = new Set();
 let promotionManagerWindow = null;
+let promotionManagerNewWindow = null;
 let podUploadSheetMiaoshouWindow = null;
 const podUploadSheetMiaoshouWindows = new Set();
 let podUploadSheetMiaoshouUniversalWindow = null;
@@ -367,6 +369,7 @@ function getOpenWindows() {
     ...getOpenManagedSubWindows(operationsPriceDeclarationWindows),
     ...getOpenManagedSubWindows(operationsNewProductLifecycleWindows),
     promotionManagerWindow,
+    promotionManagerNewWindow,
     ...getOpenManagedSubWindows(podUploadSheetMiaoshouWindows),
     ...getOpenManagedSubWindows(podUploadSheetMiaoshouUniversalWindows),
     ...getOpenManagedSubWindows(podSuiteToolWindows)
@@ -765,6 +768,10 @@ function bindMainWindow(windowInstance) {
       promotionManagerWindow.close();
     }
 
+    if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
+      promotionManagerNewWindow.close();
+    }
+
     if (shopWindowBrowserController) {
       shopWindowBrowserController.destroy();
       shopWindowBrowserController = null;
@@ -844,6 +851,11 @@ function bindOperationsNewProductLifecycleWindow(windowInstance) {
 function bindPromotionManagerWindow(windowInstance) {
   promotionManagerWindow = windowInstance;
   return setupSubWindow(windowInstance, () => { promotionManagerWindow = null; });
+}
+
+function bindPromotionManagerNewWindow(windowInstance) {
+  promotionManagerNewWindow = windowInstance;
+  return setupSubWindow(windowInstance, () => { promotionManagerNewWindow = null; });
 }
 
 function bindPodUploadSheetMiaoshouWindow(windowInstance) {
@@ -1346,6 +1358,21 @@ function showPromotionManagerWindow() {
   }));
 }
 
+function showPromotionManagerNewWindow() {
+  if (!sessionStore.hasSession()) {
+    return null;
+  }
+
+  if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
+    promotionManagerNewWindow.focus();
+    return promotionManagerNewWindow;
+  }
+
+  return bindPromotionManagerNewWindow(createPromotionManagerNewWindow({
+    backgroundColor: getThemeBackgroundColor(currentTheme)
+  }));
+}
+
 function showGlobalCategorySyncWindow() {
   if (!sessionStore.hasSession()) {
     return null;
@@ -1571,6 +1598,10 @@ function returnToAuthArea() {
 
   if (promotionManagerWindow && !promotionManagerWindow.isDestroyed()) {
     promotionManagerWindow.close();
+  }
+
+  if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
+    promotionManagerNewWindow.close();
   }
 
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -2069,6 +2100,7 @@ app.whenReady().then(() => {
     ),
     onOpenGlobalCategorySync: showGlobalCategorySyncWindow,
     onOpenPromotionManager: showPromotionManagerWindow,
+    onOpenPromotionManagerNew: showPromotionManagerNewWindow,
     onOpenPodUploadSheetMiaoshou: (payload, context = {}) => {
       return showPodUploadSheetMiaoshouWindow(mergeWindowOpenPayload(payload, context));
     },

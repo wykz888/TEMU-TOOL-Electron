@@ -84,6 +84,14 @@ const TARGETS = Object.freeze({
       'src/renderer/promotionManagerApp/dist/promotion-manager-app.css'
     ]
   },
+  'promotion-manager-new': {
+    config: 'vite.promotion-manager-new.config.mjs',
+    sourceDirs: ['src/renderer/promotionManagerNewApp'],
+    outputFiles: [
+      'src/renderer/promotionManagerNewApp/dist/promotion-manager-new-app.js',
+      'src/renderer/promotionManagerNewApp/dist/promotion-manager-new-app.css'
+    ]
+  },
   'psd-smart-suite': {
     config: 'vite.psd-smart-suite.config.mjs',
     sourceDirs: ['src/renderer/psdSmartSuiteApp'],

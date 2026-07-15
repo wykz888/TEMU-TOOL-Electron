@@ -66,6 +66,9 @@ function createFeatureCenterPreloadApi({
     openPromotionManager() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER);
     },
+    openPromotionManagerNew() {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER_NEW);
+    },
     openPodUploadSheetMiaoshou(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_POD_UPLOAD_SHEET_MIAOSHOU, payload);
     },

@@ -31,6 +31,7 @@ Renderer bundles are built one target at a time by `scripts/buildRendererBundle.
 - `npm run build:renderer:exit-progress`
 - `npm run build:renderer:pod-upload-sheet-miaoshou`
 - `npm run build:renderer:promotion-manager`
+- `npm run build:renderer:promotion-manager-new`
 
 Main/preload/service/window changes require a real Electron restart. Renderer-only changes require rebuilding or refreshing the affected window/page.
 

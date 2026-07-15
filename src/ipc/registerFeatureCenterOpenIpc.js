@@ -10,6 +10,7 @@ function registerFeatureCenterOpenIpc(options = {}) {
     onOpenMarketingTools,
     onOpenGlobalCategorySync,
     onOpenPromotionManager,
+    onOpenPromotionManagerNew,
     onOpenPodUploadSheetMiaoshou,
     onOpenPodUploadSheetMiaoshouUniversal
   } = options;
@@ -75,6 +76,11 @@ function registerFeatureCenterOpenIpc(options = {}) {
 
   handle(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER, async () => {
     if (typeof onOpenPromotionManager === 'function') onOpenPromotionManager();
+    return fb_success();
+  });
+
+  handle(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER_NEW, async () => {
+    if (typeof onOpenPromotionManagerNew === 'function') onOpenPromotionManagerNew();
     return fb_success();
   });
 

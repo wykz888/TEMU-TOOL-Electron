@@ -13,6 +13,7 @@ const FEATURE_CHANNELS = Object.freeze({
   MARKETING_TOOLS_SINGLE_PRODUCT_COUPON_PROGRESS: 'feature-center:marketing-tools-single-product-coupon-progress',
   OPEN_GLOBAL_CATEGORY_SYNC: 'feature-center:open-global-category-sync',
   OPEN_PROMOTION_MANAGER: 'feature-center:open-promotion-manager',
+  OPEN_PROMOTION_MANAGER_NEW: 'feature-center:open-promotion-manager-new',
   OPEN_POD_UPLOAD_SHEET_MIAOSHOU: 'feature-center:open-pod-upload-sheet-miaoshou',
   OPEN_POD_UPLOAD_SHEET_MIAOSHOU_UNIVERSAL: 'feature-center:open-pod-upload-sheet-miaoshou-universal',
   GET_OPERATIONS_PRODUCT_CATEGORY_SNAPSHOT: 'feature-center:get-operations-product-category-snapshot',

@@ -38,6 +38,8 @@ POD MiaoShou TEMU and universal variants have separate feature metadata, indepen
 
 Promotion management uses `src/renderer/promotionManagerApp/`, `src/services/featureCenter/promotionMasterSessionService.js`, `promotionMonitorService.js`, and related promotion IPC handlers. It depends on shop sessions and browser automation.
 
+Promotion master new is a separate layout-first feature entry under `src/features/featureCenter/promotionMasterNew/` with an independent window shell at `src/renderer/promotionManagerNew.html`, renderer module `src/renderer/promotionManagerNewApp/`, and window factory `src/windows/createPromotionManagerNewWindow.js`. It currently provides a compact Vue/Arco workbench layout before the old promotion business flows are wired in.
+
 ## Global Config, Theme, And Update
 
 Global config is served by `src/services/globalConfig/` and exposed through preload. Theme preference is managed by `src/services/theme/themePreferenceService.js` and `src/renderer/themeSync.js`. Update behavior lives under `src/services/update/updateService.js` and main-window update dialog components.
