@@ -14,7 +14,7 @@ const DEFAULT_API_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
 const DEFAULT_MODEL = 'doubao-seed-2-0-mini-260428';
 const DEFAULT_CONCURRENCY = 20;
 const MIN_CONCURRENCY = 1;
-const MAX_CONCURRENCY = 100;
+const MAX_CONCURRENCY = 50;
 
 function createPodUploadSheetMiaoshouAiTitleConfigService({
   sessionStore,

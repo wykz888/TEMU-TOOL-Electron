@@ -16,6 +16,11 @@ const {
 const {
   createPodUploadSheetMiaoshouAiTitleResultCacheStore
 } = require('./podUploadSheetMiaoshouAiTitleResultCacheStore');
+const {
+  createAsyncLimiter,
+  mapWithConcurrency,
+  normalizeBoundedInteger
+} = require('./podUploadSheetMiaoshouConcurrencyUtils');
 
 const SERVICE_VERSION = 1;
 const ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
@@ -25,6 +30,8 @@ const REQUEST_TIMEOUT_MS = 90000;
 const TITLE_MAX_LENGTH = 255;
 const DEFAULT_TARGET_TITLE_LENGTH = 250;
 const DEFAULT_OUTPUT_LANGUAGE = 'en';
+const MAX_AI_TITLE_CONCURRENCY = 50;
+const AI_IMAGE_PROCESSING_CONCURRENCY = 2;
 const AI_INPUT_IMAGE_BUCKET = 'chunagtao-1251234463';
 const AI_INPUT_IMAGE_REGION = 'ap-guangzhou';
 const AI_INPUT_IMAGE_ROOT = '\u5999\u624bAI\u8bc6\u56fe';
@@ -71,6 +78,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
   let cachedSettings = null;
   const activeGenerationJobs = new Map();
   const uploadedAiInputImageCache = new Map();
+  const limitImageProcessing = createAsyncLimiter(AI_IMAGE_PROCESSING_CONCURRENCY);
   const aiTitleResultCacheStore = createPodUploadSheetMiaoshouAiTitleResultCacheStore({
     featureCenterProfileService,
     fallbackEntryId: ENTRY_ID,
@@ -242,9 +250,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
     await fs.promises.rename(tempFilePath, filePath);
   }
 
-  function normalizeInteger(value, fallback, minValue = 0) {
-    const parsed = Number.parseInt(value, 10);
-    return Number.isFinite(parsed) && parsed >= minValue ? parsed : fallback;
+  function normalizeInteger(value, fallback, minValue = 0, maxValue = Number.MAX_SAFE_INTEGER) {
+    return normalizeBoundedInteger(value, fallback, minValue, maxValue);
   }
 
   function normalizeDecimal(value, fallback, minValue = 0) {
@@ -300,7 +307,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
       model: normalizeModelSetting(source.model),
       temperature: normalizeDecimal(source.temperature, DEFAULT_SETTINGS.temperature, 0),
       maxTokens: normalizeInteger(source.maxTokens, DEFAULT_SETTINGS.maxTokens, 64),
-      concurrency: normalizeInteger(source.concurrency, DEFAULT_SETTINGS.concurrency, 1),
+      concurrency: normalizeInteger(source.concurrency, DEFAULT_SETTINGS.concurrency, 1, MAX_AI_TITLE_CONCURRENCY),
       retryLimit: normalizeInteger(source.retryLimit, DEFAULT_SETTINGS.retryLimit, 0),
       minImageBytes: normalizeInteger(source.minImageBytes, DEFAULT_SETTINGS.minImageBytes, 64 * 1024),
       maxImageBytes: normalizeInteger(source.maxImageBytes, DEFAULT_SETTINGS.maxImageBytes, 128 * 1024)
@@ -380,7 +387,8 @@ function createPodUploadSheetMiaoshouAiTitleService({
       concurrency: normalizeInteger(
         sharedSettings && sharedSettings.concurrency,
         localSettings.concurrency,
-        1
+        1,
+        MAX_AI_TITLE_CONCURRENCY
       )
     };
   }
@@ -409,7 +417,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
 
     return {
       ...settings,
-      concurrency: normalizeInteger(source.concurrency, settings.concurrency, 1),
+      concurrency: normalizeInteger(source.concurrency, settings.concurrency, 1, MAX_AI_TITLE_CONCURRENCY),
       ...(hasImageQuality ? { imageQuality: normalizeImageQuality(source.imageQuality) } : {}),
       imageCompression: normalizeImageCompression(source.imageCompression),
       storageProvider: normalizeText(source.storageProvider),
@@ -509,14 +517,13 @@ function createPodUploadSheetMiaoshouAiTitleService({
     const minBytes = Math.min(settings.minImageBytes, settings.maxImageBytes);
     const maxBytes = Math.max(settings.maxImageBytes, settings.minImageBytes);
     const qualityOptions = getImageJpegQualities(settings);
-    let smallestWithinRange = null;
     let largestUnderRange = null;
     let smallestOverRange = null;
 
-    IMAGE_MAX_DIMENSIONS.forEach((dimension) => {
+    for (const dimension of IMAGE_MAX_DIMENSIONS) {
       const resizedImage = resizeImageToContain(image, dimension);
 
-      qualityOptions.forEach((quality) => {
+      for (const quality of qualityOptions) {
         const buffer = Buffer.from(resizedImage.toJPEG(quality));
         const candidate = {
           buffer,
@@ -529,26 +536,23 @@ function createPodUploadSheetMiaoshouAiTitleService({
         };
 
         if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
-          if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
-            smallestWithinRange = candidate;
-          }
-          return;
+          return candidate;
         }
 
         if (candidate.byteLength < minBytes) {
           if (!largestUnderRange || candidate.byteLength > largestUnderRange.byteLength) {
             largestUnderRange = candidate;
           }
-          return;
+          continue;
         }
 
         if (!smallestOverRange || candidate.byteLength < smallestOverRange.byteLength) {
           smallestOverRange = candidate;
         }
-      });
-    });
+      }
+    }
 
-    return smallestWithinRange || largestUnderRange || smallestOverRange;
+    return largestUnderRange || smallestOverRange;
   }
 
   function getSharpResizeOptions(metadata, maxDimension) {
@@ -578,7 +582,6 @@ function createPodUploadSheetMiaoshouAiTitleService({
       animated: false,
       limitInputPixels: false
     }).metadata();
-    let smallestWithinRange = null;
     let largestUnderRange = null;
     let smallestOverRange = null;
 
@@ -616,10 +619,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
         };
 
         if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
-          if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
-            smallestWithinRange = candidate;
-          }
-          continue;
+          return candidate;
         }
 
         if (candidate.byteLength < minBytes) {
@@ -635,7 +635,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
       }
     }
 
-    return smallestWithinRange || largestUnderRange || smallestOverRange;
+    return largestUnderRange || smallestOverRange;
   }
 
   function getAiInputImageFormatInfo(imagePath, imageCompression) {
@@ -718,7 +718,6 @@ function createPodUploadSheetMiaoshouAiTitleService({
       animated: false,
       limitInputPixels: false
     }).metadata();
-    let smallestWithinRange = null;
     let largestUnderRange = null;
     let smallestOverRange = null;
 
@@ -755,10 +754,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
           };
 
           if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
-            if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
-              smallestWithinRange = candidate;
-            }
-            continue;
+            return candidate;
           }
 
           if (candidate.byteLength < minBytes) {
@@ -795,10 +791,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
         };
 
         if (candidate.byteLength >= minBytes && candidate.byteLength <= maxBytes) {
-          if (!smallestWithinRange || candidate.byteLength < smallestWithinRange.byteLength) {
-            smallestWithinRange = candidate;
-          }
-          continue;
+          return candidate;
         }
 
         if (candidate.byteLength < minBytes) {
@@ -814,7 +807,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
       }
     }
 
-    return smallestWithinRange || largestUnderRange || smallestOverRange;
+    return largestUnderRange || smallestOverRange;
   }
 
   async function compressImageForArk(imagePath, settings) {
@@ -1666,7 +1659,14 @@ function createPodUploadSheetMiaoshouAiTitleService({
     job
   ) {
     throwIfJobCanceled(job);
-    const compressedImage = await compressImageForArk(product.imagePath, settings);
+    const compressedImage = await limitImageProcessing(
+      () => compressImageForArk(product.imagePath, settings),
+      {
+        shouldRun: () => !job || !job.canceled,
+        createCanceledError
+      }
+    );
+    throwIfJobCanceled(job);
     const cacheKey = buildAiTitleResultCacheKey(owner, entryId, product, settings, compressedImage, {
       prefixText,
       suffixText,
@@ -1720,34 +1720,6 @@ function createPodUploadSheetMiaoshouAiTitleService({
     }
 
     return successResult;
-  }
-
-  async function mapWithConcurrency(items, concurrency, worker, job) {
-    const targetItems = Array.isArray(items) ? items : [];
-    const results = new Array(targetItems.length);
-    let cursor = 0;
-
-    async function consume() {
-      while (true) {
-        if (job && job.canceled) {
-          return;
-        }
-
-        const currentIndex = cursor;
-
-        if (currentIndex >= targetItems.length) {
-          return;
-        }
-
-        cursor += 1;
-        results[currentIndex] = await worker(targetItems[currentIndex], currentIndex);
-      }
-    }
-
-    const workerCount = Math.max(1, Math.min(concurrency, targetItems.length || 1));
-
-    await Promise.all(Array.from({ length: workerCount }, () => consume()));
-    return results;
   }
 
   function buildCanceledResult(product, attemptCount = 0) {
@@ -1875,85 +1847,90 @@ function createPodUploadSheetMiaoshouAiTitleService({
           canceledCount: 0
         }, localEmitProgress);
 
-        const rawItems = await mapWithConcurrency(products, settings.concurrency, async (product) => {
-          const maxAttemptCount = Math.max(1, settings.retryLimit + 1);
-          let lastError = null;
+        const rawItems = await mapWithConcurrency(
+          products,
+          settings.concurrency,
+          async (product) => {
+            const maxAttemptCount = Math.max(1, settings.retryLimit + 1);
+            let lastError = null;
 
-          for (let attempt = 1; attempt <= maxAttemptCount; attempt += 1) {
-            if (job.canceled) {
-              const canceledItem = buildCanceledResult(product, attempt - 1);
-              emitItemProgress(product, canceledItem);
-              return canceledItem;
-            }
-
-            try {
-              const titleResult = await generateSingleProductTitles(
-                owner,
-                entryId,
-                product,
-                settings,
-                resolvedModel,
-                prefixText,
-                suffixText,
-                extraPrompt,
-                targetLength,
-                outputLanguage,
-                job
-              );
-
-              const successItem = {
-                id: product.id,
-                status: 'success',
-                zhTitle: titleResult.zhTitle,
-                enTitle: titleResult.enTitle,
-                usageScenarios: titleResult.usageScenarios,
-                patternSummary: titleResult.patternSummary,
-                confidence: titleResult.confidence,
-                error: '',
-                imageName: product.imageName,
-                attemptCount: attempt,
-                imageByteLength: titleResult.imageByteLength,
-                aiImageUrl: titleResult.aiImageUrl,
-                aiImageKey: titleResult.aiImageKey,
-                cacheHit: titleResult.cacheHit === true,
-                cacheKey: normalizeText(titleResult.cacheKey)
-              };
-              emitItemProgress(product, successItem);
-              return successItem;
-            } catch (error) {
-              if (isCanceledError(error) || job.canceled) {
+            for (let attempt = 1; attempt <= maxAttemptCount; attempt += 1) {
+              if (job.canceled) {
                 const canceledItem = buildCanceledResult(product, attempt - 1);
                 emitItemProgress(product, canceledItem);
                 return canceledItem;
               }
 
-              lastError = error;
+              try {
+                const titleResult = await generateSingleProductTitles(
+                  owner,
+                  entryId,
+                  product,
+                  settings,
+                  resolvedModel,
+                  prefixText,
+                  suffixText,
+                  extraPrompt,
+                  targetLength,
+                  outputLanguage,
+                  job
+                );
 
-              if (attempt < maxAttemptCount) {
-                continue;
+                const successItem = {
+                  id: product.id,
+                  status: 'success',
+                  zhTitle: titleResult.zhTitle,
+                  enTitle: titleResult.enTitle,
+                  usageScenarios: titleResult.usageScenarios,
+                  patternSummary: titleResult.patternSummary,
+                  confidence: titleResult.confidence,
+                  error: '',
+                  imageName: product.imageName,
+                  attemptCount: attempt,
+                  imageByteLength: titleResult.imageByteLength,
+                  aiImageUrl: titleResult.aiImageUrl,
+                  aiImageKey: titleResult.aiImageKey,
+                  cacheHit: titleResult.cacheHit === true,
+                  cacheKey: normalizeText(titleResult.cacheKey)
+                };
+                emitItemProgress(product, successItem);
+                return successItem;
+              } catch (error) {
+                if (isCanceledError(error) || job.canceled) {
+                  const canceledItem = buildCanceledResult(product, attempt - 1);
+                  emitItemProgress(product, canceledItem);
+                  return canceledItem;
+                }
+
+                lastError = error;
+
+                if (attempt < maxAttemptCount) {
+                  continue;
+                }
               }
             }
-          }
 
-          if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
-            runtimeLogger.logError('pod_upload_sheet_ai_title_generate_failed', lastError);
-          }
+            if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
+              runtimeLogger.logError('pod_upload_sheet_ai_title_generate_failed', lastError);
+            }
 
-          const failedItem = {
-            id: product.id,
-            status: 'failed',
-            zhTitle: '',
-            enTitle: '',
-            patternSummary: '',
-            confidence: 'low',
-            error: summarizeError(lastError),
-            imageName: product.imageName,
-            attemptCount: Math.max(1, settings.retryLimit + 1),
-            imageByteLength: 0
-          };
-          emitItemProgress(product, failedItem);
-          return failedItem;
-        }, job);
+            const failedItem = {
+              id: product.id,
+              status: 'failed',
+              zhTitle: '',
+              enTitle: '',
+              patternSummary: '',
+              confidence: 'low',
+              error: summarizeError(lastError),
+              imageName: product.imageName,
+              attemptCount: Math.max(1, settings.retryLimit + 1),
+              imageByteLength: 0
+            };
+            emitItemProgress(product, failedItem);
+            return failedItem;
+          },
+          { job }
+        );
 
         const items = products.map((product, index) => rawItems[index] || buildCanceledResult(product));
         const successCount = items.filter((item) => item && item.status === 'success').length;

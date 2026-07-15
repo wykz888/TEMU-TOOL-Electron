@@ -8,7 +8,7 @@ import {
 
 const DEFAULT_CONCURRENCY = 20;
 const MIN_CONCURRENCY = 1;
-const MAX_CONCURRENCY = 100;
+const MAX_CONCURRENCY = 50;
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 
 function normalizeText(value) {

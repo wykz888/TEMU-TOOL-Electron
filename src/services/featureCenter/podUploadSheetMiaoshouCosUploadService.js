@@ -10,6 +10,11 @@ const {
   normalizeText,
   nowIso
 } = require('../shopManagement/common');
+const {
+  createAsyncLimiter,
+  mapWithConcurrency,
+  normalizeBoundedInteger
+} = require('./podUploadSheetMiaoshouConcurrencyUtils');
 
 const SERVICE_VERSION = 2;
 const DEFAULT_ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
@@ -35,6 +40,8 @@ const JPG_FLATTEN_BACKGROUND = Object.freeze({
   b: 255
 });
 const PREPARED_UPLOAD_CACHE_DIR_NAME = 'prep';
+const MAX_UPLOAD_CONCURRENCY = 50;
+const IMAGE_PREPARATION_CONCURRENCY = 2;
 const DEFAULT_SETTINGS = Object.freeze({
   concurrency: 8,
   retryLimit: 1,
@@ -59,6 +66,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
   let cachedCacheSnapshot = null;
   const activeUploadJobs = new Map();
   const preparedFileCache = new Map();
+  const limitImagePreparation = createAsyncLimiter(IMAGE_PREPARATION_CONCURRENCY);
   let sharpModule = null;
   let sharpLoadError = null;
   let sharpLoadAttempted = false;
@@ -361,7 +369,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
   }
 
   function normalizeUploadConcurrency(value) {
-    return normalizeInteger(value, DEFAULT_SETTINGS.concurrency, 1, 32);
+    return normalizeBoundedInteger(value, DEFAULT_SETTINGS.concurrency, 1, MAX_UPLOAD_CONCURRENCY);
   }
 
   function normalizeUploadRetryLimit(value) {
@@ -2106,33 +2114,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return uploadCosFileWithTimeout(uploadParams, context);
   }
 
-  async function mapWithConcurrency(items, concurrency, worker, job) {
-    const targetItems = Array.isArray(items) ? items : [];
-    const results = new Array(targetItems.length);
-    let cursor = 0;
-
-    async function consume() {
-      while (true) {
-        if (job && job.canceled) {
-          return;
-        }
-
-        const currentIndex = cursor;
-
-        if (currentIndex >= targetItems.length) {
-          return;
-        }
-
-        cursor += 1;
-        results[currentIndex] = await worker(targetItems[currentIndex], currentIndex);
-      }
-    }
-
-    const workerCount = Math.max(1, Math.min(concurrency, targetItems.length || 1));
-    await Promise.all(Array.from({ length: workerCount }, () => consume()));
-    return results;
-  }
-
   async function uploadSingleCandidate(candidate, context) {
     const {
       cacheSnapshot,
@@ -2190,12 +2171,17 @@ function createPodUploadSheetMiaoshouCosUploadService({
       return buildSuccessResult(candidate, existingCacheEntry, 'cached');
     }
 
-    const preparedUpload = await prepareImageUploadFile(
-      owner,
-      candidate.localPath,
-      fileStat,
-      effectiveImageUploadMode,
-      effectiveImageQuality
+    const preparedUpload = await limitImagePreparation(
+      () => prepareImageUploadFile(
+        owner,
+        candidate.localPath,
+        fileStat,
+        effectiveImageUploadMode,
+        effectiveImageQuality
+      ),
+      {
+        shouldRun: () => !job || !job.canceled
+      }
     );
     const uploadFilePath = preparedUpload.uploadFilePath;
     const uploadFileStat = uploadFilePath === candidate.localPath
@@ -2416,7 +2402,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
           applyJobProgressResult(job, candidate, item);
           return item;
         },
-        job
+        { job }
       );
       const items = targetCandidates.map((candidate, index) => rawItems[index] || buildCanceledResult(candidate));
       const uploadedCount = items.filter((item) => item && item.status === 'success' && item.source === 'uploaded').length;

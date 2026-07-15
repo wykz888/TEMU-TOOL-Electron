@@ -18,6 +18,14 @@ const DELIVERY_OPTION_VALUES = Object.freeze(['1', '2', '9']);
 const PRODUCT_CODE_HASH_BASE = 1000000000000;
 const PRODUCT_CODE_HASH_RANGE = 9000000000000;
 const TITLE_MAX_LENGTH = 255;
+const SUGGESTED_PRICE_COLUMN_ALIASES = Object.freeze([
+  '\u5efa\u8bae\u552e\u4ef7',
+  '\u5efa\u8bae\u552e\u4ef7(CNY)',
+  '\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09',
+  '*\u5efa\u8bae\u552e\u4ef7',
+  '*\u5efa\u8bae\u552e\u4ef7(CNY)',
+  '*\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09'
+]);
 
 function createPodUploadSheetMiaoshouExportService({
   app,
@@ -313,6 +321,10 @@ function createPodUploadSheetMiaoshouExportService({
       result[normalizedKey] = value;
       return result;
     }, {});
+  }
+
+  function getSuggestedPriceValue(_product, skuRow) {
+    return normalizeText(skuRow && skuRow.price);
   }
 
   function getSkuValueItems(value) {
@@ -1268,7 +1280,7 @@ function createPodUploadSheetMiaoshouExportService({
         { header: '* 颜色图', getValue: (product, skuRow) => getFashionColorImageValue(product, skuRow) },
         { header: '主货号', getValue: (product) => getMasterSkuValue(product) },
         { header: '* 申报价（CNY）', getValue: (_product, skuRow) => normalizeText(skuRow.declaredPrice) },
-        { header: '建议售价（CNY）', getValue: (_product, skuRow) => normalizeText(skuRow.price) },
+        { header: '\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09', aliases: SUGGESTED_PRICE_COLUMN_ALIASES, getValue: getSuggestedPriceValue },
         { header: '* 长（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.length) },
         { header: '* 宽（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.width) },
         { header: '* 高（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.height) },
@@ -1315,7 +1327,7 @@ function createPodUploadSheetMiaoshouExportService({
       { header: '* 规格属性值2', getValue: (_product, skuRow) => normalizeText(skuRow.specValueTwo) },
       { header: '* 预览图', getValue: (product, skuRow) => getSkuImageValue(product, skuRow) },
       { header: '* 申报价（CNY）', getValue: (_product, skuRow) => normalizeText(skuRow.declaredPrice) },
-      { header: '建议售价（CNY）', getValue: (_product, skuRow) => normalizeText(skuRow.price) },
+      { header: '\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09', aliases: SUGGESTED_PRICE_COLUMN_ALIASES, getValue: getSuggestedPriceValue },
       { header: '* 长（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.length) },
       { header: '* 宽（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.width) },
       { header: '* 高（cm）', getValue: (_product, skuRow) => normalizeText(skuRow.height) },

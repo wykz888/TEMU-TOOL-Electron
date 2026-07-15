@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue';
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const DEFAULT_CONCURRENCY = 8;
 const MIN_CONCURRENCY = 1;
-const MAX_CONCURRENCY = 32;
+const MAX_CONCURRENCY = 50;
 const DEFAULT_IMAGE_QUALITY = 90;
 const MIN_IMAGE_QUALITY = 48;
 const MAX_IMAGE_QUALITY = 100;

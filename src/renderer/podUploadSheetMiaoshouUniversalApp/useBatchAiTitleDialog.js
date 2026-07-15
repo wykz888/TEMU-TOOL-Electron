@@ -12,7 +12,7 @@ import {
 const VIEW_BRIDGE_KEY = 'podUploadSheetMiaoshouViewBridge';
 const DEFAULT_CONCURRENCY = 20;
 const MIN_CONCURRENCY = 1;
-const MAX_CONCURRENCY = 100;
+const MAX_CONCURRENCY = 50;
 const DEFAULT_TARGET_LENGTH = 250;
 const MIN_TARGET_LENGTH = 80;
 const MAX_TARGET_LENGTH = 255;

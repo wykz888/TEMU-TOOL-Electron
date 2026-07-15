@@ -277,7 +277,7 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         || source.imageUploadConcurrency,
         8,
         1,
-        32
+        50
       ),
       imageQuality: normalizeInteger(
         imageUploadConfigSource.imageQuality
@@ -320,7 +320,7 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         || source.aiConcurrency,
         20,
         1,
-        100
+        50
       ),
       targetLength: normalizeInteger(
         batchAiTitleConfigSource.targetLength
