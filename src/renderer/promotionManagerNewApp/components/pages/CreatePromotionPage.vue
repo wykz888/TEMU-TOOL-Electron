@@ -14,8 +14,9 @@
       <section class="pm-new-page-panel pm-new-product-panel">
         <div class="pm-new-shop-query-row">
           <ShopSelectDropdown
-            v-model="selectedShopId"
+            v-model="selectedShopIds"
             :placeholder="shopSelectPlaceholder"
+            storage-key="promotion-manager-new:create-shop-selection"
           />
           <a-button
             type="primary"
@@ -88,8 +89,8 @@ defineProps({
   }
 });
 
-const selectedShopId = ref('');
-const queriedShopId = ref('');
+const selectedShopIds = ref([]);
+const queriedShopIds = ref([]);
 
 const title = '\u65b0\u5efa\u63a8\u5e7f';
 const draftButtonLabel = '\u4fdd\u5b58\u8349\u7a3f';
@@ -110,6 +111,6 @@ const scheduleLabel = '\u6267\u884c\u8282\u594f';
 const schedulePlaceholder = '\u9009\u62e9\u8282\u594f';
 
 function handleShopQuery() {
-  queriedShopId.value = selectedShopId.value;
+  queriedShopIds.value = selectedShopIds.value.slice();
 }
 </script>

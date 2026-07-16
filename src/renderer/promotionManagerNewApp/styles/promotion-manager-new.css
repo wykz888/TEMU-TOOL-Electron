@@ -189,6 +189,7 @@ body {
 
 .pm-new-product-panel {
   grid-template-rows: auto auto auto minmax(0, 1fr);
+  overflow: visible;
 }
 
 .pm-new-strategy-panel,
@@ -205,36 +206,6 @@ body {
   gap: 8px;
   align-items: center;
   justify-content: start;
-}
-
-.shared-shop-select {
-  width: 100%;
-}
-
-.shared-shop-select-option {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  padding: 2px 0;
-}
-
-.shared-shop-select-option strong,
-.shared-shop-select-option span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shared-shop-select-option strong {
-  color: #203048;
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.shared-shop-select-option span {
-  color: #738298;
-  font-size: 12px;
-  line-height: 1.25;
 }
 
 .pm-new-filter-row {
@@ -477,13 +448,8 @@ body.dark-theme .pm-new-policy ul,
 body.dark-theme .pm-new-log-row span,
 body.dark-theme .pm-new-log-row p,
 body.dark-theme .pm-new-metric span,
-body.dark-theme .pm-new-monitor-card span,
-body.dark-theme .shared-shop-select-option span {
+body.dark-theme .pm-new-monitor-card span {
   color: #9aa8ba;
-}
-
-body.dark-theme .shared-shop-select-option strong {
-  color: #e4edf8;
 }
 
 body.dark-theme .pm-new-switch-tab {

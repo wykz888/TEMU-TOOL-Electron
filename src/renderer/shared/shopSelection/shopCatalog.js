@@ -4,6 +4,20 @@ export function normalizeText(value) {
   return String(value == null ? '' : value).trim();
 }
 
+export function normalizeShopIds(shopIds) {
+  const sourceItems = Array.isArray(shopIds)
+    ? shopIds
+    : [shopIds];
+
+  return Array.from(
+    new Set(
+      sourceItems
+        .map((shopId) => normalizeText(shopId))
+        .filter(Boolean)
+    )
+  );
+}
+
 function normalizeGroupRecord(group) {
   return {
     id: normalizeText(group && group.id),
