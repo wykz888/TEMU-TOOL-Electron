@@ -15,7 +15,10 @@ const { createFeatureCenterProfileService } = require('./services/featureCenter/
 const { createGlobalConfigService } = require('./services/globalConfig/globalConfigService');
 const { createGlobalAiTitleConfigAdapter } = require('./services/globalConfig/globalAiTitleConfigAdapter');
 const { createAppUpdateService } = require('./services/update/updateService');
-const { createPromotionMasterSessionService } = require('./services/featureCenter/promotionMasterSessionService');
+const { createPromotionAdsSessionService } = require('./services/featureCenter/promotionAdsSessionService');
+const {
+  createPromotionManagerNewGoodsService
+} = require('./services/featureCenter/promotionManagerNewGoodsService');
 const { createPromotionMonitorService } = require('./services/featureCenter/promotionMonitorService');
 const { createPromotionManagerSettingsService } = require('./services/featureCenter/promotionManagerSettingsService');
 const {
@@ -156,7 +159,8 @@ let exitSyncProgressWindow = null;
 let shopWindowBrowserController = null;
 let shopWindowBrowserStorageSyncService = null;
 let shopManagementService = null;
-let promotionMasterSessionService = null;
+let promotionAdsSessionService = null;
+let promotionManagerNewGoodsService = null;
 let promotionMonitorService = null;
 let operationsProductCategoryService = null;
 let operationsSharedCostService = null;
@@ -1650,11 +1654,16 @@ app.whenReady().then(() => {
       runtimeLogger
     });
   });
-  promotionMasterSessionService = createPromotionMasterSessionService({
+  promotionAdsSessionService = createPromotionAdsSessionService({
     sessionStore,
     shopManagementService,
     featureCenterProfileService,
     getShopWindowBrowserController: () => shopWindowBrowserController,
+    runtimeLogger
+  });
+  promotionManagerNewGoodsService = createPromotionManagerNewGoodsService({
+    shopManagementService,
+    promotionAdsSessionService,
     runtimeLogger
   });
   operationsSharedCostService = createAppLazyService('operations-shared-cost', () => {
@@ -1781,7 +1790,7 @@ app.whenReady().then(() => {
     featureCenterProfileService,
     shopManagementService,
     promotionManagerSettingsService,
-    promotionMasterSessionService,
+    promotionMasterSessionService: promotionAdsSessionService,
     runtimeLogger
   });
   podUploadSheetMiaoshouTemplateService = createPodUploadSheetMiaoshouTemplateService({
@@ -3020,6 +3029,26 @@ app.whenReady().then(() => {
         ? promotionMonitorService.setBatchMonitoringActive(payload)
         : { updatedAt: '', batchMonitoringActive: false, enabledShopIds: [], shops: {} }
     ),
+    queryPromotionManagerNewGoods: (payload) => (
+      promotionManagerNewGoodsService
+        ? promotionManagerNewGoodsService.queryGoods(payload)
+        : {
+          updatedAt: '',
+          request: {},
+          rows: [],
+          regions: [],
+          errors: [{
+            shopId: '',
+            shopName: '',
+            regionId: '',
+            regionLabel: '',
+            message: '\u65b0\u7248\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+          }],
+          totalCount: 0,
+          successCount: 0,
+          failedCount: 1
+        }
+    ),
     getRuntimeLogEntries: (payload) => runtimeLogger.readEntries(payload),
     getPodUploadSheetMiaoshouCategories: () => (
       podUploadSheetMiaoshouCategoryService
@@ -3472,8 +3501,8 @@ app.on('before-quit', (event) => {
     if (promotionMonitorService) {
       promotionMonitorService.shutdown();
     }
-    if (promotionMasterSessionService) {
-      promotionMasterSessionService.shutdown();
+    if (promotionAdsSessionService) {
+      promotionAdsSessionService.shutdown();
     }
     runtimeLogger.log('before_quit');
 
@@ -3528,8 +3557,8 @@ app.on('before-quit', (event) => {
   if (promotionMonitorService) {
     promotionMonitorService.shutdown();
   }
-  if (promotionMasterSessionService) {
-    promotionMasterSessionService.shutdown();
+  if (promotionAdsSessionService) {
+    promotionAdsSessionService.shutdown();
   }
   runtimeLogger.log('before_quit');
 });

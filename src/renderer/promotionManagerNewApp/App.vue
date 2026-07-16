@@ -80,10 +80,7 @@ const activePageProps = computed(() => {
     };
   }
 
-  return {
-    columns: tableColumns,
-    rows: tableRows
-  };
+  return {};
 });
 
 function handleModuleChange(moduleId) {

@@ -50,6 +50,8 @@
 
 - Code: `src/services/featureCenter/`
 - Responsibility: operations activity management, traffic boost, price declaration, new product lifecycle, promotion master/monitor, marketing tools, POD MiaoShou export/upload/template/title services, shared cost/shop/category services.
+- Promotion Ads session boundary: `promotionAdsSessionService.js` owns TEMU ads login readiness, region cookie refresh/cache, and backend region-cookie POST requests. `promotionMasterSessionService.js` is now a compatibility export, and newer promotion pages should depend on the neutral Ads session service naming.
+- Promotion manager new goods query: `promotionManagerNewGoodsService.js` owns `query_mall_goods_list` payload normalization, multi-shop/multi-region fetch orchestration, and goods row parsing for the Vue renderer.
 - Notes: POD MiaoShou export now uses a shared pure helper for material item selection and description image resolution so the TEMU and universal export services stay aligned on the same rule set. POD MiaoShou AI title generation now also persists per-user, per-entry result cache files under the feature storage cache root so `useCache` can skip both upload and generation work on repeated inputs.
 - Risk: several services are thousands of lines and should be changed carefully with focused validation.
 

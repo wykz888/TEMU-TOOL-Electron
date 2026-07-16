@@ -84,6 +84,7 @@ const FEATURE_CHANNELS = Object.freeze({
   GET_PROMOTION_MONITOR_SNAPSHOT: 'feature-center:get-promotion-monitor-snapshot',
   SET_PROMOTION_MONITOR_SHOP_ENABLED: 'feature-center:set-promotion-monitor-shop-enabled',
   SET_PROMOTION_MONITOR_BATCH_ACTIVE: 'feature-center:set-promotion-monitor-batch-active',
+  QUERY_PROMOTION_MANAGER_NEW_GOODS: 'feature-center:query-promotion-manager-new-goods',
   GET_RUNTIME_LOG_ENTRIES: 'feature-center:get-runtime-log-entries',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES: 'feature-center:get-pod-upload-sheet-miaoshou-categories',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATE_SNAPSHOT: 'feature-center:get-pod-upload-sheet-miaoshou-template-snapshot',

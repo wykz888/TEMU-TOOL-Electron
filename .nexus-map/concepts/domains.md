@@ -38,7 +38,9 @@ POD MiaoShou TEMU and universal variants have separate feature metadata, indepen
 
 Promotion management uses `src/renderer/promotionManagerApp/`, `src/services/featureCenter/promotionMasterSessionService.js`, `promotionMonitorService.js`, and related promotion IPC handlers. It depends on shop sessions and browser automation.
 
-Promotion master new is a separate layout-first feature entry under `src/features/featureCenter/promotionMasterNew/` with an independent window shell at `src/renderer/promotionManagerNew.html`, renderer module `src/renderer/promotionManagerNewApp/`, and window factory `src/windows/createPromotionManagerNewWindow.js`. It currently provides a compact Vue/Arco workbench layout before the old promotion business flows are wired in.
+Promotion Ads session and cookie handling now live behind the neutral `src/services/featureCenter/promotionAdsSessionService.js`; the old `promotionMasterSessionService.js` path remains as a compatibility export. Promotion master new queries mall goods through `src/services/featureCenter/promotionManagerNewGoodsService.js`, which calls the shared Ads session service and parses `query_mall_goods_list` results.
+
+Promotion master new is a separate layout-first feature entry under `src/features/featureCenter/promotionMasterNew/` with an independent window shell at `src/renderer/promotionManagerNew.html`, renderer module `src/renderer/promotionManagerNewApp/`, and window factory `src/windows/createPromotionManagerNewWindow.js`. It now includes a real goods-list query surface before the remaining promotion creation workflow is wired in.
 
 ## Global Config, Theme, And Update
 

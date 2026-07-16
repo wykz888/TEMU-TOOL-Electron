@@ -95,6 +95,9 @@ function createFeatureCenterPreloadApi({
     setPromotionMonitorBatchActive(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.SET_PROMOTION_MONITOR_BATCH_ACTIVE, payload);
     },
+    queryPromotionManagerNewGoods(payload) {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_GOODS, payload);
+    },
     getRuntimeLogEntries(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, payload);
     },

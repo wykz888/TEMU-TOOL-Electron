@@ -7,6 +7,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     getPromotionMonitorSnapshot,
     setPromotionMonitorShopEnabled,
     setPromotionMonitorBatchActive,
+    queryPromotionManagerNewGoods,
     getRuntimeLogEntries
   } = options;
   const {
@@ -45,6 +46,29 @@ function registerFeatureCenterPromotionIpc(options = {}) {
   handle(FEATURE_CHANNELS.SET_PROMOTION_MONITOR_BATCH_ACTIVE, async (_event, payload) => {
     if (typeof setPromotionMonitorBatchActive !== 'function') return fb_promotionMonitor();
     return setPromotionMonitorBatchActive(payload);
+  });
+
+  handle(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_GOODS, async (_event, payload) => {
+    if (typeof queryPromotionManagerNewGoods !== 'function') {
+      return {
+        updatedAt: new Date().toISOString(),
+        request: {},
+        rows: [],
+        regions: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u65b0\u7248\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+        }],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1
+      };
+    }
+
+    return queryPromotionManagerNewGoods(payload);
   });
 
   handle(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, async (_event, payload) => {
