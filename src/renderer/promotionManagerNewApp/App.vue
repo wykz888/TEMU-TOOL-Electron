@@ -1,7 +1,6 @@
 <template>
   <main class="pm-new-shell">
     <FunctionSwitchBar
-      :title="copy.title"
       :modules="modules"
       :active-module-id="activeModuleId"
       :secondary-action="copy.secondaryAction"

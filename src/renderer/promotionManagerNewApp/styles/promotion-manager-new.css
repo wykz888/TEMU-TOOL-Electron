@@ -39,22 +39,10 @@ body {
 
 .pm-new-switch-bar {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   min-height: 34px;
-}
-
-.pm-new-switch-title {
-  display: inline-flex;
-  align-items: center;
-  min-width: 86px;
-}
-
-.pm-new-switch-title strong {
-  color: #172033;
-  font-size: 16px;
-  line-height: 1.2;
 }
 
 .pm-new-switch-tabs {
@@ -435,7 +423,6 @@ body.dark-theme .pm-new-metric {
   box-shadow: none;
 }
 
-body.dark-theme .pm-new-switch-title strong,
 body.dark-theme .pm-new-feature-head h2,
 body.dark-theme .pm-new-section-title strong,
 body.dark-theme .pm-new-policy h3,
@@ -484,15 +471,6 @@ body.dark-theme .pm-new-table-scroll td {
 }
 
 @media (max-width: 1180px) {
-  .pm-new-switch-bar {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .pm-new-switch-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
-
   .pm-new-create-grid,
   .pm-new-monitor-grid {
     grid-template-columns: minmax(0, 1fr);

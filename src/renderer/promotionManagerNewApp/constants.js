@@ -1,5 +1,4 @@
 export const APP_COPY = Object.freeze({
-  title: '\u529f\u80fd\u5207\u6362',
   primaryAction: '\u65b0\u5efa\u63a8\u5e7f',
   secondaryAction: '\u540c\u6b65\u6570\u636e'
 });

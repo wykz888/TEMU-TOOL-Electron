@@ -1,9 +1,5 @@
 <template>
   <header class="pm-new-switch-bar">
-    <div class="pm-new-switch-title">
-      <strong>{{ title }}</strong>
-    </div>
-
     <nav class="pm-new-switch-tabs" aria-label="Promotion function switch">
       <button
         v-for="moduleItem in modules"
@@ -46,10 +42,6 @@ import {
 } from '@arco-design/web-vue/es/icon';
 
 defineProps({
-  title: {
-    type: String,
-    default: ''
-  },
   modules: {
     type: Array,
     default: () => []
