@@ -327,8 +327,8 @@ function createPodUploadSheetMiaoshouWorkspaceStateService({
         || workspaceSource.targetLength
         || source.targetLength,
         250,
-        80,
-        255
+        30,
+        300
       ),
       imageQuality: normalizeInteger(
         batchAiTitleConfigSource.imageQuality

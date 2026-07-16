@@ -1858,6 +1858,7 @@ app.whenReady().then(() => {
       sessionStore,
       featureCenterProfileService,
       aiTitleConfigService: podUploadSheetMiaoshouAiTitleConfigService,
+      globalConfigService,
       runtimeLogger,
       emitProgress(payload) {
         [

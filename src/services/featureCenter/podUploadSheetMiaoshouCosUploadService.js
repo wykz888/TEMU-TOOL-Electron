@@ -2,7 +2,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const COS = require('cos-nodejs-sdk-v5');
 const { cosClient } = require('../cos/client');
-const { cosConfig } = require('../cos/config');
 const {
   buildOwnerDescriptor,
   createHash,
@@ -190,6 +189,10 @@ function createPodUploadSheetMiaoshouCosUploadService({
     );
   }
 
+  function createTencentCosConfigError() {
+    return new Error('\u817e\u8baf COS \u5b58\u50a8\u6e20\u9053\u672a\u914d\u7f6e\u5b8c\u6574\uff0c\u8bf7\u5148\u5728\u5168\u5c40\u914d\u7f6e\u4e2d\u586b\u5199 SecretId\u3001SecretKey\u3001\u5b58\u50a8\u6876\u548c\u5730\u57df\u3002');
+  }
+
   function createTencentCosClient(config) {
     return new COS({
       SecretId: normalizeText(config.secretId),
@@ -209,18 +212,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
       publicBaseUrl: normalizeText(config.publicBaseUrl),
       client: createTencentCosClient(config),
       usesFallbackClient: false
-    };
-  }
-
-  function createFallbackTencentCosStorageContext() {
-    return {
-      storageProvider: 'tencent-cos',
-      bucket: TARGET_BUCKET,
-      region: DEFAULT_BUCKET_REGION,
-      rootPrefix: normalizeObjectPrefix(DEFAULT_OBJECT_ROOT_PREFIX, DEFAULT_OBJECT_ROOT_PREFIX),
-      publicBaseUrl: '',
-      client: cosClient,
-      usesFallbackClient: true
     };
   }
 
@@ -269,10 +260,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
       ? providers.tencentCos
       : {};
 
+    if (!isTencentCosConfigUsable(cosProviderConfig)) {
+      throw createTencentCosConfigError();
+    }
+
     return {
-      ...(isTencentCosConfigUsable(cosProviderConfig)
-        ? createTencentCosStorageContext(cosProviderConfig)
-        : createFallbackTencentCosStorageContext()),
+      ...createTencentCosStorageContext(cosProviderConfig),
       uploadSettings
     };
   }
@@ -679,10 +672,6 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return nextSnapshot;
   }
 
-  async function resolveTargetRegion() {
-    return DEFAULT_BUCKET_REGION;
-  }
-
   function getJobKey(owner, payload) {
     const runId = normalizeText(payload && payload.runId);
     return runId || (owner && owner.userKey) || '';
@@ -882,13 +871,25 @@ function createPodUploadSheetMiaoshouCosUploadService({
     return `${parts.year || '1970'}-${parts.month || '01'}-${parts.day || '01'}`;
   }
 
-  function getPublicUrlForKey(region, objectKey) {
+  function getPublicUrlForStorageContext(storageContext, objectKey) {
     const encodedKey = String(objectKey || '')
       .split('/')
       .map((segment) => encodeURIComponent(segment))
       .join('/');
+    const baseUrl = normalizeRemoteUrl(storageContext && storageContext.publicBaseUrl, { allowBareDomain: true });
 
-    return `https://${TARGET_BUCKET}.cos.${region}.myqcloud.com/${encodedKey}`;
+    if (baseUrl) {
+      return `${baseUrl.replace(/[\\/]+$/, '')}/${encodedKey}`;
+    }
+
+    if (storageContext && storageContext.storageProvider === 'tencent-cos') {
+      const bucket = normalizeText(storageContext.bucket);
+      const region = normalizeText(storageContext.region);
+
+      return bucket && region ? `https://${bucket}.cos.${region}.myqcloud.com/${encodedKey}` : '';
+    }
+
+    return '';
   }
 
   function getContentType(filePath) {
@@ -1809,7 +1810,12 @@ function createPodUploadSheetMiaoshouCosUploadService({
     const timeoutMs = getUploadItemTimeoutMs(context.fileSize);
     const uploadClient = rawParams.client && typeof rawParams.client.uploadFile === 'function'
       ? rawParams.client
-      : cosClient;
+      : null;
+
+    if (!uploadClient) {
+      throw createTencentCosConfigError();
+    }
+
     let taskId = '';
     let completed = false;
     let timeoutTimer = null;
@@ -2109,7 +2115,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
     const uploadParams = {
       ...(params && typeof params === 'object' ? params : {}),
-      client: storageContext && storageContext.client ? storageContext.client : cosClient
+      client: storageContext && storageContext.client ? storageContext.client : null
     };
     return uploadCosFileWithTimeout(uploadParams, context);
   }
@@ -2129,8 +2135,15 @@ function createPodUploadSheetMiaoshouCosUploadService({
       imageUploadMode
     );
     const effectiveImageQuality = normalizeImageQuality(imageQuality, effectiveImageUploadMode);
-    const effectiveStorageContext = storageContext || createFallbackTencentCosStorageContext();
-    const uploadRegion = normalizeText(effectiveStorageContext.region) || DEFAULT_BUCKET_REGION;
+    const effectiveStorageContext = storageContext && typeof storageContext === 'object'
+      ? storageContext
+      : null;
+
+    if (!effectiveStorageContext) {
+      throw createTencentCosConfigError();
+    }
+
+    const uploadRegion = normalizeText(effectiveStorageContext.region);
 
     if (job && job.canceled) {
       return buildCanceledResult(candidate);
@@ -2228,7 +2241,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
       const rawUploadedUrl = normalizeText(uploadResult && (uploadResult.url || uploadResult.Location))
         || buildR2ObjectUrl(effectiveStorageContext, objectKey)
-        || getPublicUrlForKey(uploadRegion, objectKey);
+        || getPublicUrlForStorageContext(effectiveStorageContext, objectKey);
       const cacheEntry = {
         filePath: candidate.localPath,
         url: normalizeRemoteUrl(rawUploadedUrl) || rawUploadedUrl,
@@ -2325,8 +2338,8 @@ function createPodUploadSheetMiaoshouCosUploadService({
     if (!targetCandidates.length) {
       return {
         updatedAt: nowIso(),
-        bucket: normalizeText(storageContext.bucket) || TARGET_BUCKET,
-        region: normalizeText(storageContext.region) || await resolveTargetRegion(),
+        bucket: normalizeText(storageContext.bucket),
+        region: normalizeText(storageContext.region),
         canceled: false,
         totalCount: 0,
         successCount: 0,
@@ -2345,7 +2358,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
     }
 
     const cacheSnapshot = await loadCacheSnapshot(owner);
-    const region = normalizeText(storageContext.region) || cacheSnapshot.region || await resolveTargetRegion();
+    const region = normalizeText(storageContext.region);
     const job = createUploadJob(owner, payload);
 
     try {
