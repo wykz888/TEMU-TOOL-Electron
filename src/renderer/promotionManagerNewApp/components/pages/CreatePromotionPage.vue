@@ -19,7 +19,7 @@
             storage-key="promotion-manager-new:create-shop-selection"
           />
           <label class="pm-new-query-region">
-            <span>{{ regionSelectLabel }}</span>
+            <span class="pm-new-query-region-label">{{ regionSelectLabel }}</span>
             <a-select
               v-model="selectedRegionCodes"
               class="pm-new-query-region-control"

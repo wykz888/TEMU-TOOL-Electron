@@ -202,30 +202,36 @@ body {
 
 .pm-new-shop-query-row {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(190px, 220px) auto;
-  gap: 8px;
-  align-items: center;
+  grid-template-columns: minmax(260px, 320px) minmax(150px, 178px) auto;
+  gap: 10px;
+  align-items: end;
   justify-content: start;
 }
 
 .pm-new-query-region {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 6px;
-  align-items: center;
+  gap: 4px;
   min-width: 0;
 }
 
-.pm-new-query-region span {
-  color: #6a788b;
+.pm-new-query-region-label {
+  min-height: 15px;
+  color: #203048;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
 .pm-new-query-region-control {
   width: 100%;
   min-width: 0;
+}
+
+.pm-new-shop-query-row > .arco-btn {
+  height: 34px;
+  min-width: 62px;
+  padding: 0 16px;
 }
 
 .pm-new-filter-row {
