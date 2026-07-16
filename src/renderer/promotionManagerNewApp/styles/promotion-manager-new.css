@@ -124,10 +124,6 @@ body {
   padding: 12px;
 }
 
-.pm-new-feature-page--create {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-}
-
 .pm-new-feature-page--detail {
   grid-template-rows: auto auto minmax(0, 1fr);
 }
@@ -287,47 +283,10 @@ body {
   font-size: 13px;
 }
 
-.pm-new-flow-panel {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  overflow: visible;
-}
-
-.pm-new-flow-item {
-  display: grid;
-  gap: 7px;
-  padding: 12px;
-  border: 1px solid rgba(49, 66, 89, 0.08);
-  border-radius: 8px;
-  background: #f7fafc;
-}
-
-.pm-new-flow-item span {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  color: #147a56;
-  background: rgba(21, 155, 106, 0.1);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.pm-new-flow-item strong,
 .pm-new-policy h3 {
   color: #203048;
   font-size: 14px;
   line-height: 1.35;
-}
-
-.pm-new-flow-item p {
-  margin: 0;
-  color: #66778e;
-  font-size: 12px;
-  line-height: 1.55;
 }
 
 .pm-new-metric-row {
@@ -487,7 +446,6 @@ body.dark-theme .pm-new-metric {
 body.dark-theme .pm-new-switch-title strong,
 body.dark-theme .pm-new-feature-head h2,
 body.dark-theme .pm-new-section-title strong,
-body.dark-theme .pm-new-flow-item strong,
 body.dark-theme .pm-new-policy h3,
 body.dark-theme .pm-new-metric strong,
 body.dark-theme .pm-new-monitor-card strong {
@@ -495,7 +453,6 @@ body.dark-theme .pm-new-monitor-card strong {
 }
 
 body.dark-theme .pm-new-feature-head p,
-body.dark-theme .pm-new-flow-item p,
 body.dark-theme .pm-new-policy ul,
 body.dark-theme .pm-new-log-row span,
 body.dark-theme .pm-new-log-row p,
@@ -515,7 +472,6 @@ body.dark-theme .pm-new-switch-tab.is-active {
   color: var(--theme-primary-color-deep);
 }
 
-body.dark-theme .pm-new-flow-item,
 body.dark-theme .pm-new-policy,
 body.dark-theme .pm-new-monitor-card,
 body.dark-theme .pm-new-log-row {
@@ -551,7 +507,6 @@ body.dark-theme .pm-new-table-scroll td {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .pm-new-flow-panel,
   .pm-new-metric-row,
   .pm-new-monitor-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -578,7 +533,6 @@ body.dark-theme .pm-new-table-scroll td {
     justify-content: flex-start;
   }
 
-  .pm-new-flow-panel,
   .pm-new-metric-row,
   .pm-new-monitor-board {
     grid-template-columns: 1fr;

@@ -61,18 +61,6 @@
       </aside>
     </div>
 
-    <section class="pm-new-page-panel pm-new-flow-panel">
-      <div
-        v-for="step in steps"
-        :key="step.id"
-        class="pm-new-flow-item"
-      >
-        <span>{{ step.id }}</span>
-        <strong>{{ step.title }}</strong>
-        <p>{{ step.description }}</p>
-        <a-tag size="small" bordered>{{ step.status }}</a-tag>
-      </div>
-    </section>
   </section>
 </template>
 
@@ -81,10 +69,6 @@ defineProps({
   module: {
     type: Object,
     default: () => ({})
-  },
-  steps: {
-    type: Array,
-    default: () => []
   },
   columns: {
     type: Array,

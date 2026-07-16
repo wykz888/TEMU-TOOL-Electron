@@ -58,27 +58,6 @@ export const SUMMARY_METRICS = Object.freeze([
   }
 ]);
 
-export const WORKFLOW_STEPS = Object.freeze([
-  {
-    id: 'select',
-    title: '\u9009\u62e9\u5e97\u94fa\u4e0e\u5546\u54c1',
-    description: '\u652f\u6301\u6309\u5e97\u94fa\u5206\u7ec4\u3001\u5546\u54c1\u72b6\u6001\u548c\u6570\u636e\u8868\u7b5b\u9009\u3002',
-    status: '\u5f85\u63a5\u5165'
-  },
-  {
-    id: 'strategy',
-    title: '\u8bbe\u7f6e\u63a8\u5e7f\u7b56\u7565',
-    description: '\u914d\u7f6e\u9884\u7b97\u3001\u51fa\u4ef7\u3001\u76ee\u6807 ROAS \u548c\u6267\u884c\u8282\u594f\u3002',
-    status: '\u5e03\u5c40\u5b8c\u6210'
-  },
-  {
-    id: 'review',
-    title: '\u9884\u89c8\u4e0e\u63d0\u4ea4',
-    description: '\u63d0\u4ea4\u524d\u7edf\u4e00\u68c0\u67e5\u5e97\u94fa\u3001\u5546\u54c1\u548c\u9884\u7b97\u8fb9\u754c\u3002',
-    status: '\u5f85\u63a5\u5165'
-  }
-]);
-
 export const TABLE_COLUMNS = Object.freeze([
   '\u5e97\u94fa',
   '\u6a21\u5757',

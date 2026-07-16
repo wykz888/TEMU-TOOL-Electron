@@ -31,8 +31,7 @@ import {
   POLICY_GROUPS,
   SUMMARY_METRICS,
   TABLE_COLUMNS,
-  TABLE_ROWS,
-  WORKFLOW_STEPS
+  TABLE_ROWS
 } from './constants.js';
 import FunctionSwitchBar from './components/FunctionSwitchBar.vue';
 import CreatePromotionPage from './components/pages/CreatePromotionPage.vue';
@@ -43,7 +42,6 @@ import RuntimeLogsPage from './components/pages/RuntimeLogsPage.vue';
 const copy = APP_COPY;
 const modules = MODULES;
 const summaryMetrics = SUMMARY_METRICS;
-const workflowSteps = WORKFLOW_STEPS;
 const tableColumns = TABLE_COLUMNS;
 const tableRows = TABLE_ROWS;
 const policyGroups = POLICY_GROUPS;
@@ -97,7 +95,6 @@ const activePageProps = computed(() => {
 
   return {
     ...commonProps,
-    steps: workflowSteps,
     columns: tableColumns,
     rows: tableRows
   };
