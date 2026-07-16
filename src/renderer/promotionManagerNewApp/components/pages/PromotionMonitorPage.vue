@@ -2,9 +2,7 @@
   <section class="pm-new-feature-page pm-new-feature-page--monitor">
     <div class="pm-new-feature-head">
       <div>
-        <a-tag bordered>{{ module.label }}</a-tag>
         <h2>{{ title }}</h2>
-        <p>{{ description }}</p>
       </div>
       <div class="pm-new-feature-actions">
         <a-button type="outline">{{ pauseButtonLabel }}</a-button>
@@ -55,10 +53,6 @@
 
 <script setup>
 defineProps({
-  module: {
-    type: Object,
-    default: () => ({})
-  },
   metrics: {
     type: Array,
     default: () => []
@@ -70,7 +64,6 @@ defineProps({
 });
 
 const title = '\u63a8\u5e7f\u76d1\u63a7';
-const description = '\u76d1\u63a7\u5e97\u94fa\u63a8\u5e7f\u72b6\u6001\u3001\u82b1\u8d39\u8fb9\u754c\u548c\u81ea\u52a8\u5904\u7406\u52a8\u4f5c\u3002';
 const pauseButtonLabel = '\u6682\u505c\u5168\u90e8';
 const saveButtonLabel = '\u4fdd\u5b58\u89c4\u5219';
 const shopTitle = '\u5e97\u94fa\u76d1\u63a7';

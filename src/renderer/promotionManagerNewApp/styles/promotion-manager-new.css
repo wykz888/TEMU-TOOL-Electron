@@ -146,18 +146,10 @@ body {
 }
 
 .pm-new-feature-head h2 {
-  margin: 8px 0 4px;
+  margin: 0;
   color: #203048;
   font-size: 22px;
   line-height: 1.25;
-}
-
-.pm-new-feature-head p {
-  max-width: 860px;
-  margin: 0;
-  color: #647389;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .pm-new-feature-actions {
@@ -452,7 +444,6 @@ body.dark-theme .pm-new-monitor-card strong {
   color: #e4edf8;
 }
 
-body.dark-theme .pm-new-feature-head p,
 body.dark-theme .pm-new-policy ul,
 body.dark-theme .pm-new-log-row span,
 body.dark-theme .pm-new-log-row p,

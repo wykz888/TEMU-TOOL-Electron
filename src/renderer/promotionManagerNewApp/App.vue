@@ -55,23 +55,13 @@ const pageComponentMap = Object.freeze({
   logs: RuntimeLogsPage
 });
 
-const activeModule = computed(() => (
-  modules.find((moduleItem) => moduleItem.id === activeModuleId.value)
-  || modules[0]
-));
-
 const activePageComponent = computed(() => (
   pageComponentMap[activeModuleId.value] || CreatePromotionPage
 ));
 
 const activePageProps = computed(() => {
-  const commonProps = {
-    module: activeModule.value
-  };
-
   if (activeModuleId.value === 'detail') {
     return {
-      ...commonProps,
       metrics: summaryMetrics,
       columns: tableColumns,
       rows: tableRows
@@ -80,7 +70,6 @@ const activePageProps = computed(() => {
 
   if (activeModuleId.value === 'monitor') {
     return {
-      ...commonProps,
       metrics: summaryMetrics,
       policyGroups
     };
@@ -88,13 +77,11 @@ const activePageProps = computed(() => {
 
   if (activeModuleId.value === 'logs') {
     return {
-      ...commonProps,
       logs: logRows
     };
   }
 
   return {
-    ...commonProps,
     columns: tableColumns,
     rows: tableRows
   };

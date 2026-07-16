@@ -2,9 +2,7 @@
   <section class="pm-new-feature-page pm-new-feature-page--logs">
     <div class="pm-new-feature-head">
       <div>
-        <a-tag bordered>{{ module.label }}</a-tag>
         <h2>{{ title }}</h2>
-        <p>{{ description }}</p>
       </div>
       <div class="pm-new-feature-actions">
         <a-button type="outline">{{ clearButtonLabel }}</a-button>
@@ -39,10 +37,6 @@
 
 <script setup>
 defineProps({
-  module: {
-    type: Object,
-    default: () => ({})
-  },
   logs: {
     type: Array,
     default: () => []
@@ -50,7 +44,6 @@ defineProps({
 });
 
 const title = '\u8fd0\u884c\u65e5\u5fd7';
-const description = '\u96c6\u4e2d\u67e5\u770b\u63a8\u5e7f\u521b\u5efa\u3001\u540c\u6b65\u3001\u76d1\u63a7\u548c\u5f02\u5e38\u8bb0\u5f55\u3002';
 const clearButtonLabel = '\u6e05\u7406\u65e5\u5fd7';
 const exportButtonLabel = '\u5bfc\u51fa\u65e5\u5fd7';
 const listTitle = '\u65e5\u5fd7\u5217\u8868';

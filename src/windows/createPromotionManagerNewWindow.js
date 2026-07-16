@@ -5,7 +5,7 @@ const { resolveWindowTitle } = require('./resolveWindowTitle');
 function createPromotionManagerNewWindow(options = {}) {
   const {
     backgroundColor = '#ffffff',
-    title = '\u529f\u80fd\u5207\u6362'
+    title = '\u63a8\u5e7f\u5927\u5e08'
   } = options;
   const promotionManagerNewWindow = new BrowserWindow({
     width: 1440,

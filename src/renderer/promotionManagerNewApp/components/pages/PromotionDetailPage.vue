@@ -2,9 +2,7 @@
   <section class="pm-new-feature-page pm-new-feature-page--detail">
     <div class="pm-new-feature-head">
       <div>
-        <a-tag bordered>{{ module.label }}</a-tag>
         <h2>{{ title }}</h2>
-        <p>{{ description }}</p>
       </div>
       <div class="pm-new-feature-actions">
         <a-button type="outline">{{ exportButtonLabel }}</a-button>
@@ -55,10 +53,6 @@
 
 <script setup>
 defineProps({
-  module: {
-    type: Object,
-    default: () => ({})
-  },
   metrics: {
     type: Array,
     default: () => []
@@ -74,7 +68,6 @@ defineProps({
 });
 
 const title = '\u63a8\u5e7f\u660e\u7ec6';
-const description = '\u6309\u5e97\u94fa\u3001\u6d3b\u52a8\u548c\u5546\u54c1\u7ef4\u5ea6\u67e5\u770b\u63a8\u5e7f\u6570\u636e\u3002';
 const exportButtonLabel = '\u5bfc\u51fa\u660e\u7ec6';
 const syncButtonLabel = '\u540c\u6b65\u6570\u636e';
 const tableTitle = '\u63a8\u5e7f\u660e\u7ec6\u8868';

@@ -2,9 +2,7 @@
   <section class="pm-new-feature-page pm-new-feature-page--create">
     <div class="pm-new-feature-head">
       <div>
-        <a-tag bordered>{{ module.label }}</a-tag>
         <h2>{{ title }}</h2>
-        <p>{{ description }}</p>
       </div>
       <div class="pm-new-feature-actions">
         <a-button type="outline">{{ draftButtonLabel }}</a-button>
@@ -66,10 +64,6 @@
 
 <script setup>
 defineProps({
-  module: {
-    type: Object,
-    default: () => ({})
-  },
   columns: {
     type: Array,
     default: () => []
@@ -81,7 +75,6 @@ defineProps({
 });
 
 const title = '\u65b0\u5efa\u63a8\u5e7f';
-const description = '\u5e97\u94fa\u3001\u5546\u54c1\u3001\u9884\u7b97\u3001ROAS \u548c\u6267\u884c\u8282\u594f\u90fd\u653e\u5728\u8fd9\u4e2a\u5927\u9875\u9762\u91cc\u914d\u7f6e\u3002';
 const draftButtonLabel = '\u4fdd\u5b58\u8349\u7a3f';
 const submitButtonLabel = '\u63d0\u4ea4\u4efb\u52a1';
 const productTitle = '\u5e97\u94fa\u4e0e\u5546\u54c1';
