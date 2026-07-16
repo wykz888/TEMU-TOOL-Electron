@@ -528,7 +528,7 @@ defineExpose({
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
-  width: min(560px, calc(100vw - 42px));
+  width: min(460px, calc(100vw - 42px));
   max-height: 460px;
   padding: 10px;
   border: 1px solid rgba(49, 66, 89, 0.12);
@@ -721,7 +721,7 @@ body.dark-theme .shared-shop-select-shop-item:hover {
 
 @media (max-width: 820px) {
   .shared-shop-select-panel {
-    width: min(420px, calc(100vw - 34px));
+    width: min(360px, calc(100vw - 34px));
   }
 }
 </style>
