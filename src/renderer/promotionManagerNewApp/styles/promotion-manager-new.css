@@ -202,10 +202,30 @@ body {
 
 .pm-new-shop-query-row {
   display: grid;
-  grid-template-columns: minmax(240px, 360px) auto;
+  grid-template-columns: minmax(240px, 320px) minmax(190px, 220px) auto;
   gap: 8px;
   align-items: center;
   justify-content: start;
+}
+
+.pm-new-query-region {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.pm-new-query-region span {
+  color: #6a788b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pm-new-query-region-control {
+  width: 100%;
+  min-width: 0;
 }
 
 .pm-new-filter-row {
