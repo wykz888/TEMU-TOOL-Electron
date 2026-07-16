@@ -187,12 +187,54 @@ body {
   gap: 10px;
 }
 
+.pm-new-product-panel {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
 .pm-new-strategy-panel,
 .pm-new-rule-panel {
   display: grid;
   align-content: start;
   gap: 12px;
   overflow: auto;
+}
+
+.pm-new-shop-query-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) auto;
+  gap: 8px;
+  align-items: center;
+  justify-content: start;
+}
+
+.shared-shop-select {
+  width: 100%;
+}
+
+.shared-shop-select-option {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.shared-shop-select-option strong,
+.shared-shop-select-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shared-shop-select-option strong {
+  color: #203048;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.shared-shop-select-option span {
+  color: #738298;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .pm-new-filter-row {
@@ -435,8 +477,13 @@ body.dark-theme .pm-new-policy ul,
 body.dark-theme .pm-new-log-row span,
 body.dark-theme .pm-new-log-row p,
 body.dark-theme .pm-new-metric span,
-body.dark-theme .pm-new-monitor-card span {
+body.dark-theme .pm-new-monitor-card span,
+body.dark-theme .shared-shop-select-option span {
   color: #9aa8ba;
+}
+
+body.dark-theme .shared-shop-select-option strong {
+  color: #e4edf8;
 }
 
 body.dark-theme .pm-new-switch-tab {
@@ -500,6 +547,14 @@ body.dark-theme .pm-new-table-scroll td {
   .pm-new-switch-actions,
   .pm-new-feature-actions {
     justify-content: flex-start;
+  }
+
+  .pm-new-shop-query-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-new-shop-query-row .arco-btn {
+    justify-self: start;
   }
 
   .pm-new-metric-row,

@@ -12,12 +12,23 @@
 
     <div class="pm-new-create-grid">
       <section class="pm-new-page-panel pm-new-product-panel">
+        <div class="pm-new-shop-query-row">
+          <ShopSelectDropdown
+            v-model="selectedShopId"
+            :placeholder="shopSelectPlaceholder"
+          />
+          <a-button
+            type="primary"
+            @click="handleShopQuery"
+          >
+            {{ queryButtonLabel }}
+          </a-button>
+        </div>
         <div class="pm-new-section-title">
           <strong>{{ productTitle }}</strong>
           <a-tag size="small" bordered>{{ productCountText }}</a-tag>
         </div>
         <div class="pm-new-filter-row">
-          <a-input :placeholder="shopPlaceholder" />
           <a-input :placeholder="productPlaceholder" />
           <a-button type="outline">{{ filterButtonLabel }}</a-button>
         </div>
@@ -63,6 +74,9 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import ShopSelectDropdown from '../../../shared/shopSelection/ShopSelectDropdown.vue';
+
 defineProps({
   columns: {
     type: Array,
@@ -74,12 +88,16 @@ defineProps({
   }
 });
 
+const selectedShopId = ref('');
+const queriedShopId = ref('');
+
 const title = '\u65b0\u5efa\u63a8\u5e7f';
 const draftButtonLabel = '\u4fdd\u5b58\u8349\u7a3f';
 const submitButtonLabel = '\u63d0\u4ea4\u4efb\u52a1';
 const productTitle = '\u5e97\u94fa\u4e0e\u5546\u54c1';
 const productCountText = '\u5546\u54c1\u6c60';
-const shopPlaceholder = '\u9009\u62e9\u5e97\u94fa';
+const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
+const queryButtonLabel = '\u67e5\u8be2';
 const productPlaceholder = '\u641c\u7d22\u5546\u54c1';
 const filterButtonLabel = '\u7b5b\u9009';
 const strategyTitle = '\u63a8\u5e7f\u7b56\u7565';
@@ -90,4 +108,8 @@ const roasLabel = '\u76ee\u6807 ROAS';
 const roasPlaceholder = '\u8f93\u5165 ROAS';
 const scheduleLabel = '\u6267\u884c\u8282\u594f';
 const schedulePlaceholder = '\u9009\u62e9\u8282\u594f';
+
+function handleShopQuery() {
+  queriedShopId.value = selectedShopId.value;
+}
 </script>
