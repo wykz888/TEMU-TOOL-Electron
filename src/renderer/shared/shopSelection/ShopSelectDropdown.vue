@@ -90,8 +90,35 @@
                 @change="handleShopToggle(shop.id, $event.target.checked)"
               />
               <span class="shared-shop-select-shop-copy">
-                <span class="shared-shop-select-shop-name">{{ shop.shopName }}</span>
-                <span class="shared-shop-select-shop-meta">{{ buildShopMeta(shop) }}</span>
+                <span
+                  class="shared-shop-select-shop-name"
+                  :title="shop.shopName"
+                >
+                  {{ shop.shopName }}
+                </span>
+                <span class="shared-shop-select-shop-details">
+                  <span
+                    v-if="shop.groupName"
+                    class="shared-shop-select-shop-group"
+                    :title="shop.groupName"
+                  >
+                    {{ shop.groupName }}
+                  </span>
+                  <span
+                    v-if="shop.accountValue"
+                    class="shared-shop-select-shop-account"
+                    :title="shop.accountValue"
+                  >
+                    {{ shop.accountValue }}
+                  </span>
+                </span>
+                <span
+                  v-if="shop.note"
+                  class="shared-shop-select-shop-note"
+                  :title="shop.note"
+                >
+                  {{ shop.note }}
+                </span>
               </span>
             </label>
           </div>
@@ -251,14 +278,6 @@ const emptyText = computed(() => (
       ? emptySearchText
       : emptyDefaultText
 ));
-
-function buildShopMeta(shop) {
-  return [
-    normalizeText(shop && shop.groupName),
-    normalizeText(shop && shop.accountValue),
-    normalizeText(shop && shop.note)
-  ].filter(Boolean).join(' / ');
-}
 
 function normalizeKnownShopIds(shopIds) {
   const normalizedIds = normalizeShopIds(shopIds);
@@ -477,7 +496,9 @@ defineExpose({
 .shared-shop-select-trigger-value,
 .shared-shop-select-trigger-meta,
 .shared-shop-select-shop-name,
-.shared-shop-select-shop-meta,
+.shared-shop-select-shop-account,
+.shared-shop-select-shop-group,
+.shared-shop-select-shop-note,
 .shared-shop-select-section-copy strong,
 .shared-shop-select-section-copy span {
   overflow: hidden;
@@ -571,7 +592,8 @@ defineExpose({
 }
 
 .shared-shop-select-section-copy span,
-.shared-shop-select-shop-meta {
+.shared-shop-select-shop-account,
+.shared-shop-select-shop-note {
   color: #738298;
   font-size: 12px;
   line-height: 1.25;
@@ -613,7 +635,7 @@ defineExpose({
 
 .shared-shop-select-shop-copy {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -622,6 +644,35 @@ defineExpose({
   font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.shared-shop-select-shop-details {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.shared-shop-select-shop-group {
+  max-width: 128px;
+  padding: 1px 6px;
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.2);
+  border-radius: 6px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  color: var(--theme-primary-color-deep);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.shared-shop-select-shop-account,
+.shared-shop-select-shop-note {
+  min-width: 0;
+}
+
+.shared-shop-select-shop-note {
+  max-width: 100%;
 }
 
 .shared-shop-select-empty {
@@ -647,10 +698,16 @@ body.dark-theme .shared-shop-select-shop-name {
 body.dark-theme .shared-shop-select-trigger-meta,
 body.dark-theme .shared-shop-select-trigger-arrow,
 body.dark-theme .shared-shop-select-section-copy span,
-body.dark-theme .shared-shop-select-shop-meta,
+body.dark-theme .shared-shop-select-shop-account,
+body.dark-theme .shared-shop-select-shop-note,
 body.dark-theme .shared-shop-select-toolbar > span,
 body.dark-theme .shared-shop-select-empty {
   color: #9aa8ba;
+}
+
+body.dark-theme .shared-shop-select-shop-group {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.24);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
 }
 
 body.dark-theme .shared-shop-select-section {
