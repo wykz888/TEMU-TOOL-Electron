@@ -1,8 +1,5 @@
 <template>
-  <main
-    class="pm-new-shell"
-    :class="{ 'is-switch-mode': currentPage === 'switch' }"
-  >
+  <main class="pm-new-shell">
     <header class="pm-new-header">
       <div class="pm-new-title-block">
         <a-tag class="pm-new-eyebrow" bordered>{{ copy.eyebrow }}</a-tag>
@@ -11,27 +8,14 @@
       </div>
 
       <div class="pm-new-header-actions">
-        <a-tag color="green" bordered>
-          {{ currentPage === 'switch' ? switchStatusLabel : copy.statusLabel }}
-        </a-tag>
-        <a-button
-          v-if="currentPage === 'workbench'"
-          type="outline"
-          @click="showSwitchPage"
-        >
-          <template #icon><icon-apps /></template>
-          {{ switchButtonLabel }}
-        </a-button>
-        <a-button
-          v-if="currentPage === 'workbench'"
-          type="outline"
-        >
+        <a-tag color="green" bordered>{{ activeModule.label }}</a-tag>
+        <a-button type="outline">
           <template #icon><icon-refresh /></template>
           {{ copy.secondaryAction }}
         </a-button>
         <a-button
           type="primary"
-          @click="openModule('create')"
+          @click="handleModuleChange('create')"
         >
           <template #icon><icon-send /></template>
           {{ copy.primaryAction }}
@@ -39,40 +23,28 @@
       </div>
     </header>
 
-    <FunctionSwitchPage
-      v-if="currentPage === 'switch'"
-      :modules="modules"
-      :metrics="summaryMetrics"
-      @open="openModule"
-    />
+    <section class="pm-new-layout">
+      <ModuleRail
+        :modules="modules"
+        :active-module-id="activeModuleId"
+        @change="handleModuleChange"
+      />
 
-    <template v-else>
-      <SummaryStrip :metrics="summaryMetrics" />
-
-      <section class="pm-new-workspace">
-        <ModuleRail
-          :modules="modules"
-          :active-module-id="activeModuleId"
-          @change="handleModuleChange"
-        />
-        <WorkflowPanel
-          :module="activeModule"
-          :steps="workflowSteps"
-          :columns="tableColumns"
-          :rows="tableRows"
-        />
-        <SideInsightPanel :policy-groups="policyGroups" />
+      <section class="pm-new-page-frame">
+        <KeepAlive>
+          <component
+            :is="activePageComponent"
+            v-bind="activePageProps"
+          />
+        </KeepAlive>
       </section>
-
-      <RuntimeLogPanel :logs="logRows" />
-    </template>
+    </section>
   </main>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import {
-  IconApps,
   IconRefresh,
   IconSend
 } from '@arco-design/web-vue/es/icon';
@@ -86,12 +58,11 @@ import {
   TABLE_ROWS,
   WORKFLOW_STEPS
 } from './constants.js';
-import FunctionSwitchPage from './components/FunctionSwitchPage.vue';
 import ModuleRail from './components/ModuleRail.vue';
-import RuntimeLogPanel from './components/RuntimeLogPanel.vue';
-import SideInsightPanel from './components/SideInsightPanel.vue';
-import SummaryStrip from './components/SummaryStrip.vue';
-import WorkflowPanel from './components/WorkflowPanel.vue';
+import CreatePromotionPage from './components/pages/CreatePromotionPage.vue';
+import PromotionDetailPage from './components/pages/PromotionDetailPage.vue';
+import PromotionMonitorPage from './components/pages/PromotionMonitorPage.vue';
+import RuntimeLogsPage from './components/pages/RuntimeLogsPage.vue';
 
 const copy = APP_COPY;
 const modules = MODULES;
@@ -101,27 +72,63 @@ const tableColumns = TABLE_COLUMNS;
 const tableRows = TABLE_ROWS;
 const policyGroups = POLICY_GROUPS;
 const logRows = LOG_ROWS;
-const currentPage = ref('switch');
 const activeModuleId = ref('create');
-const switchStatusLabel = '\u529f\u80fd\u5207\u6362';
-const switchButtonLabel = '\u529f\u80fd\u5207\u6362';
+
+const pageComponentMap = Object.freeze({
+  create: CreatePromotionPage,
+  detail: PromotionDetailPage,
+  monitor: PromotionMonitorPage,
+  logs: RuntimeLogsPage
+});
 
 const activeModule = computed(() => (
   modules.find((moduleItem) => moduleItem.id === activeModuleId.value)
   || modules[0]
 ));
 
+const activePageComponent = computed(() => (
+  pageComponentMap[activeModuleId.value] || CreatePromotionPage
+));
+
+const activePageProps = computed(() => {
+  const commonProps = {
+    module: activeModule.value
+  };
+
+  if (activeModuleId.value === 'detail') {
+    return {
+      ...commonProps,
+      metrics: summaryMetrics,
+      columns: tableColumns,
+      rows: tableRows
+    };
+  }
+
+  if (activeModuleId.value === 'monitor') {
+    return {
+      ...commonProps,
+      metrics: summaryMetrics,
+      policyGroups
+    };
+  }
+
+  if (activeModuleId.value === 'logs') {
+    return {
+      ...commonProps,
+      logs: logRows
+    };
+  }
+
+  return {
+    ...commonProps,
+    steps: workflowSteps,
+    columns: tableColumns,
+    rows: tableRows
+  };
+});
+
 function handleModuleChange(moduleId) {
   activeModuleId.value = moduleId;
-}
-
-function openModule(moduleId) {
-  handleModuleChange(moduleId);
-  currentPage.value = 'workbench';
-}
-
-function showSwitchPage() {
-  currentPage.value = 'switch';
 }
 
 function refresh() {

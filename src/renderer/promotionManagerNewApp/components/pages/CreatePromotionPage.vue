@@ -1,0 +1,116 @@
+<template>
+  <section class="pm-new-feature-page pm-new-feature-page--create">
+    <div class="pm-new-feature-head">
+      <div>
+        <a-tag bordered>{{ module.label }}</a-tag>
+        <h2>{{ title }}</h2>
+        <p>{{ description }}</p>
+      </div>
+      <div class="pm-new-feature-actions">
+        <a-button type="outline">{{ draftButtonLabel }}</a-button>
+        <a-button type="primary">{{ submitButtonLabel }}</a-button>
+      </div>
+    </div>
+
+    <div class="pm-new-create-grid">
+      <section class="pm-new-page-panel pm-new-product-panel">
+        <div class="pm-new-section-title">
+          <strong>{{ productTitle }}</strong>
+          <a-tag size="small" bordered>{{ productCountText }}</a-tag>
+        </div>
+        <div class="pm-new-filter-row">
+          <a-input :placeholder="shopPlaceholder" />
+          <a-input :placeholder="productPlaceholder" />
+          <a-button type="outline">{{ filterButtonLabel }}</a-button>
+        </div>
+        <div class="pm-new-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th v-for="column in columns" :key="column">{{ column }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, rowIndex) in rows" :key="rowIndex">
+                <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="pm-new-page-panel pm-new-strategy-panel">
+        <div class="pm-new-section-title">
+          <strong>{{ strategyTitle }}</strong>
+          <a-tag size="small" bordered>{{ strategyTag }}</a-tag>
+        </div>
+        <div class="pm-new-form-stack">
+          <label>
+            <span>{{ budgetLabel }}</span>
+            <a-input :placeholder="budgetPlaceholder" />
+          </label>
+          <label>
+            <span>{{ roasLabel }}</span>
+            <a-input :placeholder="roasPlaceholder" />
+          </label>
+          <label>
+            <span>{{ scheduleLabel }}</span>
+            <a-select :placeholder="schedulePlaceholder" />
+          </label>
+        </div>
+      </aside>
+    </div>
+
+    <section class="pm-new-page-panel pm-new-flow-panel">
+      <div
+        v-for="step in steps"
+        :key="step.id"
+        class="pm-new-flow-item"
+      >
+        <span>{{ step.id }}</span>
+        <strong>{{ step.title }}</strong>
+        <p>{{ step.description }}</p>
+        <a-tag size="small" bordered>{{ step.status }}</a-tag>
+      </div>
+    </section>
+  </section>
+</template>
+
+<script setup>
+defineProps({
+  module: {
+    type: Object,
+    default: () => ({})
+  },
+  steps: {
+    type: Array,
+    default: () => []
+  },
+  columns: {
+    type: Array,
+    default: () => []
+  },
+  rows: {
+    type: Array,
+    default: () => []
+  }
+});
+
+const title = '\u65b0\u5efa\u63a8\u5e7f';
+const description = '\u5e97\u94fa\u3001\u5546\u54c1\u3001\u9884\u7b97\u3001ROAS \u548c\u6267\u884c\u8282\u594f\u90fd\u653e\u5728\u8fd9\u4e2a\u5927\u9875\u9762\u91cc\u914d\u7f6e\u3002';
+const draftButtonLabel = '\u4fdd\u5b58\u8349\u7a3f';
+const submitButtonLabel = '\u63d0\u4ea4\u4efb\u52a1';
+const productTitle = '\u5e97\u94fa\u4e0e\u5546\u54c1';
+const productCountText = '\u5546\u54c1\u6c60';
+const shopPlaceholder = '\u9009\u62e9\u5e97\u94fa';
+const productPlaceholder = '\u641c\u7d22\u5546\u54c1';
+const filterButtonLabel = '\u7b5b\u9009';
+const strategyTitle = '\u63a8\u5e7f\u7b56\u7565';
+const strategyTag = '\u6279\u91cf\u914d\u7f6e';
+const budgetLabel = '\u65e5\u9884\u7b97';
+const budgetPlaceholder = '\u8f93\u5165\u9884\u7b97';
+const roasLabel = '\u76ee\u6807 ROAS';
+const roasPlaceholder = '\u8f93\u5165 ROAS';
+const scheduleLabel = '\u6267\u884c\u8282\u594f';
+const schedulePlaceholder = '\u9009\u62e9\u8282\u594f';
+</script>
