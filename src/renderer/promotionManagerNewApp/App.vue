@@ -1,35 +1,15 @@
 <template>
   <main class="pm-new-shell">
-    <header class="pm-new-header">
-      <div class="pm-new-title-block">
-        <a-tag class="pm-new-eyebrow" bordered>{{ copy.eyebrow }}</a-tag>
-        <h1>{{ copy.title }}</h1>
-        <p>{{ copy.subtitle }}</p>
-      </div>
-
-      <div class="pm-new-header-actions">
-        <a-tag color="green" bordered>{{ activeModule.label }}</a-tag>
-        <a-button type="outline">
-          <template #icon><icon-refresh /></template>
-          {{ copy.secondaryAction }}
-        </a-button>
-        <a-button
-          type="primary"
-          @click="handleModuleChange('create')"
-        >
-          <template #icon><icon-send /></template>
-          {{ copy.primaryAction }}
-        </a-button>
-      </div>
-    </header>
+    <FunctionSwitchBar
+      :title="copy.title"
+      :modules="modules"
+      :active-module-id="activeModuleId"
+      :secondary-action="copy.secondaryAction"
+      :primary-action="copy.primaryAction"
+      @change="handleModuleChange"
+    />
 
     <section class="pm-new-layout">
-      <ModuleRail
-        :modules="modules"
-        :active-module-id="activeModuleId"
-        @change="handleModuleChange"
-      />
-
       <section class="pm-new-page-frame">
         <KeepAlive>
           <component
@@ -45,10 +25,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import {
-  IconRefresh,
-  IconSend
-} from '@arco-design/web-vue/es/icon';
-import {
   APP_COPY,
   LOG_ROWS,
   MODULES,
@@ -58,7 +34,7 @@ import {
   TABLE_ROWS,
   WORKFLOW_STEPS
 } from './constants.js';
-import ModuleRail from './components/ModuleRail.vue';
+import FunctionSwitchBar from './components/FunctionSwitchBar.vue';
 import CreatePromotionPage from './components/pages/CreatePromotionPage.vue';
 import PromotionDetailPage from './components/pages/PromotionDetailPage.vue';
 import PromotionMonitorPage from './components/pages/PromotionMonitorPage.vue';

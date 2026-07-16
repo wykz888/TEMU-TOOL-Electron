@@ -2,14 +2,10 @@ const path = require('node:path');
 const { BrowserWindow } = require('electron');
 const { resolveAppIconPath } = require('./resolveAppIconPath');
 const { resolveWindowTitle } = require('./resolveWindowTitle');
-const {
-  promotionMasterNewFeature
-} = require('../features/featureCenter/promotionMasterNew');
-
 function createPromotionManagerNewWindow(options = {}) {
   const {
     backgroundColor = '#ffffff',
-    title = promotionMasterNewFeature.title
+    title = '\u529f\u80fd\u5207\u6362'
   } = options;
   const promotionManagerNewWindow = new BrowserWindow({
     width: 1440,

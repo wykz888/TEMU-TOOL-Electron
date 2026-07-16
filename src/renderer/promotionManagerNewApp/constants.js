@@ -1,11 +1,7 @@
 export const APP_COPY = Object.freeze({
-  eyebrow: '\u63a8\u5e7f\u5927\u5e08-\u65b0',
   title: '\u529f\u80fd\u5207\u6362',
-  subtitle: '\u9009\u62e9\u4e3b\u529f\u80fd\u540e\uff0c\u4e0b\u65b9\u5207\u6362\u5230\u5bf9\u5e94\u7684\u6574\u9875\u5e03\u5c40\u529f\u80fd\u3002',
   primaryAction: '\u65b0\u5efa\u63a8\u5e7f',
-  secondaryAction: '\u540c\u6b65\u6570\u636e',
-  statusLabel: '\u5e03\u5c40\u9884\u89c8',
-  statusText: '\u5f85\u63a5\u5165\u771f\u5b9e\u6570\u636e'
+  secondaryAction: '\u540c\u6b65\u6570\u636e'
 });
 
 export const MODULES = Object.freeze([
