@@ -405,11 +405,28 @@ body {
   overflow: hidden;
 }
 
+.pm-new-goods-table.is-empty {
+  flex: 0 0 auto;
+  min-height: 178px;
+}
+
 .pm-new-goods-table .arco-table-container,
 .pm-new-goods-table .arco-spin,
 .pm-new-goods-table .arco-spin-children {
   height: 100%;
   min-height: 0;
+}
+
+.pm-new-goods-table.is-empty .arco-table-container,
+.pm-new-goods-table.is-empty .arco-spin,
+.pm-new-goods-table.is-empty .arco-spin-children {
+  height: auto;
+}
+
+.pm-new-goods-table.is-empty .arco-table-body,
+.pm-new-goods-table.is-empty .arco-table-body .arco-scrollbar,
+.pm-new-goods-table.is-empty .arco-table-body .arco-scrollbar-container {
+  overflow: hidden;
 }
 
 .pm-new-goods-table .arco-table-th {
@@ -639,7 +656,7 @@ body {
 .pm-new-goods-empty {
   display: grid;
   place-items: center;
-  min-height: 160px;
+  min-height: 132px;
   color: #718197;
   font-size: 13px;
 }

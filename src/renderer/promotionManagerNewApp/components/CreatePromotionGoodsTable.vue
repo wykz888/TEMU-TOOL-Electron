@@ -1,6 +1,7 @@
 <template>
   <a-table
     class="pm-new-goods-table"
+    :class="{ 'is-empty': tableRows.length <= 0 }"
     row-key="rowKey"
     :data="tableRows"
     :pagination="false"
@@ -255,7 +256,7 @@ const rowSelection = Object.freeze({
   fixed: true
 });
 
-const tableScroll = Object.freeze({
+const dataTableScroll = Object.freeze({
   x: 1360,
   y: '100%'
 });
@@ -264,6 +265,10 @@ const tableRows = computed(() => props.rows.map((row) => ({
   ...row,
   rowKey: getGoodsRowKey(row)
 })));
+
+const tableScroll = computed(() => (
+  tableRows.value.length > 0 ? dataTableScroll : undefined
+));
 
 function getRowClass() {
   return 'pm-new-goods-row';
