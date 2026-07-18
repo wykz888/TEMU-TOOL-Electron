@@ -320,16 +320,10 @@ const querySummaryText = computed(() => {
   ].join(' / ');
 });
 
-const queryMessages = computed(() => ([
-  ...queryResult.value.errors.map((error) => ({
-    key: `error:${error.shopId}:${error.regionId}:${error.pageNumber || ''}:${error.message || ''}`,
-    text: buildQueryErrorText(error)
-  })),
-  ...queryResult.value.warnings.map((warning) => ({
-    key: `warning:${warning.shopId}:${warning.regionId}:${warning.pageNumber || ''}:${warning.message || ''}`,
-    text: buildQueryErrorText(warning)
-  }))
-].filter((entry) => entry.text)));
+const queryMessages = computed(() => buildUniqueQueryMessages([
+  ...queryResult.value.errors,
+  ...queryResult.value.warnings
+]));
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -426,6 +420,27 @@ function buildQueryErrorText(error) {
     normalizeText(error && error.regionLabel),
     normalizeText(error && error.message)
   ].filter(Boolean).join(' / ');
+}
+
+function buildUniqueQueryMessages(entries) {
+  const seenMessages = new Set();
+  const messages = [];
+
+  (Array.isArray(entries) ? entries : []).forEach((entry) => {
+    const text = buildQueryErrorText(entry);
+
+    if (!text || seenMessages.has(text)) {
+      return;
+    }
+
+    seenMessages.add(text);
+    messages.push({
+      key: text,
+      text
+    });
+  });
+
+  return messages;
 }
 
 function buildBidTitle(row) {

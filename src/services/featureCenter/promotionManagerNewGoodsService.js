@@ -1,4 +1,3 @@
-const crypto = require('node:crypto');
 const { normalizeText } = require('../shopManagement/common');
 const {
   applyBidInfoToRows
@@ -134,7 +133,7 @@ function buildGoodsListPayload(payload = {}) {
     page_size: normalizePositiveInteger(payload.pageSize || payload.page_size, DEFAULT_PAGE_SIZE, {
       maximum: MAX_PAGE_SIZE
     }),
-    list_id: normalizeText(payload.listId || payload.list_id) || createQueryListId(),
+    list_id: normalizeText(payload.listId || payload.list_id),
     is_gray: normalizeBoolean(payload.isGray || payload.is_gray, false),
     selected_roas_type: normalizePositiveInteger(
       payload.selectedRoasType || payload.selected_roas_type,
@@ -143,16 +142,11 @@ function buildGoodsListPayload(payload = {}) {
   };
 }
 
-function createQueryListId() {
-  return typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`;
-}
-
-function buildGoodsListPagePayload(payload, pageNumber) {
+function buildGoodsListPagePayload(payload, pageNumber, listId) {
   return {
     ...payload,
-    page_number: normalizePositiveInteger(pageNumber, DEFAULT_PAGE_NUMBER)
+    page_number: normalizePositiveInteger(pageNumber, DEFAULT_PAGE_NUMBER),
+    list_id: normalizeText(listId !== undefined ? listId : payload.list_id)
   };
 }
 
@@ -347,6 +341,7 @@ function extractGoodsRows(response, context) {
   return {
     mallId: normalizeText(result.mall_id),
     mallType: normalizeText(result.mall_type),
+    listId: normalizeText(responsePayload.list_id || responsePayload.listId || result.list_id || result.listId),
     pageNumber: normalizePositiveInteger(responsePayload.page_number, context.requestPayload.page_number),
     pageSize: normalizePositiveInteger(responsePayload.page_size, context.requestPayload.page_size),
     total: normalizeNonNegativeInteger(responsePayload.total, goodsList.length),
@@ -382,6 +377,30 @@ function shouldFetchNextGoodsPage(extracted, accumulatedRowCount) {
   const pageSize = normalizePositiveInteger(extracted.pageSize, DEFAULT_PAGE_SIZE);
 
   return extracted.rows.length >= pageSize;
+}
+
+function isGoodsQueryLimitMessage(message) {
+  return /query\s+goods\s+over\s+limit/i.test(normalizeText(message));
+}
+
+function buildMessageSignature(entry) {
+  return [
+    normalizeText(entry && entry.shopName),
+    normalizeText(entry && entry.regionLabel),
+    normalizeText(entry && entry.message)
+  ].join('|');
+}
+
+function pushUniqueMessage(target, entry, signatureSet) {
+  const signature = buildMessageSignature(entry);
+
+  if (!signature || signatureSet.has(signature)) {
+    return false;
+  }
+
+  signatureSet.add(signature);
+  target.push(entry);
+  return true;
 }
 
 function createPromotionManagerNewGoodsService({
@@ -440,27 +459,58 @@ function createPromotionManagerNewGoodsService({
     const regionRows = [];
     const pageDetails = [];
     const bidErrors = [];
+    const pageErrors = [];
     const seenPageSignatures = new Set();
     const seenRowIds = new Set();
     let pageNumber = normalizePositiveInteger(baseRequestPayload.page_number, DEFAULT_PAGE_NUMBER);
+    let queryListId = normalizeText(baseRequestPayload.list_id);
     let lastExtracted = null;
     let lastSessionResult = null;
     let stoppedByDuplicatePage = false;
     let stoppedByPageLimit = false;
 
     for (let pageIndex = 0; pageIndex < MAX_GOODS_PAGE_COUNT; pageIndex += 1) {
-      const requestPayload = buildGoodsListPagePayload(baseRequestPayload, pageNumber);
-      const { sessionResult, extracted } = await fetchGoodsPageForRegion(
-        shop,
-        regionId,
-        regionIds,
-        requestPayload,
-        regionRows.length
-      );
+      const requestPayload = buildGoodsListPagePayload(baseRequestPayload, pageNumber, queryListId);
+      let sessionResult = null;
+      let extracted = null;
+
+      try {
+        const pageResult = await fetchGoodsPageForRegion(
+          shop,
+          regionId,
+          regionIds,
+          requestPayload,
+          regionRows.length
+        );
+
+        sessionResult = pageResult.sessionResult;
+        extracted = pageResult.extracted;
+      } catch (error) {
+        const message = normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25';
+
+        if (regionRows.length > 0 && isGoodsQueryLimitMessage(message)) {
+          pageErrors.push({
+            pageNumber: requestPayload.page_number,
+            message
+          });
+          logError('promotion_manager_new_goods_query_page_limit_reached', error, {
+            shopId: shop.id,
+            shopName: shop.shopName,
+            regionId,
+            pageNumber: requestPayload.page_number,
+            rowCount: regionRows.length
+          });
+          break;
+        }
+
+        throw error;
+      }
+
       const pageSignature = buildGoodsPageSignature(extracted.rows);
 
       lastExtracted = extracted;
       lastSessionResult = sessionResult;
+      queryListId = normalizeText(extracted.listId) || queryListId;
 
       if (pageSignature && seenPageSignatures.has(pageSignature)) {
         stoppedByDuplicatePage = true;
@@ -546,6 +596,7 @@ function createPromotionManagerNewGoodsService({
       pageDetails,
       pageCount: pageDetails.length,
       bidErrors,
+      pageErrors,
       stoppedByDuplicatePage,
       stoppedByPageLimit,
       mallId: normalizeText(lastExtracted && lastExtracted.mallId),
@@ -591,6 +642,8 @@ function createPromotionManagerNewGoodsService({
     const regions = [];
     const errors = [];
     const warnings = [];
+    const errorSignatures = new Set();
+    const warningSignatures = new Set();
 
     for (const shop of shops) {
       for (const regionId of regionIds) {
@@ -617,6 +670,7 @@ function createPromotionManagerNewGoodsService({
             pageCount: extracted.pageCount,
             pageDetails: extracted.pageDetails,
             rowCount: extracted.rows.length,
+            pageErrorCount: extracted.pageErrors.length,
             bidErrorCount: extracted.bidErrors.length,
             stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
             stoppedByPageLimit: extracted.stoppedByPageLimit === true,
@@ -624,35 +678,46 @@ function createPromotionManagerNewGoodsService({
             cookieSyncMode: normalizeText(extracted.cookieSyncMode)
           });
 
+          extracted.pageErrors.forEach((pageError) => {
+            pushUniqueMessage(warnings, {
+              shopId: shop.id,
+              shopName: shop.shopName,
+              regionId,
+              regionLabel: REGION_LABELS[regionId] || regionId,
+              pageNumber: pageError.pageNumber,
+              message: pageError.message
+            }, warningSignatures);
+          });
+
           if (extracted.stoppedByPageLimit === true) {
-            errors.push({
+            pushUniqueMessage(errors, {
               shopId: shop.id,
               shopName: shop.shopName,
               regionId,
               regionLabel: REGION_LABELS[regionId] || regionId,
               message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fbe\u5230\u4e0a\u9650\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u540e\u91cd\u8bd5'
-            });
+            }, errorSignatures);
           }
 
           extracted.bidErrors.forEach((bidError) => {
-            warnings.push({
+            pushUniqueMessage(warnings, {
               shopId: shop.id,
               shopName: shop.shopName,
               regionId,
               regionLabel: REGION_LABELS[regionId] || regionId,
               pageNumber: bidError.pageNumber,
               message: bidError.message
-            });
+            }, warningSignatures);
           });
 
           if (extracted.stoppedByDuplicatePage === true) {
-            errors.push({
+            pushUniqueMessage(errors, {
               shopId: shop.id,
               shopName: shop.shopName,
               regionId,
               regionLabel: REGION_LABELS[regionId] || regionId,
               message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fd4\u56de\u91cd\u590d\u6570\u636e\uff0c\u5df2\u505c\u6b62\u7ee7\u7eed\u67e5\u8be2'
-            });
+            }, errorSignatures);
           }
         } catch (error) {
           const failure = {
@@ -663,7 +728,7 @@ function createPromotionManagerNewGoodsService({
             message: normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25'
           };
 
-          errors.push(failure);
+          pushUniqueMessage(errors, failure, errorSignatures);
           logError('promotion_manager_new_goods_query_region_failed', error, failure);
         }
       }
