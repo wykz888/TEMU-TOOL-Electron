@@ -832,11 +832,13 @@ body {
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
 }
 
 .pm-new-roas-option strong {
+  flex: 0 0 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -851,6 +853,7 @@ body {
 
 .pm-new-roas-option-meta {
   display: inline-flex;
+  flex: 1 1 auto;
   gap: 8px;
   align-items: center;
   min-width: 0;
@@ -860,12 +863,22 @@ body {
 }
 
 .pm-new-roas-option-meta em {
+  flex: 0 1 auto;
   overflow: hidden;
   color: #718197;
   font-size: 11px;
   font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pm-new-roas-custom-inline {
+  flex: 0 0 132px;
+  min-width: 0;
+}
+
+.pm-new-roas-custom-inline .arco-input-number {
+  width: 100%;
 }
 
 .pm-new-goods-empty {

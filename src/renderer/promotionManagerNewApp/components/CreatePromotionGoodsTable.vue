@@ -169,37 +169,37 @@
                 >
                   <strong>{{ option.label }}</strong>
                   <span
-                    v-if="option.estimatedRoasText || option.dealChargeText"
+                    v-if="option.estimatedRoasText || option.estimatedChargeText"
                     class="pm-new-roas-option-meta"
                   >
                     <em v-if="option.estimatedRoasText">{{ option.estimatedRoasText }}</em>
-                    <em v-if="option.dealChargeText">{{ option.dealChargeText }}</em>
+                    <em v-if="option.estimatedChargeText">{{ option.estimatedChargeText }}</em>
                   </span>
                 </span>
               </a-radio>
               <a-radio :value="roasModeCustom">
                 <span class="pm-new-roas-option">
                   <strong>{{ customLabel }}</strong>
+                  <span
+                    v-if="getRowDraft(record).roasMode === roasModeCustom"
+                    class="pm-new-roas-custom-inline"
+                  >
+                    <a-input-number
+                      :model-value="getRowDraft(record).customRoas"
+                      :min="getCustomRoasMin(record)"
+                      :max="getCustomRoasMax(record)"
+                      :precision="2"
+                      :step="0.01"
+                      size="mini"
+                      mode="button"
+                      model-event="input"
+                      @click.stop
+                      @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
+                    />
+                  </span>
                 </span>
               </a-radio>
             </a-radio-group>
-
-            <div
-              v-if="getRowDraft(record).roasMode === roasModeCustom"
-              class="pm-new-control-inline"
-            >
-              <a-input-number
-                :model-value="getRowDraft(record).customRoas"
-                :min="getCustomRoasMin(record)"
-                :max="getCustomRoasMax(record)"
-                :precision="2"
-                :step="0.01"
-                size="small"
-                mode="button"
-                model-event="input"
-                @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
-              />
-            </div>
             <span
               v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
               class="pm-new-goods-field-hint"
@@ -301,10 +301,10 @@ const noImageText = '\u65e0\u56fe';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const budgetModeCustom = BUDGET_MODE_CUSTOM;
 const roasModeCustom = ROAS_MODE_CUSTOM;
-const goodsColumnProductWidth = 600;
-const goodsColumnCreateStatusWidth = 150;
-const goodsColumnDailyBudgetWidth = 250;
-const goodsColumnTargetRoasWidth = 500;
+const goodsColumnProductWidth = 520;
+const goodsColumnCreateStatusWidth = 120;
+const goodsColumnDailyBudgetWidth = 210;
+const goodsColumnTargetRoasWidth = 400;
 const virtualListThreshold = 120;
 
 const rowSelection = Object.freeze({
@@ -315,7 +315,6 @@ const rowSelection = Object.freeze({
 });
 
 const dataTableScroll = Object.freeze({
-  x: 1546,
   y: '100%'
 });
 

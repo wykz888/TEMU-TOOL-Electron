@@ -169,10 +169,7 @@ function getRowPriceRange(row) {
   const priceMax = normalizeOptionalNumber(row && row.priceMax);
 
   if (priceMin !== null || priceMax !== null) {
-    return {
-      min: priceMin,
-      max: priceMax
-    };
+    return normalizeRangeNumbers(priceMin, priceMax);
   }
 
   const numbers = [
@@ -191,6 +188,48 @@ function getRowPriceRange(row) {
     min: Math.min(...numbers),
     max: Math.max(...numbers)
   };
+}
+
+function formatMoneyText(value, currency) {
+  const numberValue = normalizeFiniteNumber(value);
+
+  if (numberValue === null) {
+    return '';
+  }
+
+  return `${normalizeText(currency) || '\u00a5'}${numberValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+}
+
+function buildEstimatedChargeText(row, prediction, roasText) {
+  const roasNumber = pickPositiveNumber(
+    prediction && prediction.roasNumber,
+    prediction && prediction.roas,
+    roasText
+  );
+
+  if (roasNumber === null) {
+    return '';
+  }
+
+  const priceRange = getRowPriceRange(row);
+  const minPrice = pickPositiveNumber(priceRange.min, priceRange.max);
+  const maxPrice = pickPositiveNumber(priceRange.max, priceRange.min);
+
+  if (minPrice === null || maxPrice === null) {
+    return '';
+  }
+
+  const currency = normalizeText(getBidInfo(row).currency) || '\u00a5';
+  const minChargeText = formatMoneyText(minPrice / roasNumber, currency);
+  const maxChargeText = formatMoneyText(maxPrice / roasNumber, currency);
+  const chargeText = minChargeText && maxChargeText && minChargeText !== maxChargeText
+    ? `${minChargeText} - ${maxChargeText}`
+    : (minChargeText || maxChargeText);
+
+  return chargeText ? `\u9884\u4f30\u6263\u8d39 ${chargeText}` : '';
 }
 
 function isNumberRangeOverlapping(rowRange, filterRange) {
@@ -381,7 +420,7 @@ export function buildRoasPredictionOptions(row) {
     const impressionText = normalizeText(prediction && prediction.impressionDeltaText);
     const orderText = normalizeText(prediction && prediction.orderDeltaText);
     const estimatedRoasText = roasText ? `\u9884\u4f30ROAS ${roasText}` : '';
-    const dealChargeText = budgetText ? `\u6210\u4ea4\u6263\u8d39 ${budgetText}` : '';
+    const estimatedChargeText = prediction ? buildEstimatedChargeText(row, prediction, roasText) : '';
 
     return {
       value: mode,
@@ -389,11 +428,11 @@ export function buildRoasPredictionOptions(row) {
       roasText,
       budgetText,
       estimatedRoasText,
-      dealChargeText,
+      estimatedChargeText,
       disabled: !prediction,
       title: [
         estimatedRoasText,
-        dealChargeText,
+        estimatedChargeText,
         impressionText ? `\u66dd\u5149 ${impressionText}` : '',
         orderText ? `\u8ba2\u5355 ${orderText}` : ''
       ].filter(Boolean).join(' / ')
