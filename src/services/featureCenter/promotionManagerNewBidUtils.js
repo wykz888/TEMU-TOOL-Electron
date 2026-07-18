@@ -1,7 +1,7 @@
 const { normalizeText } = require('../shopManagement/common');
 
 const ADS_GET_BID_URL = 'https://ads.temu.com/api/v1/coconut/pred/getBid';
-const MAX_BID_GOODS_PER_REQUEST = 100;
+const MAX_BID_GOODS_PER_REQUEST = 20;
 const ROAS_VALUE_SCALE = 10000;
 
 function normalizePositiveInteger(value, fallback, options = {}) {
@@ -62,6 +62,12 @@ function formatRoasText(roas, roasValue) {
   return normalizeNumberText(roas) || normalizeNumberText(roasValue);
 }
 
+function normalizeRoasValueNumber(value) {
+  const numberValue = normalizeFiniteNumber(value);
+
+  return numberValue === null ? null : numberValue / ROAS_VALUE_SCALE;
+}
+
 function formatMoneyText(value, currency) {
   const valueText = normalizeNumberText(value);
 
@@ -120,12 +126,20 @@ function normalizeBidPrediction(source, currency) {
   const orderDelta = normalizePredictionDelta(record.order_predict_info || record.orderPredictInfo);
   const roasText = formatRoasText(record.roas, pickFirstPresent(record.roas_value, record.roasValue));
   const roasBudgetText = formatMoneyText(pickFirstPresent(record.roas_budget, record.roasBudget), currency);
+  const roasNumber = normalizeFiniteNumber(record.roas);
+  const roasValueNumber = normalizeFiniteNumber(pickFirstPresent(record.roas_value, record.roasValue));
+  const roasBudgetNumber = normalizeFiniteNumber(pickFirstPresent(record.roas_budget, record.roasBudget));
   const prediction = {
     desc: normalizeText(record.desc),
-    roas: normalizeFiniteNumber(record.roas),
+    roas: roasNumber,
+    roasNumber: roasNumber !== null
+      ? roasNumber
+      : (roasValueNumber === null ? null : roasValueNumber / ROAS_VALUE_SCALE),
     roasValue: normalizeNumberText(pickFirstPresent(record.roas_value, record.roasValue)),
+    roasValueNumber,
     roasText,
     roasBudget: normalizeNumberText(pickFirstPresent(record.roas_budget, record.roasBudget)),
+    roasBudgetNumber,
     roasBudgetText,
     bestSelect: record.best_select === true || record.bestSelect === true,
     impressionDelta,
@@ -173,19 +187,28 @@ function normalizeBidResult(source, currency) {
     bestImpressionDeltaText: normalizeText(bestPrediction && bestPrediction.impressionDeltaText),
     bestOrderDeltaText: normalizeText(bestPrediction && bestPrediction.orderDeltaText),
     predictionOptionsText: predictions.map((entry) => entry.summaryText).filter(Boolean).join(' | '),
+    minDailyBudget: normalizeFiniteNumber(record.min_daily_budget),
+    maxDailyBudget: normalizeFiniteNumber(record.max_daily_budget),
     minDailyBudgetText,
     maxDailyBudgetText,
     dailyBudgetText: buildRangeText(minDailyBudgetText, maxDailyBudgetText),
     usedBudgetText: formatMoneyText(record.used_budget_value, currency),
+    minCustomRoas: normalizeRoasValueNumber(record.min_custom_roas_value),
+    maxCustomRoas: normalizeRoasValueNumber(record.max_custom_roas_value),
     minCustomRoasText,
     maxCustomRoasText,
     customRoasRangeText: buildRangeText(minCustomRoasText, maxCustomRoasText),
+    minRecommendRoas: normalizeRoasValueNumber(record.min_recommend_roas_value),
+    maxRoas: normalizeRoasValueNumber(record.max_roas_value),
     minRecommendRoasText,
     maxRoasText,
     recommendRoasRangeText: buildRangeText(minRecommendRoasText, maxRoasText),
+    softBaseRoas: normalizeRoasValueNumber(record.soft_base_roas_value),
+    hardBaseRoas: normalizeRoasValueNumber(record.hard_base_roas_value),
     softBaseRoasText,
     hardBaseRoasText,
     baseRoasText: buildRangeText(softBaseRoasText, hardBaseRoasText),
+    adviceRoas: normalizeRoasValueNumber(record.advice_roas),
     adviceRoasText: formatRoasText(null, record.advice_roas),
     remainingChangesText: normalizeNumberText(record.remaining_changes),
     acosType: normalizeNumberText(record.acos_type),

@@ -84,101 +84,15 @@
         </span>
       </div>
 
-      <div class="pm-new-table-scroll pm-new-goods-table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ goodsColumnProduct }}</th>
-              <th>{{ goodsColumnIds }}</th>
-              <th>{{ goodsColumnShopRegion }}</th>
-              <th>{{ goodsColumnCategorySite }}</th>
-              <th>{{ goodsColumnPrice }}</th>
-              <th>{{ goodsColumnStockSales }}</th>
-              <th>{{ goodsColumnCreatedAt }}</th>
-              <th>{{ goodsColumnBid }}</th>
-              <th>{{ goodsColumnPromotion }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in filteredGoodsRows"
-              :key="row.id"
-            >
-              <td>
-                <div class="pm-new-goods-product-cell">
-                  <img
-                    v-if="row.thumbUrl"
-                    :src="row.thumbUrl"
-                    :alt="row.goodsName"
-                  />
-                  <span
-                    v-else
-                    class="pm-new-goods-thumb-empty"
-                  >
-                    {{ noImageText }}
-                  </span>
-                  <strong :title="row.goodsName">{{ row.goodsName || emptyCellText }}</strong>
-                </div>
-              </td>
-              <td>
-                <div class="pm-new-goods-meta-cell">
-                  <span>{{ goodsIdLabel }} {{ row.goodsId || emptyCellText }}</span>
-                  <span>{{ spuIdLabel }} {{ row.spuId || emptyCellText }}</span>
-                  <span>{{ skuLabel }} {{ row.skuEncode || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="pm-new-goods-meta-cell">
-                  <strong>{{ row.shopName || emptyCellText }}</strong>
-                  <span>{{ row.regionLabel || emptyCellText }}</span>
-                  <span>{{ mallIdLabel }} {{ row.mallId || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="pm-new-goods-meta-cell">
-                  <span :title="row.categoryText">{{ row.categoryText || emptyCellText }}</span>
-                  <span :title="row.siteText">{{ row.siteText || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="pm-new-goods-meta-cell">
-                  <strong>{{ row.priceText || emptyCellText }}</strong>
-                  <span :title="row.sitePriceText">{{ row.sitePriceText || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="pm-new-goods-meta-cell">
-                  <span>{{ stockLabel }} {{ row.skuTotalQuantity || emptyCellText }}</span>
-                  <span>{{ salesLabel }} {{ row.sales || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>{{ row.createdAtText || emptyCellText }}</td>
-              <td>
-                <div
-                  class="pm-new-goods-meta-cell pm-new-bid-cell"
-                  :title="buildBidTitle(row)"
-                >
-                  <strong>{{ row.bidBestText || emptyCellText }}</strong>
-                  <span>{{ bidImpressionLabel }} {{ row.bidImpressionDeltaText || emptyCellText }}</span>
-                  <span>{{ bidOrderLabel }} {{ row.bidOrderDeltaText || emptyCellText }}</span>
-                  <span>{{ bidBudgetLabel }} {{ row.bidDailyBudgetText || emptyCellText }}</span>
-                  <span>{{ bidRoasLabel }} {{ row.bidCustomRoasRangeText || row.bidRecommendRoasRangeText || emptyCellText }}</span>
-                </div>
-              </td>
-              <td>
-                <span :title="row.promotionText">{{ row.promotionText || emptyCellText }}</span>
-              </td>
-            </tr>
-            <tr v-if="filteredGoodsRows.length <= 0">
-              <td colspan="9">
-                <div class="pm-new-goods-empty">
-                  {{ goodsEmptyText }}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <CreatePromotionGoodsTable
+        :rows="filteredGoodsRows"
+        :selected-row-keys="selectedGoodsRowKeys"
+        :row-drafts="goodsRowDrafts"
+        :empty-text="goodsEmptyText"
+        @toggle-all-visible="handleToggleAllVisibleRows"
+        @toggle-row="handleToggleGoodsRow"
+        @update-row-draft="handleUpdateGoodsRowDraft"
+      />
     </section>
 
     <a-modal
@@ -195,7 +109,15 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
 import ShopSelectDropdown from '../../../shared/shopSelection/ShopSelectDropdown.vue';
+import {
+  GOODS_QUERY_PAGE_SIZE,
+  buildGoodsRowDraft,
+  buildGoodsRowDraftMap,
+  buildGoodsSearchText,
+  getGoodsRowKey
+} from '../../view-models/createPromotionGoodsRows.js';
 import {
   loadCreatePromotionSelection,
   normalizeRegionIdList,
@@ -211,6 +133,8 @@ const selectedRegionCodes = ref([]);
 const queriedRegionCodes = ref([]);
 const goodsKeyword = ref('');
 const goodsRows = ref([]);
+const selectedGoodsRowKeys = ref([]);
+const goodsRowDrafts = ref({});
 const queryError = ref('');
 const queryLoading = ref(false);
 const filterModalVisible = ref(false);
@@ -238,27 +162,6 @@ const filterButtonLabel = '\u2461\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const filterModalTitle = '\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
 const goodsSearchPlaceholder = '\u641c\u7d22\u5546\u54c1\u540d / ID / SPU / \u5e97\u94fa';
-const goodsColumnProduct = '\u5546\u54c1';
-const goodsColumnIds = 'ID / SPU / SKU';
-const goodsColumnShopRegion = '\u5e97\u94fa / \u5730\u533a';
-const goodsColumnCategorySite = '\u7c7b\u76ee / \u7ad9\u70b9';
-const goodsColumnPrice = '\u4f9b\u8d27\u4ef7';
-const goodsColumnStockSales = '\u5e93\u5b58 / \u9500\u91cf';
-const goodsColumnCreatedAt = '\u521b\u5efa\u65f6\u95f4';
-const goodsColumnBid = '\u9884\u6d4b\u51fa\u4ef7';
-const goodsColumnPromotion = '\u63a8\u5e7f\u4fe1\u606f';
-const goodsIdLabel = 'Goods';
-const spuIdLabel = 'SPU';
-const skuLabel = 'SKU';
-const mallIdLabel = 'Mall';
-const stockLabel = '\u5e93\u5b58';
-const salesLabel = '\u9500\u91cf';
-const bidImpressionLabel = '\u66dd\u5149';
-const bidOrderLabel = '\u8ba2\u5355';
-const bidBudgetLabel = '\u9884\u7b97';
-const bidRoasLabel = 'ROAS';
-const emptyCellText = '-';
-const noImageText = '\u65e0\u56fe';
 const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
 const goodsEmptySearchText = '\u6ca1\u6709\u5339\u914d\u7684\u5546\u54c1';
 const goodsEmptyResultText = '\u6682\u65e0\u5546\u54c1\u6570\u636e';
@@ -284,18 +187,7 @@ const filteredGoodsRows = computed(() => {
   }
 
   return goodsRows.value.filter((row) => [
-    row.goodsName,
-    row.goodsId,
-    row.spuId,
-    row.skuEncode,
-    row.shopName,
-    row.regionLabel,
-    row.categoryText,
-    row.siteText,
-    row.bidBestText,
-    row.bidBestRoasText,
-    row.bidBestDesc,
-    row.bidOptionsText
+    buildGoodsSearchText(row)
   ].some((value) => String(value || '').toLowerCase().includes(keyword)));
 });
 
@@ -352,7 +244,7 @@ function buildGoodsQueryPayload() {
     shopIds,
     regionIds,
     pageNumber: 1,
-    pageSize: 100,
+    pageSize: GOODS_QUERY_PAGE_SIZE,
     listId: '',
     isGray: false,
     selectedRoasType: 1
@@ -443,22 +335,71 @@ function buildUniqueQueryMessages(entries) {
   return messages;
 }
 
-function buildBidTitle(row) {
-  return [
-    normalizeText(row && row.bidOptionsText),
-    normalizeText(row && row.bidDailyBudgetText)
-      ? `${bidBudgetLabel} ${normalizeText(row && row.bidDailyBudgetText)}`
-      : '',
-    normalizeText(row && row.bidCustomRoasRangeText)
-      ? `${bidRoasLabel} ${normalizeText(row && row.bidCustomRoasRangeText)}`
-      : '',
-    normalizeText(row && row.bidRecommendRoasRangeText)
-      ? `${goodsColumnBid} ${normalizeText(row && row.bidRecommendRoasRangeText)}`
-      : '',
-    normalizeText(row && row.bidBaseRoasText)
-      ? `Base ROAS ${normalizeText(row && row.bidBaseRoasText)}`
-      : ''
-  ].filter(Boolean).join('\n');
+function pruneSelectedGoodsRows(rows) {
+  const availableKeys = new Set(rows.map(getGoodsRowKey).filter(Boolean));
+
+  selectedGoodsRowKeys.value = selectedGoodsRowKeys.value.filter((rowKey) => availableKeys.has(rowKey));
+}
+
+function resetGoodsRowState(rows) {
+  selectedGoodsRowKeys.value = [];
+  goodsRowDrafts.value = buildGoodsRowDraftMap(rows);
+}
+
+function handleToggleGoodsRow(row, checked) {
+  const rowKey = getGoodsRowKey(row);
+
+  if (!rowKey) {
+    return;
+  }
+
+  const selectedSet = new Set(selectedGoodsRowKeys.value);
+
+  if (checked) {
+    selectedSet.add(rowKey);
+  } else {
+    selectedSet.delete(rowKey);
+  }
+
+  selectedGoodsRowKeys.value = Array.from(selectedSet);
+}
+
+function handleToggleAllVisibleRows(checked) {
+  const selectedSet = new Set(selectedGoodsRowKeys.value);
+
+  filteredGoodsRows.value.forEach((row) => {
+    const rowKey = getGoodsRowKey(row);
+
+    if (!rowKey) {
+      return;
+    }
+
+    if (checked) {
+      selectedSet.add(rowKey);
+    } else {
+      selectedSet.delete(rowKey);
+    }
+  });
+
+  selectedGoodsRowKeys.value = Array.from(selectedSet);
+}
+
+function handleUpdateGoodsRowDraft(row, patch) {
+  const rowKey = getGoodsRowKey(row);
+
+  if (!rowKey) {
+    return;
+  }
+
+  const currentDraft = goodsRowDrafts.value[rowKey] || buildGoodsRowDraft(row);
+
+  goodsRowDrafts.value = {
+    ...goodsRowDrafts.value,
+    [rowKey]: {
+      ...currentDraft,
+      ...(patch && typeof patch === 'object' ? patch : {})
+    }
+  };
 }
 
 async function handleShopQuery() {
@@ -490,6 +431,7 @@ async function handleShopQuery() {
       failedCount: Number(normalizedResult.failedCount) || 0
     };
     goodsRows.value = queryResult.value.rows;
+    resetGoodsRowState(queryResult.value.rows);
   } catch (error) {
     queryError.value = normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25';
   } finally {
@@ -510,6 +452,11 @@ watch(
 onMounted(() => {
   void loadCreateSettings();
 });
+
+watch(
+  goodsRows,
+  pruneSelectedGoodsRows
+);
 
 onBeforeUnmount(() => {
   const hasPendingSave = Boolean(saveSettingsTimer);

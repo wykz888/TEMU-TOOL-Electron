@@ -42,6 +42,8 @@ Promotion Ads session and cookie handling now live behind the neutral `src/servi
 
 Promotion master new is a separate layout-first feature entry under `src/features/featureCenter/promotionMasterNew/` with an independent window shell at `src/renderer/promotionManagerNew.html`, renderer module `src/renderer/promotionManagerNewApp/`, and window factory `src/windows/createPromotionManagerNewWindow.js`. It now includes a real goods-list query surface before the remaining promotion creation workflow is wired in. New create-promotion configuration state such as selected shops and query regions is persisted through `promotionManagerNewSettingsService.js` / `promotionManagerNewSettingsStore.js` under `feature_center/promotion_master_new/campaign_create/users/{userKey}/config/create-promotion-settings.json` and the matching COS key, so it does not depend on the old promotion manager settings service.
 
+The promotion master new create page keeps goods table rendering in `src/renderer/promotionManagerNewApp/components/CreatePromotionGoodsTable.vue` and row display/control defaults in `src/renderer/promotionManagerNewApp/view-models/createPromotionGoodsRows.js`. The goods list includes row selection plus per-row daily-budget and target global ROAS controls; service-side query pages and bid prediction chunks are both capped at 20 goods per request.
+
 ## Global Config, Theme, And Update
 
 Global config is served by `src/services/globalConfig/` and exposed through preload. Theme preference is managed by `src/services/theme/themePreferenceService.js` and `src/renderer/themeSync.js`. Update behavior lives under `src/services/update/updateService.js` and main-window update dialog components.

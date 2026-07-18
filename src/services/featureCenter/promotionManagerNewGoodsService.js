@@ -6,8 +6,8 @@ const { createPromotionManagerNewBidFetcher } = require('./promotionManagerNewBi
 
 const ADS_GOODS_LIST_URL = 'https://ads.temu.com/api/v1/coconut/ad/query_mall_goods_list';
 const DEFAULT_PAGE_NUMBER = 1;
-const DEFAULT_PAGE_SIZE = 100;
-const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 20;
 const MAX_GOODS_PAGE_COUNT = 1000;
 
 const REGION_LABELS = Object.freeze({
@@ -273,6 +273,7 @@ function mapGoodsRecord(record, context) {
   const siteText = joinTextList(safeRecord.site_name_list);
   const priceText = buildPriceRange(safeRecord);
   const sitePriceText = buildSitePriceText(safeRecord);
+  const fastStartEnable = Number(safeRecord.fast_start_enable);
 
   return {
     id: [
@@ -300,6 +301,9 @@ function mapGoodsRecord(record, context) {
     sales: normalizeNumberText(safeRecord.sales),
     createdAtText: formatTimestamp(safeRecord.create_timestamp),
     createTimestamp: Number(safeRecord.create_timestamp) || 0,
+    fastStartEnable: Number.isFinite(fastStartEnable) ? fastStartEnable : null,
+    fastStartEnabled: Number.isFinite(fastStartEnable) && fastStartEnable > 0,
+    recRoasType: normalizeNumberText(safeRecord.rec_roas_type),
     promotionText: buildPromotionTagsText(safeRecord),
     couponText: normalizeText(safeRecord.coupon_discount || safeRecord.coupon_tag_type)
   };
@@ -785,6 +789,8 @@ function createPromotionManagerNewGoodsService({
 
 module.exports = {
   ADS_GOODS_LIST_URL,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
   REGION_IDS,
   buildGoodsListPayload,
   buildGoodsListPagePayload,
