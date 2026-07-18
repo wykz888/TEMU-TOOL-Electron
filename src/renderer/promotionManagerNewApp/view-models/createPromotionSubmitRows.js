@@ -28,6 +28,12 @@ function normalizeText(value) {
   return String(value == null ? '' : value).trim();
 }
 
+function normalizeTextList(values) {
+  const sourceItems = Array.isArray(values) ? values : [];
+
+  return Array.from(new Set(sourceItems.map(normalizeText).filter(Boolean)));
+}
+
 function normalizeFiniteNumber(value) {
   const numberValue = Number(value);
 
@@ -42,6 +48,12 @@ function normalizePositiveInteger(value) {
   }
 
   return Math.trunc(numberValue);
+}
+
+function normalizeSubmitInteger(value) {
+  const numberValue = normalizeFiniteNumber(value);
+
+  return numberValue === null ? null : Math.trunc(numberValue);
 }
 
 function normalizePositiveRoasNumber(value) {
@@ -200,6 +212,37 @@ export function buildCreateAdsSubmitRows(rows, draftMap = {}) {
   return {
     rows: submitRows,
     invalidRows
+  };
+}
+
+export function buildCloneableCreateAdsPayload({
+  taskId,
+  rows,
+  invalidRows,
+  regionIds
+} = {}) {
+  return {
+    taskId: normalizeText(taskId),
+    rows: (Array.isArray(rows) ? rows : []).map((row) => ({
+      rowKey: normalizeText(row && row.rowKey),
+      shopId: normalizeText(row && row.shopId),
+      shopName: normalizeText(row && row.shopName),
+      regionId: normalizeText(row && row.regionId),
+      regionLabel: normalizeText(row && row.regionLabel),
+      goodsId: normalizeText(row && row.goodsId),
+      budget: normalizeSubmitInteger(row && row.budget),
+      roas: normalizeSubmitInteger(row && row.roas),
+      fastStart: normalizeSubmitInteger(row && row.fastStart),
+      roasType: normalizeSubmitInteger(row && row.roasType)
+    })),
+    invalidRows: (Array.isArray(invalidRows) ? invalidRows : []).map((row) => ({
+      rowKey: normalizeText(row && row.rowKey),
+      shopName: normalizeText(row && row.shopName),
+      regionLabel: normalizeText(row && row.regionLabel),
+      goodsId: normalizeText(row && row.goodsId),
+      message: normalizeText(row && row.message)
+    })),
+    regionIds: normalizeTextList(regionIds)
   };
 }
 

@@ -1,4 +1,7 @@
 const { normalizeText } = require('../shopManagement/common');
+const {
+  sanitizeCreateAdsResult
+} = require('./promotionManagerNewAdsCreateResult');
 
 const CREATE_PROMOTION_MANAGER_NEW_ADS_URL = 'https://ads.temu.com/api/v1/coconut/ad/create_ads/create';
 const DEFAULT_ROAS_TYPE = 1;
@@ -852,7 +855,7 @@ function createPromotionManagerNewAdsCreateService({
         warningCount: warnings.length
       });
 
-      return result;
+      return sanitizeCreateAdsResult(result);
     } finally {
       activeCreateTasks.delete(taskSignal.taskId);
     }

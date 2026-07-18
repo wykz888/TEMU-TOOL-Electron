@@ -121,6 +121,7 @@ import {
   pruneGoodsFilterStateOptions
 } from '../../view-models/createPromotionGoodsRows.js';
 import {
+  buildCloneableCreateAdsPayload,
   buildCreateAdsSubmitRows,
   hasValidCreateAdsRows
 } from '../../view-models/createPromotionSubmitRows.js';
@@ -590,12 +591,12 @@ function buildCreateAdsPayload(rows) {
     ? queriedRegionCodes.value
     : selectedRegionCodes.value;
 
-  return {
+  return buildCloneableCreateAdsPayload({
     taskId: activeSubmitTaskId.value,
     rows: submitRows.rows,
     invalidRows: submitRows.invalidRows,
     regionIds
-  };
+  });
 }
 
 function createSubmitTaskId(scope) {
