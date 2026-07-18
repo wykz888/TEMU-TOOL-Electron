@@ -13,6 +13,7 @@
     :row-selection="rowSelection"
     :selected-keys="selectedRowKeys"
     :row-class="getRowClass"
+    :loading="loading"
     size="small"
     @selection-change="$emit('selection-change', $event)"
   >
@@ -214,6 +215,10 @@ const props = defineProps({
   emptyText: {
     type: String,
     default: ''
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 });
 

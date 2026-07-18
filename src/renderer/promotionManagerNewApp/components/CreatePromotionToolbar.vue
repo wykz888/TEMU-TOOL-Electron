@@ -36,14 +36,24 @@
             </a-option>
           </a-select>
         </div>
-        <a-button
-          class="pm-new-toolbar-query-button"
-          type="primary"
-          :loading="queryLoading"
-          @click="$emit('query')"
-        >
-          {{ queryButtonLabel }}
-        </a-button>
+        <div class="pm-new-toolbar-query-buttons">
+          <a-button
+            class="pm-new-toolbar-query-button"
+            type="primary"
+            :loading="queryLoading"
+            @click="$emit('query')"
+          >
+            {{ queryButtonLabel }}
+          </a-button>
+          <a-button
+            class="pm-new-toolbar-stop-button"
+            status="danger"
+            :disabled="!queryLoading"
+            @click="$emit('stop-query')"
+          >
+            {{ stopQueryButtonLabel }}
+          </a-button>
+        </div>
       </div>
     </section>
 
@@ -203,6 +213,17 @@
               {{ option.label }}
             </a-option>
           </a-select>
+          <a-input-number
+            v-if="budgetMode === budgetModeCustom"
+            :model-value="customBudget"
+            class="pm-new-toolbar-custom-number"
+            size="small"
+            :min="0"
+            :precision="0"
+            :placeholder="budgetPlaceholder"
+            model-event="input"
+            @update:model-value="emitCustomBudget"
+          />
         </div>
         <div
           class="pm-new-toolbar-field"
@@ -225,6 +246,18 @@
               {{ option.label }}
             </a-option>
           </a-select>
+          <a-input-number
+            v-if="roasMode === roasModeCustom"
+            :model-value="customRoas"
+            class="pm-new-toolbar-custom-number"
+            size="small"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            :placeholder="roasPlaceholder"
+            model-event="input"
+            @update:model-value="emitCustomRoas"
+          />
         </div>
         <div
           class="pm-new-toolbar-field"
@@ -301,8 +334,10 @@
 import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
 import {
   BUDGET_MODE_OPTIONS,
+  BUDGET_MODE_CUSTOM,
   FAST_START_MODE_OPTIONS,
   ROAS_MODE_OPTIONS,
+  ROAS_MODE_CUSTOM,
   createEmptyGoodsFilterState
 } from '../view-models/createPromotionGoodsRows.js';
 
@@ -343,6 +378,14 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  customBudget: {
+    type: [Number, String],
+    default: null
+  },
+  customRoas: {
+    type: [Number, String],
+    default: null
+  },
   filterValues: {
     type: Object,
     default: createEmptyGoodsFilterState
@@ -375,8 +418,11 @@ const emit = defineEmits([
   'update:budgetMode',
   'update:roasMode',
   'update:fastStartMode',
+  'update:customBudget',
+  'update:customRoas',
   'update:filterValues',
   'query',
+  'stop-query',
   'search-filters',
   'reset-filters',
   'apply-all',
@@ -394,6 +440,7 @@ const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
 const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
 const queryButtonLabel = '\u67e5\u8be2\u5546\u54c1';
+const stopQueryButtonLabel = '\u505c\u6b62\u67e5\u8be2';
 const identityPlaceholder = '\u8f93\u5165\u5546\u54c1ID/SPUID\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
 const categoryPlaceholder = '\u9009\u62e9\u7c7b\u76ee';
 const sitePlaceholder = '\u9009\u62e9\u7ad9\u70b9';
@@ -411,14 +458,18 @@ const dateRangePlaceholder = Object.freeze([
 const dailyBudgetLabel = '\u5e7f\u544a\u65e5\u9884\u7b97\uff1a';
 const roasLabel = 'ROAS\u503c\uff1a';
 const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
+const budgetPlaceholder = '\u8f93\u5165\u9884\u7b97';
+const roasPlaceholder = '\u8f93\u5165ROAS';
 const applyAllLabel = '\u4e00\u952e\u8bbe\u7f6e\u5168\u90e8';
 const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
-const resetLabel = '\u91cd\u7f6e\u4e3a\u521d\u59cb\u6570\u636e';
+const resetLabel = '\u91cd\u7f6e';
 const submitAllLabel = '\u65b0\u5efa\u5168\u90e8\u5546\u54c1\u5e7f\u544a';
 const submitSelectedLabel = '\u65b0\u5efa\u5df2\u9009\u5546\u54c1\u5e7f\u544a';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const roasModeOptions = ROAS_MODE_OPTIONS;
 const fastStartModeOptions = FAST_START_MODE_OPTIONS;
+const budgetModeCustom = BUDGET_MODE_CUSTOM;
+const roasModeCustom = ROAS_MODE_CUSTOM;
 const stableSelectTriggerProps = Object.freeze({
   autoFitPopupMinWidth: true,
   updateAtScroll: true
@@ -483,6 +534,14 @@ function emitFastStartMode(value) {
   if (isOptionValue(fastStartModeOptions, value)) {
     emit('update:fastStartMode', value);
   }
+}
+
+function emitCustomBudget(value) {
+  emit('update:customBudget', value);
+}
+
+function emitCustomRoas(value) {
+  emit('update:customRoas', value);
 }
 
 function patchFilterValues(patch) {

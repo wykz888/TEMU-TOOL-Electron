@@ -78,6 +78,13 @@ function normalizeRangeNumbers(minValue, maxValue) {
   const minNumber = normalizeFiniteNumber(minValue);
   const maxNumber = normalizeFiniteNumber(maxValue);
 
+  if (minNumber === 0 && maxNumber === 0) {
+    return {
+      min: null,
+      max: null
+    };
+  }
+
   if (minNumber !== null && maxNumber !== null && minNumber > maxNumber) {
     return {
       min: maxNumber,
@@ -388,11 +395,18 @@ export function normalizeGoodsFilterState(filters) {
     identityText: normalizeText(safeFilters.identityText),
     categoryValues: normalizeTextList(safeFilters.categoryValues),
     siteValues: normalizeTextList(safeFilters.siteValues),
-    priceMin: normalizeFiniteNumber(safeFilters.priceMin),
-    priceMax: normalizeFiniteNumber(safeFilters.priceMax),
-    salesMin: normalizeFiniteNumber(safeFilters.salesMin),
-    salesMax: normalizeFiniteNumber(safeFilters.salesMax),
+    ...normalizeFilterRangeFields('price', safeFilters.priceMin, safeFilters.priceMax),
+    ...normalizeFilterRangeFields('sales', safeFilters.salesMin, safeFilters.salesMax),
     createdRange: createdRange.slice(0, 2)
+  };
+}
+
+function normalizeFilterRangeFields(fieldName, minValue, maxValue) {
+  const range = normalizeRangeNumbers(minValue, maxValue);
+
+  return {
+    [`${fieldName}Min`]: range.min,
+    [`${fieldName}Max`]: range.max
   };
 }
 

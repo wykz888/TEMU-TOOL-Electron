@@ -8,6 +8,8 @@
           v-model:budget-mode="batchBudgetMode"
           v-model:roas-mode="batchRoasMode"
           v-model:fast-start-mode="batchFastStartMode"
+          v-model:custom-budget="batchCustomBudget"
+          v-model:custom-roas="batchCustomRoas"
           v-model:filter-values="goodsFilterDraft"
           :region-options="regionOptions"
           :category-options="categoryFilterOptions"
@@ -19,6 +21,7 @@
           :submit-all-disabled="submitAllDisabled"
           :submit-selected-disabled="submitSelectedDisabled"
           @query="handleShopQuery"
+          @stop-query="handleStopShopQuery"
           @search-filters="handleApplyGoodsFilters"
           @reset-filters="handleResetGoodsFilters"
           @apply-all="handleApplyBatchToAll"
@@ -65,6 +68,7 @@
         :selected-row-keys="selectedGoodsRowKeys"
         :row-drafts="goodsRowDrafts"
         :empty-text="goodsEmptyText"
+        :loading="queryLoading"
         @selection-change="handleGoodsSelectionChange"
         @update-row-draft="handleUpdateGoodsRowDraft"
       />
@@ -77,10 +81,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
 import CreatePromotionToolbar from '../CreatePromotionToolbar.vue';
 import {
+  BUDGET_MODE_CUSTOM,
   BUDGET_MODE_UNLIMITED,
   FAST_START_MODE_OFF,
   FAST_START_MODE_ON,
   GOODS_QUERY_PAGE_SIZE,
+  ROAS_MODE_CUSTOM,
   ROAS_MODE_STRONG,
   applyGoodsRowDraftPatchToRows,
   buildGoodsCategoryFilterOptions,
@@ -115,11 +121,14 @@ const appliedGoodsFilters = ref(createEmptyGoodsFilterState());
 const batchBudgetMode = ref(BUDGET_MODE_UNLIMITED);
 const batchRoasMode = ref(ROAS_MODE_STRONG);
 const batchFastStartMode = ref(FAST_START_MODE_OFF);
+const batchCustomBudget = ref(null);
+const batchCustomRoas = ref(null);
 const queryError = ref('');
 const queryLoading = ref(false);
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
 let restoringSettings = false;
+let activeQueryToken = 0;
 const queryResult = ref({
   updatedAt: '',
   request: {},
@@ -360,11 +369,24 @@ function handleUpdateGoodsRowDraft(row, patch) {
 }
 
 function buildBatchDraftPatch() {
-  return {
+  const patch = {
     budgetMode: batchBudgetMode.value,
     roasMode: batchRoasMode.value,
     fastStartEnabled: batchFastStartMode.value === FAST_START_MODE_ON
   };
+
+  const customBudget = normalizeOptionalNumber(batchCustomBudget.value);
+  const customRoas = normalizeOptionalNumber(batchCustomRoas.value);
+
+  if (batchBudgetMode.value === BUDGET_MODE_CUSTOM && customBudget !== null) {
+    patch.customBudget = customBudget;
+  }
+
+  if (batchRoasMode.value === ROAS_MODE_CUSTOM && customRoas !== null) {
+    patch.customRoas = customRoas;
+  }
+
+  return patch;
 }
 
 function applyBatchDraftToRows(rows) {
@@ -423,7 +445,29 @@ function handleResetGoodsFilters() {
   appliedGoodsFilters.value = createEmptyGoodsFilterState();
 }
 
+function normalizeOptionalNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function handleStopShopQuery() {
+  if (!queryLoading.value) {
+    return;
+  }
+
+  activeQueryToken += 1;
+  queryLoading.value = false;
+}
+
 async function handleShopQuery() {
+  const queryToken = activeQueryToken + 1;
+
+  activeQueryToken = queryToken;
   queryError.value = '';
   queryLoading.value = true;
 
@@ -435,6 +479,10 @@ async function handleShopQuery() {
     }
 
     const result = await bridge(buildGoodsQueryPayload());
+
+    if (queryToken !== activeQueryToken) {
+      return;
+    }
 
     const normalizedResult = result && typeof result === 'object'
       ? result
@@ -455,9 +503,15 @@ async function handleShopQuery() {
     pruneGoodsFiltersForRows(queryResult.value.rows);
     resetGoodsRowState(queryResult.value.rows);
   } catch (error) {
+    if (queryToken !== activeQueryToken) {
+      return;
+    }
+
     queryError.value = normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25';
   } finally {
-    queryLoading.value = false;
+    if (queryToken === activeQueryToken) {
+      queryLoading.value = false;
+    }
   }
 }
 

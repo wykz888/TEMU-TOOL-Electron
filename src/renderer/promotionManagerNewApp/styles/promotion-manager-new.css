@@ -267,6 +267,13 @@ body {
   min-width: 0;
 }
 
+.pm-new-toolbar-query-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .pm-new-toolbar-filter-fields {
   display: flex;
   align-items: center;
@@ -364,7 +371,12 @@ body {
   width: 130px;
 }
 
+.pm-new-toolbar-custom-number {
+  width: 116px;
+}
+
 .pm-new-toolbar-query-button.arco-btn,
+.pm-new-toolbar-stop-button.arco-btn,
 .pm-new-toolbar-filter-buttons .arco-btn,
 .pm-new-toolbar-action-buttons .arco-btn {
   height: 32px;
@@ -1099,6 +1111,15 @@ body.dark-theme .pm-new-budget-radio-group.arco-radio-group-button {
 
   .pm-new-toolbar-query-button {
     justify-self: start;
+  }
+
+  .pm-new-toolbar-query-buttons {
+    justify-self: start;
+    flex-wrap: wrap;
+  }
+
+  .pm-new-toolbar-custom-number {
+    width: 100%;
   }
 
   .pm-new-metric-row,
