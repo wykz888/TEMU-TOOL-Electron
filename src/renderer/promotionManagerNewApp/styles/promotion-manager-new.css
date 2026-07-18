@@ -205,6 +205,7 @@ body {
 .pm-new-product-panel {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: visible;
 }
 
@@ -260,7 +261,7 @@ body {
 
 .pm-new-toolbar-query-fields {
   display: grid;
-  grid-template-columns: minmax(250px, 320px) minmax(180px, 216px) auto;
+  grid-template-columns: minmax(330px, 430px) minmax(220px, 260px) auto;
   gap: 10px;
   align-items: center;
   justify-content: start;
@@ -361,6 +362,15 @@ body {
 
 .pm-new-toolbar-select {
   width: 100%;
+}
+
+.pm-new-toolbar-shop-field {
+  width: 100%;
+}
+
+.pm-new-toolbar-shop-select {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .pm-new-toolbar-action-select {
@@ -486,6 +496,8 @@ body {
 }
 
 .pm-new-goods-table {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   border: 1px solid rgba(49, 66, 89, 0.08);
@@ -507,11 +519,17 @@ body {
 
 .pm-new-goods-table.is-empty .arco-table-container,
 .pm-new-goods-table.is-empty .arco-spin,
-.pm-new-goods-table.is-empty .arco-spin-children {
+.pm-new-goods-table.is-empty .arco-spin-children,
+.pm-new-goods-table.is-empty .arco-table-content,
+.pm-new-goods-table.is-empty .arco-table-content-inner,
+.pm-new-goods-table.is-empty .arco-table-element {
   height: 100%;
+  min-height: 0;
 }
 
-.pm-new-goods-table.is-empty .arco-table-container {
+.pm-new-goods-table.is-empty .arco-table-container,
+.pm-new-goods-table.is-empty .arco-table-content,
+.pm-new-goods-table.is-empty .arco-table-content-inner {
   display: flex;
   flex-direction: column;
 }
@@ -525,6 +543,10 @@ body {
   height: auto;
   min-height: 0;
   overflow: hidden;
+}
+
+.pm-new-goods-table.is-empty .arco-table-body table {
+  min-height: 100%;
 }
 
 .pm-new-goods-table.is-empty .arco-table-body .arco-scrollbar,

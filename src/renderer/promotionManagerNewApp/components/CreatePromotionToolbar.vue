@@ -3,13 +3,19 @@
     <section class="pm-new-toolbar-group pm-new-toolbar-query-group">
       <span class="pm-new-toolbar-group-title">{{ queryGroupTitle }}</span>
       <div class="pm-new-toolbar-query-fields">
-        <ShopSelectDropdown
-          class="pm-new-toolbar-shop-select"
-          :model-value="selectedShopIds"
-          :placeholder="shopSelectPlaceholder"
-          storage-key="promotion-manager-new:create-shop-selection"
-          @update:model-value="emitSelectedShopIds"
-        />
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-shop-field"
+          role="group"
+        >
+          <span class="pm-new-toolbar-field-label">{{ shopSelectLabel }}</span>
+          <ShopSelectDropdown
+            class="pm-new-toolbar-shop-select"
+            :model-value="selectedShopIds"
+            :placeholder="shopSelectPlaceholder"
+            storage-key="promotion-manager-new:create-shop-selection"
+            @update:model-value="emitSelectedShopIds"
+          />
+        </div>
         <div
           class="pm-new-toolbar-field pm-new-toolbar-region-field"
           role="group"
@@ -461,8 +467,9 @@ const queryGroupTitle = '\u6570\u636e\u67e5\u8be2';
 const filterGroupTitle = '\u5546\u54c1\u7b5b\u9009';
 const actionGroupTitle = '\u6279\u91cf\u8bbe\u7f6e';
 const submitGroupTitle = '\u521b\u5efa\u5e7f\u544a';
+const shopSelectLabel = '\u5e97\u94fa\u9009\u62e9\uff1a';
 const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
-const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
+const regionSelectLabel = '\u67e5\u8be2\u5730\u533a\uff1a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
 const queryButtonLabel = '\u67e5\u8be2\u5546\u54c1';
 const stopQueryButtonLabel = '\u505c\u6b62\u67e5\u8be2';
