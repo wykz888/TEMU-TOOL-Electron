@@ -1,9 +1,11 @@
+const crypto = require('node:crypto');
 const { normalizeText } = require('../shopManagement/common');
 
 const ADS_GOODS_LIST_URL = 'https://ads.temu.com/api/v1/coconut/ad/query_mall_goods_list';
 const DEFAULT_PAGE_NUMBER = 1;
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_PAGE_SIZE = 100;
+const MAX_GOODS_PAGE_COUNT = 1000;
 
 const REGION_LABELS = Object.freeze({
   us: '\u7f8e\u56fd',
@@ -35,6 +37,16 @@ function normalizePositiveInteger(value, fallback, options = {}) {
   }
 
   return Math.min(numberValue, maximum);
+}
+
+function normalizeNonNegativeInteger(value, fallback = 0) {
+  const numberValue = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(numberValue) || numberValue < 0) {
+    return fallback;
+  }
+
+  return numberValue;
 }
 
 function normalizeBoolean(value, fallback = false) {
@@ -118,12 +130,25 @@ function buildGoodsListPayload(payload = {}) {
     page_size: normalizePositiveInteger(payload.pageSize || payload.page_size, DEFAULT_PAGE_SIZE, {
       maximum: MAX_PAGE_SIZE
     }),
-    list_id: normalizeText(payload.listId || payload.list_id),
+    list_id: normalizeText(payload.listId || payload.list_id) || createQueryListId(),
     is_gray: normalizeBoolean(payload.isGray || payload.is_gray, false),
     selected_roas_type: normalizePositiveInteger(
       payload.selectedRoasType || payload.selected_roas_type,
       1
     )
+  };
+}
+
+function createQueryListId() {
+  return typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function buildGoodsListPagePayload(payload, pageNumber) {
+  return {
+    ...payload,
+    page_number: normalizePositiveInteger(pageNumber, DEFAULT_PAGE_NUMBER)
   };
 }
 
@@ -222,8 +247,8 @@ function buildPromotionTagsText(record) {
   const fastStartEnable = Number(record && record.fast_start_enable);
   const recRoasType = normalizeNumberText(record && record.rec_roas_type);
 
-  if (Number.isFinite(fastStartEnable)) {
-    parts.push(fastStartEnable === 1 ? 'Fast start' : `Fast start ${fastStartEnable}`);
+  if (Number.isFinite(fastStartEnable) && fastStartEnable > 0) {
+    parts.push(fastStartEnable === 1 ? '\u6781\u901f\u8d77\u91cf' : `\u6781\u901f\u8d77\u91cf ${fastStartEnable}`);
   }
 
   if (recRoasType) {
@@ -282,6 +307,30 @@ function mapGoodsRecord(record, context) {
   };
 }
 
+function normalizeOptionalBoolean(value) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  return null;
+}
+
+function buildGoodsPageSignature(rows) {
+  if (!Array.isArray(rows) || rows.length <= 0) {
+    return '';
+  }
+
+  return rows
+    .map((row) => [
+      row && row.goodsId,
+      row && row.spuId,
+      row && row.skuEncode,
+      row && row.thumbUrl
+    ].map(normalizeText).filter(Boolean).join(':'))
+    .filter(Boolean)
+    .join('|');
+}
+
 function extractGoodsRows(response, context) {
   const responsePayload = response && response.data && typeof response.data === 'object'
     ? response.data
@@ -296,17 +345,39 @@ function extractGoodsRows(response, context) {
     mallType: normalizeText(result.mall_type),
     pageNumber: normalizePositiveInteger(responsePayload.page_number, context.requestPayload.page_number),
     pageSize: normalizePositiveInteger(responsePayload.page_size, context.requestPayload.page_size),
-    total: normalizePositiveInteger(responsePayload.total, goodsList.length, {
-      minimum: 0
-    }),
-    hasMore: responsePayload.has_more === true,
+    total: normalizeNonNegativeInteger(responsePayload.total, goodsList.length),
+    hasMore: normalizeOptionalBoolean(responsePayload.has_more),
     rows: goodsList.map((record, index) => mapGoodsRecord(record, {
       ...context,
       mallId: normalizeText(result.mall_id),
       mallType: normalizeText(result.mall_type),
-      index: index + 1
+      index: normalizeNonNegativeInteger(context.rowOffset, 0) + index + 1
     }))
   };
+}
+
+function shouldFetchNextGoodsPage(extracted, accumulatedRowCount) {
+  if (!extracted || !Array.isArray(extracted.rows) || extracted.rows.length <= 0) {
+    return false;
+  }
+
+  if (extracted.hasMore === true) {
+    return true;
+  }
+
+  if (extracted.hasMore === false) {
+    return false;
+  }
+
+  const total = normalizeNonNegativeInteger(extracted.total, 0);
+
+  if (total > 0 && accumulatedRowCount < total) {
+    return true;
+  }
+
+  const pageSize = normalizePositiveInteger(extracted.pageSize, DEFAULT_PAGE_SIZE);
+
+  return extracted.rows.length >= pageSize;
 }
 
 function createPromotionManagerNewGoodsService({
@@ -327,6 +398,118 @@ function createPromotionManagerNewGoodsService({
     if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
       runtimeLogger.logError(eventName, error, payload);
     }
+  }
+
+  async function fetchGoodsPageForRegion(shop, regionId, regionIds, requestPayload, rowOffset) {
+    const sessionResult = await adsSessionService.postWithRegionCookie(
+      shop.id,
+      regionId,
+      ADS_GOODS_LIST_URL,
+      requestPayload,
+      {
+        allRegionIds: regionIds,
+        reason: `${regionId}-query-mall-goods-list-page-${requestPayload.page_number}`
+      }
+    );
+    const response = sessionResult && sessionResult.response ? sessionResult.response : null;
+
+    assertApiSuccess(response);
+
+    return {
+      sessionResult,
+      extracted: extractGoodsRows(response, {
+        shopId: shop.id,
+        shopName: shop.shopName,
+        regionId,
+        requestPayload,
+        rowOffset
+      })
+    };
+  }
+
+  async function fetchAllGoodsRowsForRegion(shop, regionId, regionIds, baseRequestPayload) {
+    const regionRows = [];
+    const pageDetails = [];
+    const seenPageSignatures = new Set();
+    const seenRowIds = new Set();
+    let pageNumber = normalizePositiveInteger(baseRequestPayload.page_number, DEFAULT_PAGE_NUMBER);
+    let lastExtracted = null;
+    let lastSessionResult = null;
+    let stoppedByDuplicatePage = false;
+    let stoppedByPageLimit = false;
+
+    for (let pageIndex = 0; pageIndex < MAX_GOODS_PAGE_COUNT; pageIndex += 1) {
+      const requestPayload = buildGoodsListPagePayload(baseRequestPayload, pageNumber);
+      const { sessionResult, extracted } = await fetchGoodsPageForRegion(
+        shop,
+        regionId,
+        regionIds,
+        requestPayload,
+        regionRows.length
+      );
+      const pageSignature = buildGoodsPageSignature(extracted.rows);
+
+      lastExtracted = extracted;
+      lastSessionResult = sessionResult;
+
+      if (pageSignature && seenPageSignatures.has(pageSignature)) {
+        stoppedByDuplicatePage = true;
+        break;
+      }
+
+      if (pageSignature) {
+        seenPageSignatures.add(pageSignature);
+      }
+
+      let uniqueRowCount = 0;
+
+      extracted.rows.forEach((row) => {
+        const rowId = normalizeText(row && row.id);
+
+        if (!rowId || seenRowIds.has(rowId)) {
+          return;
+        }
+
+        seenRowIds.add(rowId);
+        regionRows.push(row);
+        uniqueRowCount += 1;
+      });
+
+      pageDetails.push({
+        pageNumber: extracted.pageNumber,
+        pageSize: extracted.pageSize,
+        rowCount: extracted.rows.length,
+        uniqueRowCount,
+        total: extracted.total,
+        hasMore: extracted.hasMore
+      });
+
+      if (!shouldFetchNextGoodsPage(extracted, regionRows.length)) {
+        break;
+      }
+
+      pageNumber = extracted.pageNumber + 1;
+
+      if (pageIndex + 1 >= MAX_GOODS_PAGE_COUNT) {
+        stoppedByPageLimit = true;
+      }
+    }
+
+    return {
+      rows: regionRows,
+      pageDetails,
+      pageCount: pageDetails.length,
+      stoppedByDuplicatePage,
+      stoppedByPageLimit,
+      mallId: normalizeText(lastExtracted && lastExtracted.mallId),
+      mallType: normalizeText(lastExtracted && lastExtracted.mallType),
+      pageNumber: normalizePositiveInteger(lastExtracted && lastExtracted.pageNumber, pageNumber),
+      pageSize: normalizePositiveInteger(lastExtracted && lastExtracted.pageSize, baseRequestPayload.page_size),
+      hasMore: lastExtracted ? lastExtracted.hasMore === true : false,
+      total: normalizeNonNegativeInteger(lastExtracted && lastExtracted.total, regionRows.length),
+      refreshedCookies: lastSessionResult && lastSessionResult.refreshedCookies === true,
+      cookieSyncMode: normalizeText(lastSessionResult && lastSessionResult.cookieSyncMode)
+    };
   }
 
   async function queryGoods(payload = {}) {
@@ -364,26 +547,12 @@ function createPromotionManagerNewGoodsService({
     for (const shop of shops) {
       for (const regionId of regionIds) {
         try {
-          const sessionResult = await adsSessionService.postWithRegionCookie(
-            shop.id,
+          const extracted = await fetchAllGoodsRowsForRegion(
+            shop,
             regionId,
-            ADS_GOODS_LIST_URL,
-            requestPayload,
-            {
-              allRegionIds: regionIds,
-              reason: `${regionId}-query-mall-goods-list`
-            }
-          );
-          const response = sessionResult && sessionResult.response ? sessionResult.response : null;
-
-          assertApiSuccess(response);
-
-          const extracted = extractGoodsRows(response, {
-            shopId: shop.id,
-            shopName: shop.shopName,
-            regionId,
+            regionIds,
             requestPayload
-          });
+          );
 
           rows.push(...extracted.rows);
           regions.push({
@@ -397,10 +566,34 @@ function createPromotionManagerNewGoodsService({
             pageSize: extracted.pageSize,
             hasMore: extracted.hasMore,
             total: extracted.total,
+            pageCount: extracted.pageCount,
+            pageDetails: extracted.pageDetails,
             rowCount: extracted.rows.length,
-            refreshedCookies: sessionResult.refreshedCookies === true,
-            cookieSyncMode: normalizeText(sessionResult.cookieSyncMode)
+            stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
+            stoppedByPageLimit: extracted.stoppedByPageLimit === true,
+            refreshedCookies: extracted.refreshedCookies === true,
+            cookieSyncMode: normalizeText(extracted.cookieSyncMode)
           });
+
+          if (extracted.stoppedByPageLimit === true) {
+            errors.push({
+              shopId: shop.id,
+              shopName: shop.shopName,
+              regionId,
+              regionLabel: REGION_LABELS[regionId] || regionId,
+              message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fbe\u5230\u4e0a\u9650\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u540e\u91cd\u8bd5'
+            });
+          }
+
+          if (extracted.stoppedByDuplicatePage === true) {
+            errors.push({
+              shopId: shop.id,
+              shopName: shop.shopName,
+              regionId,
+              regionLabel: REGION_LABELS[regionId] || regionId,
+              message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fd4\u56de\u91cd\u590d\u6570\u636e\uff0c\u5df2\u505c\u6b62\u7ee7\u7eed\u67e5\u8be2'
+            });
+          }
         } catch (error) {
           const failure = {
             shopId: shop.id,
@@ -465,7 +658,11 @@ function createPromotionManagerNewGoodsService({
 module.exports = {
   ADS_GOODS_LIST_URL,
   REGION_IDS,
+  buildGoodsListPayload,
+  buildGoodsListPagePayload,
+  extractGoodsRows,
   mapGoodsRecord,
+  shouldFetchNextGoodsPage,
   toCloneableJsonValue,
   createPromotionManagerNewGoodsService
 };
