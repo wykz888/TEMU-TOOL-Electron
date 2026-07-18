@@ -1,5 +1,9 @@
 const crypto = require('node:crypto');
 const { normalizeText } = require('../shopManagement/common');
+const {
+  applyBidInfoToRows
+} = require('./promotionManagerNewBidUtils');
+const { createPromotionManagerNewBidFetcher } = require('./promotionManagerNewBidService');
 
 const ADS_GOODS_LIST_URL = 'https://ads.temu.com/api/v1/coconut/ad/query_mall_goods_list';
 const DEFAULT_PAGE_NUMBER = 1;
@@ -400,6 +404,11 @@ function createPromotionManagerNewGoodsService({
     }
   }
 
+  const bidFetcher = createPromotionManagerNewBidFetcher({
+    adsSessionService,
+    assertApiSuccess
+  });
+
   async function fetchGoodsPageForRegion(shop, regionId, regionIds, requestPayload, rowOffset) {
     const sessionResult = await adsSessionService.postWithRegionCookie(
       shop.id,
@@ -430,6 +439,7 @@ function createPromotionManagerNewGoodsService({
   async function fetchAllGoodsRowsForRegion(shop, regionId, regionIds, baseRequestPayload) {
     const regionRows = [];
     const pageDetails = [];
+    const bidErrors = [];
     const seenPageSignatures = new Set();
     const seenRowIds = new Set();
     let pageNumber = normalizePositiveInteger(baseRequestPayload.page_number, DEFAULT_PAGE_NUMBER);
@@ -461,9 +471,42 @@ function createPromotionManagerNewGoodsService({
         seenPageSignatures.add(pageSignature);
       }
 
+      let pageRows = extracted.rows;
+      let bidRequestCount = 0;
+      let bidResponseCount = 0;
+      let bidErrorCount = 0;
+
+      try {
+        const bidResult = await bidFetcher.fetchBidInfoForRows({
+          shop,
+          regionId,
+          regionIds,
+          rows: extracted.rows,
+          roasType: baseRequestPayload.selected_roas_type,
+          pageNumber: extracted.pageNumber
+        });
+
+        pageRows = applyBidInfoToRows(extracted.rows, bidResult.lookup);
+        bidRequestCount = bidResult.requestCount;
+        bidResponseCount = bidResult.responseCount;
+      } catch (error) {
+        bidErrorCount = 1;
+        bidErrors.push({
+          pageNumber: extracted.pageNumber,
+          message: normalizeText(error && error.message) || '\u51fa\u4ef7\u9884\u6d4b\u67e5\u8be2\u5931\u8d25'
+        });
+        logError('promotion_manager_new_goods_bid_query_page_failed', error, {
+          shopId: shop.id,
+          shopName: shop.shopName,
+          regionId,
+          pageNumber: extracted.pageNumber,
+          rowCount: extracted.rows.length
+        });
+      }
+
       let uniqueRowCount = 0;
 
-      extracted.rows.forEach((row) => {
+      pageRows.forEach((row) => {
         const rowId = normalizeText(row && row.id);
 
         if (!rowId || seenRowIds.has(rowId)) {
@@ -481,7 +524,10 @@ function createPromotionManagerNewGoodsService({
         rowCount: extracted.rows.length,
         uniqueRowCount,
         total: extracted.total,
-        hasMore: extracted.hasMore
+        hasMore: extracted.hasMore,
+        bidRequestCount,
+        bidResponseCount,
+        bidErrorCount
       });
 
       if (!shouldFetchNextGoodsPage(extracted, regionRows.length)) {
@@ -499,6 +545,7 @@ function createPromotionManagerNewGoodsService({
       rows: regionRows,
       pageDetails,
       pageCount: pageDetails.length,
+      bidErrors,
       stoppedByDuplicatePage,
       stoppedByPageLimit,
       mallId: normalizeText(lastExtracted && lastExtracted.mallId),
@@ -543,6 +590,7 @@ function createPromotionManagerNewGoodsService({
     const rows = [];
     const regions = [];
     const errors = [];
+    const warnings = [];
 
     for (const shop of shops) {
       for (const regionId of regionIds) {
@@ -569,6 +617,7 @@ function createPromotionManagerNewGoodsService({
             pageCount: extracted.pageCount,
             pageDetails: extracted.pageDetails,
             rowCount: extracted.rows.length,
+            bidErrorCount: extracted.bidErrors.length,
             stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
             stoppedByPageLimit: extracted.stoppedByPageLimit === true,
             refreshedCookies: extracted.refreshedCookies === true,
@@ -584,6 +633,17 @@ function createPromotionManagerNewGoodsService({
               message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fbe\u5230\u4e0a\u9650\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u540e\u91cd\u8bd5'
             });
           }
+
+          extracted.bidErrors.forEach((bidError) => {
+            warnings.push({
+              shopId: shop.id,
+              shopName: shop.shopName,
+              regionId,
+              regionLabel: REGION_LABELS[regionId] || regionId,
+              pageNumber: bidError.pageNumber,
+              message: bidError.message
+            });
+          });
 
           if (extracted.stoppedByDuplicatePage === true) {
             errors.push({
@@ -620,6 +680,7 @@ function createPromotionManagerNewGoodsService({
       rows,
       regions,
       errors,
+      warnings,
       totalCount: rows.length,
       successCount: regions.length,
       failedCount: errors.length
@@ -629,7 +690,8 @@ function createPromotionManagerNewGoodsService({
       shopCount: shops.length,
       regionCount: regionIds.length,
       rowCount: rows.length,
-      failedCount: errors.length
+      failedCount: errors.length,
+      warningCount: warnings.length
     });
 
     return toCloneableJsonValue(result, {
@@ -644,6 +706,7 @@ function createPromotionManagerNewGoodsService({
         regionLabel: '',
         message: '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u7ed3\u679c\u89e3\u6790\u5931\u8d25'
       }],
+      warnings: [],
       totalCount: 0,
       successCount: 0,
       failedCount: 1

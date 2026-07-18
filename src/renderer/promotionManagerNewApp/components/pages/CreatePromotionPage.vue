@@ -73,14 +73,14 @@
       </div>
 
       <div
-        v-if="queryResult.errors.length > 0"
+        v-if="queryMessages.length > 0"
         class="pm-new-query-message is-warning"
       >
         <span
-          v-for="error in queryResult.errors"
-          :key="`${error.shopId}:${error.regionId}`"
+          v-for="message in queryMessages"
+          :key="message.key"
         >
-          {{ buildQueryErrorText(error) }}
+          {{ message.text }}
         </span>
       </div>
 
@@ -95,6 +95,7 @@
               <th>{{ goodsColumnPrice }}</th>
               <th>{{ goodsColumnStockSales }}</th>
               <th>{{ goodsColumnCreatedAt }}</th>
+              <th>{{ goodsColumnBid }}</th>
               <th>{{ goodsColumnPromotion }}</th>
             </tr>
           </thead>
@@ -153,11 +154,23 @@
               </td>
               <td>{{ row.createdAtText || emptyCellText }}</td>
               <td>
+                <div
+                  class="pm-new-goods-meta-cell pm-new-bid-cell"
+                  :title="buildBidTitle(row)"
+                >
+                  <strong>{{ row.bidBestText || emptyCellText }}</strong>
+                  <span>{{ bidImpressionLabel }} {{ row.bidImpressionDeltaText || emptyCellText }}</span>
+                  <span>{{ bidOrderLabel }} {{ row.bidOrderDeltaText || emptyCellText }}</span>
+                  <span>{{ bidBudgetLabel }} {{ row.bidDailyBudgetText || emptyCellText }}</span>
+                  <span>{{ bidRoasLabel }} {{ row.bidCustomRoasRangeText || row.bidRecommendRoasRangeText || emptyCellText }}</span>
+                </div>
+              </td>
+              <td>
                 <span :title="row.promotionText">{{ row.promotionText || emptyCellText }}</span>
               </td>
             </tr>
             <tr v-if="filteredGoodsRows.length <= 0">
-              <td colspan="8">
+              <td colspan="9">
                 <div class="pm-new-goods-empty">
                   {{ goodsEmptyText }}
                 </div>
@@ -210,6 +223,7 @@ const queryResult = ref({
   rows: [],
   regions: [],
   errors: [],
+  warnings: [],
   totalCount: 0,
   successCount: 0,
   failedCount: 0
@@ -231,6 +245,7 @@ const goodsColumnCategorySite = '\u7c7b\u76ee / \u7ad9\u70b9';
 const goodsColumnPrice = '\u4f9b\u8d27\u4ef7';
 const goodsColumnStockSales = '\u5e93\u5b58 / \u9500\u91cf';
 const goodsColumnCreatedAt = '\u521b\u5efa\u65f6\u95f4';
+const goodsColumnBid = '\u9884\u6d4b\u51fa\u4ef7';
 const goodsColumnPromotion = '\u63a8\u5e7f\u4fe1\u606f';
 const goodsIdLabel = 'Goods';
 const spuIdLabel = 'SPU';
@@ -238,6 +253,10 @@ const skuLabel = 'SKU';
 const mallIdLabel = 'Mall';
 const stockLabel = '\u5e93\u5b58';
 const salesLabel = '\u9500\u91cf';
+const bidImpressionLabel = '\u66dd\u5149';
+const bidOrderLabel = '\u8ba2\u5355';
+const bidBudgetLabel = '\u9884\u7b97';
+const bidRoasLabel = 'ROAS';
 const emptyCellText = '-';
 const noImageText = '\u65e0\u56fe';
 const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
@@ -272,7 +291,11 @@ const filteredGoodsRows = computed(() => {
     row.shopName,
     row.regionLabel,
     row.categoryText,
-    row.siteText
+    row.siteText,
+    row.bidBestText,
+    row.bidBestRoasText,
+    row.bidBestDesc,
+    row.bidOptionsText
   ].some((value) => String(value || '').toLowerCase().includes(keyword)));
 });
 
@@ -296,6 +319,17 @@ const querySummaryText = computed(() => {
     `${queryFailedCountLabel} ${queryResult.value.failedCount}`
   ].join(' / ');
 });
+
+const queryMessages = computed(() => ([
+  ...queryResult.value.errors.map((error) => ({
+    key: `error:${error.shopId}:${error.regionId}:${error.pageNumber || ''}:${error.message || ''}`,
+    text: buildQueryErrorText(error)
+  })),
+  ...queryResult.value.warnings.map((warning) => ({
+    key: `warning:${warning.shopId}:${warning.regionId}:${warning.pageNumber || ''}:${warning.message || ''}`,
+    text: buildQueryErrorText(warning)
+  }))
+].filter((entry) => entry.text)));
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -394,6 +428,24 @@ function buildQueryErrorText(error) {
   ].filter(Boolean).join(' / ');
 }
 
+function buildBidTitle(row) {
+  return [
+    normalizeText(row && row.bidOptionsText),
+    normalizeText(row && row.bidDailyBudgetText)
+      ? `${bidBudgetLabel} ${normalizeText(row && row.bidDailyBudgetText)}`
+      : '',
+    normalizeText(row && row.bidCustomRoasRangeText)
+      ? `${bidRoasLabel} ${normalizeText(row && row.bidCustomRoasRangeText)}`
+      : '',
+    normalizeText(row && row.bidRecommendRoasRangeText)
+      ? `${goodsColumnBid} ${normalizeText(row && row.bidRecommendRoasRangeText)}`
+      : '',
+    normalizeText(row && row.bidBaseRoasText)
+      ? `Base ROAS ${normalizeText(row && row.bidBaseRoasText)}`
+      : ''
+  ].filter(Boolean).join('\n');
+}
+
 async function handleShopQuery() {
   queryError.value = '';
   queryLoading.value = true;
@@ -417,6 +469,7 @@ async function handleShopQuery() {
       rows: Array.isArray(normalizedResult.rows) ? normalizedResult.rows : [],
       regions: Array.isArray(normalizedResult.regions) ? normalizedResult.regions : [],
       errors: Array.isArray(normalizedResult.errors) ? normalizedResult.errors : [],
+      warnings: Array.isArray(normalizedResult.warnings) ? normalizedResult.warnings : [],
       totalCount: Number(normalizedResult.totalCount) || 0,
       successCount: Number(normalizedResult.successCount) || 0,
       failedCount: Number(normalizedResult.failedCount) || 0

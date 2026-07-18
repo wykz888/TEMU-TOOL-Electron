@@ -339,7 +339,7 @@ body {
 }
 
 .pm-new-goods-table-scroll table {
-  min-width: 1180px;
+  min-width: 1380px;
 }
 
 .pm-new-table-scroll th,
@@ -413,6 +413,10 @@ body {
   gap: 4px;
   min-width: 0;
   max-width: 240px;
+}
+
+.pm-new-bid-cell {
+  max-width: 280px;
 }
 
 .pm-new-goods-meta-cell strong,
