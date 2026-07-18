@@ -22,6 +22,8 @@
           :submit-all-disabled="submitAllDisabled"
           :submit-selected-disabled="submitSelectedDisabled"
           :submit-loading="submitLoading"
+          :submit-stopping="submitStopping"
+          :submit-scope="submitScope"
           @query="handleShopQuery"
           @stop-query="handleStopShopQuery"
           @search-filters="handleApplyGoodsFilters"
@@ -83,6 +85,8 @@
         :rows="filteredGoodsRows"
         :selected-row-keys="selectedGoodsRowKeys"
         :row-drafts="goodsRowDrafts"
+        :row-draft-version="goodsRowDraftVersion"
+        :row-create-statuses="goodsCreateStatusMap"
         :empty-text="goodsEmptyText"
         :loading="queryLoading"
         @selection-change="handleGoodsSelectionChange"
@@ -93,7 +97,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, triggerRef, watch } from 'vue';
 import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
 import CreatePromotionToolbar from '../CreatePromotionToolbar.vue';
 import {
@@ -107,7 +111,6 @@ import {
   applyGoodsRowDraftPatchToRows,
   buildGoodsCategoryFilterOptions,
   buildGoodsRowDraft,
-  buildGoodsRowDraftMap,
   buildGoodsShopFilterOptions,
   buildGoodsSiteFilterOptions,
   createEmptyGoodsFilterState,
@@ -122,6 +125,13 @@ import {
   hasValidCreateAdsRows
 } from '../../view-models/createPromotionSubmitRows.js';
 import {
+  CREATE_STATUS_CREATING,
+  CREATE_STATUS_FAILED,
+  CREATE_STATUS_SKIPPED,
+  applyCreateResultToStatusMap,
+  patchCreateStatusForRows
+} from '../../view-models/createPromotionSubmitStatus.js';
+import {
   loadCreatePromotionSelection,
   normalizeRegionIdList,
   normalizeText,
@@ -134,9 +144,11 @@ const selectedShopIds = ref([]);
 const queriedShopIds = ref([]);
 const selectedRegionCodes = ref([]);
 const queriedRegionCodes = ref([]);
-const goodsRows = ref([]);
+const goodsRows = shallowRef([]);
 const selectedGoodsRowKeys = ref([]);
-const goodsRowDrafts = ref({});
+const goodsRowDrafts = shallowRef({});
+const goodsRowDraftVersion = ref(0);
+const goodsCreateStatusMap = shallowRef({});
 const goodsFilterDraft = ref(createEmptyGoodsFilterState());
 const appliedGoodsFilters = ref(createEmptyGoodsFilterState());
 const batchBudgetMode = ref(BUDGET_MODE_UNLIMITED);
@@ -146,13 +158,19 @@ const batchCustomBudget = ref(null);
 const batchCustomRoas = ref(null);
 const queryError = ref('');
 const queryLoading = ref(false);
+const activeQueryTaskId = ref('');
 const submitError = ref('');
 const submitLoading = ref(false);
+const submitStopping = ref(false);
+const submitScope = ref('');
+const activeSubmitTaskId = ref('');
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
 let restoringSettings = false;
 let activeQueryToken = 0;
-const queryResult = ref({
+const queryResult = shallowRef({
+  taskId: '',
+  canceled: false,
   updatedAt: '',
   request: {},
   rows: [],
@@ -163,7 +181,7 @@ const queryResult = ref({
   successCount: 0,
   failedCount: 0
 });
-const submitResult = ref(createEmptySubmitResult());
+const submitResult = shallowRef(createEmptySubmitResult());
 
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
 const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
@@ -178,6 +196,13 @@ const submitFailedCountLabel = '\u5931\u8d25';
 const submitSkippedCountLabel = '\u8df3\u8fc7';
 const submitNoRowsText = '\u8bf7\u5148\u9009\u62e9\u9700\u8981\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1';
 const submitNoValidRowsText = '\u6ca1\u6709\u53ef\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1';
+const submitStoppingText = '\u6b63\u5728\u505c\u6b62\u521b\u5efa\u5e7f\u544a...';
+const submitStoppedLabel = '\u5df2\u505c\u6b62\u521b\u5efa\u5e7f\u544a';
+const submitCanceledCountLabel = '\u505c\u6b62';
+const submitInvalidRowText = '\u914d\u7f6e\u65e0\u6548\uff0c\u5df2\u8df3\u8fc7';
+const submitCreateFailedText = '\u521b\u5efa\u5931\u8d25';
+const submitScopeAll = 'all';
+const submitScopeSelected = 'selected';
 const settingsLoadFailedText = '\u65b0\u5efa\u63a8\u5e7f\u914d\u7f6e\u52a0\u8f7d\u5931\u8d25';
 const queryLoadingText = '\u6b63\u5728\u67e5\u8be2...';
 const queryLoadingGoodsText = '\u6b63\u5728\u67e5\u8be2\u5546\u54c1\u6570\u636e';
@@ -252,7 +277,7 @@ const submitMessages = computed(() => buildUniqueQueryMessages([
 
 const submitStatusText = computed(() => {
   if (submitLoading.value) {
-    return submitLoadingText;
+    return submitStopping.value ? submitStoppingText : submitLoadingText;
   }
 
   if (submitError.value) {
@@ -263,11 +288,16 @@ const submitStatusText = computed(() => {
     return '';
   }
 
+  const finishedLabel = submitResult.value.canceled === true
+    ? submitStoppedLabel
+    : submitFinishedLabel;
+
   return [
-    submitFinishedLabel,
+    finishedLabel,
     `${submitSuccessCountLabel} ${Number(submitResult.value.successCount) || 0}`,
     `${submitFailedCountLabel} ${Number(submitResult.value.failedCount) || 0}`,
-    `${submitSkippedCountLabel} ${Number(submitResult.value.skippedCount) || 0}`
+    `${submitSkippedCountLabel} ${Number(submitResult.value.skippedCount) || 0}`,
+    `${submitCanceledCountLabel} ${Number(submitResult.value.canceledCount) || 0}`
   ].join(' / ');
 });
 
@@ -315,6 +345,7 @@ function buildGoodsQueryPayload() {
   queriedRegionCodes.value = regionIds.slice();
 
   return {
+    taskId: activeQueryTaskId.value,
     shopIds,
     regionIds,
     pageNumber: 1,
@@ -325,23 +356,38 @@ function buildGoodsQueryPayload() {
   };
 }
 
+function createQueryTaskId() {
+  return [
+    'query_goods',
+    Date.now().toString(36),
+    Math.random().toString(16).slice(2, 10)
+  ].join('_');
+}
+
 function createEmptySubmitResult() {
   return {
+    taskId: '',
+    canceled: false,
     updatedAt: '',
     request: {},
     groups: [],
+    rowResults: [],
     errors: [],
     warnings: [],
     totalCount: 0,
     successCount: 0,
     failedCount: 0,
-    skippedCount: 0
+    skippedCount: 0,
+    canceledCount: 0
   };
 }
 
 function resetSubmitState() {
   submitError.value = '';
   submitResult.value = createEmptySubmitResult();
+  submitStopping.value = false;
+  submitScope.value = '';
+  activeSubmitTaskId.value = '';
 }
 
 function getFeatureCenterBridgeMethod(methodName) {
@@ -434,13 +480,19 @@ function pruneSelectedGoodsRows(rows) {
   selectedGoodsRowKeys.value = selectedGoodsRowKeys.value.filter((rowKey) => availableKeys.has(rowKey));
 }
 
-function resetGoodsRowDrafts(rows) {
-  goodsRowDrafts.value = buildGoodsRowDraftMap(rows);
+function setGoodsRowDraftMap(nextDraftMap) {
+  goodsRowDrafts.value = nextDraftMap && typeof nextDraftMap === 'object' ? nextDraftMap : {};
+  goodsRowDraftVersion.value += 1;
+}
+
+function resetGoodsRowDrafts() {
+  setGoodsRowDraftMap({});
 }
 
 function resetGoodsRowState(rows) {
   selectedGoodsRowKeys.value = [];
-  resetGoodsRowDrafts(rows);
+  resetGoodsRowDrafts();
+  goodsCreateStatusMap.value = {};
 }
 
 function pruneGoodsFiltersForRows(rows) {
@@ -467,13 +519,12 @@ function handleUpdateGoodsRowDraft(row, patch) {
 
   const currentDraft = goodsRowDrafts.value[rowKey] || buildGoodsRowDraft(row);
 
-  goodsRowDrafts.value = {
-    ...goodsRowDrafts.value,
-    [rowKey]: {
-      ...currentDraft,
-      ...(patch && typeof patch === 'object' ? patch : {})
-    }
+  goodsRowDrafts.value[rowKey] = {
+    ...currentDraft,
+    ...(patch && typeof patch === 'object' ? patch : {})
   };
+  goodsRowDraftVersion.value += 1;
+  triggerRef(goodsRowDrafts);
 }
 
 function buildBatchDraftPatch() {
@@ -504,11 +555,11 @@ function applyBatchDraftToRows(rows) {
     return;
   }
 
-  goodsRowDrafts.value = applyGoodsRowDraftPatchToRows(
+  setGoodsRowDraftMap(applyGoodsRowDraftPatchToRows(
     goodsRowDrafts.value,
     targetRows,
     buildBatchDraftPatch()
-  );
+  ));
 }
 
 function getSelectedGoodsRows() {
@@ -530,7 +581,7 @@ function handleApplyBatchToSelected() {
 }
 
 function handleResetBatchDrafts() {
-  resetGoodsRowDrafts(goodsRows.value);
+  resetGoodsRowDrafts();
 }
 
 function buildCreateAdsPayload(rows) {
@@ -540,27 +591,92 @@ function buildCreateAdsPayload(rows) {
     : selectedRegionCodes.value;
 
   return {
+    taskId: activeSubmitTaskId.value,
     rows: submitRows.rows,
     invalidRows: submitRows.invalidRows,
     regionIds
   };
 }
 
-async function submitCreateAdsForRows(rows) {
-  if (submitLoading.value) {
+function createSubmitTaskId(scope) {
+  return [
+    'create_ads',
+    normalizeText(scope) || 'task',
+    Date.now().toString(36),
+    Math.random().toString(16).slice(2, 10)
+  ].join('_');
+}
+
+function markCreateRowsAsRunning(targetRows, invalidRows) {
+  const invalidRowKeySet = new Set(
+    (Array.isArray(invalidRows) ? invalidRows : [])
+      .map((row) => normalizeText(row && row.rowKey))
+      .filter(Boolean)
+  );
+  const validRows = targetRows.filter((row) => !invalidRowKeySet.has(getGoodsRowKey(row)));
+
+  goodsCreateStatusMap.value = patchCreateStatusForRows(
+    patchCreateStatusForRows(goodsCreateStatusMap.value, validRows, CREATE_STATUS_CREATING),
+    invalidRows,
+    CREATE_STATUS_SKIPPED,
+    submitInvalidRowText
+  );
+}
+
+function markCreateRowsAsFailed(rows, message) {
+  goodsCreateStatusMap.value = patchCreateStatusForRows(
+    goodsCreateStatusMap.value,
+    rows,
+    CREATE_STATUS_FAILED,
+    message || submitCreateFailedText
+  );
+}
+
+function applyCreateAdsResult(result) {
+  goodsCreateStatusMap.value = applyCreateResultToStatusMap(goodsCreateStatusMap.value, result);
+}
+
+async function cancelCreateAdsTask() {
+  if (!submitLoading.value || !activeSubmitTaskId.value || submitStopping.value) {
     return;
   }
 
-  resetSubmitState();
+  submitStopping.value = true;
+
+  try {
+    const bridge = getFeatureCenterBridgeMethod('cancelPromotionManagerNewAdsCreate');
+
+    if (typeof bridge !== 'function') {
+      throw new Error('\u505c\u6b62\u521b\u5efa\u5e7f\u544a\u63a5\u53e3\u672a\u52a0\u8f7d');
+    }
+
+    await bridge({
+      taskId: activeSubmitTaskId.value
+    });
+  } catch (error) {
+    submitStopping.value = false;
+    submitError.value = normalizeText(error && error.message) || '\u505c\u6b62\u521b\u5efa\u5e7f\u544a\u5931\u8d25';
+  }
+}
+
+async function submitCreateAdsForRows(rows, scope) {
+  if (submitLoading.value) {
+    return cancelCreateAdsTask();
+  }
 
   const targetRows = Array.isArray(rows) ? rows : [];
+
+  resetSubmitState();
 
   if (targetRows.length <= 0) {
     submitError.value = submitNoRowsText;
     return;
   }
 
+  activeSubmitTaskId.value = createSubmitTaskId(scope);
+  submitScope.value = normalizeText(scope);
   const payload = buildCreateAdsPayload(targetRows);
+  markCreateRowsAsRunning(targetRows, payload.invalidRows);
 
   if (!hasValidCreateAdsRows(payload.rows)) {
     const firstInvalidMessage = payload.invalidRows.length > 0
@@ -568,6 +684,8 @@ async function submitCreateAdsForRows(rows) {
       : '';
 
     submitError.value = firstInvalidMessage || submitNoValidRowsText;
+    submitScope.value = '';
+    activeSubmitTaskId.value = '';
     return;
   }
 
@@ -586,29 +704,40 @@ async function submitCreateAdsForRows(rows) {
       : {};
 
     submitResult.value = {
+      taskId: normalizeText(normalizedResult.taskId),
+      canceled: normalizedResult.canceled === true,
       updatedAt: normalizeText(normalizedResult.updatedAt),
       request: normalizedResult.request || {},
       groups: Array.isArray(normalizedResult.groups) ? normalizedResult.groups : [],
+      rowResults: Array.isArray(normalizedResult.rowResults) ? normalizedResult.rowResults : [],
       errors: Array.isArray(normalizedResult.errors) ? normalizedResult.errors : [],
       warnings: Array.isArray(normalizedResult.warnings) ? normalizedResult.warnings : [],
       totalCount: Number(normalizedResult.totalCount) || 0,
       successCount: Number(normalizedResult.successCount) || 0,
       failedCount: Number(normalizedResult.failedCount) || 0,
-      skippedCount: Number(normalizedResult.skippedCount) || 0
+      skippedCount: Number(normalizedResult.skippedCount) || 0,
+      canceledCount: Number(normalizedResult.canceledCount) || 0
     };
+    applyCreateAdsResult(submitResult.value);
   } catch (error) {
-    submitError.value = normalizeText(error && error.message) || '\u521b\u5efa\u5e7f\u544a\u5931\u8d25';
+    const message = normalizeText(error && error.message) || '\u521b\u5efa\u5e7f\u544a\u5931\u8d25';
+
+    submitError.value = message;
+    markCreateRowsAsFailed(targetRows, message);
   } finally {
     submitLoading.value = false;
+    submitStopping.value = false;
+    submitScope.value = '';
+    activeSubmitTaskId.value = '';
   }
 }
 
 function handleSubmitAllCampaigns() {
-  return submitCreateAdsForRows(filteredGoodsRows.value);
+  return submitCreateAdsForRows(filteredGoodsRows.value, submitScopeAll);
 }
 
 function handleSubmitSelectedCampaigns() {
-  return submitCreateAdsForRows(getSelectedGoodsRows());
+  return submitCreateAdsForRows(getSelectedGoodsRows(), submitScopeSelected);
 }
 
 function handleApplyGoodsFilters() {
@@ -633,19 +762,37 @@ function normalizeOptionalNumber(value) {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
-function handleStopShopQuery() {
+async function handleStopShopQuery() {
   if (!queryLoading.value) {
     return;
   }
 
+  const taskId = activeQueryTaskId.value;
+
   activeQueryToken += 1;
   queryLoading.value = false;
+  activeQueryTaskId.value = '';
+
+  if (!taskId) {
+    return;
+  }
+
+  try {
+    const bridge = getFeatureCenterBridgeMethod('cancelPromotionManagerNewGoodsQuery');
+
+    if (typeof bridge === 'function') {
+      await bridge({ taskId });
+    }
+  } catch (error) {
+    console.warn('\u5546\u54c1\u67e5\u8be2\u505c\u6b62\u5931\u8d25', error);
+  }
 }
 
 async function handleShopQuery() {
   const queryToken = activeQueryToken + 1;
 
   activeQueryToken = queryToken;
+  activeQueryTaskId.value = createQueryTaskId();
   queryError.value = '';
   resetSubmitState();
   queryLoading.value = true;
@@ -668,6 +815,8 @@ async function handleShopQuery() {
       : {};
 
     queryResult.value = {
+      taskId: normalizeText(normalizedResult.taskId),
+      canceled: normalizedResult.canceled === true,
       updatedAt: normalizeText(normalizedResult.updatedAt),
       request: normalizedResult.request || {},
       rows: Array.isArray(normalizedResult.rows) ? normalizedResult.rows : [],
@@ -690,6 +839,7 @@ async function handleShopQuery() {
   } finally {
     if (queryToken === activeQueryToken) {
       queryLoading.value = false;
+      activeQueryTaskId.value = '';
     }
   }
 }

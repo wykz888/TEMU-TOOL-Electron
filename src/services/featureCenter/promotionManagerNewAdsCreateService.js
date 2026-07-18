@@ -3,6 +3,10 @@ const { normalizeText } = require('../shopManagement/common');
 const CREATE_PROMOTION_MANAGER_NEW_ADS_URL = 'https://ads.temu.com/api/v1/coconut/ad/create_ads/create';
 const DEFAULT_ROAS_TYPE = 1;
 const MAX_CREATE_ADS_PER_REQUEST = 50;
+const CREATE_STATUS_SUCCESS = 'success';
+const CREATE_STATUS_FAILED = 'failed';
+const CREATE_STATUS_SKIPPED = 'skipped';
+const CREATE_STATUS_CANCELED = 'canceled';
 
 const REGION_LABELS = Object.freeze({
   us: '\u7f8e\u56fd',
@@ -84,6 +88,10 @@ function normalizeFastStartFlag(value) {
   const normalized = normalizeText(value).toLowerCase();
 
   return ['true', 'yes', 'on'].includes(normalized) ? 1 : 0;
+}
+
+function createCreateTaskId() {
+  return `create_ads_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function toCloneableJsonValue(value, fallback) {
@@ -261,6 +269,93 @@ function groupRowsByShopRegion(rows) {
   return Array.from(groupMap.values());
 }
 
+function groupShopRegionGroupsByShop(groups) {
+  const groupMap = new Map();
+
+  groups.forEach((group) => {
+    if (!groupMap.has(group.shopId)) {
+      groupMap.set(group.shopId, {
+        shopId: group.shopId,
+        shopName: group.shopName,
+        groups: []
+      });
+    }
+
+    groupMap.get(group.shopId).groups.push(group);
+  });
+
+  return Array.from(groupMap.values());
+}
+
+function buildRowResult(row, status, message = '') {
+  return {
+    rowKey: normalizeText(row && row.rowKey),
+    shopId: normalizeText(row && row.shopId),
+    shopName: normalizeText(row && row.shopName),
+    regionId: normalizeText(row && row.regionId),
+    regionLabel: normalizeText(row && row.regionLabel),
+    goodsId: normalizeText(row && row.goodsId),
+    status,
+    message: normalizeText(message)
+  };
+}
+
+function getResponseGoodsId(row) {
+  return normalizeText(row && (
+    row.goods_id
+    || row.goodsId
+    || row.goodsID
+  ));
+}
+
+function getResponseRowMessage(row) {
+  return normalizeText(row && (
+    row.error_msg
+    || row.errorMsg
+    || row.message
+    || row.msg
+    || row.reason
+  ));
+}
+
+function buildSuccessChunkRowResults(rows, stats) {
+  const failedRows = Array.isArray(stats && stats.failedRows) ? stats.failedRows : [];
+  const successRows = Array.isArray(stats && stats.successRows) ? stats.successRows : [];
+  const failedByGoodsId = new Map();
+  const successGoodsIds = new Set();
+
+  failedRows.forEach((row) => {
+    const goodsId = getResponseGoodsId(row);
+
+    if (goodsId && !failedByGoodsId.has(goodsId)) {
+      failedByGoodsId.set(goodsId, row);
+    }
+  });
+  successRows.forEach((row) => {
+    const goodsId = getResponseGoodsId(row);
+
+    if (goodsId) {
+      successGoodsIds.add(goodsId);
+    }
+  });
+
+  const shouldUseSuccessGoodsIds = successRows.length > 0 && successGoodsIds.size > 0;
+
+  return rows.map((row) => {
+    const failedRow = failedByGoodsId.get(row.goodsId);
+
+    if (failedRow) {
+      return buildRowResult(row, CREATE_STATUS_FAILED, getResponseRowMessage(failedRow) || '\u521b\u5efa\u5931\u8d25');
+    }
+
+    if (shouldUseSuccessGoodsIds && !successGoodsIds.has(row.goodsId)) {
+      return buildRowResult(row, CREATE_STATUS_FAILED, '\u521b\u5efa\u5931\u8d25');
+    }
+
+    return buildRowResult(row, CREATE_STATUS_SUCCESS, '\u521b\u5efa\u6210\u529f');
+  });
+}
+
 function buildRegionIdsByShop(rows, requestedRegionIds) {
   const regionIdsByShop = new Map();
 
@@ -372,7 +467,9 @@ function extractCreateResponseStats(response, requestCount) {
     'created_list',
     'createdList'
   ]);
-  const failedCount = failedRows.length;
+  const failedCount = failedRows.length > 0
+    ? failedRows.length
+    : (successRows.length > 0 ? Math.max(0, requestCount - successRows.length) : 0);
   const successCount = successRows.length > 0
     ? successRows.length
     : Math.max(0, requestCount - failedCount);
@@ -412,6 +509,8 @@ function createPromotionManagerNewAdsCreateService({
   runtimeLogger
 } = {}) {
   const adsSessionService = promotionAdsSessionService || promotionMasterSessionService;
+  const activeCreateTasks = new Map();
+  const pendingCanceledTaskIds = new Set();
 
   function log(eventName, payload) {
     if (runtimeLogger && typeof runtimeLogger.log === 'function') {
@@ -451,51 +550,89 @@ function createPromotionManagerNewAdsCreateService({
       message: stats.message,
       failedRows: stats.failedRows,
       successRows: stats.successRows,
+      rowResults: buildSuccessChunkRowResults(rows, stats),
       refreshedCookies: sessionResult && sessionResult.refreshedCookies === true,
       cookieSyncMode: normalizeText(sessionResult && sessionResult.cookieSyncMode)
     };
   }
 
-  async function createAds(payload = {}) {
-    if (!adsSessionService || typeof adsSessionService.postWithRegionCookie !== 'function') {
-      throw new Error('\u63a8\u5e7f\u4f1a\u8bdd\u670d\u52a1\u672a\u52a0\u8f7d');
+  function createTaskSignal(taskId) {
+    const normalizedTaskId = normalizeText(taskId) || createCreateTaskId();
+    const signal = {
+      taskId: normalizedTaskId,
+      canceled: pendingCanceledTaskIds.has(normalizedTaskId),
+      canceledAt: ''
+    };
+
+    pendingCanceledTaskIds.delete(normalizedTaskId);
+    activeCreateTasks.set(normalizedTaskId, signal);
+    return signal;
+  }
+
+  function cancelCreateAds(payload = {}) {
+    const taskId = normalizeText(payload.taskId || payload.task_id);
+
+    if (!taskId) {
+      return {
+        canceled: false,
+        taskId: '',
+        message: '\u521b\u5efa\u4efb\u52a1\u4e0d\u5b58\u5728'
+      };
     }
 
-    const sourceRows = getSourceRows(payload);
+    const signal = activeCreateTasks.get(taskId);
 
-    if (sourceRows.length <= 0) {
-      throw new Error('\u8bf7\u5148\u9009\u62e9\u9700\u8981\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1');
+    if (!signal) {
+      pendingCanceledTaskIds.add(taskId);
+      return {
+        canceled: true,
+        taskId,
+        message: '\u5df2\u53d1\u9001\u505c\u6b62\u8bf7\u6c42'
+      };
     }
 
-    const normalized = normalizeCreateAdRows(payload);
-    const requestedRegionIds = normalizeRegionIds(payload.regionIds || payload.region_ids);
-    const regionIdsByShop = buildRegionIdsByShop(normalized.rows, requestedRegionIds);
-    const groups = groupRowsByShopRegion(normalized.rows);
+    signal.canceled = true;
+    signal.canceledAt = new Date().toISOString();
+
+    return {
+      canceled: true,
+      taskId,
+      message: '\u5df2\u53d1\u9001\u505c\u6b62\u8bf7\u6c42'
+    };
+  }
+
+  function buildCanceledChunkResult(chunkRows, chunkIndex) {
+    const rowResults = chunkRows.map((row) => (
+      buildRowResult(row, CREATE_STATUS_CANCELED, '\u5df2\u505c\u6b62\u521b\u5efa')
+    ));
+
+    return {
+      chunkIndex: chunkIndex + 1,
+      requestCount: chunkRows.length,
+      successCount: 0,
+      failedCount: 0,
+      canceledCount: chunkRows.length,
+      message: '\u5df2\u505c\u6b62\u521b\u5efa',
+      failedRows: [],
+      successRows: [],
+      rowResults,
+      refreshedCookies: false,
+      cookieSyncMode: ''
+    };
+  }
+
+  async function submitShopGroups(shopGroup, regionIdsByShop, chunkSize, signal) {
+    const groupResults = [];
     const errors = [];
     const warnings = [];
+    const rowResults = [];
     const errorSignatures = new Set();
     const warningSignatures = new Set();
-    const groupResults = [];
-    const chunkSize = normalizePositiveInteger(
-      payload.chunkSize || payload.chunk_size,
-      MAX_CREATE_ADS_PER_REQUEST,
-      { maximum: MAX_CREATE_ADS_PER_REQUEST }
-    );
     let successCount = 0;
     let failedCount = 0;
+    let canceledCount = 0;
 
-    normalized.skippedRows.forEach((row) => {
-      pushUniqueMessage(warnings, {
-        shopId: normalizeText(row && row.shopId),
-        shopName: normalizeText(row && row.shopName),
-        regionId: normalizeText(row && row.regionId),
-        regionLabel: normalizeText(row && row.regionLabel),
-        goodsId: normalizeText(row && row.goodsId),
-        message: normalizeText(row && row.message) || '\u5546\u54c1\u5df2\u8df3\u8fc7'
-      }, warningSignatures);
-    });
-
-    for (const group of groups) {
+    for (const group of shopGroup.groups) {
       const chunks = chunkList(group.rows, chunkSize);
       const groupResult = {
         shopId: group.shopId,
@@ -505,12 +642,30 @@ function createPromotionManagerNewAdsCreateService({
         rowCount: group.rows.length,
         successCount: 0,
         failedCount: 0,
+        canceledCount: 0,
         chunks: []
       };
       const allRegionIds = regionIdsByShop.get(group.shopId) || [group.regionId];
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex += 1) {
         const chunkRows = chunks[chunkIndex];
+
+        if (signal && signal.canceled === true) {
+          const chunkResult = buildCanceledChunkResult(chunkRows, chunkIndex);
+
+          groupResult.chunks.push(chunkResult);
+          groupResult.canceledCount += chunkResult.canceledCount;
+          canceledCount += chunkResult.canceledCount;
+          rowResults.push(...chunkResult.rowResults);
+          pushUniqueMessage(warnings, {
+            shopId: group.shopId,
+            shopName: group.shopName,
+            regionId: group.regionId,
+            regionLabel: group.regionLabel,
+            message: '\u5df2\u505c\u6b62\u521b\u5efa'
+          }, warningSignatures);
+          continue;
+        }
 
         try {
           const chunkResult = await submitGroupChunk(group, chunkRows, chunkIndex, allRegionIds);
@@ -520,6 +675,7 @@ function createPromotionManagerNewAdsCreateService({
           groupResult.failedCount += chunkResult.failedCount;
           successCount += chunkResult.successCount;
           failedCount += chunkResult.failedCount;
+          rowResults.push(...chunkResult.rowResults);
 
           if (chunkResult.failedCount > 0) {
             pushUniqueMessage(errors, {
@@ -532,20 +688,26 @@ function createPromotionManagerNewAdsCreateService({
           }
         } catch (error) {
           const message = normalizeText(error && error.message) || '\u521b\u5efa\u5e7f\u544a\u5931\u8d25';
+          const failedRowResults = chunkRows.map((row) => (
+            buildRowResult(row, CREATE_STATUS_FAILED, message)
+          ));
 
           groupResult.chunks.push({
             chunkIndex: chunkIndex + 1,
             requestCount: chunkRows.length,
             successCount: 0,
             failedCount: chunkRows.length,
+            canceledCount: 0,
             message,
             failedRows: [],
             successRows: [],
+            rowResults: failedRowResults,
             refreshedCookies: false,
             cookieSyncMode: ''
           });
           groupResult.failedCount += chunkRows.length;
           failedCount += chunkRows.length;
+          rowResults.push(...failedRowResults);
           pushUniqueMessage(errors, {
             shopId: group.shopId,
             shopName: group.shopName,
@@ -566,65 +728,138 @@ function createPromotionManagerNewAdsCreateService({
       groupResults.push(groupResult);
     }
 
-    if (normalized.rows.length <= 0 && normalized.skippedRows.length > 0) {
-      pushUniqueMessage(errors, {
-        shopId: '',
-        shopName: '',
-        regionId: '',
-        regionLabel: '',
-        message: '\u6ca1\u6709\u53ef\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1'
-      }, errorSignatures);
+    return {
+      groups: groupResults,
+      errors,
+      warnings,
+      rowResults,
+      successCount,
+      failedCount,
+      canceledCount
+    };
+  }
+
+  async function createAds(payload = {}) {
+    if (!adsSessionService || typeof adsSessionService.postWithRegionCookie !== 'function') {
+      throw new Error('\u63a8\u5e7f\u4f1a\u8bdd\u670d\u52a1\u672a\u52a0\u8f7d');
     }
 
-    const result = {
-      updatedAt: new Date().toISOString(),
-      request: {
+    const sourceRows = getSourceRows(payload);
+
+    if (sourceRows.length <= 0) {
+      throw new Error('\u8bf7\u5148\u9009\u62e9\u9700\u8981\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1');
+    }
+
+    const taskSignal = createTaskSignal(payload.taskId || payload.task_id);
+
+    try {
+      const normalized = normalizeCreateAdRows(payload);
+      const requestedRegionIds = normalizeRegionIds(payload.regionIds || payload.region_ids);
+      const regionIdsByShop = buildRegionIdsByShop(normalized.rows, requestedRegionIds);
+      const groups = groupRowsByShopRegion(normalized.rows);
+      const shopGroups = groupShopRegionGroupsByShop(groups);
+      const errors = [];
+      const warnings = [];
+      const rowResults = [];
+      const errorSignatures = new Set();
+      const warningSignatures = new Set();
+      const chunkSize = normalizePositiveInteger(
+        payload.chunkSize || payload.chunk_size,
+        MAX_CREATE_ADS_PER_REQUEST,
+        { maximum: MAX_CREATE_ADS_PER_REQUEST }
+      );
+      let successCount = 0;
+      let failedCount = 0;
+      let canceledCount = 0;
+
+      normalized.skippedRows.forEach((row) => {
+        rowResults.push(buildRowResult(row, CREATE_STATUS_SKIPPED, normalizeText(row && row.message)));
+        pushUniqueMessage(warnings, {
+          shopId: normalizeText(row && row.shopId),
+          shopName: normalizeText(row && row.shopName),
+          regionId: normalizeText(row && row.regionId),
+          regionLabel: normalizeText(row && row.regionLabel),
+          goodsId: normalizeText(row && row.goodsId),
+          message: normalizeText(row && row.message) || '\u5546\u54c1\u5df2\u8df3\u8fc7'
+        }, warningSignatures);
+      });
+
+      const shopResults = await Promise.all(shopGroups.map((shopGroup) => (
+        submitShopGroups(shopGroup, regionIdsByShop, chunkSize, taskSignal)
+      )));
+      const groupResults = [];
+
+      shopResults.forEach((shopResult) => {
+        groupResults.push(...shopResult.groups);
+        rowResults.push(...shopResult.rowResults);
+        successCount += shopResult.successCount;
+        failedCount += shopResult.failedCount;
+        canceledCount += shopResult.canceledCount;
+
+        shopResult.errors.forEach((entry) => {
+          pushUniqueMessage(errors, entry, errorSignatures);
+        });
+        shopResult.warnings.forEach((entry) => {
+          pushUniqueMessage(warnings, entry, warningSignatures);
+        });
+      });
+
+      if (normalized.rows.length <= 0 && normalized.skippedRows.length > 0) {
+        pushUniqueMessage(errors, {
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u6ca1\u6709\u53ef\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1'
+        }, errorSignatures);
+      }
+
+      const result = {
+        taskId: taskSignal.taskId,
+        canceled: taskSignal.canceled === true,
+        updatedAt: new Date().toISOString(),
+        request: {
+          rowCount: sourceRows.length,
+          validCount: normalized.rows.length,
+          skippedCount: normalized.skippedRows.length,
+          groupCount: groups.length,
+          shopThreadCount: shopGroups.length,
+          chunkSize
+        },
+        groups: groupResults,
+        rowResults,
+        errors,
+        warnings,
+        totalCount: sourceRows.length,
+        successCount,
+        failedCount,
+        skippedCount: normalized.skippedRows.length,
+        canceledCount
+      };
+
+      log('promotion_manager_new_create_ads_finished', {
+        taskId: taskSignal.taskId,
+        canceled: taskSignal.canceled === true,
         rowCount: sourceRows.length,
         validCount: normalized.rows.length,
         skippedCount: normalized.skippedRows.length,
         groupCount: groups.length,
-        chunkSize
-      },
-      groups: groupResults,
-      errors,
-      warnings,
-      totalCount: sourceRows.length,
-      successCount,
-      failedCount,
-      skippedCount: normalized.skippedRows.length
-    };
+        shopThreadCount: shopGroups.length,
+        successCount,
+        failedCount,
+        canceledCount,
+        errorCount: errors.length,
+        warningCount: warnings.length
+      });
 
-    log('promotion_manager_new_create_ads_finished', {
-      rowCount: sourceRows.length,
-      validCount: normalized.rows.length,
-      skippedCount: normalized.skippedRows.length,
-      groupCount: groups.length,
-      successCount,
-      failedCount,
-      errorCount: errors.length,
-      warningCount: warnings.length
-    });
-
-    return toCloneableJsonValue(result, {
-      updatedAt: new Date().toISOString(),
-      request: {},
-      groups: [],
-      errors: [{
-        shopId: '',
-        shopName: '',
-        regionId: '',
-        regionLabel: '',
-        message: '\u521b\u5efa\u5e7f\u544a\u7ed3\u679c\u89e3\u6790\u5931\u8d25'
-      }],
-      warnings: [],
-      totalCount: 0,
-      successCount: 0,
-      failedCount: 1,
-      skippedCount: 0
-    });
+      return result;
+    } finally {
+      activeCreateTasks.delete(taskSignal.taskId);
+    }
   }
 
   return {
+    cancelCreateAds,
     createAds
   };
 }

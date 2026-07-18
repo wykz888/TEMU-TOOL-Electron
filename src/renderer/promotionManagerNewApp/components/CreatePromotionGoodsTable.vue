@@ -2,7 +2,7 @@
   <a-table
     class="pm-new-goods-table"
     :class="{ 'is-empty': tableRows.length <= 0 }"
-    row-key="rowKey"
+    row-key="id"
     :data="tableRows"
     :pagination="false"
     :bordered="false"
@@ -10,6 +10,7 @@
     :stripe="false"
     :table-layout-fixed="true"
     :scroll="tableScroll"
+    :virtual-list-props="tableVirtualListProps"
     :row-selection="rowSelection"
     :selected-keys="selectedRowKeys"
     :row-class="getRowClass"
@@ -29,6 +30,8 @@
               v-if="record.thumbUrl"
               :src="record.thumbUrl"
               :alt="record.goodsName"
+              loading="lazy"
+              decoding="async"
             />
             <span
               v-else
@@ -60,6 +63,30 @@
                 <span :title="record.promotionText">{{ promotionLabel }} {{ record.promotionText || emptyCellText }}</span>
               </div>
             </div>
+          </div>
+        </template>
+      </a-table-column>
+      <a-table-column
+        :title="goodsColumnCreateStatus"
+        data-index="createStatus"
+        :width="goodsColumnCreateStatusWidth"
+      >
+        <template #cell="{ record }">
+          <div class="pm-new-create-status-cell">
+            <a-tag
+              class="pm-new-create-status-tag"
+              :class="getCreateStatusClass(record)"
+              size="small"
+              bordered
+            >
+              {{ getCreateStatus(record).label }}
+            </a-tag>
+            <span
+              v-if="getCreateStatus(record).message"
+              :title="getCreateStatus(record).message"
+            >
+              {{ getCreateStatus(record).message }}
+            </span>
           </div>
         </template>
       </a-table-column>
@@ -191,6 +218,7 @@ import {
   BUDGET_MODE_OPTIONS,
   BUDGET_MODE_CUSTOM,
   ROAS_MODE_CUSTOM,
+  buildGoodsRowDraft,
   buildCustomRoasHint,
   buildDailyBudgetHint,
   buildRoasPredictionOptions,
@@ -198,6 +226,14 @@ import {
   getDailyBudgetBounds,
   getGoodsRowKey
 } from '../view-models/createPromotionGoodsRows.js';
+import {
+  CREATE_STATUS_CANCELED,
+  CREATE_STATUS_CREATING,
+  CREATE_STATUS_FAILED,
+  CREATE_STATUS_SKIPPED,
+  CREATE_STATUS_SUCCESS,
+  getCreateStatusRecord
+} from '../view-models/createPromotionSubmitStatus.js';
 
 const props = defineProps({
   rows: {
@@ -209,6 +245,14 @@ const props = defineProps({
     default: () => []
   },
   rowDrafts: {
+    type: Object,
+    default: () => ({})
+  },
+  rowDraftVersion: {
+    type: Number,
+    default: 0
+  },
+  rowCreateStatuses: {
     type: Object,
     default: () => ({})
   },
@@ -228,6 +272,7 @@ defineEmits([
 ]);
 
 const goodsColumnProduct = '\u5546\u54c1';
+const goodsColumnCreateStatus = '\u521b\u5efa\u72b6\u6001';
 const goodsColumnDailyBudget = '\u63a8\u5e7f\u65e5\u9884\u7b97';
 const goodsColumnTargetRoas = '\u76ee\u6807\u5168\u57dfROAS';
 const goodsIdLabel = 'Goods';
@@ -250,9 +295,11 @@ const noImageText = '\u65e0\u56fe';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const budgetModeCustom = BUDGET_MODE_CUSTOM;
 const roasModeCustom = ROAS_MODE_CUSTOM;
-const goodsColumnProductWidth = 640;
+const goodsColumnProductWidth = 600;
+const goodsColumnCreateStatusWidth = 150;
 const goodsColumnDailyBudgetWidth = 250;
 const goodsColumnTargetRoasWidth = 420;
+const virtualListThreshold = 120;
 
 const rowSelection = Object.freeze({
   type: 'checkbox',
@@ -262,17 +309,24 @@ const rowSelection = Object.freeze({
 });
 
 const dataTableScroll = Object.freeze({
-  x: 1360,
+  x: 1466,
   y: '100%'
 });
 
-const tableRows = computed(() => props.rows.map((row) => ({
-  ...row,
-  rowKey: getGoodsRowKey(row)
-})));
+const virtualListProps = Object.freeze({
+  threshold: virtualListThreshold,
+  estimatedSize: 136,
+  buffer: 14
+});
+
+const tableRows = computed(() => (Array.isArray(props.rows) ? props.rows : []));
 
 const tableScroll = computed(() => (
   tableRows.value.length > 0 ? dataTableScroll : undefined
+));
+
+const tableVirtualListProps = computed(() => (
+  tableRows.value.length >= virtualListThreshold ? virtualListProps : undefined
 ));
 
 function getRowClass() {
@@ -280,7 +334,35 @@ function getRowClass() {
 }
 
 function getRowDraft(row) {
-  return props.rowDrafts[getGoodsRowKey(row)] || {};
+  props.rowDraftVersion;
+
+  return props.rowDrafts[getGoodsRowKey(row)] || buildGoodsRowDraft(row);
+}
+
+function getCreateStatus(row) {
+  return getCreateStatusRecord(props.rowCreateStatuses, row);
+}
+
+function getCreateStatusClass(row) {
+  const status = getCreateStatus(row).status;
+
+  if (status === CREATE_STATUS_SUCCESS) {
+    return 'is-success';
+  }
+
+  if (status === CREATE_STATUS_FAILED) {
+    return 'is-error';
+  }
+
+  if (status === CREATE_STATUS_SKIPPED || status === CREATE_STATUS_CANCELED) {
+    return 'is-warning';
+  }
+
+  if (status === CREATE_STATUS_CREATING) {
+    return 'is-info';
+  }
+
+  return 'is-pending';
 }
 
 function isBudgetCustom(row) {

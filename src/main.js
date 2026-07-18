@@ -3054,6 +3054,8 @@ app.whenReady().then(() => {
       promotionManagerNewGoodsService
         ? promotionManagerNewGoodsService.queryGoods(payload)
         : {
+          taskId: '',
+          canceled: false,
           updatedAt: '',
           request: {},
           rows: [],
@@ -3070,6 +3072,15 @@ app.whenReady().then(() => {
           failedCount: 1
         }
     ),
+    cancelPromotionManagerNewGoodsQuery: (payload) => (
+      promotionManagerNewGoodsService
+        ? promotionManagerNewGoodsService.cancelQueryGoods(payload)
+        : {
+          canceled: false,
+          taskId: '',
+          message: '\u5546\u54c1\u67e5\u8be2\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+        }
+    ),
     createPromotionManagerNewAds: (payload) => (
       promotionManagerNewAdsCreateService
         ? promotionManagerNewAdsCreateService.createAds(payload)
@@ -3077,6 +3088,7 @@ app.whenReady().then(() => {
           updatedAt: '',
           request: {},
           groups: [],
+          rowResults: [],
           errors: [{
             shopId: '',
             shopName: '',
@@ -3088,7 +3100,17 @@ app.whenReady().then(() => {
           totalCount: 0,
           successCount: 0,
           failedCount: 1,
-          skippedCount: 0
+          skippedCount: 0,
+          canceledCount: 0
+        }
+    ),
+    cancelPromotionManagerNewAdsCreate: (payload) => (
+      promotionManagerNewAdsCreateService
+        ? promotionManagerNewAdsCreateService.cancelCreateAds(payload)
+        : {
+          canceled: false,
+          taskId: '',
+          message: '\u521b\u5efa\u5e7f\u544a\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
         }
     ),
     getRuntimeLogEntries: (payload) => runtimeLogger.readEntries(payload),

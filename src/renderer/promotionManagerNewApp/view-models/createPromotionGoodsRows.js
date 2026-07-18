@@ -63,6 +63,14 @@ function normalizeFiniteNumber(value) {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
+function normalizeOptionalNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  return normalizeFiniteNumber(value);
+}
+
 function pickNumber(...values) {
   for (const value of values) {
     const numberValue = normalizeFiniteNumber(value);
@@ -157,6 +165,16 @@ function parseNumberList(value) {
 }
 
 function getRowPriceRange(row) {
+  const priceMin = normalizeOptionalNumber(row && row.priceMin);
+  const priceMax = normalizeOptionalNumber(row && row.priceMax);
+
+  if (priceMin !== null || priceMax !== null) {
+    return {
+      min: priceMin,
+      max: priceMax
+    };
+  }
+
   const numbers = [
     ...parseNumberList(row && row.priceText),
     ...parseNumberList(row && row.sitePriceText)
@@ -413,9 +431,7 @@ function normalizeFilterRangeFields(fieldName, minValue, maxValue) {
   };
 }
 
-export function isGoodsFilterActive(filters) {
-  const normalizedFilters = normalizeGoodsFilterState(filters);
-
+function hasNormalizedGoodsFilterValues(normalizedFilters) {
   return Boolean(
     normalizedFilters.identityText
     || normalizedFilters.shopValues.length > 0
@@ -427,6 +443,10 @@ export function isGoodsFilterActive(filters) {
     || normalizedFilters.salesMax !== null
     || normalizedFilters.createdRange.length > 0
   );
+}
+
+export function isGoodsFilterActive(filters) {
+  return hasNormalizedGoodsFilterValues(normalizeGoodsFilterState(filters));
 }
 
 function buildUniqueTextOptions(rows, resolveValues) {
@@ -502,7 +522,13 @@ export function pruneGoodsFilterStateOptions(filters, options = {}) {
 }
 
 export function filterGoodsRows(rows, filters) {
+  const sourceRows = Array.isArray(rows) ? rows : [];
   const normalizedFilters = normalizeGoodsFilterState(filters);
+
+  if (!hasNormalizedGoodsFilterValues(normalizedFilters)) {
+    return sourceRows;
+  }
+
   const identityTokens = splitFilterTokens(normalizedFilters.identityText);
   const shopLookup = createTextLookup(normalizedFilters.shopValues);
   const categoryLookup = createTextLookup(normalizedFilters.categoryValues);
@@ -513,7 +539,7 @@ export function filterGoodsRows(rows, filters) {
   const startTime = normalizeTimestamp(normalizedFilters.createdRange[0]);
   const endTime = normalizeEndOfDayTimestamp(normalizedFilters.createdRange[1]);
 
-  return (Array.isArray(rows) ? rows : []).filter((row) => {
+  return sourceRows.filter((row) => {
     if (identityTokens.length > 0) {
       const rowIdentityText = [
         row && row.goodsId,
@@ -554,7 +580,7 @@ export function filterGoodsRows(rows, filters) {
     }
 
     if (salesRange.min !== null || salesRange.max !== null) {
-      const sales = normalizeFiniteNumber(row && row.sales);
+      const sales = normalizeOptionalNumber(row && row.salesNumber) ?? normalizeFiniteNumber(row && row.sales);
 
       if (sales === null) {
         return false;

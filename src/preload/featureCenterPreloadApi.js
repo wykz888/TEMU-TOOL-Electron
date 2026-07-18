@@ -123,9 +123,21 @@ function createFeatureCenterPreloadApi({
         toCloneablePayload(payload)
       );
     },
+    cancelPromotionManagerNewGoodsQuery(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_GOODS_QUERY,
+        toCloneablePayload(payload)
+      );
+    },
     createPromotionManagerNewAds(payload) {
       return ipcRenderer.invoke(
         FEATURE_CHANNELS.CREATE_PROMOTION_MANAGER_NEW_ADS,
+        toCloneablePayload(payload)
+      );
+    },
+    cancelPromotionManagerNewAdsCreate(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_ADS_CREATE,
         toCloneablePayload(payload)
       );
     },

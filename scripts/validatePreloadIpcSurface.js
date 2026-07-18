@@ -64,7 +64,9 @@ const EXPECTED_FEATURE_INVOKES = Object.freeze([
   ['getPromotionManagerNewCreateSettings', 'GET_PROMOTION_MANAGER_NEW_CREATE_SETTINGS'],
   ['savePromotionManagerNewCreateSettings', 'SAVE_PROMOTION_MANAGER_NEW_CREATE_SETTINGS'],
   ['queryPromotionManagerNewGoods', 'QUERY_PROMOTION_MANAGER_NEW_GOODS'],
+  ['cancelPromotionManagerNewGoodsQuery', 'CANCEL_PROMOTION_MANAGER_NEW_GOODS_QUERY'],
   ['createPromotionManagerNewAds', 'CREATE_PROMOTION_MANAGER_NEW_ADS'],
+  ['cancelPromotionManagerNewAdsCreate', 'CANCEL_PROMOTION_MANAGER_NEW_ADS_CREATE'],
   ['getPodUploadSheetMiaoshouAiTitleConfig', 'GET_POD_UPLOAD_SHEET_MIAOSHOU_AI_TITLE_CONFIG'],
   ['savePodUploadSheetMiaoshouAiTitleConfig', 'SAVE_POD_UPLOAD_SHEET_MIAOSHOU_AI_TITLE_CONFIG']
 ]);

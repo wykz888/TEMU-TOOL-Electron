@@ -11,6 +11,7 @@ const DEFAULT_PAGE_SIZE = 100;
 const MAX_PAGE_SIZE = 100;
 const MAX_GOODS_PAGE_COUNT = 1000;
 const MAX_CONSECUTIVE_DUPLICATE_GOODS_PAGE_COUNT = 5;
+const GOODS_QUERY_CANCELED_MESSAGE = '\u5df2\u505c\u6b62\u67e5\u8be2';
 
 const REGION_LABELS = Object.freeze({
   us: '\u7f8e\u56fd',
@@ -54,6 +55,16 @@ function normalizeNonNegativeInteger(value, fallback = 0) {
   return numberValue;
 }
 
+function normalizeFiniteNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const numberValue = Number(String(value).replace(/,/g, ''));
+
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
 function normalizeBoolean(value, fallback = false) {
   if (typeof value === 'boolean') {
     return value;
@@ -90,6 +101,10 @@ function createGoodsListId() {
   }
 
   return `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function createGoodsQueryTaskId() {
+  return `query_goods_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function toCloneableJsonValue(value, fallback) {
@@ -279,13 +294,17 @@ function mapGoodsRecord(record, context) {
   const priceText = buildPriceRange(safeRecord);
   const sitePriceText = buildSitePriceText(safeRecord);
   const fastStartEnable = Number(safeRecord.fast_start_enable);
+  const priceMin = normalizeFiniteNumber(safeRecord.supply_price_min);
+  const priceMax = normalizeFiniteNumber(safeRecord.supply_price_max);
+  const rowId = [
+    context.shopId,
+    context.regionId,
+    goodsId || spuId || skuEncode || context.index
+  ].filter(Boolean).join(':');
 
   return {
-    id: [
-      context.shopId,
-      context.regionId,
-      goodsId || spuId || skuEncode || context.index
-    ].filter(Boolean).join(':'),
+    id: rowId,
+    rowKey: rowId,
     rowIndex: context.index,
     shopId: context.shopId,
     shopName: context.shopName,
@@ -299,11 +318,14 @@ function mapGoodsRecord(record, context) {
     skuEncode,
     spuId,
     priceText,
+    priceMin,
+    priceMax,
     sitePriceText,
     categoryText,
     siteText,
     skuTotalQuantity: normalizeNumberText(safeRecord.sku_total_quantity),
     sales: normalizeNumberText(safeRecord.sales),
+    salesNumber: normalizeFiniteNumber(safeRecord.sales),
     createdAtText: formatTimestamp(safeRecord.create_timestamp),
     createTimestamp: Number(safeRecord.create_timestamp) || 0,
     fastStartEnable: Number.isFinite(fastStartEnable) ? fastStartEnable : null,
@@ -419,6 +441,8 @@ function createPromotionManagerNewGoodsService({
   runtimeLogger
 } = {}) {
   const adsSessionService = promotionAdsSessionService || promotionMasterSessionService;
+  const activeQueryTasks = new Map();
+  const pendingCanceledQueryTaskIds = new Set();
 
   function log(eventName, payload) {
     if (runtimeLogger && typeof runtimeLogger.log === 'function') {
@@ -436,6 +460,55 @@ function createPromotionManagerNewGoodsService({
     adsSessionService,
     assertApiSuccess
   });
+
+  function createQueryTaskSignal(taskId) {
+    const normalizedTaskId = normalizeText(taskId) || createGoodsQueryTaskId();
+    const signal = {
+      taskId: normalizedTaskId,
+      canceled: pendingCanceledQueryTaskIds.has(normalizedTaskId),
+      canceledAt: ''
+    };
+
+    pendingCanceledQueryTaskIds.delete(normalizedTaskId);
+    activeQueryTasks.set(normalizedTaskId, signal);
+    return signal;
+  }
+
+  function cancelQueryGoods(payload = {}) {
+    const taskId = normalizeText(payload.taskId || payload.task_id);
+
+    if (!taskId) {
+      return {
+        canceled: false,
+        taskId: '',
+        message: '\u67e5\u8be2\u4efb\u52a1\u4e0d\u5b58\u5728'
+      };
+    }
+
+    const signal = activeQueryTasks.get(taskId);
+
+    if (!signal) {
+      pendingCanceledQueryTaskIds.add(taskId);
+      return {
+        canceled: true,
+        taskId,
+        message: '\u5df2\u53d1\u9001\u505c\u6b62\u8bf7\u6c42'
+      };
+    }
+
+    signal.canceled = true;
+    signal.canceledAt = new Date().toISOString();
+
+    return {
+      canceled: true,
+      taskId,
+      message: '\u5df2\u53d1\u9001\u505c\u6b62\u8bf7\u6c42'
+    };
+  }
+
+  function isQueryCanceled(signal) {
+    return signal && signal.canceled === true;
+  }
 
   async function fetchGoodsPageForRegion(shop, regionId, regionIds, requestPayload, rowOffset) {
     const sessionResult = await adsSessionService.postWithRegionCookie(
@@ -464,7 +537,7 @@ function createPromotionManagerNewGoodsService({
     };
   }
 
-  async function fetchAllGoodsRowsForRegion(shop, regionId, regionIds, baseRequestPayload) {
+  async function fetchAllGoodsRowsForRegion(shop, regionId, regionIds, baseRequestPayload, signal) {
     const regionRows = [];
     const pageDetails = [];
     const bidErrors = [];
@@ -478,9 +551,15 @@ function createPromotionManagerNewGoodsService({
     let lastSessionResult = null;
     let stoppedByDuplicatePage = false;
     let stoppedByPageLimit = false;
+    let stoppedByCancel = false;
     let consecutiveDuplicatePageCount = 0;
 
     for (let pageIndex = 0; pageIndex < MAX_GOODS_PAGE_COUNT; pageIndex += 1) {
+      if (isQueryCanceled(signal)) {
+        stoppedByCancel = true;
+        break;
+      }
+
       const requestPayload = buildGoodsListPagePayload(baseRequestPayload, pageNumber, queryListId);
       let sessionResult = null;
       let extracted = null;
@@ -521,6 +600,11 @@ function createPromotionManagerNewGoodsService({
 
       lastExtracted = extracted;
       lastSessionResult = sessionResult;
+
+      if (isQueryCanceled(signal)) {
+        stoppedByCancel = true;
+        break;
+      }
 
       if (pageSignature && seenPageSignatures.has(pageSignature)) {
         consecutiveDuplicatePageCount += 1;
@@ -572,7 +656,8 @@ function createPromotionManagerNewGoodsService({
           regionIds,
           rows: extracted.rows,
           roasType: baseRequestPayload.selected_roas_type,
-          pageNumber: extracted.pageNumber
+          pageNumber: extracted.pageNumber,
+          signal
         });
 
         pageRows = applyBidInfoToRows(extracted.rows, bidResult.lookup);
@@ -591,6 +676,11 @@ function createPromotionManagerNewGoodsService({
           pageNumber: extracted.pageNumber,
           rowCount: extracted.rows.length
         });
+      }
+
+      if (isQueryCanceled(signal)) {
+        stoppedByCancel = true;
+        break;
       }
 
       let uniqueRowCount = 0;
@@ -641,6 +731,7 @@ function createPromotionManagerNewGoodsService({
       duplicatePageWarnings,
       stoppedByDuplicatePage,
       stoppedByPageLimit,
+      stoppedByCancel,
       mallId: normalizeText(lastExtracted && lastExtracted.mallId),
       mallType: normalizeText(lastExtracted && lastExtracted.mallType),
       pageNumber: normalizePositiveInteger(lastExtracted && lastExtracted.pageNumber, pageNumber),
@@ -649,6 +740,124 @@ function createPromotionManagerNewGoodsService({
       total: normalizeNonNegativeInteger(lastExtracted && lastExtracted.total, regionRows.length),
       refreshedCookies: lastSessionResult && lastSessionResult.refreshedCookies === true,
       cookieSyncMode: normalizeText(lastSessionResult && lastSessionResult.cookieSyncMode)
+    };
+  }
+
+  async function queryGoodsForShop(shop, regionIds, requestPayload, signal) {
+    const rows = [];
+    const regions = [];
+    const errors = [];
+    const warnings = [];
+    const errorSignatures = new Set();
+    const warningSignatures = new Set();
+
+    for (const regionId of regionIds) {
+      if (isQueryCanceled(signal)) {
+        pushUniqueMessage(warnings, {
+          shopId: shop.id,
+          shopName: shop.shopName,
+          regionId,
+          regionLabel: REGION_LABELS[regionId] || regionId,
+          message: GOODS_QUERY_CANCELED_MESSAGE
+        }, warningSignatures);
+        break;
+      }
+
+      try {
+        const extracted = await fetchAllGoodsRowsForRegion(
+          shop,
+          regionId,
+          regionIds,
+          requestPayload,
+          signal
+        );
+
+        rows.push(...extracted.rows);
+        regions.push({
+          shopId: shop.id,
+          shopName: shop.shopName,
+          regionId,
+          regionLabel: REGION_LABELS[regionId] || regionId,
+          mallId: extracted.mallId,
+          mallType: extracted.mallType,
+          pageNumber: extracted.pageNumber,
+          pageSize: extracted.pageSize,
+          hasMore: extracted.hasMore,
+          total: extracted.total,
+          pageCount: extracted.pageCount,
+          pageDetails: extracted.pageDetails,
+          rowCount: extracted.rows.length,
+          pageErrorCount: extracted.pageErrors.length,
+          duplicatePageCount: extracted.duplicatePageWarnings.length,
+          bidErrorCount: extracted.bidErrors.length,
+          stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
+          stoppedByPageLimit: extracted.stoppedByPageLimit === true,
+          stoppedByCancel: extracted.stoppedByCancel === true,
+          refreshedCookies: extracted.refreshedCookies === true,
+          cookieSyncMode: normalizeText(extracted.cookieSyncMode)
+        });
+
+        extracted.pageErrors.forEach((pageError) => {
+          pushUniqueMessage(warnings, {
+            shopId: shop.id,
+            shopName: shop.shopName,
+            regionId,
+            regionLabel: REGION_LABELS[regionId] || regionId,
+            pageNumber: pageError.pageNumber,
+            message: pageError.message
+          }, warningSignatures);
+        });
+
+        if (extracted.stoppedByPageLimit === true) {
+          pushUniqueMessage(errors, {
+            shopId: shop.id,
+            shopName: shop.shopName,
+            regionId,
+            regionLabel: REGION_LABELS[regionId] || regionId,
+            message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fbe\u5230\u4e0a\u9650\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u540e\u91cd\u8bd5'
+          }, errorSignatures);
+        }
+
+        if (extracted.stoppedByCancel === true) {
+          pushUniqueMessage(warnings, {
+            shopId: shop.id,
+            shopName: shop.shopName,
+            regionId,
+            regionLabel: REGION_LABELS[regionId] || regionId,
+            message: GOODS_QUERY_CANCELED_MESSAGE
+          }, warningSignatures);
+          break;
+        }
+
+        extracted.bidErrors.forEach((bidError) => {
+          pushUniqueMessage(warnings, {
+            shopId: shop.id,
+            shopName: shop.shopName,
+            regionId,
+            regionLabel: REGION_LABELS[regionId] || regionId,
+            pageNumber: bidError.pageNumber,
+            message: bidError.message
+          }, warningSignatures);
+        });
+      } catch (error) {
+        const failure = {
+          shopId: shop.id,
+          shopName: shop.shopName,
+          regionId,
+          regionLabel: REGION_LABELS[regionId] || regionId,
+          message: normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25'
+        };
+
+        pushUniqueMessage(errors, failure, errorSignatures);
+        logError('promotion_manager_new_goods_query_region_failed', error, failure);
+      }
+    }
+
+    return {
+      rows,
+      regions,
+      errors,
+      warnings
     };
   }
 
@@ -680,138 +889,69 @@ function createPromotionManagerNewGoodsService({
       throw new Error('\u6ca1\u6709\u627e\u5230\u53ef\u67e5\u8be2\u7684\u5e97\u94fa');
     }
 
-    const rows = [];
-    const regions = [];
-    const errors = [];
-    const warnings = [];
-    const errorSignatures = new Set();
-    const warningSignatures = new Set();
+    const taskSignal = createQueryTaskSignal(payload.taskId || payload.task_id);
 
-    for (const shop of shops) {
-      for (const regionId of regionIds) {
-        try {
-          const extracted = await fetchAllGoodsRowsForRegion(
-            shop,
-            regionId,
-            regionIds,
-            requestPayload
-          );
+    try {
+      const rows = [];
+      const regions = [];
+      const errors = [];
+      const warnings = [];
+      const errorSignatures = new Set();
+      const warningSignatures = new Set();
 
-          rows.push(...extracted.rows);
-          regions.push({
-            shopId: shop.id,
-            shopName: shop.shopName,
-            regionId,
-            regionLabel: REGION_LABELS[regionId] || regionId,
-            mallId: extracted.mallId,
-            mallType: extracted.mallType,
-            pageNumber: extracted.pageNumber,
-            pageSize: extracted.pageSize,
-            hasMore: extracted.hasMore,
-            total: extracted.total,
-            pageCount: extracted.pageCount,
-            pageDetails: extracted.pageDetails,
-            rowCount: extracted.rows.length,
-            pageErrorCount: extracted.pageErrors.length,
-            duplicatePageCount: extracted.duplicatePageWarnings.length,
-            bidErrorCount: extracted.bidErrors.length,
-            stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
-            stoppedByPageLimit: extracted.stoppedByPageLimit === true,
-            refreshedCookies: extracted.refreshedCookies === true,
-            cookieSyncMode: normalizeText(extracted.cookieSyncMode)
-          });
+      const shopResults = await Promise.all(shops.map((shop) => (
+        queryGoodsForShop(shop, regionIds, requestPayload, taskSignal)
+      )));
 
-          extracted.pageErrors.forEach((pageError) => {
-            pushUniqueMessage(warnings, {
-              shopId: shop.id,
-              shopName: shop.shopName,
-              regionId,
-              regionLabel: REGION_LABELS[regionId] || regionId,
-              pageNumber: pageError.pageNumber,
-              message: pageError.message
-            }, warningSignatures);
-          });
+      shopResults.forEach((shopResult) => {
+        rows.push(...shopResult.rows);
+        regions.push(...shopResult.regions);
 
-          if (extracted.stoppedByPageLimit === true) {
-            pushUniqueMessage(errors, {
-              shopId: shop.id,
-              shopName: shop.shopName,
-              regionId,
-              regionLabel: REGION_LABELS[regionId] || regionId,
-              message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fbe\u5230\u4e0a\u9650\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u540e\u91cd\u8bd5'
-            }, errorSignatures);
-          }
+        shopResult.errors.forEach((entry) => {
+          pushUniqueMessage(errors, entry, errorSignatures);
+        });
+        shopResult.warnings.forEach((entry) => {
+          pushUniqueMessage(warnings, entry, warningSignatures);
+        });
+      });
 
-          extracted.bidErrors.forEach((bidError) => {
-            pushUniqueMessage(warnings, {
-              shopId: shop.id,
-              shopName: shop.shopName,
-              regionId,
-              regionLabel: REGION_LABELS[regionId] || regionId,
-              pageNumber: bidError.pageNumber,
-              message: bidError.message
-            }, warningSignatures);
-          });
-        } catch (error) {
-          const failure = {
-            shopId: shop.id,
-            shopName: shop.shopName,
-            regionId,
-            regionLabel: REGION_LABELS[regionId] || regionId,
-            message: normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25'
-          };
+      const result = {
+        taskId: taskSignal.taskId,
+        canceled: taskSignal.canceled === true,
+        updatedAt: new Date().toISOString(),
+        request: {
+          shopIds: shops.map((shop) => shop.id),
+          regionIds,
+          pageNumber: requestPayload.page_number,
+          pageSize: requestPayload.page_size
+        },
+        rows,
+        regions,
+        errors,
+        warnings,
+        totalCount: rows.length,
+        successCount: regions.length,
+        failedCount: errors.length
+      };
 
-          pushUniqueMessage(errors, failure, errorSignatures);
-          logError('promotion_manager_new_goods_query_region_failed', error, failure);
-        }
-      }
+      log('promotion_manager_new_goods_query_finished', {
+        taskId: taskSignal.taskId,
+        canceled: taskSignal.canceled === true,
+        shopCount: shops.length,
+        regionCount: regionIds.length,
+        rowCount: rows.length,
+        failedCount: errors.length,
+        warningCount: warnings.length
+      });
+
+      return result;
+    } finally {
+      activeQueryTasks.delete(taskSignal.taskId);
     }
-
-    const result = {
-      updatedAt: new Date().toISOString(),
-      request: {
-        shopIds: shops.map((shop) => shop.id),
-        regionIds,
-        pageNumber: requestPayload.page_number,
-        pageSize: requestPayload.page_size
-      },
-      rows,
-      regions,
-      errors,
-      warnings,
-      totalCount: rows.length,
-      successCount: regions.length,
-      failedCount: errors.length
-    };
-
-    log('promotion_manager_new_goods_query_finished', {
-      shopCount: shops.length,
-      regionCount: regionIds.length,
-      rowCount: rows.length,
-      failedCount: errors.length,
-      warningCount: warnings.length
-    });
-
-    return toCloneableJsonValue(result, {
-      updatedAt: new Date().toISOString(),
-      request: {},
-      rows: [],
-      regions: [],
-      errors: [{
-        shopId: '',
-        shopName: '',
-        regionId: '',
-        regionLabel: '',
-        message: '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u7ed3\u679c\u89e3\u6790\u5931\u8d25'
-      }],
-      warnings: [],
-      totalCount: 0,
-      successCount: 0,
-      failedCount: 1
-    });
   }
 
   return {
+    cancelQueryGoods,
     queryGoods
   };
 }
@@ -824,6 +964,7 @@ module.exports = {
   buildGoodsListPayload,
   buildGoodsListPagePayload,
   createGoodsListId,
+  createGoodsQueryTaskId,
   extractGoodsRows,
   mapGoodsRecord,
   shouldFetchNextGoodsPage,

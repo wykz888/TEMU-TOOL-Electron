@@ -339,20 +339,22 @@
         <a-button
           class="pm-new-toolbar-submit-button"
           type="primary"
-          :loading="submitLoading"
-          :disabled="submitAllDisabled"
+          :status="getSubmitButtonStatus(submitScopeAll)"
+          :loading="isSubmitButtonLoading(submitScopeAll)"
+          :disabled="isSubmitButtonDisabled(submitScopeAll, submitAllDisabled)"
           @click="$emit('submit-all')"
         >
-          {{ submitAllLabel }}
+          {{ getSubmitAllButtonLabel() }}
         </a-button>
         <a-button
           class="pm-new-toolbar-submit-button"
           type="outline"
-          :loading="submitLoading"
-          :disabled="submitSelectedDisabled"
+          :status="getSubmitButtonStatus(submitScopeSelected)"
+          :loading="isSubmitButtonLoading(submitScopeSelected)"
+          :disabled="isSubmitButtonDisabled(submitScopeSelected, submitSelectedDisabled)"
           @click="$emit('submit-selected')"
         >
-          {{ submitSelectedLabel }}
+          {{ getSubmitSelectedButtonLabel() }}
         </a-button>
       </div>
     </section>
@@ -446,6 +448,14 @@ const props = defineProps({
   submitLoading: {
     type: Boolean,
     default: false
+  },
+  submitStopping: {
+    type: Boolean,
+    default: false
+  },
+  submitScope: {
+    type: String,
+    default: ''
   }
 });
 
@@ -504,6 +514,10 @@ const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
 const resetLabel = '\u91cd\u7f6e';
 const submitAllLabel = '\u65b0\u5efa\u5168\u90e8\u5546\u54c1\u5e7f\u544a';
 const submitSelectedLabel = '\u65b0\u5efa\u5df2\u9009\u5546\u54c1\u5e7f\u544a';
+const stopSubmitAllLabel = '\u505c\u6b62\u521b\u5efa\u5168\u90e8\u5e7f\u544a';
+const stopSubmitSelectedLabel = '\u505c\u6b62\u521b\u5efa\u52fe\u9009\u5e7f\u544a';
+const submitScopeAll = 'all';
+const submitScopeSelected = 'selected';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const roasModeOptions = ROAS_MODE_OPTIONS;
 const fastStartModeOptions = FAST_START_MODE_OPTIONS;
@@ -595,5 +609,33 @@ function patchFilterValues(patch) {
     ...(props.filterValues && typeof props.filterValues === 'object' ? props.filterValues : {}),
     ...(patch && typeof patch === 'object' ? patch : {})
   });
+}
+
+function isActiveSubmitButton(scope) {
+  return props.submitLoading === true && props.submitScope === scope;
+}
+
+function getSubmitButtonStatus(scope) {
+  return isActiveSubmitButton(scope) ? 'danger' : undefined;
+}
+
+function isSubmitButtonLoading(scope) {
+  return isActiveSubmitButton(scope) && props.submitStopping === true;
+}
+
+function isSubmitButtonDisabled(scope, baseDisabled) {
+  if (props.submitLoading !== true) {
+    return baseDisabled;
+  }
+
+  return props.submitScope !== scope || props.submitStopping === true;
+}
+
+function getSubmitAllButtonLabel() {
+  return isActiveSubmitButton(submitScopeAll) ? stopSubmitAllLabel : submitAllLabel;
+}
+
+function getSubmitSelectedButtonLabel() {
+  return isActiveSubmitButton(submitScopeSelected) ? stopSubmitSelectedLabel : submitSelectedLabel;
 }
 </script>

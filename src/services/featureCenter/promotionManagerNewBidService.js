@@ -17,7 +17,8 @@ function createPromotionManagerNewBidFetcher({
     regionIds,
     rows,
     roasType,
-    pageNumber
+    pageNumber,
+    signal
   } = {}) {
     if (!adsSessionService || typeof adsSessionService.postWithRegionCookie !== 'function') {
       throw new Error('\u63a8\u5e7f\u4f1a\u8bdd\u670d\u52a1\u672a\u52a0\u8f7d');
@@ -28,6 +29,10 @@ function createPromotionManagerNewBidFetcher({
     const details = [];
 
     for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex += 1) {
+      if (signal && signal.canceled === true) {
+        break;
+      }
+
       const requestPayload = buildBidRequestPayload(chunks[chunkIndex], roasType);
 
       if (requestPayload.goods_info_list.length <= 0) {
