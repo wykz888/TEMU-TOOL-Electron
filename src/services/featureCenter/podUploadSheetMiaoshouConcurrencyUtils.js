@@ -8,6 +8,7 @@ function normalizeBoundedInteger(value, fallback, minValue, maxValue) {
 function createAsyncLimiter(concurrency) {
   const limit = normalizeBoundedInteger(concurrency, 1, 1, Number.MAX_SAFE_INTEGER);
   const queue = [];
+  let queueCursor = 0;
   let activeCount = 0;
 
   function isCanceled(item) {
@@ -29,8 +30,18 @@ function createAsyncLimiter(concurrency) {
   }
 
   function runNext() {
-    while (activeCount < limit && queue.length > 0) {
-      const item = queue.shift();
+    while (activeCount < limit && queueCursor < queue.length) {
+      const item = queue[queueCursor];
+      queue[queueCursor] = null;
+      queueCursor += 1;
+
+      if (queueCursor >= queue.length) {
+        queue.length = 0;
+        queueCursor = 0;
+      } else if (queueCursor > 128 && queueCursor * 2 >= queue.length) {
+        queue.splice(0, queueCursor);
+        queueCursor = 0;
+      }
 
       if (isCanceled(item)) {
         item.reject(createCanceledError(item));

@@ -16,6 +16,11 @@ const {
   createPodUploadSheetMiaoshouAiTitleResultCacheStore
 } = require('./podUploadSheetMiaoshouAiTitleResultCacheStore');
 const {
+  buildAiTitleCompressedResultCacheKey,
+  buildAiTitleSourceResultCacheKey,
+  getUniqueAiTitleCacheKeys
+} = require('./podUploadSheetMiaoshouAiTitleCacheKeyUtils');
+const {
   createAsyncLimiter,
   mapWithConcurrency,
   normalizeBoundedInteger
@@ -811,14 +816,27 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return largestUnderRange || smallestOverRange;
   }
 
-  async function compressImageForArk(imagePath, settings) {
+  async function readAiInputImageFileStat(imagePath) {
     try {
       await fs.promises.access(imagePath, fs.constants.R_OK);
+      return await fs.promises.stat(imagePath);
     } catch (_error) {
-      throw new Error('默认图片不存在或无法读取。');
+      return null;
+    }
+  }
+
+  async function compressImageForArk(imagePath, settings, sourceFileStat = null) {
+    let fileStat = sourceFileStat;
+
+    if (!fileStat) {
+      try {
+        await fs.promises.access(imagePath, fs.constants.R_OK);
+        fileStat = await fs.promises.stat(imagePath);
+      } catch (_error) {
+        throw new Error('\u9ed8\u8ba4\u56fe\u7247\u4e0d\u5b58\u5728\u6216\u65e0\u6cd5\u8bfb\u53d6\u3002');
+      }
     }
 
-    const fileStat = await fs.promises.stat(imagePath);
     let candidate = null;
     let sourceImage = null;
     const imageCompression = normalizeImageCompression(settings && settings.imageCompression);
@@ -940,36 +958,49 @@ function createPodUploadSheetMiaoshouAiTitleService({
     );
   }
 
-  function buildAiTitleResultCacheKey(owner, entryId, product, settings, compressedImage, storageContext, promptOptions = {}) {
-    return createHash([
-      getResolvedEntryId(entryId),
-      normalizeText(owner && owner.userKey),
-      getPodMiaoshouStorageFingerprint(storageContext),
-      normalizeText(product && product.id),
-      normalizeText(product && product.localName),
-      normalizeText(product && product.sourceFolder),
-      normalizeText(product && product.mainNumber),
-      normalizeText(product && product.categoryId),
-      normalizeText(product && product.categoryLabel),
-      normalizeText(product && product.imageName),
-      normalizeText(product && product.imagePath),
-      Number(compressedImage && compressedImage.fileStat && compressedImage.fileStat.size) || 0,
-      Number(compressedImage && compressedImage.fileStat && compressedImage.fileStat.mtimeMs) || 0,
-      Number(compressedImage && compressedImage.byteLength) || 0,
-      Number(compressedImage && compressedImage.maxDimension) || 0,
-      Number(compressedImage && compressedImage.quality) || 0,
-      normalizeText(compressedImage && compressedImage.imageCompression),
-      normalizeText(compressedImage && compressedImage.extension),
-      normalizeText(settings && settings.apiBaseUrl),
-      normalizeText(settings && settings.model),
-      normalizeText(settings && settings.imageCompression),
-      Number(settings && settings.imageQuality) || 0,
-      normalizeText(promptOptions.prefixText),
-      normalizeText(promptOptions.suffixText),
-      normalizeText(promptOptions.extraPrompt),
-      normalizeText(promptOptions.targetLength),
-      normalizeText(promptOptions.outputLanguage)
-    ].join('|'), 32);
+  function decorateCachedAiTitleResult(cachedTitleResult, cacheKey) {
+    return {
+      ...cachedTitleResult,
+      cacheHit: true,
+      cacheKey,
+      imageByteLength: Number(cachedTitleResult && cachedTitleResult.imageByteLength) || 0
+    };
+  }
+
+  async function getCachedAiTitleResultByKeys(owner, entryId, cacheKeys) {
+    const normalizedCacheKeys = getUniqueAiTitleCacheKeys(cacheKeys);
+
+    for (const cacheKey of normalizedCacheKeys) {
+      const cachedTitleResult = await aiTitleResultCacheStore.getCachedResult(owner, entryId, cacheKey);
+
+      if (cachedTitleResult) {
+        return decorateCachedAiTitleResult(cachedTitleResult, cacheKey);
+      }
+    }
+
+    return null;
+  }
+
+  function persistAiTitleResultCacheKeys(owner, entryId, cacheKeys, successResult) {
+    const normalizedCacheKeys = getUniqueAiTitleCacheKeys(cacheKeys);
+
+    if (!normalizedCacheKeys.length) {
+      return;
+    }
+
+    void (async () => {
+      for (const cacheKey of normalizedCacheKeys) {
+        await aiTitleResultCacheStore.setCachedResult(owner, entryId, cacheKey, {
+          ...successResult,
+          cacheHit: false,
+          cacheKey
+        });
+      }
+    })().catch((error) => {
+      if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
+        runtimeLogger.logError('pod_upload_sheet_ai_title_result_cache_write_failed', error);
+      }
+    });
   }
 
   async function uploadCompressedImageForAi(owner, entryId, product, compressedImage, settings, job, storageContext) {
@@ -1718,32 +1749,62 @@ function createPodUploadSheetMiaoshouAiTitleService({
     job
   ) {
     throwIfJobCanceled(job);
+    const sourceFileStat = await readAiInputImageFileStat(product.imagePath);
+    const sourceCacheKey = buildAiTitleSourceResultCacheKey({
+      entryId: getResolvedEntryId(entryId),
+      owner,
+      product,
+      settings,
+      fileStat: sourceFileStat,
+      storageContext,
+      promptOptions: {
+        prefixText,
+        suffixText,
+        extraPrompt,
+        targetLength,
+        outputLanguage
+      }
+    });
+
+    if (settings && settings.useCache !== false) {
+      const cachedTitleResult = await getCachedAiTitleResultByKeys(owner, entryId, [sourceCacheKey]);
+
+      if (cachedTitleResult) {
+        return cachedTitleResult;
+      }
+    }
+
     const compressedImage = await limitImageProcessing(
-      () => compressImageForArk(product.imagePath, settings),
+      () => compressImageForArk(product.imagePath, settings, sourceFileStat),
       {
         shouldRun: () => !job || !job.canceled,
         createCanceledError
       }
     );
     throwIfJobCanceled(job);
-    const cacheKey = buildAiTitleResultCacheKey(owner, entryId, product, settings, compressedImage, storageContext, {
-      prefixText,
-      suffixText,
-      extraPrompt,
-      targetLength,
-      outputLanguage
+    const cacheKey = buildAiTitleCompressedResultCacheKey({
+      entryId: getResolvedEntryId(entryId),
+      owner,
+      product,
+      settings,
+      compressedImage,
+      storageContext,
+      promptOptions: {
+        prefixText,
+        suffixText,
+        extraPrompt,
+        targetLength,
+        outputLanguage
+      }
     });
+    const resultCacheKeys = getUniqueAiTitleCacheKeys([sourceCacheKey, cacheKey]);
 
     if (settings && settings.useCache !== false) {
-      const cachedTitleResult = await aiTitleResultCacheStore.getCachedResult(owner, entryId, cacheKey);
+      const cachedTitleResult = await getCachedAiTitleResultByKeys(owner, entryId, resultCacheKeys);
 
       if (cachedTitleResult) {
-        return {
-          ...cachedTitleResult,
-          cacheHit: true,
-          cacheKey,
-          imageByteLength: Number(cachedTitleResult.imageByteLength) || 0
-        };
+        persistAiTitleResultCacheKeys(owner, entryId, resultCacheKeys, cachedTitleResult);
+        return decorateCachedAiTitleResult(cachedTitleResult, sourceCacheKey || cacheKey);
       }
     }
 
@@ -1771,15 +1832,11 @@ function createPodUploadSheetMiaoshouAiTitleService({
       aiImageRegion: uploadedImage.region,
       aiImageRootPrefix: uploadedImage.rootPrefix,
       cacheHit: false,
-      cacheKey
+      cacheKey: sourceCacheKey || cacheKey
     };
 
     if (!settings || settings.useCache !== false) {
-      void aiTitleResultCacheStore.setCachedResult(owner, entryId, cacheKey, successResult).catch((error) => {
-        if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
-          runtimeLogger.logError('pod_upload_sheet_ai_title_result_cache_write_failed', error);
-        }
-      });
+      persistAiTitleResultCacheKeys(owner, entryId, resultCacheKeys, successResult);
     }
 
     return successResult;

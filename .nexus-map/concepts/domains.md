@@ -32,7 +32,7 @@ Operations activity management, traffic boost, price declaration, and new produc
 
 ## POD MiaoShou
 
-POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Both variants now preserve material import order maps for carousel items, use description image name fields as the first-class selection source before falling back to legacy order numbers, and share the persistent AI title result cache boundary under `users/{userKey}/cache/ai-title-results`. Git hotspots show this is the most active current area.
+POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Both variants now preserve material import order maps for carousel items, use description image name fields as the first-class selection source before falling back to legacy order numbers, and share the persistent AI title result cache boundary under `users/{userKey}/cache/ai-title-results`. The batch AI title dialog state lives in the shared renderer module `src/renderer/shared/batchAiTitle/useBatchAiTitleDialog.js`; TEMU keeps output-language selection disabled because it generates Chinese and English titles together, while universal keeps the output-language control. AI title result cache keys live in `podUploadSheetMiaoshouAiTitleCacheKeyUtils.js`, including a source-file-stat key that allows repeat runs to return cached titles before image compression. Git hotspots show this is the most active current area.
 
 ## Promotion Master And Monitor
 

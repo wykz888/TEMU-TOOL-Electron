@@ -6,6 +6,11 @@ const {
   SUGGESTED_PRICE_COLUMN_ALIASES,
   getSuggestedPriceValue
 } = require('../src/services/featureCenter/podUploadSheetMiaoshouPriceExportUtils');
+const {
+  buildAiTitleCompressedResultCacheKey,
+  buildAiTitleSourceResultCacheKey,
+  getUniqueAiTitleCacheKeys
+} = require('../src/services/featureCenter/podUploadSheetMiaoshouAiTitleCacheKeyUtils');
 
 function assert(condition, message) {
   if (!condition) {
@@ -102,10 +107,139 @@ function validateSuggestedPriceUsesSkuPrice() {
   );
 }
 
+function validateAiTitleCacheKeyRules() {
+  const owner = {
+    userKey: 'tester'
+  };
+  const product = {
+    id: 'item-1',
+    localName: 'sample',
+    sourceFolder: 'folder-a',
+    mainNumber: '1',
+    categoryId: '11804',
+    categoryLabel: 'category',
+    imageName: 'image-a.png',
+    imagePath: 'D:\\source\\image-a.png'
+  };
+  const settings = {
+    apiBaseUrl: 'https://ark.example.com/api/v3',
+    model: 'doubao-seed-2-0-mini-260428',
+    imageCompression: 'jpg',
+    imageQuality: 84
+  };
+  const storageContext = {
+    storageProvider: 'tencent-cos',
+    bucket: 'bucket-a',
+    region: 'ap-guangzhou',
+    rootPrefix: 'TEMU_Resources_Data'
+  };
+  const promptOptions = {
+    prefixText: 'front',
+    suffixText: 'end',
+    extraPrompt: 'extra',
+    targetLength: '250',
+    outputLanguage: 'en'
+  };
+  const sourceCacheKey = buildAiTitleSourceResultCacheKey({
+    entryId: 'pod-upload-sheet-miaoshou-table',
+    owner,
+    product,
+    settings,
+    fileStat: {
+      size: 1024,
+      mtimeMs: 123456
+    },
+    storageContext,
+    promptOptions
+  });
+  const changedSourceCacheKey = buildAiTitleSourceResultCacheKey({
+    entryId: 'pod-upload-sheet-miaoshou-table',
+    owner,
+    product,
+    settings,
+    fileStat: {
+      size: 1024,
+      mtimeMs: 123457
+    },
+    storageContext,
+    promptOptions
+  });
+  const changedPromptCacheKey = buildAiTitleSourceResultCacheKey({
+    entryId: 'pod-upload-sheet-miaoshou-table',
+    owner,
+    product,
+    settings,
+    fileStat: {
+      size: 1024,
+      mtimeMs: 123456
+    },
+    storageContext,
+    promptOptions: {
+      ...promptOptions,
+      targetLength: '300'
+    }
+  });
+  const compressedCacheKey = buildAiTitleCompressedResultCacheKey({
+    entryId: 'pod-upload-sheet-miaoshou-table',
+    owner,
+    product,
+    settings,
+    compressedImage: {
+      fileStat: {
+        size: 1024,
+        mtimeMs: 123456
+      },
+      byteLength: 512,
+      maxDimension: 1280,
+      quality: 84,
+      imageCompression: 'jpg',
+      extension: '.jpg'
+    },
+    storageContext,
+    promptOptions
+  });
+
+  assert(sourceCacheKey.length === 32, 'AI title source cache key should be a stable hash.');
+  assert(sourceCacheKey !== changedSourceCacheKey, 'AI title source cache key should change when the image file changes.');
+  assert(sourceCacheKey !== changedPromptCacheKey, 'AI title source cache key should change when prompt settings change.');
+  assert(compressedCacheKey.length === 32, 'AI title compressed cache key should remain available for existing cached results.');
+  assert(
+    getUniqueAiTitleCacheKeys(['', sourceCacheKey, compressedCacheKey, sourceCacheKey]).join('|')
+      === `${sourceCacheKey}|${compressedCacheKey}`,
+    'AI title cache keys should be deduplicated before cache lookup/write.'
+  );
+}
+
+function validateSharedBatchAiTitleDialogHooks() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const temuHookPath = path.join(__dirname, '..', 'src', 'renderer', 'podUploadSheetMiaoshouApp', 'useBatchAiTitleDialog.js');
+  const universalHookPath = path.join(__dirname, '..', 'src', 'renderer', 'podUploadSheetMiaoshouUniversalApp', 'useBatchAiTitleDialog.js');
+  const sharedHookPath = path.join(__dirname, '..', 'src', 'renderer', 'shared', 'batchAiTitle', 'useBatchAiTitleDialog.js');
+  const temuHook = fs.readFileSync(temuHookPath, 'utf8');
+  const universalHook = fs.readFileSync(universalHookPath, 'utf8');
+  const sharedHook = fs.readFileSync(sharedHookPath, 'utf8');
+
+  assert(
+    /createBatchAiTitleDialog/.test(temuHook) && /includeOutputLanguage:\s*false/.test(temuHook),
+    'TEMU batch AI title hook should reuse the shared dialog factory without output language selection.'
+  );
+  assert(
+    /createBatchAiTitleDialog/.test(universalHook) && /includeOutputLanguage:\s*true/.test(universalHook),
+    'Universal batch AI title hook should reuse the shared dialog factory with output language selection.'
+  );
+  assert(
+    /MIN_TARGET_LENGTH\s*=\s*30/.test(sharedHook) && /MAX_TARGET_LENGTH\s*=\s*300/.test(sharedHook),
+    'Shared batch AI title dialog should keep title length bounds at 30-300.'
+  );
+}
+
 function main() {
   validateSkuImageUsesOriginalImportOrder();
   validateFallbackFromPathMapOrderForOldProducts();
   validateSuggestedPriceUsesSkuPrice();
+  validateAiTitleCacheKeyRules();
+  validateSharedBatchAiTitleDialogHooks();
 
   console.log('POD MiaoShou material rule validation passed');
 }
