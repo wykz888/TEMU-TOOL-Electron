@@ -21,21 +21,6 @@
         </template>
       </a-tab-pane>
     </a-tabs>
-
-    <div class="pm-new-switch-actions">
-      <a-button type="outline" size="small">
-        <template #icon><icon-refresh /></template>
-        {{ secondaryAction }}
-      </a-button>
-      <a-button
-        type="primary"
-        size="small"
-        @click="$emit('change', 'create')"
-      >
-        <template #icon><icon-send /></template>
-        {{ primaryAction }}
-      </a-button>
-    </div>
   </header>
 </template>
 
@@ -44,7 +29,6 @@ import {
   IconBarChart,
   IconFile,
   IconNotification,
-  IconRefresh,
   IconSend,
   IconTool
 } from '@arco-design/web-vue/es/icon';
@@ -55,14 +39,6 @@ defineProps({
     default: () => []
   },
   activeModuleId: {
-    type: String,
-    default: ''
-  },
-  secondaryAction: {
-    type: String,
-    default: ''
-  },
-  primaryAction: {
     type: String,
     default: ''
   }

@@ -39,8 +39,7 @@ body {
 
 .pm-new-switch-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   min-height: 34px;
 }
@@ -56,7 +55,11 @@ body {
 }
 
 .pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 30px;
+  min-width: 116px;
   margin: 0;
   border: 1px solid rgba(49, 66, 89, 0.12);
   border-radius: 7px;
@@ -76,27 +79,27 @@ body {
   display: none;
 }
 
+.pm-new-switch-tabs .arco-tabs-tab-title {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .pm-new-switch-tab-title {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  width: 100%;
   min-width: 0;
   font-size: 13px;
   line-height: 1;
+  text-align: center;
 }
 
 .pm-new-switch-tab-title svg {
   width: 14px;
   height: 14px;
-}
-
-.pm-new-switch-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .pm-new-layout {
@@ -464,8 +467,8 @@ body {
 }
 
 .pm-new-goods-table.is-empty {
-  flex: 0 0 auto;
-  min-height: 178px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .pm-new-goods-table .arco-table-container,
@@ -478,13 +481,37 @@ body {
 .pm-new-goods-table.is-empty .arco-table-container,
 .pm-new-goods-table.is-empty .arco-spin,
 .pm-new-goods-table.is-empty .arco-spin-children {
-  height: auto;
+  height: 100%;
 }
 
-.pm-new-goods-table.is-empty .arco-table-body,
+.pm-new-goods-table.is-empty .arco-table-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.pm-new-goods-table.is-empty .arco-table-header {
+  flex: 0 0 auto;
+}
+
+.pm-new-goods-table.is-empty .arco-table-body {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .pm-new-goods-table.is-empty .arco-table-body .arco-scrollbar,
 .pm-new-goods-table.is-empty .arco-table-body .arco-scrollbar-container {
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
+}
+
+.pm-new-goods-table.is-empty .arco-table-body table,
+.pm-new-goods-table.is-empty .arco-table-body tbody,
+.pm-new-goods-table.is-empty .arco-table-tr-empty,
+.pm-new-goods-table.is-empty .arco-table-tr-empty .arco-table-td {
+  height: 100%;
 }
 
 .pm-new-goods-table .arco-table-th {
@@ -1007,7 +1034,6 @@ body.dark-theme .pm-new-budget-radio-group.arco-radio-group-button {
     gap: 8px;
   }
 
-  .pm-new-switch-actions,
   .pm-new-feature-actions {
     justify-content: flex-start;
   }

@@ -1,8 +1,3 @@
-export const APP_COPY = Object.freeze({
-  primaryAction: '\u65b0\u5efa\u63a8\u5e7f',
-  secondaryAction: '\u540c\u6b65\u6570\u636e'
-});
-
 export const MODULES = Object.freeze([
   {
     id: 'create',

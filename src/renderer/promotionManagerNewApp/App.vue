@@ -3,8 +3,6 @@
     <FunctionSwitchBar
       :modules="modules"
       :active-module-id="activeModuleId"
-      :secondary-action="copy.secondaryAction"
-      :primary-action="copy.primaryAction"
       @change="handleModuleChange"
     />
 
@@ -24,7 +22,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import {
-  APP_COPY,
   LOG_ROWS,
   MODULES,
   POLICY_GROUPS,
@@ -38,7 +35,6 @@ import PromotionDetailPage from './components/pages/PromotionDetailPage.vue';
 import PromotionMonitorPage from './components/pages/PromotionMonitorPage.vue';
 import RuntimeLogsPage from './components/pages/RuntimeLogsPage.vue';
 
-const copy = APP_COPY;
 const modules = MODULES;
 const summaryMetrics = SUMMARY_METRICS;
 const tableColumns = TABLE_COLUMNS;
