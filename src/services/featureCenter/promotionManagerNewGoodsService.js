@@ -1,3 +1,4 @@
+const crypto = require('node:crypto');
 const { normalizeText } = require('../shopManagement/common');
 const {
   applyBidInfoToRows
@@ -81,6 +82,14 @@ function normalizeNumberText(value) {
   }
 
   return String(value).trim();
+}
+
+function createGoodsListId() {
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function toCloneableJsonValue(value, fallback) {
@@ -469,7 +478,7 @@ function createPromotionManagerNewGoodsService({
     const seenPageSignatures = new Set();
     const seenRowIds = new Set();
     let pageNumber = normalizePositiveInteger(baseRequestPayload.page_number, DEFAULT_PAGE_NUMBER);
-    let queryListId = normalizeText(baseRequestPayload.list_id);
+    const queryListId = normalizeText(baseRequestPayload.list_id) || createGoodsListId();
     let lastExtracted = null;
     let lastSessionResult = null;
     let stoppedByDuplicatePage = false;
@@ -517,7 +526,6 @@ function createPromotionManagerNewGoodsService({
 
       lastExtracted = extracted;
       lastSessionResult = sessionResult;
-      queryListId = normalizeText(extracted.listId) || queryListId;
 
       if (pageSignature && seenPageSignatures.has(pageSignature)) {
         consecutiveDuplicatePageCount += 1;
@@ -820,6 +828,7 @@ module.exports = {
   REGION_IDS,
   buildGoodsListPayload,
   buildGoodsListPagePayload,
+  createGoodsListId,
   extractGoodsRows,
   mapGoodsRecord,
   shouldFetchNextGoodsPage,
