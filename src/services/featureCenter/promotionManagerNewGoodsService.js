@@ -67,6 +67,19 @@ function normalizeNumberText(value) {
   return String(value).trim();
 }
 
+function toCloneableJsonValue(value, fallback) {
+  try {
+    if (value === undefined) {
+      return fallback;
+    }
+
+    const text = JSON.stringify(value);
+    return text ? JSON.parse(text) : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+}
+
 function joinTextList(values, separator = ' / ') {
   return Array.isArray(values)
     ? values.map(normalizeText).filter(Boolean).join(separator)
@@ -265,8 +278,7 @@ function mapGoodsRecord(record, context) {
     createdAtText: formatTimestamp(safeRecord.create_timestamp),
     createTimestamp: Number(safeRecord.create_timestamp) || 0,
     promotionText: buildPromotionTagsText(safeRecord),
-    couponText: normalizeText(safeRecord.coupon_discount || safeRecord.coupon_tag_type),
-    raw: safeRecord
+    couponText: normalizeText(safeRecord.coupon_discount || safeRecord.coupon_tag_type)
   };
 }
 
@@ -427,7 +439,22 @@ function createPromotionManagerNewGoodsService({
       failedCount: errors.length
     });
 
-    return result;
+    return toCloneableJsonValue(result, {
+      updatedAt: new Date().toISOString(),
+      request: {},
+      rows: [],
+      regions: [],
+      errors: [{
+        shopId: '',
+        shopName: '',
+        regionId: '',
+        regionLabel: '',
+        message: '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u7ed3\u679c\u89e3\u6790\u5931\u8d25'
+      }],
+      totalCount: 0,
+      successCount: 0,
+      failedCount: 1
+    });
   }
 
   return {
@@ -438,5 +465,7 @@ function createPromotionManagerNewGoodsService({
 module.exports = {
   ADS_GOODS_LIST_URL,
   REGION_IDS,
+  mapGoodsRecord,
+  toCloneableJsonValue,
   createPromotionManagerNewGoodsService
 };

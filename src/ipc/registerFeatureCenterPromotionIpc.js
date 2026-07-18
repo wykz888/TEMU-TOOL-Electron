@@ -10,6 +10,9 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     queryPromotionManagerNewGoods,
     getRuntimeLogEntries
   } = options;
+  const logError = typeof options.logError === 'function'
+    ? options.logError
+    : () => {};
   const {
     fb_promotionMonitor,
     fb_promotionSettings,
@@ -68,7 +71,34 @@ function registerFeatureCenterPromotionIpc(options = {}) {
       };
     }
 
-    return queryPromotionManagerNewGoods(payload);
+    const result = await queryPromotionManagerNewGoods(payload);
+
+    try {
+      return structuredClone(result);
+    } catch (error) {
+      logError('promotion_manager_new_goods_query_result_clone_failed', error, {
+        rowCount: Array.isArray(result && result.rows) ? result.rows.length : 0,
+        regionCount: Array.isArray(result && result.regions) ? result.regions.length : 0,
+        errorCount: Array.isArray(result && result.errors) ? result.errors.length : 0
+      });
+
+      return {
+        updatedAt: new Date().toISOString(),
+        request: {},
+        rows: [],
+        regions: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u7ed3\u679c\u8fd4\u56de\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5'
+        }],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1
+      };
+    }
   });
 
   handle(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, async (_event, payload) => {
