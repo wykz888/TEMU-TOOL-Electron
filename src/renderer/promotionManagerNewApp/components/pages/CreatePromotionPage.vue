@@ -43,17 +43,33 @@
         </div>
 
         <div
-          v-if="submitStatusText"
-          class="pm-new-query-message"
+          v-if="visibleSubmitStatusText"
+          class="pm-new-query-message pm-new-query-message--closable"
           :class="submitStatusClass"
         >
-          <span>{{ submitStatusText }}</span>
-          <span
-            v-for="message in submitMessages"
-            :key="message.key"
+          <div class="pm-new-query-message-content">
+            <span>{{ submitStatusText }}</span>
+            <span
+              v-for="message in submitMessages"
+              :key="message.key"
+            >
+              {{ message.text }}
+            </span>
+          </div>
+          <a-button
+            v-if="submitStatusClosable"
+            class="pm-new-query-message-close"
+            type="text"
+            size="mini"
+            shape="circle"
+            :title="closeStatusLabel"
+            :aria-label="closeStatusLabel"
+            @click="handleCloseSubmitStatus"
           >
-            {{ message.text }}
-          </span>
+            <template #icon>
+              <IconClose />
+            </template>
+          </a-button>
         </div>
       </div>
 
@@ -97,6 +113,7 @@
 </template>
 
 <script setup>
+import { IconClose } from '@arco-design/web-vue/es/icon';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, triggerRef, watch } from 'vue';
 import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
 import CreatePromotionToolbar from '../CreatePromotionToolbar.vue';
@@ -164,6 +181,7 @@ const submitError = ref('');
 const submitLoading = ref(false);
 const submitStopping = ref(false);
 const submitScope = ref('');
+const submitStatusDismissed = ref(false);
 const activeSubmitTaskId = ref('');
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
@@ -211,6 +229,7 @@ const queryShopCountLabel = '\u5e97\u94fa';
 const queryRegionCountLabel = '\u5730\u533a';
 const querySuccessCountLabel = '\u6210\u529f';
 const queryFailedCountLabel = '\u5931\u8d25';
+const closeStatusLabel = '\u5173\u95ed';
 const regionOptions = [
   { value: 'us', label: '\u7f8e\u56fd' },
   { value: 'eu', label: '\u6b27\u533a' },
@@ -322,6 +341,10 @@ const submitStatusClass = computed(() => {
   return 'is-success';
 });
 
+const submitStatusClosable = computed(() => !submitLoading.value && Boolean(submitStatusText.value));
+
+const visibleSubmitStatusText = computed(() => Boolean(submitStatusText.value) && !submitStatusDismissed.value);
+
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
     return queryLoadingGoodsText;
@@ -388,6 +411,7 @@ function resetSubmitState() {
   submitResult.value = createEmptySubmitResult();
   submitStopping.value = false;
   submitScope.value = '';
+  submitStatusDismissed.value = false;
   activeSubmitTaskId.value = '';
 }
 
@@ -635,6 +659,14 @@ function markCreateRowsAsFailed(rows, message) {
 
 function applyCreateAdsResult(result) {
   goodsCreateStatusMap.value = applyCreateResultToStatusMap(goodsCreateStatusMap.value, result);
+}
+
+function handleCloseSubmitStatus() {
+  if (submitLoading.value) {
+    return;
+  }
+
+  submitStatusDismissed.value = true;
 }
 
 async function cancelCreateAdsTask() {

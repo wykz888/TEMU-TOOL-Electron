@@ -439,10 +439,36 @@ body {
   line-height: 1.45;
 }
 
-.pm-new-query-message span {
+.pm-new-query-message--closable {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 8px;
+}
+
+.pm-new-query-message-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pm-new-query-message span,
+.pm-new-query-message-content span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pm-new-query-message-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+.pm-new-query-message-close:hover {
+  opacity: 1;
 }
 
 .pm-new-query-message.is-error {
