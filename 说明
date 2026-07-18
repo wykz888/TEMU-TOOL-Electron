@@ -1,2 +1,4 @@
 release:win-updater
 
+旧路径 [promotionMasterSessionService.js](/d:/AI开发项目/VS CODE 开发/TEMU 工具箱 Electron版/src/services/featureCenter/promotionMasterSessionService.js) 现在只是兼容导出。以后删旧版推广大师 UI 时，不要删 promotionAdsSessionService.js，新版就靠这个共享后台能力。
+
