@@ -31,6 +31,14 @@ These rules are mandatory for future development in this repository.
 - Keep table columns, panel order, and button order stable unless the user requests a re-layout.
 - When refining an existing page, prefer adjusting spacing, borders, surfaces, and control states before changing structure.
 
+## Storage Material Path Rules
+
+- The global config `存储素材` provider and root prefix are user-selected storage locations.
+- Object keys written to `存储素材` must not add a software account username, `userKey`, or `users/{userKey}` layer.
+- Keep local caches and cloud config/state account-scoped when they belong to software data; this rule only applies to uploaded material object paths generated under the user-selected storage provider/root prefix.
+- Do not add compatibility matching for old uploaded material object caches that contain a software account path layer. Treat those old material cache entries as expired and regenerate or reupload under the current material root.
+- Known current users of `存储素材`: `POD上货表格(妙手TEMU版)`, `POD上货表格(妙手通用版)`, shared image upload dialogs, and shared batch AI title image upload.
+
 ## Verification
 
 - Run the relevant build or validation command after UI or framework changes.

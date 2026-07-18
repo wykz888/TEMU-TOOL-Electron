@@ -16,6 +16,15 @@ Electron app so new modules follow the same boundary by default.
 Use account-scoped storage unless the dataset is clearly shared across every
 login of the same software.
 
+Exception: uploaded material object keys under the user-selected global
+`存储素材` provider/root prefix must not add a software-account username,
+`userKey`, or `users/{userKey}` layer. The user selected that storage location
+directly. Keep local caches and cloud config/state account-scoped when needed,
+but do not push the software-account boundary into material object paths.
+Old uploaded material object caches that include a software-account path layer
+should expire instead of being matched or migrated. Regenerate or reupload those
+assets under the current material root.
+
 Choose shared storage only when all of the following are true:
 
 - the data is not tied to one software account
@@ -50,6 +59,11 @@ These modules should stay isolated by software account.
 
 These datasets are intentionally shared across accounts.
 
+- Software login bootstrap cache:
+  `src/state/loginAccountCache.js` and `src/state/authSessionCache.js`
+  Reason: these files are read before a software account is active. They only
+  store remembered login bootstrap state for opening the app and do not store
+  feature, shop, task, or template data across accounts.
 - Full global category tree cache:
   `src/services/featureCenter/operationsProductCategoryService.js`
   Reason: the dataset comes from online category crawling and can be reused by

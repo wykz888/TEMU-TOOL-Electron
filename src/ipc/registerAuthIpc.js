@@ -3,7 +3,51 @@ const { authService } = require('../services/auth/authService');
 const { AUTH_CHANNELS } = require('./authChannels');
 const { registerInvokeHandler } = require('./ipcRegistration');
 
-function registerAuthIpc({ sessionStore, loginAccountCache, onLoginSuccess, onLogout }) {
+function logAuthPersistenceError(runtimeLogger, eventName, error) {
+  if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
+    runtimeLogger.logError(eventName, error);
+  }
+}
+
+async function persistLoginCache({ loginAccountCache, authSessionCache, runtimeLogger }, session, payload) {
+  const rememberLogin = payload && payload.rememberLogin === true;
+
+  try {
+    await loginAccountCache.setCachedAccount({
+      username: session.username,
+      password: payload.password,
+      rememberLogin
+    });
+  } catch (error) {
+    logAuthPersistenceError(runtimeLogger, 'auth_login_account_cache_persist_failed', error);
+  }
+
+  if (!authSessionCache || typeof authSessionCache.setCachedSession !== 'function') {
+    return;
+  }
+
+  try {
+    await authSessionCache.setCachedSession(session, {
+      rememberLogin
+    });
+  } catch (error) {
+    logAuthPersistenceError(runtimeLogger, 'auth_session_cache_persist_failed', error);
+  }
+}
+
+async function clearSessionCache({ authSessionCache, runtimeLogger }) {
+  if (!authSessionCache || typeof authSessionCache.clearCachedSession !== 'function') {
+    return;
+  }
+
+  try {
+    await authSessionCache.clearCachedSession();
+  } catch (error) {
+    logAuthPersistenceError(runtimeLogger, 'auth_session_cache_clear_failed', error);
+  }
+}
+
+function registerAuthIpc({ sessionStore, loginAccountCache, authSessionCache, runtimeLogger, onLoginSuccess, onLogout }) {
   registerInvokeHandler(ipcMain, AUTH_CHANNELS.GET_SESSION, async () => sessionStore.getSession());
   registerInvokeHandler(
     ipcMain,
@@ -21,11 +65,7 @@ function registerAuthIpc({ sessionStore, loginAccountCache, onLoginSuccess, onLo
     const session = await authService.loginUser(payload);
 
     sessionStore.setSession(session);
-    await loginAccountCache.setCachedAccount({
-      username: session.username,
-      password: payload.password,
-      rememberLogin: payload.rememberLogin === true
-    });
+    await persistLoginCache({ loginAccountCache, authSessionCache, runtimeLogger }, session, payload);
 
     if (typeof onLoginSuccess === 'function') {
       onLoginSuccess(session);
@@ -36,6 +76,7 @@ function registerAuthIpc({ sessionStore, loginAccountCache, onLoginSuccess, onLo
 
   registerInvokeHandler(ipcMain, AUTH_CHANNELS.LOGOUT, async () => {
     sessionStore.clearSession();
+    await clearSessionCache({ authSessionCache, runtimeLogger });
 
     if (typeof onLogout === 'function') {
       onLogout();

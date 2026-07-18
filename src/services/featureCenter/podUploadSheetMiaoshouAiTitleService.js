@@ -918,14 +918,13 @@ function createPodUploadSheetMiaoshouAiTitleService({
     });
   }
 
-  function buildAiInputImageObjectKey(owner, entryId, product, compressedImage, storageContext) {
+  function buildAiInputImageObjectKey(entryId, product, compressedImage, storageContext) {
     const normalizedEntryId = getResolvedEntryId(entryId);
     const dateFolder = formatDateFolder();
     const rootPrefix = normalizePodMiaoshouObjectPrefix(
       storageContext && storageContext.rootPrefix,
       DEFAULT_OBJECT_ROOT_PREFIX
     );
-    const ownerFolder = createSlug(owner && owner.userKey, 'anonymous').slice(0, 96) || 'anonymous';
     const productFolder = createSlug(
       product && (product.sourceFolder || product.localName || product.mainNumber),
       'product'
@@ -949,8 +948,6 @@ function createPodUploadSheetMiaoshouAiTitleService({
     return joinPodMiaoshouObjectKeySegments(
       rootPrefix,
       normalizedEntryId,
-      'users',
-      ownerFolder,
       AI_INPUT_IMAGE_ROOT,
       dateFolder,
       productFolder,
@@ -1007,7 +1004,7 @@ function createPodUploadSheetMiaoshouAiTitleService({
     throwIfJobCanceled(job);
 
     const effectiveStorageContext = storageContext || await resolveAiInputStorageContext(settings, entryId);
-    const objectKey = buildAiInputImageObjectKey(owner, entryId, product, compressedImage, effectiveStorageContext);
+    const objectKey = buildAiInputImageObjectKey(entryId, product, compressedImage, effectiveStorageContext);
     const cacheKey = [
       normalizeText(owner && owner.userKey),
       getPodMiaoshouStorageFingerprint(effectiveStorageContext),

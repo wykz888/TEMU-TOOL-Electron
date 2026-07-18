@@ -164,6 +164,10 @@ body.dark-theme {
   word-break: break-word;
 }
 
+.confirm-dialog-head-copy.is-plain .confirm-dialog-title {
+  margin-top: 6px;
+}
+
 .confirm-dialog-close.arco-btn {
   width: 34px;
   height: 34px;

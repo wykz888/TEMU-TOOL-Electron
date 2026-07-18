@@ -6,7 +6,8 @@ const {
   getPodMiaoshouStorageFingerprint
 } = require('./podUploadSheetMiaoshouStorageProviderContext');
 
-const AI_TITLE_SOURCE_CACHE_KEY_VERSION = 'source-stat-v1';
+const AI_TITLE_COMPRESSED_CACHE_KEY_VERSION = 'compressed-v2-material-root';
+const AI_TITLE_SOURCE_CACHE_KEY_VERSION = 'source-stat-v2-material-root';
 
 function getAiTitleProductIdentityFields(product) {
   return [
@@ -50,6 +51,7 @@ function buildAiTitleCompressedResultCacheKey({
   promptOptions
 } = {}) {
   return createHash([
+    AI_TITLE_COMPRESSED_CACHE_KEY_VERSION,
     normalizeText(entryId),
     normalizeText(owner && owner.userKey),
     getPodMiaoshouStorageFingerprint(storageContext),
@@ -108,6 +110,7 @@ function getUniqueAiTitleCacheKeys(cacheKeys) {
 }
 
 module.exports = {
+  AI_TITLE_COMPRESSED_CACHE_KEY_VERSION,
   AI_TITLE_SOURCE_CACHE_KEY_VERSION,
   buildAiTitleCompressedResultCacheKey,
   buildAiTitleSourceResultCacheKey,

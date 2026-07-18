@@ -30,14 +30,15 @@ function normalizeTheme(value) {
 
 function buildConfirmDialogPayload(payload = {}) {
   const tone = normalizeTone(payload.tone);
+  const rawBadgeText = normalizeText(payload.badgeText);
+  const rawMessage = normalizeText(payload.message);
+  const defaultBadgeText = tone === 'danger' ? '\u91cd\u8981\u63d0\u793a' : '\u64cd\u4f5c\u786e\u8ba4';
 
   return {
     requestId: crypto.randomUUID(),
     title: normalizeText(payload.title) || '\u64cd\u4f5c\u786e\u8ba4',
-    badgeText:
-      normalizeText(payload.badgeText)
-      || (tone === 'danger' ? '\u91cd\u8981\u63d0\u793a' : '\u64cd\u4f5c\u786e\u8ba4'),
-    message: normalizeText(payload.message) || '\u8bf7\u786e\u8ba4\u662f\u5426\u7ee7\u7eed\u3002',
+    badgeText: rawBadgeText || (payload.badgeText === '' ? '' : defaultBadgeText),
+    message: rawMessage || (payload.message === '' ? '' : '\u8bf7\u786e\u8ba4\u662f\u5426\u7ee7\u7eed\u3002'),
     detail: normalizeText(payload.detail),
     confirmText: normalizeText(payload.confirmText) || '\u786e\u8ba4',
     cancelText: normalizeText(payload.cancelText) || '\u53d6\u6d88',
@@ -53,6 +54,10 @@ function encodeConfirmDialogPayload(payload) {
 
 function showConfirmDialog(payload = {}) {
   const normalizedPayload = buildConfirmDialogPayload(payload);
+  const hasBody = Boolean(normalizedPayload.message || normalizedPayload.detail);
+  const windowHeight = hasBody
+    ? (normalizedPayload.detail ? 372 : 332)
+    : 272;
   const parentWindow =
     payload && payload.parentWindow && !payload.parentWindow.isDestroyed()
       ? payload.parentWindow
@@ -90,9 +95,9 @@ function showConfirmDialog(payload = {}) {
 
     confirmWindow = new BrowserWindow({
       width: 468,
-      height: normalizedPayload.detail ? 372 : 332,
+      height: windowHeight,
       minWidth: 468,
-      minHeight: normalizedPayload.detail ? 372 : 332,
+      minHeight: windowHeight,
       maxWidth: 560,
       maxHeight: 420,
       resizable: false,

@@ -52,7 +52,7 @@
 - Responsibility: operations activity management, traffic boost, price declaration, new product lifecycle, promotion master/monitor, marketing tools, POD MiaoShou export/upload/template/title services, shared cost/shop/category services.
 - Promotion Ads session boundary: `promotionAdsSessionService.js` owns TEMU ads login readiness, region cookie refresh/cache, and backend region-cookie POST requests. `promotionMasterSessionService.js` is now a compatibility export, and newer promotion pages should depend on the neutral Ads session service naming.
 - Promotion manager new goods query: `promotionManagerNewGoodsService.js` owns `query_mall_goods_list` payload normalization, multi-shop/multi-region fetch orchestration, and goods row parsing for the Vue renderer.
-- Notes: POD MiaoShou export now uses a shared pure helper for material item selection and description image resolution so the TEMU and universal export services stay aligned on the same rule set. POD MiaoShou AI title generation persists per-user, per-entry result cache files under the feature storage cache root; cache lookup also has a source-file-stat key path so repeated inputs can skip image compression before upload/generation. TEMU and universal batch AI title dialogs share `src/renderer/shared/batchAiTitle/useBatchAiTitleDialog.js`, while the TEMU entry disables output-language controls and the universal entry keeps them enabled.
+- Notes: POD MiaoShou export now uses a shared pure helper for material item selection and description image resolution so the TEMU and universal export services stay aligned on the same rule set. POD MiaoShou image upload and AI title image upload use the global config `存储素材` provider/root prefix as the remote material root and do not append `users/{userKey}` to object keys. Old material upload caches that include a software-account path layer are expired, not migrated. POD MiaoShou AI title generation persists per-user, per-entry result cache files under the feature storage cache root; cache lookup also has a source-file-stat key path so repeated inputs can skip image compression before upload/generation. TEMU and universal batch AI title dialogs share `src/renderer/shared/batchAiTitle/useBatchAiTitleDialog.js`, while the TEMU entry disables output-language controls and the universal entry keeps them enabled.
 - Risk: several services are thousands of lines and should be changed carefully with focused validation.
 
 ## Creation Services
@@ -65,7 +65,7 @@
 ## Shop Management And Persistence
 
 - Code: `src/services/shopManagement/`, `src/state/`, `src/utils/persistenceRoots.js`, `docs/persistence-scope.md`
-- Responsibility: shop records, groups, visibility, fingerprints, login account/session state, and scoped TEMU data root migration.
+- Responsibility: shop records, groups, visibility, fingerprints, login account cache, remembered software-login session bootstrap cache, and scoped TEMU data root migration.
 - Rule: new account-tied data should live under `{featureRoot}/users/{userKey}/{config|state|cache}/...`.
 
 ## Build And Release Tooling

@@ -2,6 +2,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { getAppDataRoot } = require('../utils/persistenceRoots');
 
+const CACHE_VERSION = 3;
+const SAFE_STORAGE_MODE = 'safeStorage';
+const PLAIN_MODE = 'plain';
+
+function normalizeText(value) {
+  return String(value || '').trim();
+}
+
 function createLoginAccountCache({ app, safeStorage }) {
   function getCacheFilePath() {
     return path.join(
@@ -29,9 +37,11 @@ function createLoginAccountCache({ app, safeStorage }) {
 
   async function writeCacheFile(payload) {
     const cacheFilePath = getCacheFilePath();
+    const tempFilePath = `${cacheFilePath}.${process.pid}.${Date.now().toString(36)}.tmp`;
 
     await fs.promises.mkdir(path.dirname(cacheFilePath), { recursive: true });
-    await fs.promises.writeFile(cacheFilePath, JSON.stringify(payload, null, 2), 'utf8');
+    await fs.promises.writeFile(tempFilePath, JSON.stringify(payload, null, 2), 'utf8');
+    await fs.promises.rename(tempFilePath, cacheFilePath);
   }
 
   async function removeCacheFile() {
@@ -44,12 +54,6 @@ function createLoginAccountCache({ app, safeStorage }) {
         throw error;
       }
     }
-  }
-
-  async function removeInvalidCacheFile() {
-    try {
-      await removeCacheFile();
-    } catch (_error) {}
   }
 
   function canUseSafeStorage() {
@@ -67,42 +71,62 @@ function createLoginAccountCache({ app, safeStorage }) {
 
     if (canUseSafeStorage()) {
       return {
-        mode: 'safeStorage',
+        mode: SAFE_STORAGE_MODE,
         value: safeStorage.encryptString(normalizedValue).toString('base64')
       };
     }
 
     return {
-      mode: 'plain',
+      mode: PLAIN_MODE,
       value: normalizedValue
     };
   }
 
   function decodeSecret(record) {
-    if (!record || typeof record !== 'object') {
+    if (typeof record === 'string') {
       return {
-        value: '',
-        invalid: false
+        value: record,
+        invalid: false,
+        unavailable: false
       };
     }
 
-    if (record.mode === 'safeStorage') {
-      if (typeof record.value !== 'string' || !record.value || !canUseSafeStorage()) {
+    if (!record || typeof record !== 'object') {
+      return {
+        value: '',
+        invalid: false,
+        unavailable: false
+      };
+    }
+
+    if (record.mode === SAFE_STORAGE_MODE) {
+      if (typeof record.value !== 'string' || !record.value) {
         return {
           value: '',
-          invalid: true
+          invalid: true,
+          unavailable: false
+        };
+      }
+
+      if (!canUseSafeStorage()) {
+        return {
+          value: '',
+          invalid: false,
+          unavailable: true
         };
       }
 
       try {
         return {
           value: safeStorage.decryptString(Buffer.from(record.value, 'base64')),
-          invalid: false
+          invalid: false,
+          unavailable: false
         };
       } catch (_error) {
         return {
           value: '',
-          invalid: true
+          invalid: true,
+          unavailable: false
         };
       }
     }
@@ -110,13 +134,15 @@ function createLoginAccountCache({ app, safeStorage }) {
     if (typeof record.value === 'string') {
       return {
         value: record.value,
-        invalid: false
+        invalid: false,
+        unavailable: false
       };
     }
 
     return {
       value: '',
-      invalid: false
+      invalid: false,
+      unavailable: false
     };
   }
 
@@ -131,16 +157,38 @@ function createLoginAccountCache({ app, safeStorage }) {
       if (cache.rememberLogin === true) {
         const usernameRecord = decodeSecret(cache.username);
         const passwordRecord = decodeSecret(cache.password);
+        const username = normalizeText(usernameRecord.value) || normalizeText(cache.displayUsername);
+        const passwordUnavailable = passwordRecord.invalid || passwordRecord.unavailable;
 
-        if (usernameRecord.invalid || passwordRecord.invalid || !usernameRecord.value.trim()) {
-          await removeInvalidCacheFile();
+        if (!username) {
           return null;
+        }
+
+        if (
+          !usernameRecord.invalid
+          && !usernameRecord.unavailable
+          && !passwordRecord.invalid
+          && !passwordRecord.unavailable
+          && (cache.version !== CACHE_VERSION || normalizeText(cache.displayUsername) !== username)
+        ) {
+          await writeCacheFile({
+            ...cache,
+            version: CACHE_VERSION,
+            displayUsername: username,
+            updatedAt: cache.updatedAt || new Date().toISOString()
+          }).catch(() => {});
         }
 
         return {
           rememberLogin: true,
-          username: usernameRecord.value.trim(),
-          password: passwordRecord.value,
+          username,
+          password: passwordUnavailable ? '' : passwordRecord.value,
+          credentialUnavailable: Boolean(
+            usernameRecord.invalid
+            || usernameRecord.unavailable
+            || passwordRecord.invalid
+            || passwordRecord.unavailable
+          ),
           updatedAt: cache.updatedAt || null
         };
       }
@@ -168,8 +216,9 @@ function createLoginAccountCache({ app, safeStorage }) {
       }
 
       await writeCacheFile({
-        version: 2,
+        version: CACHE_VERSION,
         rememberLogin: true,
+        displayUsername: username.trim(),
         username: encodeSecret(username.trim()),
         password: encodeSecret(typeof password === 'string' ? password : ''),
         updatedAt: new Date().toISOString()

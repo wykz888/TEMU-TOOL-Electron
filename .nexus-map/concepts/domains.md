@@ -6,7 +6,7 @@
 
 ## Auth And Session
 
-Session state is held in `src/state/sessionStore.js` and login account cache in `src/state/loginAccountCache.js`. Main process switches between auth and main areas through `openAuthenticatedArea` and `returnToAuthArea` in `src/main.js`.
+Session state is held in `src/state/sessionStore.js`, remembered software-login credentials are handled by `src/state/loginAccountCache.js`, and remembered software-login session bootstrap state is handled by `src/state/authSessionCache.js`. Main process switches between auth and main areas through `openAuthenticatedArea` and `returnToAuthArea` in `src/main.js`; startup restores a remembered software-login session before opening the auth window when `rememberLogin` was enabled.
 
 ## Shop Management
 
@@ -32,7 +32,7 @@ Operations activity management, traffic boost, price declaration, and new produc
 
 ## POD MiaoShou
 
-POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Both variants now preserve material import order maps for carousel items, use description image name fields as the first-class selection source before falling back to legacy order numbers, and share the persistent AI title result cache boundary under `users/{userKey}/cache/ai-title-results`. The batch AI title dialog state lives in the shared renderer module `src/renderer/shared/batchAiTitle/useBatchAiTitleDialog.js`; TEMU keeps output-language selection disabled because it generates Chinese and English titles together, while universal keeps the output-language control. AI title result cache keys live in `podUploadSheetMiaoshouAiTitleCacheKeyUtils.js`, including a source-file-stat key that allows repeat runs to return cached titles before image compression. Git hotspots show this is the most active current area.
+POD MiaoShou TEMU and universal variants have separate feature metadata, independent Vue apps, form/template/workspace services, export services, COS upload services, and shared AI title generation support. Both variants now preserve material import order maps for carousel items, use description image name fields as the first-class selection source before falling back to legacy order numbers, and share the persistent AI title result cache boundary under `users/{userKey}/cache/ai-title-results`. Global config `存储素材` is used by POD image upload and batch AI title image upload as a user-selected remote material root; uploaded object keys should stay under the configured root plus feature folders and must not append a software-account username or `users/{userKey}` segment. Old material upload caches with a software-account path layer should expire instead of being matched or migrated. The batch AI title dialog state lives in the shared renderer module `src/renderer/shared/batchAiTitle/useBatchAiTitleDialog.js`; TEMU keeps output-language selection disabled because it generates Chinese and English titles together, while universal keeps the output-language control. AI title result cache keys live in `podUploadSheetMiaoshouAiTitleCacheKeyUtils.js`, including a source-file-stat key that allows repeat runs to return cached titles before image compression. Git hotspots show this is the most active current area.
 
 ## Promotion Master And Monitor
 

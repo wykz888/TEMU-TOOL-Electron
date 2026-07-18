@@ -7,6 +7,7 @@ const {
   getSuggestedPriceValue
 } = require('../src/services/featureCenter/podUploadSheetMiaoshouPriceExportUtils');
 const {
+  AI_TITLE_COMPRESSED_CACHE_KEY_VERSION,
   buildAiTitleCompressedResultCacheKey,
   buildAiTitleSourceResultCacheKey,
   getUniqueAiTitleCacheKeys
@@ -200,6 +201,10 @@ function validateAiTitleCacheKeyRules() {
   });
 
   assert(sourceCacheKey.length === 32, 'AI title source cache key should be a stable hash.');
+  assert(
+    AI_TITLE_COMPRESSED_CACHE_KEY_VERSION === 'compressed-v2-material-root',
+    'AI title compressed cache key should use the material-root cache generation.'
+  );
   assert(sourceCacheKey !== changedSourceCacheKey, 'AI title source cache key should change when the image file changes.');
   assert(sourceCacheKey !== changedPromptCacheKey, 'AI title source cache key should change when prompt settings change.');
   assert(compressedCacheKey.length === 32, 'AI title compressed cache key should remain available for existing cached results.');

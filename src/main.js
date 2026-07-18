@@ -33,6 +33,7 @@ const {
 const {
   createPodUploadSheetMiaoshouAiTitleConfigService
 } = require('./services/featureCenter/podUploadSheetMiaoshouAiTitleConfigService');
+const { createAuthSessionCache } = require('./state/authSessionCache');
 const { createLoginAccountCache } = require('./state/loginAccountCache');
 const { createSessionStore } = require('./state/sessionStore');
 const { createAuthWindow } = require('./windows/createAuthWindow');
@@ -112,6 +113,7 @@ app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'disable_non_pro
 
 const sessionStore = createSessionStore();
 const loginAccountCache = createLoginAccountCache({ app, safeStorage });
+const authSessionCache = createAuthSessionCache({ app });
 const creationCenterProfileService = createCreationCenterProfileService({ app });
 const featureCenterProfileService = createFeatureCenterProfileService({ app });
 const globalConfigService = createGlobalConfigService({
@@ -580,10 +582,10 @@ async function confirmMainWindowExit() {
       appearance: currentThemeAppearance,
       tone: 'warning',
       title: '\u9000\u51fa\u786e\u8ba4',
-      badgeText: '\u7a97\u53e3\u5173\u95ed',
-      message: '\u786e\u8ba4\u5173\u95ed\u8f6f\u4ef6\u5417\uff1f',
-      detail: '\u5173\u95ed\u540e\uff0c\u5f53\u524d\u76d1\u63a7\u4efb\u52a1\u3001\u6d4f\u89c8\u5668\u7a97\u53e3\u548c\u540e\u53f0\u8c03\u5ea6\u90fd\u4f1a\u505c\u6b62\u3002',
-      confirmText: '\u9000\u51fa\u8f6f\u4ef6',
+      badgeText: '',
+      message: '',
+      detail: '',
+      confirmText: '\u786e\u8ba4',
       cancelText: '\u53d6\u6d88'
     });
   } catch (error) {
@@ -1627,6 +1629,8 @@ app.whenReady().then(() => {
   registerAuthIpc({
     sessionStore,
     loginAccountCache,
+    authSessionCache,
+    runtimeLogger,
     onLoginSuccess: openAuthenticatedArea,
     onLogout: returnToAuthArea
   });
@@ -3470,7 +3474,22 @@ app.whenReady().then(() => {
     }
   });
 
-  showAuthWindow();
+  Promise.resolve(authSessionCache.getCachedSession())
+    .then((cachedSession) => {
+      if (cachedSession && !sessionStore.hasSession()) {
+        runtimeLogger.log('auth_session_restored', {
+          username: cachedSession.username
+        });
+        openAuthenticatedArea(cachedSession);
+        return;
+      }
+
+      showAuthWindow();
+    })
+    .catch((error) => {
+      runtimeLogger.logError('auth_session_restore_failed', error);
+      showAuthWindow();
+    });
 
   app.on('activate', () => {
     if (sessionStore.hasSession()) {

@@ -15,7 +15,7 @@ const {
   normalizeBoundedInteger
 } = require('./podUploadSheetMiaoshouConcurrencyUtils');
 
-const SERVICE_VERSION = 2;
+const SERVICE_VERSION = 3;
 const DEFAULT_ENTRY_ID = 'pod-upload-sheet-miaoshou-table';
 const CACHE_FILE_NAME = 'cos-image-upload-cache.json';
 const TARGET_BUCKET = 'chunagtao-1251234463';
@@ -293,6 +293,8 @@ function createPodUploadSheetMiaoshouCosUploadService({
       updatedAt: '',
       bucket: TARGET_BUCKET,
       region: DEFAULT_BUCKET_REGION,
+      storageProvider: 'tencent-cos',
+      rootPrefix: DEFAULT_OBJECT_ROOT_PREFIX,
       items: {}
     };
   }
@@ -455,22 +457,16 @@ function createPodUploadSheetMiaoshouCosUploadService({
       .join('/');
   }
 
-  function getOwnerObjectPathSegment(owner) {
-    return createSlug(owner && owner.userKey, 'anonymous').slice(0, 96) || 'anonymous';
-  }
-
-  function buildOwnerObjectKeyPrefix(storageContext, owner) {
+  function buildMaterialObjectKeyPrefix(storageContext) {
     return joinObjectKeySegments(
       normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
-      normalizedEntryId,
-      'users',
-      getOwnerObjectPathSegment(owner)
+      normalizedEntryId
     );
   }
 
-  function isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner) {
+  function isCacheEntryInStorageObjectScope(cacheEntry, storageContext) {
     const key = normalizeObjectPrefix(cacheEntry && cacheEntry.key, '');
-    const prefix = buildOwnerObjectKeyPrefix(storageContext, owner);
+    const prefix = buildMaterialObjectKeyPrefix(storageContext);
 
     return Boolean(key && prefix && (key === prefix || key.startsWith(`${prefix}/`)));
   }
@@ -583,6 +579,11 @@ function createPodUploadSheetMiaoshouCosUploadService({
 
   function normalizeCacheSnapshot(record, owner) {
     const source = record && typeof record === 'object' && !Array.isArray(record) ? record : {};
+
+    if (Number(source.version) !== SERVICE_VERSION) {
+      return buildDefaultCacheSnapshot(owner);
+    }
+
     const itemSource = source.items && typeof source.items === 'object' && !Array.isArray(source.items)
       ? source.items
       : {};
@@ -1613,7 +1614,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       && normalizeStorageProvider(cacheEntry.storageProvider || 'tencent-cos') === normalizeStorageProvider(storageContext && storageContext.storageProvider)
       && normalizeText(cacheEntry.bucket) === normalizeText(storageContext && storageContext.bucket)
       && normalizeText(cacheEntry.rootPrefix) === normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX)
-      && isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner)
+      && isCacheEntryInStorageObjectScope(cacheEntry, storageContext)
       && getCacheEntryImageUploadMode(cacheEntry) === expectedMode
       && getImageQualityCacheToken(getCacheEntryImageUploadMode(cacheEntry), cacheEntry.imageQuality) === expectedQuality
       && Number(cacheEntry.size) === Number(fileStat && fileStat.size)
@@ -1632,7 +1633,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
       && normalizeStorageProvider(cacheEntry.storageProvider || 'tencent-cos') === normalizeStorageProvider(storageContext && storageContext.storageProvider)
       && normalizeText(cacheEntry.bucket) === normalizeText(storageContext && storageContext.bucket)
       && normalizeText(cacheEntry.rootPrefix) === normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX)
-      && isCacheEntryInOwnerObjectScope(cacheEntry, storageContext, owner)
+      && isCacheEntryInStorageObjectScope(cacheEntry, storageContext)
       && getCacheEntryImageUploadMode(cacheEntry) === expectedMode
       && getImageQualityCacheToken(getCacheEntryImageUploadMode(cacheEntry), cacheEntry.imageQuality) === expectedQuality
     );
@@ -1666,7 +1667,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
         normalizeStorageProvider(storageContext && storageContext.storageProvider),
         normalizeText(storageContext && storageContext.bucket),
         normalizeObjectPrefix(storageContext && storageContext.rootPrefix, DEFAULT_OBJECT_ROOT_PREFIX),
-        getOwnerObjectPathSegment(owner),
+        normalizedEntryId,
         normalizeImageUploadMode(imageUploadMode),
         getImageQualityCacheToken(imageUploadMode, imageQuality)
       ].join('|'),
@@ -1674,7 +1675,7 @@ function createPodUploadSheetMiaoshouCosUploadService({
     );
 
     return joinObjectKeySegments(
-      buildOwnerObjectKeyPrefix(storageContext, owner),
+      buildMaterialObjectKeyPrefix(storageContext),
       dateFolder,
       productFolder,
       `${fileSlug}-${uniqueHash}${extension}`

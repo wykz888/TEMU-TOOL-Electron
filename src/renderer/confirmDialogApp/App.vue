@@ -6,7 +6,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmDialogTitle"
-      aria-describedby="confirmDialogMessage"
+      :aria-describedby="hasDialogBody ? 'confirmDialogMessage' : undefined"
       tabindex="-1"
     >
       <div class="confirm-dialog-accent"></div>
@@ -15,8 +15,8 @@
           <component :is="toneIcon" />
         </div>
 
-        <div class="confirm-dialog-head-copy">
-          <span class="confirm-dialog-badge">{{ dialogPayload.badgeText }}</span>
+        <div class="confirm-dialog-head-copy" :class="{ 'is-plain': !dialogPayload.badgeText }">
+          <span v-if="dialogPayload.badgeText" class="confirm-dialog-badge">{{ dialogPayload.badgeText }}</span>
           <h1 id="confirmDialogTitle" class="confirm-dialog-title">{{ dialogPayload.title }}</h1>
         </div>
 
@@ -33,7 +33,7 @@
         </a-button>
       </header>
 
-      <div class="confirm-dialog-body">
+      <div v-if="hasDialogBody" class="confirm-dialog-body">
         <p id="confirmDialogMessage" class="confirm-dialog-message">{{ dialogPayload.message }}</p>
         <div v-if="dialogPayload.detail" class="confirm-dialog-detail">{{ dialogPayload.detail }}</div>
       </div>
@@ -71,6 +71,7 @@ export default {
     const settled = ref(false);
     const dialogPayload = readConfirmDialogPayload();
     const closeLabel = '\u5173\u95ed';
+    const hasDialogBody = computed(() => Boolean(dialogPayload.message || dialogPayload.detail));
 
     const toneIcon = computed(() => {
       if (dialogPayload.tone === 'danger') {
@@ -127,6 +128,7 @@ export default {
       closeLabel,
       dialogPayload,
       finish,
+      hasDialogBody,
       toneIcon,
       toneIconClass
     };
