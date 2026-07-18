@@ -1,4 +1,4 @@
-export const GOODS_QUERY_PAGE_SIZE = 20;
+export const GOODS_QUERY_PAGE_SIZE = 100;
 
 export const BUDGET_MODE_UNLIMITED = 'unlimited';
 export const BUDGET_MODE_CUSTOM = 'custom';

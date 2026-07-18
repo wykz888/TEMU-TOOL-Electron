@@ -1,7 +1,7 @@
 const { normalizeText } = require('../shopManagement/common');
 
 const ADS_GET_BID_URL = 'https://ads.temu.com/api/v1/coconut/pred/getBid';
-const MAX_BID_GOODS_PER_REQUEST = 20;
+const MAX_BID_GOODS_PER_REQUEST = 50;
 const ROAS_VALUE_SCALE = 10000;
 
 function normalizePositiveInteger(value, fallback, options = {}) {

@@ -6,8 +6,8 @@ const { createPromotionManagerNewBidFetcher } = require('./promotionManagerNewBi
 
 const ADS_GOODS_LIST_URL = 'https://ads.temu.com/api/v1/coconut/ad/query_mall_goods_list';
 const DEFAULT_PAGE_NUMBER = 1;
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 100;
+const MAX_PAGE_SIZE = 100;
 const MAX_GOODS_PAGE_COUNT = 1000;
 const MAX_CONSECUTIVE_DUPLICATE_GOODS_PAGE_COUNT = 5;
 
