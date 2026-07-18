@@ -197,6 +197,20 @@ body {
   gap: 10px;
 }
 
+.pm-new-monitor-shop-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.pm-new-monitor-shop-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
 .pm-new-product-panel {
   display: flex;
   flex-direction: column;
@@ -964,6 +978,31 @@ body {
   min-height: 0;
 }
 
+.pm-new-monitor-shop-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.pm-new-monitor-shop-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pm-new-monitor-shop-table .arco-table-container {
+  height: 100%;
+}
+
+.pm-new-monitor-shop-note {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #66778e;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pm-new-monitor-board {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1056,7 +1095,8 @@ body.dark-theme .pm-new-goods-inline-meta span,
 body.dark-theme .pm-new-goods-field-hint,
 body.dark-theme .pm-new-roas-option-meta,
 body.dark-theme .pm-new-roas-option-meta em,
-body.dark-theme .pm-new-goods-empty {
+body.dark-theme .pm-new-goods-empty,
+body.dark-theme .pm-new-monitor-shop-note {
   color: #9aa8ba;
 }
 
