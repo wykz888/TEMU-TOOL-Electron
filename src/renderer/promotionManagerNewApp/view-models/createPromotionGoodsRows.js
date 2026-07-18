@@ -380,16 +380,20 @@ export function buildRoasPredictionOptions(row) {
     const budgetText = normalizeText(prediction && prediction.roasBudgetText);
     const impressionText = normalizeText(prediction && prediction.impressionDeltaText);
     const orderText = normalizeText(prediction && prediction.orderDeltaText);
+    const estimatedRoasText = roasText ? `\u9884\u4f30ROAS ${roasText}` : '';
+    const dealChargeText = budgetText ? `\u6210\u4ea4\u6263\u8d39 ${budgetText}` : '';
 
     return {
       value: mode,
       label: ROAS_LABELS[mode],
       roasText,
       budgetText,
+      estimatedRoasText,
+      dealChargeText,
       disabled: !prediction,
       title: [
-        roasText ? `ROAS ${roasText}` : '',
-        budgetText ? `\u9884\u7b97 ${budgetText}` : '',
+        estimatedRoasText,
+        dealChargeText,
         impressionText ? `\u66dd\u5149 ${impressionText}` : '',
         orderText ? `\u8ba2\u5355 ${orderText}` : ''
       ].filter(Boolean).join(' / ')

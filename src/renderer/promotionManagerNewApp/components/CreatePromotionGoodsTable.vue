@@ -168,7 +168,13 @@
                   :title="option.title"
                 >
                   <strong>{{ option.label }}</strong>
-                  <em v-if="option.roasText">ROAS {{ option.roasText }}</em>
+                  <span
+                    v-if="option.estimatedRoasText || option.dealChargeText"
+                    class="pm-new-roas-option-meta"
+                  >
+                    <em v-if="option.estimatedRoasText">{{ option.estimatedRoasText }}</em>
+                    <em v-if="option.dealChargeText">{{ option.dealChargeText }}</em>
+                  </span>
                 </span>
               </a-radio>
               <a-radio :value="roasModeCustom">
@@ -298,7 +304,7 @@ const roasModeCustom = ROAS_MODE_CUSTOM;
 const goodsColumnProductWidth = 600;
 const goodsColumnCreateStatusWidth = 150;
 const goodsColumnDailyBudgetWidth = 250;
-const goodsColumnTargetRoasWidth = 420;
+const goodsColumnTargetRoasWidth = 500;
 const virtualListThreshold = 120;
 
 const rowSelection = Object.freeze({
@@ -309,13 +315,13 @@ const rowSelection = Object.freeze({
 });
 
 const dataTableScroll = Object.freeze({
-  x: 1466,
+  x: 1546,
   y: '100%'
 });
 
 const virtualListProps = Object.freeze({
   threshold: virtualListThreshold,
-  estimatedSize: 136,
+  estimatedSize: 156,
   buffer: 14
 });
 
