@@ -10,16 +10,21 @@
           storage-key="promotion-manager-new:create-shop-selection"
           @update:model-value="emitSelectedShopIds"
         />
-        <label class="pm-new-toolbar-field pm-new-toolbar-region-field">
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-region-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-field-label">{{ regionSelectLabel }}</span>
           <a-select
             :model-value="selectedRegionCodes"
             class="pm-new-toolbar-select"
             multiple
             allow-clear
+            popup-container="body"
             size="small"
             :max-tag-count="1"
             :placeholder="regionSelectPlaceholder"
+            :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitSelectedRegionCodes"
           >
             <a-option
@@ -30,7 +35,7 @@
               {{ region.label }}
             </a-option>
           </a-select>
-        </label>
+        </div>
         <a-button
           class="pm-new-toolbar-query-button"
           type="primary"
@@ -61,7 +66,10 @@
           :placeholder="categoryPlaceholder"
           @update:model-value="(value) => patchFilterValues({ categoryText: value })"
         />
-        <label class="pm-new-toolbar-field pm-new-toolbar-range-field">
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-range-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ priceRangeLabel }}</span>
           <a-input-number
             :model-value="filterValues.priceMin"
@@ -80,8 +88,11 @@
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ priceMax: value })"
           />
-        </label>
-        <label class="pm-new-toolbar-field pm-new-toolbar-range-field">
+        </div>
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-range-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ salesRangeLabel }}</span>
           <a-input-number
             :model-value="filterValues.salesMin"
@@ -100,8 +111,11 @@
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ salesMax: value })"
           />
-        </label>
-        <label class="pm-new-toolbar-field pm-new-toolbar-date-field">
+        </div>
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-date-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ createdRangeLabel }}</span>
           <a-range-picker
             :model-value="filterValues.createdRange"
@@ -109,7 +123,7 @@
             size="small"
             @update:model-value="(value) => patchFilterValues({ createdRange: value })"
           />
-        </label>
+        </div>
         <div class="pm-new-toolbar-filter-buttons">
           <a-button
             type="primary"
@@ -127,12 +141,17 @@
     <section class="pm-new-toolbar-group pm-new-toolbar-action-group">
       <span class="pm-new-toolbar-group-title">{{ actionGroupTitle }}</span>
       <div class="pm-new-toolbar-action-fields">
-        <label class="pm-new-toolbar-field">
+        <div
+          class="pm-new-toolbar-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ dailyBudgetLabel }}</span>
           <a-select
             :model-value="budgetMode"
             class="pm-new-toolbar-action-select"
+            popup-container="body"
             size="small"
+            :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitBudgetMode"
           >
             <a-option
@@ -143,13 +162,18 @@
               {{ option.label }}
             </a-option>
           </a-select>
-        </label>
-        <label class="pm-new-toolbar-field">
+        </div>
+        <div
+          class="pm-new-toolbar-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ roasLabel }}</span>
           <a-select
             :model-value="roasMode"
             class="pm-new-toolbar-action-select"
+            popup-container="body"
             size="small"
+            :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitRoasMode"
           >
             <a-option
@@ -160,13 +184,18 @@
               {{ option.label }}
             </a-option>
           </a-select>
-        </label>
-        <label class="pm-new-toolbar-field">
+        </div>
+        <div
+          class="pm-new-toolbar-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ fastStartLabel }}</span>
           <a-select
             :model-value="fastStartMode"
             class="pm-new-toolbar-action-select pm-new-toolbar-fast-start-select"
+            popup-container="body"
             size="small"
+            :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitFastStartMode"
           >
             <a-option
@@ -177,7 +206,7 @@
               {{ option.label }}
             </a-option>
           </a-select>
-        </label>
+        </div>
         <div class="pm-new-toolbar-action-buttons">
           <a-button
             type="primary"
@@ -334,25 +363,45 @@ const submitSelectedLabel = '\u65b0\u5efa\u5df2\u9009\u5546\u54c1\u5e7f\u544a';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const roasModeOptions = ROAS_MODE_OPTIONS;
 const fastStartModeOptions = FAST_START_MODE_OPTIONS;
+const stableSelectTriggerProps = Object.freeze({
+  autoFitPopupMinWidth: true,
+  updateAtScroll: true
+});
+
+function isOptionValue(options, value) {
+  return (Array.isArray(options) ? options : []).some((option) => option && option.value === value);
+}
 
 function emitSelectedShopIds(value) {
   emit('update:selectedShopIds', Array.isArray(value) ? value : []);
 }
 
 function emitSelectedRegionCodes(value) {
-  emit('update:selectedRegionCodes', Array.isArray(value) ? value : []);
+  const validRegionValues = new Set(
+    (Array.isArray(props.regionOptions) ? props.regionOptions : []).map((option) => option && option.value)
+  );
+  const nextValues = (Array.isArray(value) ? value : [])
+    .filter((entry) => validRegionValues.has(entry));
+
+  emit('update:selectedRegionCodes', nextValues);
 }
 
 function emitBudgetMode(value) {
-  emit('update:budgetMode', value);
+  if (isOptionValue(budgetModeOptions, value)) {
+    emit('update:budgetMode', value);
+  }
 }
 
 function emitRoasMode(value) {
-  emit('update:roasMode', value);
+  if (isOptionValue(roasModeOptions, value)) {
+    emit('update:roasMode', value);
+  }
 }
 
 function emitFastStartMode(value) {
-  emit('update:fastStartMode', value);
+  if (isOptionValue(fastStartModeOptions, value)) {
+    emit('update:fastStartMode', value);
+  }
 }
 
 function patchFilterValues(patch) {
