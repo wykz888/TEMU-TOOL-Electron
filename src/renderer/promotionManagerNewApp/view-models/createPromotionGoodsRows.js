@@ -48,6 +48,18 @@ function pickNumber(...values) {
   return null;
 }
 
+function pickPositiveNumber(...values) {
+  for (const value of values) {
+    const numberValue = normalizeFiniteNumber(value);
+
+    if (numberValue !== null && numberValue > 0) {
+      return numberValue;
+    }
+  }
+
+  return null;
+}
+
 function firstPresentText(...values) {
   for (const value of values) {
     const text = normalizeText(value);
@@ -130,25 +142,43 @@ export function getDailyBudgetBounds(row) {
   };
 }
 
+export function hasDailyBudgetBounds(row) {
+  const bounds = getDailyBudgetBounds(row);
+
+  return bounds.min !== null || bounds.max !== null;
+}
+
 export function getCustomRoasBounds(row) {
   const bidInfo = getBidInfo(row);
 
   return {
-    min: pickNumber(bidInfo.minCustomRoas, row && row.bidMinCustomRoas),
-    max: pickNumber(bidInfo.maxCustomRoas, row && row.bidMaxCustomRoas)
+    min: pickPositiveNumber(bidInfo.minCustomRoas, row && row.bidMinCustomRoas),
+    max: pickPositiveNumber(bidInfo.maxCustomRoas, row && row.bidMaxCustomRoas)
   };
 }
 
+export function hasCustomRoasBounds(row) {
+  const bounds = getCustomRoasBounds(row);
+
+  return bounds.min !== null || bounds.max !== null;
+}
+
 export function buildDailyBudgetHint(row) {
+  if (!hasDailyBudgetBounds(row)) {
+    return '';
+  }
+
   return firstPresentText(row && row.bidDailyBudgetText, getBidInfo(row).dailyBudgetText);
 }
 
 export function buildCustomRoasHint(row) {
+  if (!hasCustomRoasBounds(row)) {
+    return '';
+  }
+
   return firstPresentText(
     row && row.bidCustomRoasRangeText,
-    getBidInfo(row).customRoasRangeText,
-    row && row.bidRecommendRoasRangeText,
-    getBidInfo(row).recommendRoasRangeText
+    getBidInfo(row).customRoasRangeText
   );
 }
 

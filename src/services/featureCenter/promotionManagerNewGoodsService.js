@@ -9,6 +9,7 @@ const DEFAULT_PAGE_NUMBER = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 20;
 const MAX_GOODS_PAGE_COUNT = 1000;
+const MAX_CONSECUTIVE_DUPLICATE_GOODS_PAGE_COUNT = 5;
 
 const REGION_LABELS = Object.freeze({
   us: '\u7f8e\u56fd',
@@ -359,13 +360,9 @@ function extractGoodsRows(response, context) {
   };
 }
 
-function shouldFetchNextGoodsPage(extracted, accumulatedRowCount) {
+function shouldFetchNextGoodsPage(extracted) {
   if (!extracted || !Array.isArray(extracted.rows) || extracted.rows.length <= 0) {
     return false;
-  }
-
-  if (extracted.hasMore === true) {
-    return true;
   }
 
   if (extracted.hasMore === false) {
@@ -373,12 +370,16 @@ function shouldFetchNextGoodsPage(extracted, accumulatedRowCount) {
   }
 
   const total = normalizeNonNegativeInteger(extracted.total, 0);
+  const pageNumber = normalizePositiveInteger(extracted.pageNumber, DEFAULT_PAGE_NUMBER);
+  const pageSize = normalizePositiveInteger(extracted.pageSize, DEFAULT_PAGE_SIZE);
 
-  if (total > 0 && accumulatedRowCount < total) {
-    return true;
+  if (total > 0 && pageSize > 0) {
+    return pageNumber < Math.ceil(total / pageSize);
   }
 
-  const pageSize = normalizePositiveInteger(extracted.pageSize, DEFAULT_PAGE_SIZE);
+  if (extracted.hasMore === true) {
+    return true;
+  }
 
   return extracted.rows.length >= pageSize;
 }
@@ -464,6 +465,7 @@ function createPromotionManagerNewGoodsService({
     const pageDetails = [];
     const bidErrors = [];
     const pageErrors = [];
+    const duplicatePageWarnings = [];
     const seenPageSignatures = new Set();
     const seenRowIds = new Set();
     let pageNumber = normalizePositiveInteger(baseRequestPayload.page_number, DEFAULT_PAGE_NUMBER);
@@ -472,6 +474,7 @@ function createPromotionManagerNewGoodsService({
     let lastSessionResult = null;
     let stoppedByDuplicatePage = false;
     let stoppedByPageLimit = false;
+    let consecutiveDuplicatePageCount = 0;
 
     for (let pageIndex = 0; pageIndex < MAX_GOODS_PAGE_COUNT; pageIndex += 1) {
       const requestPayload = buildGoodsListPagePayload(baseRequestPayload, pageNumber, queryListId);
@@ -517,13 +520,41 @@ function createPromotionManagerNewGoodsService({
       queryListId = normalizeText(extracted.listId) || queryListId;
 
       if (pageSignature && seenPageSignatures.has(pageSignature)) {
-        stoppedByDuplicatePage = true;
-        break;
+        consecutiveDuplicatePageCount += 1;
+        duplicatePageWarnings.push({
+          pageNumber: extracted.pageNumber,
+          message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fd4\u56de\u91cd\u590d\u6570\u636e\uff0c\u5df2\u8df3\u8fc7\u8be5\u9875'
+        });
+        pageDetails.push({
+          pageNumber: extracted.pageNumber,
+          pageSize: extracted.pageSize,
+          rowCount: extracted.rows.length,
+          uniqueRowCount: 0,
+          total: extracted.total,
+          hasMore: extracted.hasMore,
+          duplicatePage: true,
+          bidRequestCount: 0,
+          bidResponseCount: 0,
+          bidErrorCount: 0
+        });
+
+        if (consecutiveDuplicatePageCount >= MAX_CONSECUTIVE_DUPLICATE_GOODS_PAGE_COUNT) {
+          stoppedByDuplicatePage = true;
+          break;
+        }
+
+        if (!shouldFetchNextGoodsPage(extracted)) {
+          break;
+        }
+
+        pageNumber = extracted.pageNumber + 1;
+        continue;
       }
 
       if (pageSignature) {
         seenPageSignatures.add(pageSignature);
       }
+      consecutiveDuplicatePageCount = 0;
 
       let pageRows = extracted.rows;
       let bidRequestCount = 0;
@@ -579,12 +610,13 @@ function createPromotionManagerNewGoodsService({
         uniqueRowCount,
         total: extracted.total,
         hasMore: extracted.hasMore,
+        duplicatePage: false,
         bidRequestCount,
         bidResponseCount,
         bidErrorCount
       });
 
-      if (!shouldFetchNextGoodsPage(extracted, regionRows.length)) {
+      if (!shouldFetchNextGoodsPage(extracted)) {
         break;
       }
 
@@ -601,6 +633,7 @@ function createPromotionManagerNewGoodsService({
       pageCount: pageDetails.length,
       bidErrors,
       pageErrors,
+      duplicatePageWarnings,
       stoppedByDuplicatePage,
       stoppedByPageLimit,
       mallId: normalizeText(lastExtracted && lastExtracted.mallId),
@@ -675,6 +708,7 @@ function createPromotionManagerNewGoodsService({
             pageDetails: extracted.pageDetails,
             rowCount: extracted.rows.length,
             pageErrorCount: extracted.pageErrors.length,
+            duplicatePageCount: extracted.duplicatePageWarnings.length,
             bidErrorCount: extracted.bidErrors.length,
             stoppedByDuplicatePage: extracted.stoppedByDuplicatePage === true,
             stoppedByPageLimit: extracted.stoppedByPageLimit === true,
@@ -690,6 +724,17 @@ function createPromotionManagerNewGoodsService({
               regionLabel: REGION_LABELS[regionId] || regionId,
               pageNumber: pageError.pageNumber,
               message: pageError.message
+            }, warningSignatures);
+          });
+
+          extracted.duplicatePageWarnings.forEach((duplicatePageWarning) => {
+            pushUniqueMessage(warnings, {
+              shopId: shop.id,
+              shopName: shop.shopName,
+              regionId,
+              regionLabel: REGION_LABELS[regionId] || regionId,
+              pageNumber: duplicatePageWarning.pageNumber,
+              message: duplicatePageWarning.message
             }, warningSignatures);
           });
 
@@ -715,13 +760,13 @@ function createPromotionManagerNewGoodsService({
           });
 
           if (extracted.stoppedByDuplicatePage === true) {
-            pushUniqueMessage(errors, {
+            pushUniqueMessage(warnings, {
               shopId: shop.id,
               shopName: shop.shopName,
               regionId,
               regionLabel: REGION_LABELS[regionId] || regionId,
-              message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fd4\u56de\u91cd\u590d\u6570\u636e\uff0c\u5df2\u505c\u6b62\u7ee7\u7eed\u67e5\u8be2'
-            }, errorSignatures);
+              message: '\u5546\u54c1\u5217\u8868\u8fde\u7eed\u8fd4\u56de\u91cd\u590d\u5206\u9875\uff0c\u5df2\u4e3a\u907f\u514d\u65e0\u6548\u8bf7\u6c42\u505c\u6b62'
+            }, warningSignatures);
           }
         } catch (error) {
           const failure = {

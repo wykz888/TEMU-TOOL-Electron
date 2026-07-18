@@ -69,6 +69,7 @@
         <template #cell="{ record }">
           <div class="pm-new-goods-control-cell">
             <a-radio-group
+              class="pm-new-budget-radio-group"
               :model-value="getRowDraft(record).budgetMode"
               type="button"
               size="small"
@@ -93,11 +94,12 @@
                 :precision="0"
                 size="small"
                 mode="button"
-                @change="(value) => $emit('update-row-draft', record, { customBudget: value })"
+                model-event="input"
+                @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
               />
             </div>
             <span
-              v-if="buildDailyBudgetHint(record)"
+              v-if="isBudgetCustom(record) && buildDailyBudgetHint(record)"
               class="pm-new-goods-field-hint"
             >
               {{ dailyBudgetRangeLabel }} {{ buildDailyBudgetHint(record) }}
@@ -159,11 +161,12 @@
                 :step="0.01"
                 size="small"
                 mode="button"
-                @change="(value) => $emit('update-row-draft', record, { customRoas: value })"
+                model-event="input"
+                @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
               />
             </div>
             <span
-              v-if="buildCustomRoasHint(record)"
+              v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
               class="pm-new-goods-field-hint"
             >
               {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
@@ -270,6 +273,14 @@ function getRowDraft(row) {
   return props.rowDrafts[getGoodsRowKey(row)] || {};
 }
 
+function isBudgetCustom(row) {
+  return getRowDraft(row).budgetMode === budgetModeCustom;
+}
+
+function isRoasCustom(row) {
+  return getRowDraft(row).roasMode === roasModeCustom;
+}
+
 function getRoasOptions(row) {
   return buildRoasPredictionOptions(row);
 }
@@ -277,7 +288,7 @@ function getRoasOptions(row) {
 function getDailyBudgetMin(row) {
   const bounds = getDailyBudgetBounds(row);
 
-  return bounds.min === null ? 0 : bounds.min;
+  return bounds.min === null ? undefined : bounds.min;
 }
 
 function getDailyBudgetMax(row) {
@@ -289,7 +300,7 @@ function getDailyBudgetMax(row) {
 function getCustomRoasMin(row) {
   const bounds = getCustomRoasBounds(row);
 
-  return bounds.min === null ? 0 : bounds.min;
+  return bounds.min === null ? undefined : bounds.min;
 }
 
 function getCustomRoasMax(row) {

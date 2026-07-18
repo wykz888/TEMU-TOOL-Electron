@@ -464,6 +464,7 @@ defineExpose({
   border-radius: 7px;
   background: #ffffff;
   color: #253650;
+  overflow: hidden;
   text-align: left;
   cursor: pointer;
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
@@ -489,8 +490,9 @@ defineExpose({
 }
 
 .shared-shop-select-trigger-copy {
-  display: grid;
-  gap: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   text-align: left;
 }
@@ -509,13 +511,22 @@ defineExpose({
 }
 
 .shared-shop-select-trigger-value {
+  flex: 1 1 auto;
+  min-width: 0;
   color: #203048;
   font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
 }
 
-.shared-shop-select-trigger-meta,
+.shared-shop-select-trigger-meta {
+  flex: 0 0 auto;
+  max-width: 86px;
+  color: #75859b;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
 .shared-shop-select-trigger-arrow {
   width: 14px;
   height: 14px;

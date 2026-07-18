@@ -474,11 +474,26 @@ body {
 }
 
 .pm-new-control-inline {
-  width: 168px;
+  width: 160px;
+  max-width: 100%;
 }
 
 .pm-new-control-inline .arco-input-number {
   width: 100%;
+}
+
+.pm-new-budget-radio-group.arco-radio-group-button {
+  max-width: 100%;
+  background: #f3f5f8;
+}
+
+.pm-new-budget-radio-group .arco-radio-button {
+  min-width: 0;
+}
+
+.pm-new-budget-radio-group .arco-radio-button-content {
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .pm-new-goods-field-hint {
@@ -787,6 +802,10 @@ body.dark-theme .pm-new-goods-table .arco-table-th {
 
 body.dark-theme .pm-new-goods-table .arco-table-td {
   color: #e4edf8;
+}
+
+body.dark-theme .pm-new-budget-radio-group.arco-radio-group-button {
+  background: rgba(148, 163, 184, 0.1);
 }
 
 @media (max-width: 1180px) {
