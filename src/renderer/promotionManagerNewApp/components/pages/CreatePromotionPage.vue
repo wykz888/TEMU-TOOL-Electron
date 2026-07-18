@@ -12,6 +12,7 @@
           v-model:custom-roas="batchCustomRoas"
           v-model:filter-values="goodsFilterDraft"
           :region-options="regionOptions"
+          :shop-options="shopFilterOptions"
           :category-options="categoryFilterOptions"
           :site-options="siteFilterOptions"
           :query-loading="queryLoading"
@@ -92,6 +93,7 @@ import {
   buildGoodsCategoryFilterOptions,
   buildGoodsRowDraft,
   buildGoodsRowDraftMap,
+  buildGoodsShopFilterOptions,
   buildGoodsSiteFilterOptions,
   createEmptyGoodsFilterState,
   filterGoodsRows,
@@ -162,6 +164,8 @@ const regionOptions = [
 const filtersActive = computed(() => isGoodsFilterActive(appliedGoodsFilters.value));
 
 const filteredGoodsRows = computed(() => filterGoodsRows(goodsRows.value, appliedGoodsFilters.value));
+
+const shopFilterOptions = computed(() => buildGoodsShopFilterOptions(goodsRows.value));
 
 const categoryFilterOptions = computed(() => buildGoodsCategoryFilterOptions(goodsRows.value));
 
@@ -338,6 +342,7 @@ function resetGoodsRowState(rows) {
 
 function pruneGoodsFiltersForRows(rows) {
   const optionValues = {
+    shopValues: buildGoodsShopFilterOptions(rows).map((option) => option.value),
     categoryValues: buildGoodsCategoryFilterOptions(rows).map((option) => option.value),
     siteValues: buildGoodsSiteFilterOptions(rows).map((option) => option.value)
   };

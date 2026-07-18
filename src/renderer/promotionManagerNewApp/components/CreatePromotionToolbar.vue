@@ -60,6 +60,27 @@
     <section class="pm-new-toolbar-group pm-new-toolbar-filter-group">
       <span class="pm-new-toolbar-group-title">{{ filterGroupTitle }}</span>
       <div class="pm-new-toolbar-filter-fields">
+        <a-select
+          :model-value="asOptionValueList(filterValues.shopValues)"
+          class="pm-new-toolbar-filter-select"
+          multiple
+          allow-clear
+          allow-search
+          popup-container="body"
+          size="small"
+          :max-tag-count="1"
+          :placeholder="shopFilterPlaceholder"
+          :trigger-props="stableSelectTriggerProps"
+          @update:model-value="emitShopValues"
+        >
+          <a-option
+            v-for="option in shopOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-option>
+        </a-select>
         <a-input
           :model-value="filterValues.identityText"
           class="pm-new-toolbar-filter-input pm-new-toolbar-filter-input--wide"
@@ -354,6 +375,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  shopOptions: {
+    type: Array,
+    default: () => []
+  },
   categoryOptions: {
     type: Array,
     default: () => []
@@ -441,6 +466,7 @@ const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
 const queryButtonLabel = '\u67e5\u8be2\u5546\u54c1';
 const stopQueryButtonLabel = '\u505c\u6b62\u67e5\u8be2';
+const shopFilterPlaceholder = '\u9009\u62e9\u5e97\u94fa';
 const identityPlaceholder = '\u8f93\u5165\u5546\u54c1ID/SPUID\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
 const categoryPlaceholder = '\u9009\u62e9\u7c7b\u76ee';
 const sitePlaceholder = '\u9009\u62e9\u7ad9\u70b9';
@@ -504,6 +530,12 @@ function normalizeSelectedOptionValues(value, options) {
 
 function asOptionValueList(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function emitShopValues(value) {
+  patchFilterValues({
+    shopValues: normalizeSelectedOptionValues(value, props.shopOptions)
+  });
 }
 
 function emitCategoryValues(value) {

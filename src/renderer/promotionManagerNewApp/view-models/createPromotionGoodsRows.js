@@ -13,6 +13,7 @@ export const FAST_START_MODE_ON = 'on';
 
 export const EMPTY_GOODS_FILTER_STATE = Object.freeze({
   identityText: '',
+  shopValues: [],
   categoryValues: [],
   siteValues: [],
   priceMin: null,
@@ -381,6 +382,7 @@ export function buildRoasPredictionOptions(row) {
 export function createEmptyGoodsFilterState() {
   return {
     ...EMPTY_GOODS_FILTER_STATE,
+    shopValues: [],
     categoryValues: [],
     siteValues: [],
     createdRange: []
@@ -393,6 +395,7 @@ export function normalizeGoodsFilterState(filters) {
 
   return {
     identityText: normalizeText(safeFilters.identityText),
+    shopValues: normalizeTextList(safeFilters.shopValues),
     categoryValues: normalizeTextList(safeFilters.categoryValues),
     siteValues: normalizeTextList(safeFilters.siteValues),
     ...normalizeFilterRangeFields('price', safeFilters.priceMin, safeFilters.priceMax),
@@ -415,6 +418,7 @@ export function isGoodsFilterActive(filters) {
 
   return Boolean(
     normalizedFilters.identityText
+    || normalizedFilters.shopValues.length > 0
     || normalizedFilters.categoryValues.length > 0
     || normalizedFilters.siteValues.length > 0
     || normalizedFilters.priceMin !== null
@@ -445,6 +449,29 @@ function buildUniqueTextOptions(rows, resolveValues) {
     }));
 }
 
+export function buildGoodsShopFilterOptions(rows) {
+  const optionMap = new Map();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const value = firstPresentText(row && row.shopId, row && row.shopName);
+    const label = firstPresentText(row && row.shopName, row && row.shopId);
+
+    if (value && !optionMap.has(value)) {
+      optionMap.set(value, label);
+    }
+  });
+
+  return Array.from(optionMap.entries())
+    .sort((left, right) => left[1].localeCompare(right[1], 'zh-CN', {
+      numeric: true,
+      sensitivity: 'base'
+    }))
+    .map(([value, label]) => ({
+      value,
+      label
+    }));
+}
+
 export function buildGoodsCategoryFilterOptions(rows) {
   return buildUniqueTextOptions(rows, (row) => row && row.categoryText);
 }
@@ -468,6 +495,7 @@ export function pruneGoodsFilterStateOptions(filters, options = {}) {
 
   return {
     ...normalizedFilters,
+    shopValues: pruneSelectedValues(normalizedFilters.shopValues, options.shopValues),
     categoryValues: pruneSelectedValues(normalizedFilters.categoryValues, options.categoryValues),
     siteValues: pruneSelectedValues(normalizedFilters.siteValues, options.siteValues)
   };
@@ -476,6 +504,7 @@ export function pruneGoodsFilterStateOptions(filters, options = {}) {
 export function filterGoodsRows(rows, filters) {
   const normalizedFilters = normalizeGoodsFilterState(filters);
   const identityTokens = splitFilterTokens(normalizedFilters.identityText);
+  const shopLookup = createTextLookup(normalizedFilters.shopValues);
   const categoryLookup = createTextLookup(normalizedFilters.categoryValues);
   const siteLookup = createTextLookup(normalizedFilters.siteValues);
   const selectedSiteValues = Array.from(siteLookup);
@@ -492,6 +521,14 @@ export function filterGoodsRows(rows, filters) {
       ].map(normalizeText).join(' ').toLowerCase();
 
       if (!identityTokens.some((token) => rowIdentityText.includes(token))) {
+        return false;
+      }
+    }
+
+    if (shopLookup.size > 0) {
+      const rowShopValue = firstPresentText(row && row.shopId, row && row.shopName).toLowerCase();
+
+      if (!shopLookup.has(rowShopValue)) {
         return false;
       }
     }

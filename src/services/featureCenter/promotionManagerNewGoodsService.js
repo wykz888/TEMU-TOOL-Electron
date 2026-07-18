@@ -253,14 +253,9 @@ function buildSitePriceText(record) {
 function buildPromotionTagsText(record) {
   const parts = [];
   const fastStartEnable = Number(record && record.fast_start_enable);
-  const recRoasType = normalizeNumberText(record && record.rec_roas_type);
 
   if (Number.isFinite(fastStartEnable) && fastStartEnable > 0) {
     parts.push(fastStartEnable === 1 ? '\u6781\u901f\u8d77\u91cf' : `\u6781\u901f\u8d77\u91cf ${fastStartEnable}`);
-  }
-
-  if (recRoasType) {
-    parts.push(`ROAS ${recRoasType}`);
   }
 
   if (record && record.created_new_roas === true) {
