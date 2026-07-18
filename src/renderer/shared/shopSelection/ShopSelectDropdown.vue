@@ -579,11 +579,18 @@ defineExpose({
   min-height: 0;
 }
 
+.shared-shop-select-section-list-scrollbar {
+  display: block;
+  max-height: min(352px, calc(100vh - 188px));
+  overflow: hidden;
+}
+
 .shared-shop-select-section-scroll {
   max-height: min(352px, calc(100vh - 188px));
   overflow: hidden;
 }
 
+.shared-shop-select-section-list-scrollbar .arco-scrollbar-container,
 .shared-shop-select-section-scroll .arco-scrollbar-container {
   max-height: min(352px, calc(100vh - 188px));
   overflow-x: hidden;

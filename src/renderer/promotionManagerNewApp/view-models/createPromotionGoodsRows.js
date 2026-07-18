@@ -13,7 +13,8 @@ export const FAST_START_MODE_ON = 'on';
 
 export const EMPTY_GOODS_FILTER_STATE = Object.freeze({
   identityText: '',
-  categoryText: '',
+  categoryValues: [],
+  siteValues: [],
   priceMin: null,
   priceMax: null,
   salesMin: null,
@@ -118,6 +119,23 @@ function splitFilterTokens(value) {
   return normalizeText(value)
     .toLowerCase()
     .split(/[\s,\uFF0C;\uFF1B]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeTextList(value) {
+  const sourceItems = Array.isArray(value) ? value : [value];
+
+  return Array.from(new Set(sourceItems.map(normalizeText).filter(Boolean)));
+}
+
+function createTextLookup(values) {
+  return new Set(normalizeTextList(values).map((entry) => entry.toLowerCase()));
+}
+
+function splitJoinedTextValues(value) {
+  return normalizeText(value)
+    .split(/\s*\/\s*|[\uFF0C,\uFF1B;]+/)
     .map((entry) => entry.trim())
     .filter(Boolean);
 }
@@ -356,6 +374,8 @@ export function buildRoasPredictionOptions(row) {
 export function createEmptyGoodsFilterState() {
   return {
     ...EMPTY_GOODS_FILTER_STATE,
+    categoryValues: [],
+    siteValues: [],
     createdRange: []
   };
 }
@@ -366,7 +386,8 @@ export function normalizeGoodsFilterState(filters) {
 
   return {
     identityText: normalizeText(safeFilters.identityText),
-    categoryText: normalizeText(safeFilters.categoryText),
+    categoryValues: normalizeTextList(safeFilters.categoryValues),
+    siteValues: normalizeTextList(safeFilters.siteValues),
     priceMin: normalizeFiniteNumber(safeFilters.priceMin),
     priceMax: normalizeFiniteNumber(safeFilters.priceMax),
     salesMin: normalizeFiniteNumber(safeFilters.salesMin),
@@ -380,7 +401,8 @@ export function isGoodsFilterActive(filters) {
 
   return Boolean(
     normalizedFilters.identityText
-    || normalizedFilters.categoryText
+    || normalizedFilters.categoryValues.length > 0
+    || normalizedFilters.siteValues.length > 0
     || normalizedFilters.priceMin !== null
     || normalizedFilters.priceMax !== null
     || normalizedFilters.salesMin !== null
@@ -389,10 +411,60 @@ export function isGoodsFilterActive(filters) {
   );
 }
 
+function buildUniqueTextOptions(rows, resolveValues) {
+  const optionValues = new Set();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    normalizeTextList(resolveValues(row)).forEach((value) => {
+      optionValues.add(value);
+    });
+  });
+
+  return Array.from(optionValues)
+    .sort((left, right) => left.localeCompare(right, 'zh-CN', {
+      numeric: true,
+      sensitivity: 'base'
+    }))
+    .map((value) => ({
+      value,
+      label: value
+    }));
+}
+
+export function buildGoodsCategoryFilterOptions(rows) {
+  return buildUniqueTextOptions(rows, (row) => row && row.categoryText);
+}
+
+export function buildGoodsSiteFilterOptions(rows) {
+  return buildUniqueTextOptions(rows, (row) => splitJoinedTextValues(row && row.siteText));
+}
+
+function pruneSelectedValues(values, availableValues) {
+  const availableLookup = createTextLookup(availableValues);
+
+  if (availableLookup.size <= 0) {
+    return [];
+  }
+
+  return normalizeTextList(values).filter((value) => availableLookup.has(value.toLowerCase()));
+}
+
+export function pruneGoodsFilterStateOptions(filters, options = {}) {
+  const normalizedFilters = normalizeGoodsFilterState(filters);
+
+  return {
+    ...normalizedFilters,
+    categoryValues: pruneSelectedValues(normalizedFilters.categoryValues, options.categoryValues),
+    siteValues: pruneSelectedValues(normalizedFilters.siteValues, options.siteValues)
+  };
+}
+
 export function filterGoodsRows(rows, filters) {
   const normalizedFilters = normalizeGoodsFilterState(filters);
   const identityTokens = splitFilterTokens(normalizedFilters.identityText);
-  const categoryTokens = splitFilterTokens(normalizedFilters.categoryText);
+  const categoryLookup = createTextLookup(normalizedFilters.categoryValues);
+  const siteLookup = createTextLookup(normalizedFilters.siteValues);
+  const selectedSiteValues = Array.from(siteLookup);
   const priceRange = normalizeRangeNumbers(normalizedFilters.priceMin, normalizedFilters.priceMax);
   const salesRange = normalizeRangeNumbers(normalizedFilters.salesMin, normalizedFilters.salesMax);
   const startTime = normalizeTimestamp(normalizedFilters.createdRange[0]);
@@ -410,10 +482,18 @@ export function filterGoodsRows(rows, filters) {
       }
     }
 
-    if (categoryTokens.length > 0) {
+    if (categoryLookup.size > 0) {
       const rowCategoryText = normalizeText(row && row.categoryText).toLowerCase();
 
-      if (!categoryTokens.some((token) => rowCategoryText.includes(token))) {
+      if (!categoryLookup.has(rowCategoryText)) {
+        return false;
+      }
+    }
+
+    if (selectedSiteValues.length > 0) {
+      const rowSiteLookup = createTextLookup(splitJoinedTextValues(row && row.siteText));
+
+      if (!selectedSiteValues.some((value) => rowSiteLookup.has(value))) {
         return false;
       }
     }

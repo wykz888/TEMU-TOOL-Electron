@@ -10,6 +10,8 @@
           v-model:fast-start-mode="batchFastStartMode"
           v-model:filter-values="goodsFilterDraft"
           :region-options="regionOptions"
+          :category-options="categoryFilterOptions"
+          :site-options="siteFilterOptions"
           :query-loading="queryLoading"
           :apply-all-disabled="batchApplyAllDisabled"
           :apply-selected-disabled="batchApplySelectedDisabled"
@@ -81,13 +83,16 @@ import {
   GOODS_QUERY_PAGE_SIZE,
   ROAS_MODE_STRONG,
   applyGoodsRowDraftPatchToRows,
+  buildGoodsCategoryFilterOptions,
   buildGoodsRowDraft,
   buildGoodsRowDraftMap,
+  buildGoodsSiteFilterOptions,
   createEmptyGoodsFilterState,
   filterGoodsRows,
   getGoodsRowKey,
   isGoodsFilterActive,
-  normalizeGoodsFilterState
+  normalizeGoodsFilterState,
+  pruneGoodsFilterStateOptions
 } from '../../view-models/createPromotionGoodsRows.js';
 import {
   loadCreatePromotionSelection,
@@ -149,6 +154,10 @@ const filtersActive = computed(() => isGoodsFilterActive(appliedGoodsFilters.val
 
 const filteredGoodsRows = computed(() => filterGoodsRows(goodsRows.value, appliedGoodsFilters.value));
 
+const categoryFilterOptions = computed(() => buildGoodsCategoryFilterOptions(goodsRows.value));
+
+const siteFilterOptions = computed(() => buildGoodsSiteFilterOptions(goodsRows.value));
+
 const goodsCountText = computed(() => (
   `${filteredGoodsRows.value.length} / ${goodsRows.value.length}`
 ));
@@ -175,15 +184,15 @@ const queryMessages = computed(() => buildUniqueQueryMessages([
   ...queryResult.value.warnings
 ]));
 
-const batchApplyAllDisabled = computed(() => goodsRows.value.length <= 0);
+const batchApplyAllDisabled = computed(() => filteredGoodsRows.value.length <= 0);
 
 const batchApplySelectedDisabled = computed(() => selectedGoodsRowKeys.value.length <= 0);
 
 const batchResetDisabled = computed(() => goodsRows.value.length <= 0);
 
-const submitAllDisabled = computed(() => goodsRows.value.length <= 0);
+const submitAllDisabled = computed(() => true);
 
-const submitSelectedDisabled = computed(() => selectedGoodsRowKeys.value.length <= 0);
+const submitSelectedDisabled = computed(() => true);
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -318,6 +327,16 @@ function resetGoodsRowState(rows) {
   resetGoodsRowDrafts(rows);
 }
 
+function pruneGoodsFiltersForRows(rows) {
+  const optionValues = {
+    categoryValues: buildGoodsCategoryFilterOptions(rows).map((option) => option.value),
+    siteValues: buildGoodsSiteFilterOptions(rows).map((option) => option.value)
+  };
+
+  goodsFilterDraft.value = pruneGoodsFilterStateOptions(goodsFilterDraft.value, optionValues);
+  appliedGoodsFilters.value = pruneGoodsFilterStateOptions(appliedGoodsFilters.value, optionValues);
+}
+
 function handleGoodsSelectionChange(rowKeys) {
   selectedGoodsRowKeys.value = Array.isArray(rowKeys) ? rowKeys.map(normalizeText).filter(Boolean) : [];
 }
@@ -373,7 +392,7 @@ function getSelectedGoodsRows() {
 }
 
 function handleApplyBatchToAll() {
-  applyBatchDraftToRows(goodsRows.value);
+  applyBatchDraftToRows(filteredGoodsRows.value);
 }
 
 function handleApplyBatchToSelected() {
@@ -385,11 +404,11 @@ function handleResetBatchDrafts() {
 }
 
 function handleSubmitAllCampaigns() {
-  return goodsRows.value;
+  return null;
 }
 
 function handleSubmitSelectedCampaigns() {
-  return getSelectedGoodsRows();
+  return null;
 }
 
 function handleApplyGoodsFilters() {
@@ -433,6 +452,7 @@ async function handleShopQuery() {
       failedCount: Number(normalizedResult.failedCount) || 0
     };
     goodsRows.value = queryResult.value.rows;
+    pruneGoodsFiltersForRows(queryResult.value.rows);
     resetGoodsRowState(queryResult.value.rows);
   } catch (error) {
     queryError.value = normalizeText(error && error.message) || '\u5546\u54c1\u5217\u8868\u67e5\u8be2\u5931\u8d25';

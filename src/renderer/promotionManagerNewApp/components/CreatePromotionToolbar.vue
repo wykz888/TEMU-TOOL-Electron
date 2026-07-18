@@ -58,14 +58,48 @@
           :placeholder="identityPlaceholder"
           @update:model-value="(value) => patchFilterValues({ identityText: value })"
         />
-        <a-input
-          :model-value="filterValues.categoryText"
-          class="pm-new-toolbar-filter-input pm-new-toolbar-filter-input--wide"
+        <a-select
+          :model-value="asOptionValueList(filterValues.categoryValues)"
+          class="pm-new-toolbar-filter-select pm-new-toolbar-filter-select--wide"
+          multiple
           allow-clear
+          allow-search
+          popup-container="body"
           size="small"
+          :max-tag-count="1"
           :placeholder="categoryPlaceholder"
-          @update:model-value="(value) => patchFilterValues({ categoryText: value })"
-        />
+          :trigger-props="stableSelectTriggerProps"
+          @update:model-value="emitCategoryValues"
+        >
+          <a-option
+            v-for="option in categoryOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-option>
+        </a-select>
+        <a-select
+          :model-value="asOptionValueList(filterValues.siteValues)"
+          class="pm-new-toolbar-filter-select"
+          multiple
+          allow-clear
+          allow-search
+          popup-container="body"
+          size="small"
+          :max-tag-count="1"
+          :placeholder="sitePlaceholder"
+          :trigger-props="stableSelectTriggerProps"
+          @update:model-value="emitSiteValues"
+        >
+          <a-option
+            v-for="option in siteOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </a-option>
+        </a-select>
         <div
           class="pm-new-toolbar-field pm-new-toolbar-range-field"
           role="group"
@@ -76,6 +110,7 @@
             class="pm-new-toolbar-number-input"
             size="small"
             :precision="2"
+            :placeholder="minNumberPlaceholder"
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ priceMin: value })"
           />
@@ -85,6 +120,7 @@
             class="pm-new-toolbar-number-input"
             size="small"
             :precision="2"
+            :placeholder="maxNumberPlaceholder"
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ priceMax: value })"
           />
@@ -99,6 +135,7 @@
             class="pm-new-toolbar-number-input"
             size="small"
             :precision="0"
+            :placeholder="minNumberPlaceholder"
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ salesMin: value })"
           />
@@ -108,6 +145,7 @@
             class="pm-new-toolbar-number-input"
             size="small"
             :precision="0"
+            :placeholder="maxNumberPlaceholder"
             model-event="input"
             @update:model-value="(value) => patchFilterValues({ salesMax: value })"
           />
@@ -120,7 +158,10 @@
           <a-range-picker
             :model-value="filterValues.createdRange"
             class="pm-new-toolbar-date-range"
+            popup-container="body"
             size="small"
+            :placeholder="dateRangePlaceholder"
+            :trigger-props="stableSelectTriggerProps"
             @update:model-value="(value) => patchFilterValues({ createdRange: value })"
           />
         </div>
@@ -260,9 +301,9 @@
 import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
 import {
   BUDGET_MODE_OPTIONS,
-  EMPTY_GOODS_FILTER_STATE,
   FAST_START_MODE_OPTIONS,
-  ROAS_MODE_OPTIONS
+  ROAS_MODE_OPTIONS,
+  createEmptyGoodsFilterState
 } from '../view-models/createPromotionGoodsRows.js';
 
 const props = defineProps({
@@ -275,6 +316,14 @@ const props = defineProps({
     default: () => []
   },
   regionOptions: {
+    type: Array,
+    default: () => []
+  },
+  categoryOptions: {
+    type: Array,
+    default: () => []
+  },
+  siteOptions: {
     type: Array,
     default: () => []
   },
@@ -296,7 +345,7 @@ const props = defineProps({
   },
   filterValues: {
     type: Object,
-    default: () => ({ ...EMPTY_GOODS_FILTER_STATE, createdRange: [] })
+    default: createEmptyGoodsFilterState
   },
   applyAllDisabled: {
     type: Boolean,
@@ -346,12 +395,19 @@ const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
 const queryButtonLabel = '\u67e5\u8be2\u5546\u54c1';
 const identityPlaceholder = '\u8f93\u5165\u5546\u54c1ID/SPUID\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
-const categoryPlaceholder = '\u8f93\u5165\u7c7b\u76ee\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
+const categoryPlaceholder = '\u9009\u62e9\u7c7b\u76ee';
+const sitePlaceholder = '\u9009\u62e9\u7ad9\u70b9';
 const priceRangeLabel = '\u4ef7\u683c\u533a\u95f4\uff1a';
 const salesRangeLabel = '\u9500\u91cf\u533a\u95f4\uff1a';
 const createdRangeLabel = '\u521b\u5efa\u65f6\u95f4\u8303\u56f4\uff1a';
 const filterSearchLabel = '\u641c\u7d22';
 const filterResetLabel = '\u91cd\u7f6e';
+const minNumberPlaceholder = '\u6700\u4f4e';
+const maxNumberPlaceholder = '\u6700\u9ad8';
+const dateRangePlaceholder = Object.freeze([
+  '\u5f00\u59cb\u65e5\u671f',
+  '\u7ed3\u675f\u65e5\u671f'
+]);
 const dailyBudgetLabel = '\u5e7f\u544a\u65e5\u9884\u7b97\uff1a';
 const roasLabel = 'ROAS\u503c\uff1a';
 const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
@@ -386,6 +442,31 @@ function emitSelectedRegionCodes(value) {
   emit('update:selectedRegionCodes', nextValues);
 }
 
+function normalizeSelectedOptionValues(value, options) {
+  const validValues = new Set(
+    (Array.isArray(options) ? options : []).map((option) => option && option.value)
+  );
+
+  return Array.from(new Set((Array.isArray(value) ? value : [])
+    .filter((entry) => validValues.has(entry))));
+}
+
+function asOptionValueList(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function emitCategoryValues(value) {
+  patchFilterValues({
+    categoryValues: normalizeSelectedOptionValues(value, props.categoryOptions)
+  });
+}
+
+function emitSiteValues(value) {
+  patchFilterValues({
+    siteValues: normalizeSelectedOptionValues(value, props.siteOptions)
+  });
+}
+
 function emitBudgetMode(value) {
   if (isOptionValue(budgetModeOptions, value)) {
     emit('update:budgetMode', value);
@@ -406,7 +487,7 @@ function emitFastStartMode(value) {
 
 function patchFilterValues(patch) {
   emit('update:filterValues', {
-    ...EMPTY_GOODS_FILTER_STATE,
+    ...createEmptyGoodsFilterState(),
     ...(props.filterValues && typeof props.filterValues === 'object' ? props.filterValues : {}),
     ...(patch && typeof patch === 'object' ? patch : {})
   });
