@@ -75,6 +75,9 @@
             class="shared-shop-select-section-list-scrollbar"
             outer-class="shared-shop-select-section-scroll"
             type="embed"
+            disable-horizontal
+            @wheel.stop
+            @touchmove.stop
           >
             <div class="shared-shop-select-section-list">
               <section
@@ -549,7 +552,7 @@ defineExpose({
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
-  max-height: 460px;
+  max-height: min(460px, calc(100vh - 72px));
   padding: 10px;
   overflow: hidden;
 }
@@ -577,11 +580,15 @@ defineExpose({
 }
 
 .shared-shop-select-section-scroll {
-  max-height: 352px;
+  max-height: min(352px, calc(100vh - 188px));
+  overflow: hidden;
 }
 
 .shared-shop-select-section-scroll .arco-scrollbar-container {
-  max-height: 352px;
+  max-height: min(352px, calc(100vh - 188px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .shared-shop-select-section-list {
