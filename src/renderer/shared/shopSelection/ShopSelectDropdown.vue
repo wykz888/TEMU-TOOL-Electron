@@ -8,7 +8,6 @@
       content-class="shared-shop-select-panel"
       :disabled="disabled"
       :popup-offset="6"
-      :click-to-close="false"
       :auto-fit-popup-min-width="true"
       :update-at-scroll="true"
       @popup-visible-change="handlePanelVisibleChange"
