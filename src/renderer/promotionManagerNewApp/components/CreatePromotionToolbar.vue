@@ -339,6 +339,7 @@
         <a-button
           class="pm-new-toolbar-submit-button"
           type="primary"
+          :loading="submitLoading"
           :disabled="submitAllDisabled"
           @click="$emit('submit-all')"
         >
@@ -347,6 +348,7 @@
         <a-button
           class="pm-new-toolbar-submit-button"
           type="outline"
+          :loading="submitLoading"
           :disabled="submitSelectedDisabled"
           @click="$emit('submit-selected')"
         >
@@ -438,6 +440,10 @@ const props = defineProps({
     default: false
   },
   submitSelectedDisabled: {
+    type: Boolean,
+    default: false
+  },
+  submitLoading: {
     type: Boolean,
     default: false
   }

@@ -21,6 +21,7 @@
           :reset-disabled="batchResetDisabled"
           :submit-all-disabled="submitAllDisabled"
           :submit-selected-disabled="submitSelectedDisabled"
+          :submit-loading="submitLoading"
           @query="handleShopQuery"
           @stop-query="handleStopShopQuery"
           @search-filters="handleApplyGoodsFilters"
@@ -37,6 +38,20 @@
           class="pm-new-query-message is-error"
         >
           {{ queryError }}
+        </div>
+
+        <div
+          v-if="submitStatusText"
+          class="pm-new-query-message"
+          :class="submitStatusClass"
+        >
+          <span>{{ submitStatusText }}</span>
+          <span
+            v-for="message in submitMessages"
+            :key="message.key"
+          >
+            {{ message.text }}
+          </span>
         </div>
       </div>
 
@@ -103,6 +118,10 @@ import {
   pruneGoodsFilterStateOptions
 } from '../../view-models/createPromotionGoodsRows.js';
 import {
+  buildCreateAdsSubmitRows,
+  hasValidCreateAdsRows
+} from '../../view-models/createPromotionSubmitRows.js';
+import {
   loadCreatePromotionSelection,
   normalizeRegionIdList,
   normalizeText,
@@ -127,6 +146,8 @@ const batchCustomBudget = ref(null);
 const batchCustomRoas = ref(null);
 const queryError = ref('');
 const queryLoading = ref(false);
+const submitError = ref('');
+const submitLoading = ref(false);
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
 let restoringSettings = false;
@@ -142,12 +163,21 @@ const queryResult = ref({
   successCount: 0,
   failedCount: 0
 });
+const submitResult = ref(createEmptySubmitResult());
 
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
 const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
 const goodsEmptySearchText = '\u6ca1\u6709\u5339\u914d\u7684\u5546\u54c1';
 const goodsEmptyResultText = '\u6682\u65e0\u5546\u54c1\u6570\u636e';
 const queryNoBridgeText = '\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u63a5\u53e3\u672a\u52a0\u8f7d';
+const submitNoBridgeText = '\u521b\u5efa\u5e7f\u544a\u63a5\u53e3\u672a\u52a0\u8f7d';
+const submitLoadingText = '\u6b63\u5728\u521b\u5efa\u5e7f\u544a...';
+const submitFinishedLabel = '\u521b\u5efa\u5e7f\u544a\u5b8c\u6210';
+const submitSuccessCountLabel = '\u6210\u529f';
+const submitFailedCountLabel = '\u5931\u8d25';
+const submitSkippedCountLabel = '\u8df3\u8fc7';
+const submitNoRowsText = '\u8bf7\u5148\u9009\u62e9\u9700\u8981\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1';
+const submitNoValidRowsText = '\u6ca1\u6709\u53ef\u521b\u5efa\u5e7f\u544a\u7684\u5546\u54c1';
 const settingsLoadFailedText = '\u65b0\u5efa\u63a8\u5e7f\u914d\u7f6e\u52a0\u8f7d\u5931\u8d25';
 const queryLoadingText = '\u6b63\u5728\u67e5\u8be2...';
 const queryLoadingGoodsText = '\u6b63\u5728\u67e5\u8be2\u5546\u54c1\u6570\u636e';
@@ -203,9 +233,63 @@ const batchApplySelectedDisabled = computed(() => selectedGoodsRowKeys.value.len
 
 const batchResetDisabled = computed(() => goodsRows.value.length <= 0);
 
-const submitAllDisabled = computed(() => true);
+const submitAllDisabled = computed(() => (
+  queryLoading.value
+  || submitLoading.value
+  || filteredGoodsRows.value.length <= 0
+));
 
-const submitSelectedDisabled = computed(() => true);
+const submitSelectedDisabled = computed(() => (
+  queryLoading.value
+  || submitLoading.value
+  || selectedGoodsRowKeys.value.length <= 0
+));
+
+const submitMessages = computed(() => buildUniqueQueryMessages([
+  ...submitResult.value.errors,
+  ...submitResult.value.warnings
+]));
+
+const submitStatusText = computed(() => {
+  if (submitLoading.value) {
+    return submitLoadingText;
+  }
+
+  if (submitError.value) {
+    return submitError.value;
+  }
+
+  if (!submitResult.value.updatedAt) {
+    return '';
+  }
+
+  return [
+    submitFinishedLabel,
+    `${submitSuccessCountLabel} ${Number(submitResult.value.successCount) || 0}`,
+    `${submitFailedCountLabel} ${Number(submitResult.value.failedCount) || 0}`,
+    `${submitSkippedCountLabel} ${Number(submitResult.value.skippedCount) || 0}`
+  ].join(' / ');
+});
+
+const submitStatusClass = computed(() => {
+  if (submitLoading.value) {
+    return 'is-info';
+  }
+
+  if (
+    submitError.value
+    || Number(submitResult.value.failedCount) > 0
+    || submitResult.value.errors.length > 0
+  ) {
+    return 'is-error';
+  }
+
+  if (Number(submitResult.value.skippedCount) > 0 || submitMessages.value.length > 0) {
+    return 'is-warning';
+  }
+
+  return 'is-success';
+});
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -239,6 +323,25 @@ function buildGoodsQueryPayload() {
     isGray: false,
     selectedRoasType: 1
   };
+}
+
+function createEmptySubmitResult() {
+  return {
+    updatedAt: '',
+    request: {},
+    groups: [],
+    errors: [],
+    warnings: [],
+    totalCount: 0,
+    successCount: 0,
+    failedCount: 0,
+    skippedCount: 0
+  };
+}
+
+function resetSubmitState() {
+  submitError.value = '';
+  submitResult.value = createEmptySubmitResult();
 }
 
 function getFeatureCenterBridgeMethod(methodName) {
@@ -430,12 +533,82 @@ function handleResetBatchDrafts() {
   resetGoodsRowDrafts(goodsRows.value);
 }
 
+function buildCreateAdsPayload(rows) {
+  const submitRows = buildCreateAdsSubmitRows(rows, goodsRowDrafts.value);
+  const regionIds = queriedRegionCodes.value.length > 0
+    ? queriedRegionCodes.value
+    : selectedRegionCodes.value;
+
+  return {
+    rows: submitRows.rows,
+    invalidRows: submitRows.invalidRows,
+    regionIds
+  };
+}
+
+async function submitCreateAdsForRows(rows) {
+  if (submitLoading.value) {
+    return;
+  }
+
+  resetSubmitState();
+
+  const targetRows = Array.isArray(rows) ? rows : [];
+
+  if (targetRows.length <= 0) {
+    submitError.value = submitNoRowsText;
+    return;
+  }
+
+  const payload = buildCreateAdsPayload(targetRows);
+
+  if (!hasValidCreateAdsRows(payload.rows)) {
+    const firstInvalidMessage = payload.invalidRows.length > 0
+      ? buildQueryErrorText(payload.invalidRows[0])
+      : '';
+
+    submitError.value = firstInvalidMessage || submitNoValidRowsText;
+    return;
+  }
+
+  submitLoading.value = true;
+
+  try {
+    const bridge = getFeatureCenterBridgeMethod('createPromotionManagerNewAds');
+
+    if (typeof bridge !== 'function') {
+      throw new Error(submitNoBridgeText);
+    }
+
+    const result = await bridge(payload);
+    const normalizedResult = result && typeof result === 'object'
+      ? result
+      : {};
+
+    submitResult.value = {
+      updatedAt: normalizeText(normalizedResult.updatedAt),
+      request: normalizedResult.request || {},
+      groups: Array.isArray(normalizedResult.groups) ? normalizedResult.groups : [],
+      errors: Array.isArray(normalizedResult.errors) ? normalizedResult.errors : [],
+      warnings: Array.isArray(normalizedResult.warnings) ? normalizedResult.warnings : [],
+      totalCount: Number(normalizedResult.totalCount) || 0,
+      successCount: Number(normalizedResult.successCount) || 0,
+      failedCount: Number(normalizedResult.failedCount) || 0,
+      skippedCount: Number(normalizedResult.skippedCount) || 0
+    };
+  } catch (error) {
+    submitError.value = normalizeText(error && error.message) || '\u521b\u5efa\u5e7f\u544a\u5931\u8d25';
+  } finally {
+    submitLoading.value = false;
+  }
+}
+
 function handleSubmitAllCampaigns() {
-  return null;
+  return submitCreateAdsForRows(filteredGoodsRows.value);
 }
 
 function handleSubmitSelectedCampaigns() {
-  return null;
+  return submitCreateAdsForRows(getSelectedGoodsRows());
 }
 
 function handleApplyGoodsFilters() {
@@ -474,6 +647,7 @@ async function handleShopQuery() {
 
   activeQueryToken = queryToken;
   queryError.value = '';
+  resetSubmitState();
   queryLoading.value = true;
 
   try {

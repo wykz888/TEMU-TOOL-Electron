@@ -10,6 +10,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     getPromotionManagerNewCreateSettings,
     savePromotionManagerNewCreateSettings,
     queryPromotionManagerNewGoods,
+    createPromotionManagerNewAds,
     getRuntimeLogEntries
   } = options;
   const logError = typeof options.logError === 'function'
@@ -119,6 +120,58 @@ function registerFeatureCenterPromotionIpc(options = {}) {
         totalCount: 0,
         successCount: 0,
         failedCount: 1
+      };
+    }
+  });
+
+  handle(FEATURE_CHANNELS.CREATE_PROMOTION_MANAGER_NEW_ADS, async (_event, payload) => {
+    if (typeof createPromotionManagerNewAds !== 'function') {
+      return {
+        updatedAt: new Date().toISOString(),
+        request: {},
+        groups: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u65b0\u7248\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
+        }],
+        warnings: [],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1,
+        skippedCount: 0
+      };
+    }
+
+    const result = await createPromotionManagerNewAds(payload);
+
+    try {
+      return structuredClone(result);
+    } catch (error) {
+      logError('promotion_manager_new_create_ads_result_clone_failed', error, {
+        groupCount: Array.isArray(result && result.groups) ? result.groups.length : 0,
+        errorCount: Array.isArray(result && result.errors) ? result.errors.length : 0,
+        warningCount: Array.isArray(result && result.warnings) ? result.warnings.length : 0
+      });
+
+      return {
+        updatedAt: new Date().toISOString(),
+        request: {},
+        groups: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u521b\u5efa\u5e7f\u544a\u7ed3\u679c\u8fd4\u56de\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5'
+        }],
+        warnings: [],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1,
+        skippedCount: 0
       };
     }
   });

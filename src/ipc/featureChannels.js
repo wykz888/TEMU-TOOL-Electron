@@ -87,6 +87,7 @@ const FEATURE_CHANNELS = Object.freeze({
   GET_PROMOTION_MANAGER_NEW_CREATE_SETTINGS: 'feature-center:get-promotion-manager-new-create-settings',
   SAVE_PROMOTION_MANAGER_NEW_CREATE_SETTINGS: 'feature-center:save-promotion-manager-new-create-settings',
   QUERY_PROMOTION_MANAGER_NEW_GOODS: 'feature-center:query-promotion-manager-new-goods',
+  CREATE_PROMOTION_MANAGER_NEW_ADS: 'feature-center:create-promotion-manager-new-ads',
   GET_RUNTIME_LOG_ENTRIES: 'feature-center:get-runtime-log-entries',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES: 'feature-center:get-pod-upload-sheet-miaoshou-categories',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATE_SNAPSHOT: 'feature-center:get-pod-upload-sheet-miaoshou-template-snapshot',

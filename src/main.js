@@ -20,6 +20,9 @@ const {
   createPromotionManagerNewGoodsService
 } = require('./services/featureCenter/promotionManagerNewGoodsService');
 const {
+  createPromotionManagerNewAdsCreateService
+} = require('./services/featureCenter/promotionManagerNewAdsCreateService');
+const {
   createPromotionManagerNewSettingsService
 } = require('./services/featureCenter/promotionManagerNewSettingsService');
 const { createPromotionMonitorService } = require('./services/featureCenter/promotionMonitorService');
@@ -170,6 +173,7 @@ let shopWindowBrowserStorageSyncService = null;
 let shopManagementService = null;
 let promotionAdsSessionService = null;
 let promotionManagerNewGoodsService = null;
+let promotionManagerNewAdsCreateService = null;
 let promotionMonitorService = null;
 let operationsProductCategoryService = null;
 let operationsSharedCostService = null;
@@ -1677,6 +1681,10 @@ app.whenReady().then(() => {
     promotionAdsSessionService,
     runtimeLogger
   });
+  promotionManagerNewAdsCreateService = createPromotionManagerNewAdsCreateService({
+    promotionAdsSessionService,
+    runtimeLogger
+  });
   operationsSharedCostService = createAppLazyService('operations-shared-cost', () => {
     const {
       createOperationsSharedCostService
@@ -3060,6 +3068,27 @@ app.whenReady().then(() => {
           totalCount: 0,
           successCount: 0,
           failedCount: 1
+        }
+    ),
+    createPromotionManagerNewAds: (payload) => (
+      promotionManagerNewAdsCreateService
+        ? promotionManagerNewAdsCreateService.createAds(payload)
+        : {
+          updatedAt: '',
+          request: {},
+          groups: [],
+          errors: [{
+            shopId: '',
+            shopName: '',
+            regionId: '',
+            regionLabel: '',
+            message: '\u65b0\u7248\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
+          }],
+          warnings: [],
+          totalCount: 0,
+          successCount: 0,
+          failedCount: 1,
+          skippedCount: 0
         }
     ),
     getRuntimeLogEntries: (payload) => runtimeLogger.readEntries(payload),

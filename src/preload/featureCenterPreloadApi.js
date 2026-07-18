@@ -123,6 +123,12 @@ function createFeatureCenterPreloadApi({
         toCloneablePayload(payload)
       );
     },
+    createPromotionManagerNewAds(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.CREATE_PROMOTION_MANAGER_NEW_ADS,
+        toCloneablePayload(payload)
+      );
+    },
     getRuntimeLogEntries(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, payload);
     },
