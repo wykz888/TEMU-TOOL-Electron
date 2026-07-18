@@ -14,11 +14,15 @@
           :apply-all-disabled="batchApplyAllDisabled"
           :apply-selected-disabled="batchApplySelectedDisabled"
           :reset-disabled="batchResetDisabled"
+          :submit-all-disabled="submitAllDisabled"
+          :submit-selected-disabled="submitSelectedDisabled"
           @query="handleShopQuery"
           @search-filters="handleApplyGoodsFilters"
           @reset-filters="handleResetGoodsFilters"
           @apply-all="handleApplyBatchToAll"
           @apply-selected="handleApplyBatchToSelected"
+          @submit-all="handleSubmitAllCampaigns"
+          @submit-selected="handleSubmitSelectedCampaigns"
           @reset="handleResetBatchDrafts"
         />
 
@@ -176,6 +180,10 @@ const batchApplyAllDisabled = computed(() => goodsRows.value.length <= 0);
 const batchApplySelectedDisabled = computed(() => selectedGoodsRowKeys.value.length <= 0);
 
 const batchResetDisabled = computed(() => goodsRows.value.length <= 0);
+
+const submitAllDisabled = computed(() => goodsRows.value.length <= 0);
+
+const submitSelectedDisabled = computed(() => selectedGoodsRowKeys.value.length <= 0);
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -374,6 +382,14 @@ function handleApplyBatchToSelected() {
 
 function handleResetBatchDrafts() {
   resetGoodsRowDrafts(goodsRows.value);
+}
+
+function handleSubmitAllCampaigns() {
+  return goodsRows.value;
+}
+
+function handleSubmitSelectedCampaigns() {
+  return getSelectedGoodsRows();
 }
 
 function handleApplyGoodsFilters() {

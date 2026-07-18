@@ -202,6 +202,28 @@
         </div>
       </div>
     </section>
+
+    <section class="pm-new-toolbar-group pm-new-toolbar-submit-group">
+      <span class="pm-new-toolbar-group-title">{{ submitGroupTitle }}</span>
+      <div class="pm-new-toolbar-submit-fields">
+        <a-button
+          class="pm-new-toolbar-submit-button"
+          type="primary"
+          :disabled="submitAllDisabled"
+          @click="$emit('submit-all')"
+        >
+          {{ submitAllLabel }}
+        </a-button>
+        <a-button
+          class="pm-new-toolbar-submit-button"
+          type="outline"
+          :disabled="submitSelectedDisabled"
+          @click="$emit('submit-selected')"
+        >
+          {{ submitSelectedLabel }}
+        </a-button>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -258,6 +280,14 @@ const props = defineProps({
   resetDisabled: {
     type: Boolean,
     default: false
+  },
+  submitAllDisabled: {
+    type: Boolean,
+    default: false
+  },
+  submitSelectedDisabled: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -273,12 +303,15 @@ const emit = defineEmits([
   'reset-filters',
   'apply-all',
   'apply-selected',
+  'submit-all',
+  'submit-selected',
   'reset'
 ]);
 
-const queryGroupTitle = '\u67e5\u8be2\u7ec4';
-const filterGroupTitle = '\u7b5b\u9009\u7ec4';
-const actionGroupTitle = '\u64cd\u4f5c\u7ec4';
+const queryGroupTitle = '\u6570\u636e\u67e5\u8be2';
+const filterGroupTitle = '\u5546\u54c1\u7b5b\u9009';
+const actionGroupTitle = '\u6279\u91cf\u8bbe\u7f6e';
+const submitGroupTitle = '\u521b\u5efa\u5e7f\u544a';
 const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
 const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
@@ -296,6 +329,8 @@ const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
 const applyAllLabel = '\u4e00\u952e\u8bbe\u7f6e\u5168\u90e8';
 const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
 const resetLabel = '\u91cd\u7f6e\u4e3a\u521d\u59cb\u6570\u636e';
+const submitAllLabel = '\u65b0\u5efa\u5168\u90e8\u5546\u54c1\u5e7f\u544a';
+const submitSelectedLabel = '\u65b0\u5efa\u5df2\u9009\u5546\u54c1\u5e7f\u544a';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const roasModeOptions = ROAS_MODE_OPTIONS;
 const fastStartModeOptions = FAST_START_MODE_OPTIONS;

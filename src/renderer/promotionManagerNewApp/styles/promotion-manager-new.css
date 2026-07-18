@@ -364,6 +364,22 @@ body {
   flex-wrap: wrap;
 }
 
+.pm-new-toolbar-submit-fields {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.pm-new-toolbar-submit-button.arco-btn {
+  height: 34px;
+  min-width: 144px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .pm-new-goods-toolbar {
   display: flex;
   align-items: center;
