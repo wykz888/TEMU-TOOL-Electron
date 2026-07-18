@@ -4,8 +4,9 @@ const { cosService, COS_SCOPES } = require('../cos');
 const { buildOwnerDescriptor } = require('../shopManagement/common');
 
 const SETTINGS_VERSION = 9;
-const FEATURE_ID = 'promotion-master';
-const SETTINGS_FILE_NAME = 'promotion-manager-view.json';
+const DEFAULT_FEATURE_ID = 'promotion-master-new-campaign-monitor';
+const DEFAULT_SETTINGS_FILE_NAME = 'monitor-settings.json';
+const DEFAULT_CLOUD_RECORD_TYPE = 'promotion-manager-monitor-settings';
 const MONITOR_BASE_COLUMN_IDS = Object.freeze([
   'monitor',
   'log',
@@ -21,6 +22,8 @@ const MONITOR_REGION_IDS = Object.freeze([
 const MONITOR_ACTION_IDS = Object.freeze([
   'pause_plan',
   'pause_then_resume',
+  'pause_then_modify',
+  'pause_then_modify_resume',
   'delete_plan',
   'update_roas',
   'increase_roas'
@@ -28,7 +31,14 @@ const MONITOR_ACTION_IDS = Object.freeze([
 const DEFAULT_MONITOR_INTERVAL_SECONDS = 60;
 const MIN_MONITOR_INTERVAL_SECONDS = 5;
 
-function createPromotionManagerSettingsService({ sessionStore, featureCenterProfileService }) {
+function createPromotionManagerSettingsService({
+  sessionStore,
+  featureCenterProfileService,
+  featureId = DEFAULT_FEATURE_ID,
+  settingsFileName = DEFAULT_SETTINGS_FILE_NAME,
+  entryNotRegisteredMessage = '',
+  cloudRecordType = DEFAULT_CLOUD_RECORD_TYPE
+}) {
   let cachedOwnerKey = '';
   let cachedSettingsResult = null;
 
@@ -45,13 +55,23 @@ function createPromotionManagerSettingsService({ sessionStore, featureCenterProf
   }
 
   function getFeatureEntry() {
-    const featureEntry = featureCenterProfileService.getFeatureById(FEATURE_ID);
+    const featureEntry =
+      featureCenterProfileService
+      && typeof featureCenterProfileService.getEntryById === 'function'
+        ? featureCenterProfileService.getEntryById(featureId)
+        : null;
+    const fallbackEntry =
+      !featureEntry
+      && featureCenterProfileService
+      && typeof featureCenterProfileService.getFeatureById === 'function'
+        ? featureCenterProfileService.getFeatureById(featureId)
+        : null;
 
-    if (!featureEntry) {
-      throw new Error('推广大师配置未注册，无法读取自定义列设置。');
+    if (!featureEntry && !fallbackEntry) {
+      throw new Error(entryNotRegisteredMessage || 'Promotion manager monitor settings entry is not registered.');
     }
 
-    return featureEntry;
+    return featureEntry || fallbackEntry;
   }
 
   function buildDefaultSettings(owner) {
@@ -93,14 +113,14 @@ function createPromotionManagerSettingsService({ sessionStore, featureCenterProf
       'users',
       owner.userKey,
       'config',
-      SETTINGS_FILE_NAME
+      settingsFileName
     );
   }
 
   function getCloudSettingsKey(owner) {
     const featureEntry = getFeatureEntry();
 
-    return `${featureEntry.storageKey}/users/${owner.userKey}/config/${SETTINGS_FILE_NAME}`;
+    return `${featureEntry.storageKey}/users/${owner.userKey}/config/${settingsFileName}`;
   }
 
   async function readJsonFile(filePath) {
@@ -420,7 +440,7 @@ function createPromotionManagerSettingsService({ sessionStore, featureCenterProf
       key: getCloudSettingsKey(owner),
       data: payload,
       metadata: {
-        record_type: 'promotion-manager-view-settings',
+        record_type: cloudRecordType,
         owner_user_key: owner.userKey,
         owner_username: owner.username
       }

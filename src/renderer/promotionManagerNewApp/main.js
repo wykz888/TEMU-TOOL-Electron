@@ -30,7 +30,7 @@ export function mountPromotionManagerNewApp(target = '#promotionManagerNewApp') 
     : target;
 
   if (!mountTarget) {
-    throw new Error('\u63a8\u5e7f\u5927\u5e08-\u65b0\u754c\u9762\u6302\u8f7d\u70b9\u672a\u627e\u5230\u3002');
+    throw new Error('\u63a8\u5e7f\u5927\u5e08\u754c\u9762\u6302\u8f7d\u70b9\u672a\u627e\u5230\u3002');
   }
 
   const app = createApp(App);

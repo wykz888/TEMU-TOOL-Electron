@@ -12,7 +12,6 @@ const {
 const {
   operationsTrafficBoostFeature
 } = require('./operationsTrafficBoost');
-const { promotionMasterFeature } = require('./promotionMaster');
 const { promotionMasterNewFeature } = require('./promotionMasterNew');
 const { podUploadSheetMiaoshouFeature } = require('./podUploadSheetMiaoshou');
 const {
@@ -26,7 +25,6 @@ const FEATURE_CENTER_CATALOG = Object.freeze([
   operationsPriceDeclarationFeature,
   operationsNewProductLifecycleFeature,
   marketingToolsFeature,
-  promotionMasterFeature,
   promotionMasterNewFeature,
   podUploadSheetMiaoshouFeature,
   podUploadSheetMiaoshouUniversalFeature

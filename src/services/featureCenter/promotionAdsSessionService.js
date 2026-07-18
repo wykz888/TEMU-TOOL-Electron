@@ -10,8 +10,12 @@ const {
 const {
   createShopScopedSessionPolicy
 } = require('../shopManagement/shopScopedSessionPolicy');
+const {
+  buildReportsQueryPayload,
+  buildReportsQuerySummaryContainer
+} = require('./promotionReportsQueryUtils');
 
-const FEATURE_ID = 'promotion-master';
+const FEATURE_ENTRY_ID = 'promotion-master-new';
 const ADS_COOKIE_URL = 'https://ads.temu.com';
 const ADS_HOME_URL = 'https://ads.temu.com/';
 const ADS_LIST_PAGE_URL = 'https://ads.temu.com/ad-list.html';
@@ -278,7 +282,7 @@ function createPromotionMasterSessionService({
 
   const shopScopedSessionPolicy = createShopScopedSessionPolicy({
     runtimeLogger,
-    scope: 'promotion-master'
+    scope: 'promotion-manager'
   });
 
   function getOwner() {
@@ -296,15 +300,21 @@ function createPromotionMasterSessionService({
   function getFeatureEntry() {
     const featureEntry =
       featureCenterProfileService
+      && typeof featureCenterProfileService.getEntryById === 'function'
+        ? featureCenterProfileService.getEntryById(FEATURE_ENTRY_ID)
+        : null;
+    const fallbackEntry =
+      !featureEntry
+      && featureCenterProfileService
       && typeof featureCenterProfileService.getFeatureById === 'function'
-        ? featureCenterProfileService.getFeatureById(FEATURE_ID)
+        ? featureCenterProfileService.getFeatureById(FEATURE_ENTRY_ID)
         : null;
 
-    if (!featureEntry) {
-      throw new Error('promotion-master feature entry is not registered');
+    if (!featureEntry && !fallbackEntry) {
+      throw new Error('promotion ads feature entry is not registered');
     }
 
-    return featureEntry;
+    return featureEntry || fallbackEntry;
   }
 
   function ensureOwnerScope() {
@@ -425,7 +435,7 @@ function createPromotionMasterSessionService({
       key: cloudCacheKey,
       data: payload,
       metadata: {
-        record_type: 'promotion-master-region-cookie-cache',
+        record_type: 'promotion-ads-region-cookie-cache',
         owner_user_key: owner.userKey,
         owner_username: owner.username,
         shop_id: normalizeText(shopId)
@@ -1068,6 +1078,13 @@ function createPromotionMasterSessionService({
     const statusText = normalizeText(response && response.statusText);
     const errorCode = data && Object.prototype.hasOwnProperty.call(data, 'errorCode')
       ? Number(data.errorCode)
+      : (
+          data && Object.prototype.hasOwnProperty.call(data, 'error_code')
+            ? Number(data.error_code)
+            : null
+        );
+    const success = data && Object.prototype.hasOwnProperty.call(data, 'success')
+      ? Boolean(data.success)
       : null;
     const responsePreview = normalizeText(
       String(responseText || '')
@@ -1079,6 +1096,7 @@ function createPromotionMasterSessionService({
         data.message
         || data.msg
         || data.errorMsg
+        || data.error_msg
         || data.error_message
         || data.errorMessage
       )
@@ -1087,7 +1105,7 @@ function createPromotionMasterSessionService({
     if (!message) {
       if (responseStatus >= 400) {
         message = `HTTP ${responseStatus}${statusText ? ` ${statusText}` : ''}`;
-      } else if (Number.isFinite(errorCode) && errorCode !== 0) {
+      } else if (success !== true && Number.isFinite(errorCode) && errorCode !== 0 && errorCode !== 1000000) {
         message = `errorCode ${errorCode}`;
       } else if (responsePreview) {
         message = responsePreview;
@@ -1117,9 +1135,7 @@ function createPromotionMasterSessionService({
       httpStatus: responseStatus,
       statusText,
       message,
-      success: data && Object.prototype.hasOwnProperty.call(data, 'success')
-        ? Boolean(data.success)
-        : null,
+      success,
       errorCode,
       data,
       responseTextPreview: responsePreview.slice(0, 240)
@@ -1224,8 +1240,8 @@ function createPromotionMasterSessionService({
       controllerPayload: options.controllerPayload,
       requestUrl: url,
       origin: normalizeText(options.origin),
-      source: 'promotion-master-session-fetch',
-      reason: normalizeText(options.reason) || 'promotion-master-session-fetch'
+      source: 'promotion-manager-session-fetch',
+      reason: normalizeText(options.reason) || 'promotion-manager-session-fetch'
     });
     const targetSession = resolveShopScopedFetchSession(sessionContext.partition, {
       shopId: normalizeText(options.shopId),
@@ -1268,8 +1284,8 @@ function createPromotionMasterSessionService({
       controllerPayload: options.controllerPayload,
       requestUrl: url,
       origin: normalizeText(options.origin),
-      source: 'promotion-master-session-html-fetch',
-      reason: normalizeText(options.reason) || 'promotion-master-session-html-fetch'
+      source: 'promotion-manager-session-html-fetch',
+      reason: normalizeText(options.reason) || 'promotion-manager-session-html-fetch'
     });
     const targetSession = resolveShopScopedFetchSession(sessionContext.partition, {
       shopId: normalizeText(options.shopId),
@@ -1317,7 +1333,7 @@ function createPromotionMasterSessionService({
 
     await controller.beginBackgroundProductPromotionMonitorRelogin({
       ...(controllerPayload || {}),
-      reason: normalizeText(reason) || 'promotion-master-auth-expired',
+      reason: normalizeText(reason) || 'promotion-manager-auth-expired',
       message: normalizeText(message)
     });
   }
@@ -1347,7 +1363,7 @@ function createPromotionMasterSessionService({
     ) {
       await triggerBackgroundRelogin(
         controllerPayload,
-        options.reason || 'promotion-master-ensure-workspace-ready'
+        options.reason || 'promotion-manager-ensure-workspace-ready'
       );
     }
 
@@ -1390,7 +1406,7 @@ function createPromotionMasterSessionService({
 
     const sessionContext = options.sessionContext || await waitForWorkspaceReady(normalizedShopId, {
       controllerPayload: options.controllerPayload,
-      reason: options.reason || 'promotion-master-resolve-partition'
+      reason: options.reason || 'promotion-manager-resolve-partition'
     });
     const resolvedPartition = normalizeText(sessionContext && sessionContext.shopEntry && sessionContext.shopEntry.partition);
 
@@ -1461,7 +1477,7 @@ function createPromotionMasterSessionService({
     return withShopTask(shopEntry, 'cookieRefreshPromise', async () => {
       const sessionContext = await waitForWorkspaceReady(shopId, {
         controllerPayload,
-        reason: options.reason || 'promotion-master-refresh-cookies'
+        reason: options.reason || 'promotion-manager-refresh-cookies'
       });
       const resolvedPartition = normalizeText(sessionContext.shopEntry && sessionContext.shopEntry.partition);
       const targetSession = resolveShopScopedCookieSession(resolvedPartition, {
@@ -1756,18 +1772,7 @@ function createPromotionMasterSessionService({
   }
 
   function buildDefaultReportsQueryPayload(now = new Date()) {
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    return {
-      start_ts: startOfDay.getTime(),
-      end_ts: now.getTime(),
-      source: 0,
-      sort_type: 0,
-      query_type: 0,
-      need_query_last_cycle: false,
-      asc_order: true,
-      columns_type: 10
-    };
+    return buildReportsQueryPayload(now);
   }
 
   async function fetchAdListSummaries(shopId, options = {}) {
@@ -1839,12 +1844,7 @@ function createPromotionMasterSessionService({
       const resultData = responseData.result && typeof responseData.result === 'object'
         ? responseData.result
         : {};
-      const summary = buildCombinedSummaryContainer([
-        { key: 'resultSummary', value: resultData.summary },
-        { key: 'resultReportsSummary', value: resultData.reports_summary },
-        { key: 'responseSummary', value: responseData.summary },
-        { key: 'responseReportsSummary', value: responseData.reports_summary }
-      ]);
+      const summary = buildReportsQuerySummaryContainer(resultData, responseData);
 
       if (onRegionStatus) {
         onRegionStatus({
@@ -1937,11 +1937,12 @@ function createPromotionMasterSessionService({
         });
       }
 
+      const requestPayload = buildPayload(region);
       const fetchResult = await fetchWithRegionCookie(
         normalizedShopId,
         region.id,
         ADS_DETAIL_URL,
-        buildPayload(region),
+        requestPayload,
         {
           cookieSnapshot,
           allRegionIds: targetRegionIds,
@@ -1978,6 +1979,7 @@ function createPromotionMasterSessionService({
           source: region.source,
           fetchedAt: new Date().toISOString(),
           response: fetchResult.result,
+          requestPayload,
           summary: buildCombinedSummaryContainer([
             { key: 'resultSummary', value: resultData.summary },
             { key: 'resultReportsSummary', value: resultData.reports_summary },

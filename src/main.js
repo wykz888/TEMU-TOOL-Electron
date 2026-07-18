@@ -67,7 +67,6 @@ const {
 const {
   createOperationsTrafficBoostWindow
 } = require('./windows/createOperationsTrafficBoostWindow');
-const { createPromotionManagerWindow } = require('./windows/createPromotionManagerWindow');
 const { createPromotionManagerNewWindow } = require('./windows/createPromotionManagerNewWindow');
 const { createExitSyncProgressWindow } = require('./windows/createExitSyncProgressWindow');
 const {
@@ -132,9 +131,13 @@ const appUpdateService = createAppUpdateService({
   getUpdateSettings: () => globalConfigService.getUpdateSettings(),
   runtimeLogger
 });
-const promotionManagerSettingsService = createPromotionManagerSettingsService({
+const promotionManagerNewMonitorSettingsService = createPromotionManagerSettingsService({
   sessionStore,
-  featureCenterProfileService
+  featureCenterProfileService,
+  featureId: 'promotion-master-new-campaign-monitor',
+  settingsFileName: 'monitor-settings.json',
+  entryNotRegisteredMessage: '\u63a8\u5e7f\u5927\u5e08\u63a8\u5e7f\u76d1\u63a7\u6a21\u5757\u672a\u6ce8\u518c\uff0c\u65e0\u6cd5\u8bfb\u5199\u914d\u7f6e\u3002',
+  cloudRecordType: 'promotion-manager-monitor-settings'
 });
 const promotionManagerNewSettingsService = createPromotionManagerNewSettingsService({
   sessionStore,
@@ -160,7 +163,6 @@ const operationsPriceDeclarationWindows = new Set();
 let operationsNewProductLifecycleWindow = null;
 const operationsNewProductLifecycleWindows = new Set();
 let promotionManagerWindow = null;
-let promotionManagerNewWindow = null;
 let podUploadSheetMiaoshouWindow = null;
 const podUploadSheetMiaoshouWindows = new Set();
 let podUploadSheetMiaoshouUniversalWindow = null;
@@ -386,7 +388,6 @@ function getOpenWindows() {
     ...getOpenManagedSubWindows(operationsPriceDeclarationWindows),
     ...getOpenManagedSubWindows(operationsNewProductLifecycleWindows),
     promotionManagerWindow,
-    promotionManagerNewWindow,
     ...getOpenManagedSubWindows(podUploadSheetMiaoshouWindows),
     ...getOpenManagedSubWindows(podUploadSheetMiaoshouUniversalWindows),
     ...getOpenManagedSubWindows(podSuiteToolWindows)
@@ -785,10 +786,6 @@ function bindMainWindow(windowInstance) {
       promotionManagerWindow.close();
     }
 
-    if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
-      promotionManagerNewWindow.close();
-    }
-
     if (shopWindowBrowserController) {
       shopWindowBrowserController.destroy();
       shopWindowBrowserController = null;
@@ -868,11 +865,6 @@ function bindOperationsNewProductLifecycleWindow(windowInstance) {
 function bindPromotionManagerWindow(windowInstance) {
   promotionManagerWindow = windowInstance;
   return setupSubWindow(windowInstance, () => { promotionManagerWindow = null; });
-}
-
-function bindPromotionManagerNewWindow(windowInstance) {
-  promotionManagerNewWindow = windowInstance;
-  return setupSubWindow(windowInstance, () => { promotionManagerNewWindow = null; });
 }
 
 function bindPodUploadSheetMiaoshouWindow(windowInstance) {
@@ -1370,22 +1362,7 @@ function showPromotionManagerWindow() {
     return promotionManagerWindow;
   }
 
-  return bindPromotionManagerWindow(createPromotionManagerWindow({
-    backgroundColor: getThemeBackgroundColor(currentTheme)
-  }));
-}
-
-function showPromotionManagerNewWindow() {
-  if (!sessionStore.hasSession()) {
-    return null;
-  }
-
-  if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
-    promotionManagerNewWindow.focus();
-    return promotionManagerNewWindow;
-  }
-
-  return bindPromotionManagerNewWindow(createPromotionManagerNewWindow({
+  return bindPromotionManagerWindow(createPromotionManagerNewWindow({
     backgroundColor: getThemeBackgroundColor(currentTheme)
   }));
 }
@@ -1617,10 +1594,6 @@ function returnToAuthArea() {
     promotionManagerWindow.close();
   }
 
-  if (promotionManagerNewWindow && !promotionManagerNewWindow.isDestroyed()) {
-    promotionManagerNewWindow.close();
-  }
-
   if (mainWindow && !mainWindow.isDestroyed()) {
     allowMainWindowClose = true;
     mainWindow.close();
@@ -1808,7 +1781,7 @@ app.whenReady().then(() => {
     sessionStore,
     featureCenterProfileService,
     shopManagementService,
-    promotionManagerSettingsService,
+    promotionManagerSettingsService: promotionManagerNewMonitorSettingsService,
     promotionMasterSessionService: promotionAdsSessionService,
     runtimeLogger
   });
@@ -2129,7 +2102,6 @@ app.whenReady().then(() => {
     ),
     onOpenGlobalCategorySync: showGlobalCategorySyncWindow,
     onOpenPromotionManager: showPromotionManagerWindow,
-    onOpenPromotionManagerNew: showPromotionManagerNewWindow,
     onOpenPodUploadSheetMiaoshou: (payload, context = {}) => {
       return showPodUploadSheetMiaoshouWindow(mergeWindowOpenPayload(payload, context));
     },
@@ -3031,8 +3003,10 @@ app.whenReady().then(() => {
           updatedAt: ''
         }
     ),
-    getPromotionManagerSettings: () => promotionManagerSettingsService.getSettings(),
-    savePromotionManagerSettings: (payload) => promotionManagerSettingsService.saveSettings(payload),
+    getPromotionManagerNewMonitorSettings: () => promotionManagerNewMonitorSettingsService.getSettings(),
+    savePromotionManagerNewMonitorSettings: (payload) => (
+      promotionManagerNewMonitorSettingsService.saveSettings(payload)
+    ),
     getPromotionMonitorSnapshot: () => (
       promotionMonitorService
         ? promotionMonitorService.getSnapshot()
@@ -3065,7 +3039,7 @@ app.whenReady().then(() => {
             shopName: '',
             regionId: '',
             regionLabel: '',
-            message: '\u65b0\u7248\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+            message: '\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
           }],
           totalCount: 0,
           successCount: 0,
@@ -3094,7 +3068,7 @@ app.whenReady().then(() => {
             shopName: '',
             regionId: '',
             regionLabel: '',
-            message: '\u65b0\u7248\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
+            message: '\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
           }],
           warnings: [],
           totalCount: 0,

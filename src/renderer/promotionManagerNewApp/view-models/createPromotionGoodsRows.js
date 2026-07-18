@@ -58,6 +58,10 @@ function normalizeText(value) {
 }
 
 function normalizeFiniteNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
   const numberValue = Number(value);
 
   return Number.isFinite(numberValue) ? numberValue : null;
@@ -372,8 +376,8 @@ export function getCustomRoasBounds(row) {
   const bidInfo = getBidInfo(row);
 
   return {
-    min: pickPositiveNumber(bidInfo.minCustomRoas, row && row.bidMinCustomRoas),
-    max: pickPositiveNumber(bidInfo.maxCustomRoas, row && row.bidMaxCustomRoas)
+    min: pickNumber(bidInfo.minCustomRoas, row && row.bidMinCustomRoas),
+    max: pickNumber(bidInfo.maxCustomRoas, row && row.bidMaxCustomRoas)
   };
 }
 

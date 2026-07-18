@@ -18,13 +18,13 @@ export default defineConfig({
   plugins: [vue()],
   build: {
     emptyOutDir: true,
-    outDir: path.resolve(__dirname, 'src/renderer/promotionManagerApp/dist'),
+    outDir: path.resolve(__dirname, 'src/renderer/promotionManagerNewApp/dist'),
     cssCodeSplit: false,
     minify: false,
     reportCompressedSize: false,
     codeSplitting: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/renderer/promotionManagerApp/main.js'),
+      entry: path.resolve(__dirname, 'src/renderer/promotionManagerNewApp/main.js'),
       formats: ['es'],
       fileName: () => 'promotion-manager-app.js',
       cssFileName: 'promotion-manager-app'

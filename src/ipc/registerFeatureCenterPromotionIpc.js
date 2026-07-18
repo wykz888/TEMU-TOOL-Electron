@@ -2,13 +2,13 @@ function registerFeatureCenterPromotionIpc(options = {}) {
   const {
     FEATURE_CHANNELS,
     handle,
-    getPromotionManagerSettings,
-    savePromotionManagerSettings,
     getPromotionMonitorSnapshot,
     setPromotionMonitorShopEnabled,
     setPromotionMonitorBatchActive,
     getPromotionManagerNewCreateSettings,
     savePromotionManagerNewCreateSettings,
+    getPromotionManagerNewMonitorSettings,
+    savePromotionManagerNewMonitorSettings,
     queryPromotionManagerNewGoods,
     cancelPromotionManagerNewGoodsQuery,
     createPromotionManagerNewAds,
@@ -17,27 +17,10 @@ function registerFeatureCenterPromotionIpc(options = {}) {
   } = options;
   const {
     fb_promotionManagerNewCreateSettings,
+    fb_promotionManagerNewMonitorSettings,
     fb_promotionMonitor,
-    fb_promotionSettings,
     fb_runtimeLog
   } = options.fallbacks || {};
-
-  handle(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_SETTINGS, async () => {
-    if (typeof getPromotionManagerSettings !== 'function') return fb_promotionSettings();
-    return getPromotionManagerSettings();
-  });
-
-  handle(FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_SETTINGS, async (_event, payload) => {
-    if (typeof savePromotionManagerSettings !== 'function') {
-      return {
-        settings: payload || null,
-        source: 'unavailable',
-        cloudSynced: false
-      };
-    }
-
-    return savePromotionManagerSettings(payload);
-  });
 
   handle(FEATURE_CHANNELS.GET_PROMOTION_MONITOR_SNAPSHOT, async () => {
     if (typeof getPromotionMonitorSnapshot !== 'function') return fb_promotionMonitor();
@@ -70,6 +53,22 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     return savePromotionManagerNewCreateSettings(payload);
   });
 
+  handle(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS, async () => {
+    if (typeof getPromotionManagerNewMonitorSettings !== 'function') {
+      return fb_promotionManagerNewMonitorSettings();
+    }
+
+    return getPromotionManagerNewMonitorSettings();
+  });
+
+  handle(FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS, async (_event, payload) => {
+    if (typeof savePromotionManagerNewMonitorSettings !== 'function') {
+      return fb_promotionManagerNewMonitorSettings();
+    }
+
+    return savePromotionManagerNewMonitorSettings(payload);
+  });
+
   handle(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_GOODS, async (_event, payload) => {
     if (typeof queryPromotionManagerNewGoods !== 'function') {
       return {
@@ -84,7 +83,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
           shopName: '',
           regionId: '',
           regionLabel: '',
-          message: '\u65b0\u7248\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+          message: '\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
         }],
         warnings: [],
         totalCount: 0,
@@ -120,7 +119,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
           shopName: '',
           regionId: '',
           regionLabel: '',
-          message: '\u65b0\u7248\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
+          message: '\u63a8\u5e7f\u521b\u5efa\u670d\u52a1\u672a\u52a0\u8f7d'
         }],
         warnings: [],
         totalCount: 0,

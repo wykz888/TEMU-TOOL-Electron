@@ -1,9 +1,20 @@
 const DEFAULT_REGION_IDS = Object.freeze(['us', 'eu', 'global']);
 const DEFAULT_ACTION_TYPE = 'pause_plan';
+const ACTION_REQUIRES_TARGET_ROAS = new Set([
+  'pause_then_modify',
+  'pause_then_modify_resume'
+]);
+const ACTION_REQUIRES_RESUME_INTERVAL = new Set([
+  'pause_then_resume',
+  'pause_then_modify_resume'
+]);
 
 export const MIN_MONITOR_INTERVAL_SECONDS = 5;
 export const MAX_MONITOR_INTERVAL_SECONDS = 86400;
 export const DEFAULT_MONITOR_INTERVAL_SECONDS = 60;
+export const MIN_RESUME_INTERVAL_MINUTES = 1;
+export const MAX_RESUME_INTERVAL_MINUTES = 999;
+export const NEXT_DAY_RESUME_INTERVAL_MINUTES = 999;
 
 export const MONITOR_REGION_OPTIONS = Object.freeze([
   { value: 'us', label: '\u7f8e\u56fd' },
@@ -62,6 +73,24 @@ function normalizeRequiredInteger(value, defaultValue, options = {}) {
   return max === null ? minLimitedValue : Math.min(max, minLimitedValue);
 }
 
+function normalizeOptionalInteger(value, options = {}) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const min = Number.isFinite(options.min) ? Number(options.min) : 0;
+  const max = Number.isFinite(options.max) ? Number(options.max) : null;
+  const parsedValue = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsedValue)) {
+    return null;
+  }
+
+  const minLimitedValue = Math.max(min, parsedValue);
+
+  return max === null ? minLimitedValue : Math.min(max, minLimitedValue);
+}
+
 export function normalizeMonitorRegionIds(value, options = {}) {
   if (!Array.isArray(value)) {
     return options.useDefault === false ? [] : [...DEFAULT_REGION_IDS];
@@ -80,6 +109,14 @@ export function normalizeMonitorActionType(value) {
   return VALID_ACTION_TYPES.has(normalizedValue) ? normalizedValue : DEFAULT_ACTION_TYPE;
 }
 
+export function doesMonitorActionRequireTargetRoas(value) {
+  return ACTION_REQUIRES_TARGET_ROAS.has(normalizeMonitorActionType(value));
+}
+
+export function doesMonitorActionRequireResumeInterval(value) {
+  return ACTION_REQUIRES_RESUME_INTERVAL.has(normalizeMonitorActionType(value));
+}
+
 export function createDefaultPromotionMonitorConfig() {
   return {
     monitorIntervalSeconds: DEFAULT_MONITOR_INTERVAL_SECONDS,
@@ -88,7 +125,9 @@ export function createDefaultPromotionMonitorConfig() {
     autoPauseRoasThreshold: null,
     conditionMaxRoas: null,
     minOrderCount: 1,
-    actionType: DEFAULT_ACTION_TYPE
+    actionType: DEFAULT_ACTION_TYPE,
+    resumeIntervalMinutes: null,
+    targetRoas: null
   };
 }
 
@@ -123,7 +162,15 @@ export function normalizePromotionMonitorConfig(payload) {
     minOrderCount: normalizeRequiredInteger(source.minOrderCount, defaultConfig.minOrderCount, {
       min: 0
     }),
-    actionType: normalizeMonitorActionType(source.actionType)
+    actionType: normalizeMonitorActionType(source.actionType),
+    resumeIntervalMinutes: normalizeOptionalInteger(source.resumeIntervalMinutes, {
+      min: MIN_RESUME_INTERVAL_MINUTES,
+      max: MAX_RESUME_INTERVAL_MINUTES
+    }),
+    targetRoas: normalizeOptionalNumber(source.targetRoas, {
+      min: 0,
+      precision: 2
+    })
   };
 }
 
@@ -133,4 +180,21 @@ export function patchPromotionMonitorConfig(baseConfig, patch) {
     ...(baseConfig && typeof baseConfig === 'object' ? baseConfig : {}),
     ...(patch && typeof patch === 'object' ? patch : {})
   });
+}
+
+export function buildPromotionMonitorConfigSettingsPayload(config) {
+  const normalizedConfig = normalizePromotionMonitorConfig(config);
+  const payload = {
+    monitorIntervalSeconds: normalizedConfig.monitorIntervalSeconds,
+    regionIds: normalizedConfig.regionIds.slice(),
+    autoPauseSpendThreshold: normalizedConfig.autoPauseSpendThreshold,
+    autoPauseRoasThreshold: normalizedConfig.autoPauseRoasThreshold,
+    conditionMaxRoas: normalizedConfig.conditionMaxRoas,
+    minOrderCount: normalizedConfig.minOrderCount,
+    actionType: normalizedConfig.actionType,
+    resumeIntervalMinutes: normalizedConfig.resumeIntervalMinutes,
+    targetRoas: normalizedConfig.targetRoas
+  };
+
+  return payload;
 }

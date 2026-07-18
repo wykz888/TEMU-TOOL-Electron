@@ -17,6 +17,10 @@ function normalizePositiveInteger(value, fallback, options = {}) {
 }
 
 function normalizeFiniteNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
   const numberValue = Number(value);
 
   return Number.isFinite(numberValue) ? numberValue : null;
@@ -166,10 +170,14 @@ function normalizeBidResult(source, currency) {
   const bestPrediction = predictions.find((entry) => entry.bestSelect) || predictions[0] || null;
   const minDailyBudgetText = formatMoneyText(record.min_daily_budget, currency);
   const maxDailyBudgetText = formatMoneyText(record.max_daily_budget, currency);
-  const minCustomRoasText = formatRoasText(null, record.min_custom_roas_value);
-  const maxCustomRoasText = formatRoasText(null, record.max_custom_roas_value);
-  const minRecommendRoasText = formatRoasText(null, record.min_recommend_roas_value);
-  const maxRoasText = formatRoasText(null, record.max_roas_value);
+  const minCustomRoasValue = pickFirstPresent(record.min_custom_roas_value, record.minCustomRoasValue);
+  const maxCustomRoasValue = pickFirstPresent(record.hard_base_roas_value, record.hardBaseRoasValue);
+  const minRecommendRoasValue = pickFirstPresent(record.min_recommend_roas_value, record.minRecommendRoasValue);
+  const maxRoasValue = pickFirstPresent(record.max_roas_value, record.maxRoasValue);
+  const minCustomRoasText = formatRoasText(null, minCustomRoasValue);
+  const maxCustomRoasText = formatRoasText(null, maxCustomRoasValue);
+  const minRecommendRoasText = formatRoasText(null, minRecommendRoasValue);
+  const maxRoasText = formatRoasText(null, maxRoasValue);
   const softBaseRoasText = formatRoasText(null, record.soft_base_roas_value);
   const hardBaseRoasText = formatRoasText(null, record.hard_base_roas_value);
 
@@ -193,13 +201,13 @@ function normalizeBidResult(source, currency) {
     maxDailyBudgetText,
     dailyBudgetText: buildRangeText(minDailyBudgetText, maxDailyBudgetText),
     usedBudgetText: formatMoneyText(record.used_budget_value, currency),
-    minCustomRoas: normalizeRoasValueNumber(record.min_custom_roas_value),
-    maxCustomRoas: normalizeRoasValueNumber(record.max_custom_roas_value),
+    minCustomRoas: normalizeRoasValueNumber(minCustomRoasValue),
+    maxCustomRoas: normalizeRoasValueNumber(maxCustomRoasValue),
     minCustomRoasText,
     maxCustomRoasText,
     customRoasRangeText: buildRangeText(minCustomRoasText, maxCustomRoasText),
-    minRecommendRoas: normalizeRoasValueNumber(record.min_recommend_roas_value),
-    maxRoas: normalizeRoasValueNumber(record.max_roas_value),
+    minRecommendRoas: normalizeRoasValueNumber(minRecommendRoasValue),
+    maxRoas: normalizeRoasValueNumber(maxRoasValue),
     minRecommendRoasText,
     maxRoasText,
     recommendRoasRangeText: buildRangeText(minRecommendRoasText, maxRoasText),

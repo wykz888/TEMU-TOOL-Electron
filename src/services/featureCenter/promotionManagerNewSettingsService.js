@@ -1,21 +1,12 @@
-const { normalizeText } = require('../shopManagement/common');
 const {
   createPromotionManagerNewSettingsStore
 } = require('./promotionManagerNewSettingsStore');
-
-const SETTINGS_VERSION = 1;
-const REGION_IDS = Object.freeze(['us', 'eu', 'global']);
-
-function normalizeUniqueTextList(values) {
-  const sourceItems = Array.isArray(values) ? values : [];
-
-  return Array.from(new Set(sourceItems.map(normalizeText).filter(Boolean)));
-}
-
-function normalizeRegionIds(values) {
-  return normalizeUniqueTextList(values)
-    .filter((regionId) => REGION_IDS.includes(regionId));
-}
+const {
+  REGION_IDS,
+  SETTINGS_VERSION,
+  buildDefaultSettings,
+  normalizeSettingsPayload
+} = require('./promotionManagerCreateSettingsModel');
 
 function getPayloadTimestamp(payload) {
   const timestamp = Date.parse(
@@ -43,50 +34,6 @@ function pickPreferredConfig(localConfig, cloudConfig) {
   }
 
   return { source: 'default', config: null };
-}
-
-function buildDefaultSettings(owner) {
-  return {
-    version: SETTINGS_VERSION,
-    owner: owner ? {
-      userId: owner.userId,
-      username: owner.username,
-      userKey: owner.userKey
-    } : null,
-    updatedAt: new Date().toISOString(),
-    createPromotion: {
-      selectedShopIds: [],
-      selectedRegionIds: []
-    }
-  };
-}
-
-function normalizeCreatePromotionSettings(value) {
-  const source = value && typeof value === 'object' && !Array.isArray(value)
-    ? value
-    : {};
-
-  return {
-    ...source,
-    selectedShopIds: normalizeUniqueTextList(source.selectedShopIds || source.shopIds),
-    selectedRegionIds: normalizeRegionIds(source.selectedRegionIds || source.regionIds)
-  };
-}
-
-function normalizeSettingsPayload(payload, owner) {
-  const defaults = buildDefaultSettings(owner);
-  const source = payload && typeof payload === 'object' && !Array.isArray(payload)
-    ? payload
-    : {};
-
-  return {
-    ...defaults,
-    ...source,
-    version: SETTINGS_VERSION,
-    owner: defaults.owner,
-    updatedAt: normalizeText(source.updatedAt) || defaults.updatedAt,
-    createPromotion: normalizeCreatePromotionSettings(source.createPromotion)
-  };
 }
 
 function createPromotionManagerNewSettingsService({

@@ -1,20 +1,71 @@
 <template>
   <section class="pm-new-feature-page pm-new-feature-page--monitor">
-    <PromotionMonitorConfigPanel
-      :config="monitorConfig"
-      @update:config="handleMonitorConfigUpdate"
-    />
+    <section class="pm-new-page-panel pm-new-monitor-workspace">
+      <div class="pm-new-monitor-toolbar">
+        <div class="pm-new-monitor-toolbar-main">
+          <strong>{{ shopListTitle }}</strong>
+          <div class="pm-new-monitor-toolbar-tags">
+            <a-tag size="small" bordered>{{ shopCountText }}</a-tag>
+            <a-tag size="small" bordered>{{ metricCountText }}</a-tag>
+            <a-tag size="small" bordered>{{ selectedRegionText }}</a-tag>
+          </div>
+        </div>
 
-    <section class="pm-new-page-panel pm-new-monitor-shop-panel">
-      <div class="pm-new-section-title">
-        <strong>{{ shopListTitle }}</strong>
-        <div class="pm-new-monitor-shop-actions">
-          <a-tag size="small" bordered>{{ shopCountText }}</a-tag>
+        <div class="pm-new-monitor-toolbar-actions">
+          <label class="pm-new-monitor-batch-toggle">
+            <span>{{ batchMonitorLabel }}</span>
+            <a-switch
+              size="small"
+              :model-value="batchMonitoringActive"
+              :loading="batchActiveSaving"
+              :disabled="loading"
+              @change="handleBatchActiveChange"
+            />
+          </label>
+
+          <a-radio-group
+            class="pm-new-monitor-filter-group"
+            type="button"
+            size="small"
+            :model-value="activeFilter"
+            @change="handleFilterChange"
+          >
+            <a-radio
+              v-for="option in filterOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-radio>
+          </a-radio-group>
+
+          <a-button
+            type="outline"
+            size="small"
+            @click="openGlobalConfigModal"
+          >
+            <template #icon>
+              <IconSettings />
+            </template>
+            {{ configButtonLabel }}
+          </a-button>
+
+          <a-button
+            type="outline"
+            size="small"
+            @click="openCustomizeModal"
+          >
+            <template #icon>
+              <IconApps />
+            </template>
+            {{ customizeButtonLabel }}
+          </a-button>
+
           <a-button
             type="outline"
             size="small"
             :loading="loading"
-            @click="loadShopRows"
+            @click="loadWorkspaceData"
           >
             <template #icon>
               <IconRefresh />
@@ -24,97 +75,258 @@
         </div>
       </div>
 
-      <div class="pm-new-monitor-shop-body">
-        <a-alert
-          v-if="errorText"
-          type="error"
-          :content="errorText"
-          show-icon
-        />
+      <a-alert
+        v-if="errorText"
+        type="error"
+        :content="errorText"
+        show-icon
+      />
 
-        <a-table
-          class="pm-new-monitor-shop-table"
-          row-key="id"
-          :columns="shopColumns"
-          :data="shopRows"
-          :pagination="false"
-          :bordered="false"
-          :loading="loading"
-          size="small"
-        >
-          <template #status="{ record }">
-            <a-tag color="green" size="small" bordered>{{ record.statusLabel }}</a-tag>
-          </template>
-          <template #note="{ record }">
-            <span class="pm-new-monitor-shop-note">{{ record.note || emptyText }}</span>
-          </template>
-        </a-table>
-      </div>
+      <PromotionMonitorDataTable
+        :rows="monitorRows"
+        :visible-columns="visibleColumns"
+        :loading="loading"
+        :toggling-shop-ids="togglingShopIds"
+        @toggle-shop="handleToggleShop"
+        @open-shop-config="openShopConfigModal"
+      />
     </section>
+
+    <PromotionMonitorCustomizeModal
+      v-model:visible="customizeModalVisible"
+      :selected-column-ids="selectedColumnIds"
+      @apply="handleApplyColumns"
+    />
+
+    <a-modal
+      :visible="configModalVisible"
+      :mask-closable="false"
+      :esc-to-close="true"
+      :closable="!savingConfig"
+      :footer="false"
+      :width="960"
+      modal-class="pm-new-monitor-config-modal"
+      unmount-on-close
+      @cancel="closeConfigModal"
+    >
+      <template #title>
+        <div class="pm-new-monitor-modal-title">
+          <strong>{{ configModalTitle }}</strong>
+        </div>
+      </template>
+
+      <PromotionMonitorConfigPanel
+        embedded
+        :show-title="false"
+        :config="configDraft"
+        @update:config="handleConfigDraftUpdate"
+      />
+
+      <div class="pm-new-monitor-modal-footer">
+        <a-button
+          v-if="canClearShopConfig"
+          status="danger"
+          :loading="savingConfig"
+          @click="handleClearShopConfig"
+        >
+          {{ clearShopConfigLabel }}
+        </a-button>
+        <span class="pm-new-monitor-modal-spacer"></span>
+        <a-button
+          :disabled="savingConfig"
+          @click="closeConfigModal"
+        >
+          {{ cancelLabel }}
+        </a-button>
+        <a-button
+          type="primary"
+          :loading="savingConfig"
+          @click="handleSaveConfig"
+        >
+          {{ saveLabel }}
+        </a-button>
+      </div>
+    </a-modal>
   </section>
 </template>
 
 <script setup>
-import { IconRefresh } from '@arco-design/web-vue/es/icon';
-import { computed, onMounted, ref } from 'vue';
+import {
+  IconApps,
+  IconRefresh,
+  IconSettings
+} from '@arco-design/web-vue/es/icon';
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import PromotionMonitorConfigPanel from '../PromotionMonitorConfigPanel.vue';
-import { loadPromotionMonitorShopRows } from '../../services/promotionMonitorShops.js';
-import { createDefaultPromotionMonitorConfig } from '../../view-models/promotionMonitorConfig.js';
-import { normalizeText } from '../../view-models/promotionMonitorShopRows.js';
+import PromotionMonitorCustomizeModal from '../PromotionMonitorCustomizeModal.vue';
+import PromotionMonitorDataTable from '../PromotionMonitorDataTable.vue';
+import {
+  DEFAULT_MONITOR_COLUMN_IDS,
+  MONITOR_FILTER_OPTIONS,
+  normalizeMonitorColumnIds,
+  normalizeMonitorFilter,
+  resolveVisibleMonitorColumns,
+  normalizeText
+} from '../../view-models/promotionMonitorColumns.js';
+import {
+  MONITOR_REGION_OPTIONS,
+  createDefaultPromotionMonitorConfig,
+  normalizePromotionMonitorConfig
+} from '../../view-models/promotionMonitorConfig.js';
+import {
+  buildPromotionMonitorRows,
+  createDefaultPromotionMonitorSnapshot
+} from '../../view-models/promotionMonitorRows.js';
+import {
+  clearPromotionMonitorShopConfigSettings,
+  loadPromotionMonitorWorkspaceData,
+  savePromotionMonitorConfigSettings,
+  savePromotionMonitorShopConfigSettings,
+  savePromotionMonitorViewSettings,
+  loadPromotionMonitorSnapshot,
+  setPromotionMonitorBatchActive,
+  setPromotionMonitorShopEnabled
+} from '../../services/promotionMonitorWorkspace.js';
+
+const SNAPSHOT_REFRESH_INTERVAL_MS = 5000;
 
 const monitorConfig = ref(createDefaultPromotionMonitorConfig());
-const shopRows = ref([]);
+const monitorShopConfigs = shallowRef({});
+const selectedColumnIds = ref([...DEFAULT_MONITOR_COLUMN_IDS]);
+const activeFilter = ref('all');
+const snapshot = shallowRef(createDefaultPromotionMonitorSnapshot());
+const shopState = shallowRef({ shops: [] });
 const loading = ref(false);
 const errorText = ref('');
+const customizeModalVisible = ref(false);
+const configModalVisible = ref(false);
+const configModalMode = ref('global');
+const configDraft = ref(createDefaultPromotionMonitorConfig());
+const activeShopForConfig = ref(null);
+const savingConfig = ref(false);
+const batchActiveSaving = ref(false);
+const togglingShopIds = ref([]);
+let snapshotRefreshTimer = 0;
+let snapshotRefreshRunning = false;
 
 const shopListTitle = '\u5e97\u94fa\u5217\u8868';
+const batchMonitorLabel = '\u6279\u91cf\u76d1\u63a7';
+const configButtonLabel = '\u76d1\u63a7\u914d\u7f6e';
+const customizeButtonLabel = '\u81ea\u5b9a\u4e49\u6570\u636e\u9879';
 const refreshButtonLabel = '\u5237\u65b0';
-const shopNameColumnLabel = '\u5e97\u94fa\u540d\u79f0';
-const groupColumnLabel = '\u5206\u7ec4';
-const noteColumnLabel = '\u5907\u6ce8';
-const statusColumnLabel = '\u5e97\u94fa\u72b6\u6001';
-const shopCountLabel = '\u5bb6\u5e97\u94fa';
-const emptyText = '-';
-const loadFailedText = '\u5e97\u94fa\u5217\u8868\u52a0\u8f7d\u5931\u8d25';
+const shopCountUnitLabel = '\u5bb6\u5e97\u94fa';
+const metricCountUnitLabel = '\u4e2a\u6570\u636e\u9879';
+const allRegionsLabel = '\u5168\u90e8\u5730\u533a';
+const noRegionLabel = '\u672a\u9009\u62e9\u5730\u533a';
+const globalConfigTitle = '\u76d1\u63a7\u914d\u7f6e';
+const independentConfigTitle = '\u72ec\u7acb\u914d\u7f6e';
+const clearShopConfigLabel = '\u6e05\u7a7a\u72ec\u7acb\u914d\u7f6e';
+const cancelLabel = '\u53d6\u6d88';
+const saveLabel = '\u4fdd\u5b58';
+const loadFailedText = '\u63a8\u5e7f\u76d1\u63a7\u6570\u636e\u52a0\u8f7d\u5931\u8d25';
+const saveFailedText = '\u76d1\u63a7\u914d\u7f6e\u4fdd\u5b58\u5931\u8d25';
+const toggleShopFailedText = '\u5e97\u94fa\u76d1\u63a7\u72b6\u6001\u66f4\u65b0\u5931\u8d25';
+const batchActiveFailedText = '\u6279\u91cf\u76d1\u63a7\u72b6\u6001\u66f4\u65b0\u5931\u8d25';
+const viewSaveFailedText = '\u6570\u636e\u9879\u8bbe\u7f6e\u4fdd\u5b58\u5931\u8d25';
+const filterOptions = MONITOR_FILTER_OPTIONS;
+const regionOptions = MONITOR_REGION_OPTIONS;
 
-const shopColumns = Object.freeze([
-  {
-    title: shopNameColumnLabel,
-    dataIndex: 'shopName',
-    ellipsis: true,
-    tooltip: true,
-    minWidth: 180
-  },
-  {
-    title: groupColumnLabel,
-    dataIndex: 'groupName',
-    ellipsis: true,
-    tooltip: true,
-    width: 160
-  },
-  {
-    title: noteColumnLabel,
-    dataIndex: 'note',
-    slotName: 'note',
-    ellipsis: true,
-    tooltip: true,
-    minWidth: 220
-  },
-  {
-    title: statusColumnLabel,
-    dataIndex: 'statusLabel',
-    slotName: 'status',
-    width: 120
+const monitorRows = computed(() => buildPromotionMonitorRows({
+  snapshot: snapshot.value,
+  shopRows: shopState.value && Array.isArray(shopState.value.shops) ? shopState.value.shops : [],
+  selectedRegionIds: monitorConfig.value.regionIds,
+  monitorShopConfigs: monitorShopConfigs.value
+}));
+
+const visibleColumns = computed(() => resolveVisibleMonitorColumns(
+  selectedColumnIds.value,
+  activeFilter.value
+));
+
+const batchMonitoringActive = computed(() => (
+  snapshot.value && snapshot.value.batchMonitoringActive === true
+));
+
+const shopCountText = computed(() => `${monitorRows.value.length} ${shopCountUnitLabel}`);
+const metricCountText = computed(() => `${visibleColumns.value.length} ${metricCountUnitLabel}`);
+const selectedRegionText = computed(() => buildRegionSummaryText(monitorConfig.value.regionIds));
+const configModalTitle = computed(() => {
+  if (configModalMode.value !== 'shop') {
+    return globalConfigTitle;
   }
-]);
 
-const shopCountText = computed(() => `${shopRows.value.length} ${shopCountLabel}`);
+  const shopName = normalizeText(activeShopForConfig.value && activeShopForConfig.value.shopName);
 
-function handleMonitorConfigUpdate(nextConfig) {
-  monitorConfig.value = nextConfig;
+  return `${shopName || independentConfigTitle} ${independentConfigTitle}`;
+});
+const canClearShopConfig = computed(() => {
+  const shopId = normalizeText(activeShopForConfig.value && activeShopForConfig.value.shopId);
+
+  return (
+    configModalMode.value === 'shop'
+    && Boolean(shopId)
+    && Boolean(monitorShopConfigs.value && monitorShopConfigs.value[shopId])
+  );
+});
+
+function buildRegionSummaryText(regionIds) {
+  const normalizedRegionIds = Array.isArray(regionIds) ? regionIds : [];
+
+  if (normalizedRegionIds.length <= 0) {
+    return noRegionLabel;
+  }
+
+  if (normalizedRegionIds.length >= regionOptions.length) {
+    return allRegionsLabel;
+  }
+
+  const labelByValue = new Map(regionOptions.map((option) => [option.value, option.label]));
+
+  return normalizedRegionIds
+    .map((regionId) => labelByValue.get(regionId) || regionId)
+    .join(' / ');
 }
 
-async function loadShopRows() {
+function buildErrorText(error, fallbackText) {
+  return normalizeText(error && error.message) || fallbackText;
+}
+
+function applySettingsResult(settingsResult) {
+  if (!settingsResult || typeof settingsResult !== 'object') {
+    return;
+  }
+
+  if (settingsResult.monitorConfig) {
+    monitorConfig.value = normalizePromotionMonitorConfig(settingsResult.monitorConfig);
+  }
+
+  if (settingsResult.monitorShopConfigs && typeof settingsResult.monitorShopConfigs === 'object') {
+    monitorShopConfigs.value = { ...settingsResult.monitorShopConfigs };
+  }
+
+  if (settingsResult.monitorView && typeof settingsResult.monitorView === 'object') {
+    activeFilter.value = normalizeMonitorFilter(settingsResult.monitorView.activeFilter);
+    selectedColumnIds.value = normalizeMonitorColumnIds(settingsResult.monitorView.selectedColumnIds);
+  }
+}
+
+function applyWorkspaceData(workspaceData) {
+  const data = workspaceData && typeof workspaceData === 'object' ? workspaceData : {};
+  const settings = data.settings || {};
+
+  applySettingsResult(settings);
+  snapshot.value = data.snapshot && typeof data.snapshot === 'object'
+    ? data.snapshot
+    : createDefaultPromotionMonitorSnapshot();
+  shopState.value = data.shopState && typeof data.shopState === 'object'
+    ? data.shopState
+    : { shops: [] };
+  errorText.value = Array.isArray(data.errors) && data.errors.length > 0
+    ? data.errors.join('\n')
+    : '';
+}
+
+async function loadWorkspaceData() {
   if (loading.value) {
     return;
   }
@@ -123,16 +335,224 @@ async function loadShopRows() {
   errorText.value = '';
 
   try {
-    shopRows.value = await loadPromotionMonitorShopRows();
+    applyWorkspaceData(await loadPromotionMonitorWorkspaceData());
   } catch (error) {
-    shopRows.value = [];
-    errorText.value = normalizeText(error && error.message) || loadFailedText;
+    errorText.value = buildErrorText(error, loadFailedText);
   } finally {
     loading.value = false;
   }
 }
 
+async function refreshMonitorSnapshot() {
+  if (snapshotRefreshRunning || loading.value) {
+    return;
+  }
+
+  snapshotRefreshRunning = true;
+
+  try {
+    snapshot.value = await loadPromotionMonitorSnapshot();
+  } catch (error) {
+    if (!errorText.value) {
+      errorText.value = buildErrorText(error, loadFailedText);
+    }
+  } finally {
+    snapshotRefreshRunning = false;
+  }
+}
+
+function startSnapshotRefresh() {
+  if (snapshotRefreshTimer) {
+    return;
+  }
+
+  snapshotRefreshTimer = window.setInterval(() => {
+    void refreshMonitorSnapshot();
+  }, SNAPSHOT_REFRESH_INTERVAL_MS);
+}
+
+function stopSnapshotRefresh() {
+  if (!snapshotRefreshTimer) {
+    return;
+  }
+
+  window.clearInterval(snapshotRefreshTimer);
+  snapshotRefreshTimer = 0;
+}
+
+async function persistViewSettings() {
+  try {
+    applySettingsResult(await savePromotionMonitorViewSettings({
+      selectedColumnIds: selectedColumnIds.value,
+      activeFilter: activeFilter.value
+    }));
+  } catch (error) {
+    errorText.value = buildErrorText(error, viewSaveFailedText);
+  }
+}
+
+function handleFilterChange(value) {
+  activeFilter.value = normalizeMonitorFilter(value);
+  void persistViewSettings();
+}
+
+function openCustomizeModal() {
+  customizeModalVisible.value = true;
+}
+
+function handleApplyColumns(columnIds) {
+  selectedColumnIds.value = normalizeMonitorColumnIds(columnIds);
+  void persistViewSettings();
+}
+
+function openGlobalConfigModal() {
+  configModalMode.value = 'global';
+  activeShopForConfig.value = null;
+  configDraft.value = normalizePromotionMonitorConfig(monitorConfig.value);
+  configModalVisible.value = true;
+}
+
+function openShopConfigModal(row) {
+  const shopId = normalizeText(row && row.shopId);
+  const shopConfig = shopId && monitorShopConfigs.value ? monitorShopConfigs.value[shopId] : null;
+
+  configModalMode.value = 'shop';
+  activeShopForConfig.value = row || null;
+  configDraft.value = normalizePromotionMonitorConfig(shopConfig || monitorConfig.value);
+  configModalVisible.value = true;
+}
+
+function closeConfigModal() {
+  if (savingConfig.value) {
+    return;
+  }
+
+  configModalVisible.value = false;
+}
+
+function handleConfigDraftUpdate(nextConfig) {
+  configDraft.value = normalizePromotionMonitorConfig(nextConfig);
+}
+
+async function handleSaveConfig() {
+  if (savingConfig.value) {
+    return;
+  }
+
+  savingConfig.value = true;
+  errorText.value = '';
+
+  try {
+    if (configModalMode.value === 'shop') {
+      const shopId = normalizeText(activeShopForConfig.value && activeShopForConfig.value.shopId);
+
+      applySettingsResult(await savePromotionMonitorShopConfigSettings({
+        shopId,
+        config: configDraft.value,
+        currentShopConfigs: monitorShopConfigs.value
+      }));
+    } else {
+      applySettingsResult(await savePromotionMonitorConfigSettings(configDraft.value));
+    }
+
+    configModalVisible.value = false;
+  } catch (error) {
+    errorText.value = buildErrorText(error, saveFailedText);
+  } finally {
+    savingConfig.value = false;
+  }
+}
+
+async function handleClearShopConfig() {
+  if (savingConfig.value || configModalMode.value !== 'shop') {
+    return;
+  }
+
+  const shopId = normalizeText(activeShopForConfig.value && activeShopForConfig.value.shopId);
+
+  if (!shopId) {
+    return;
+  }
+
+  savingConfig.value = true;
+  errorText.value = '';
+
+  try {
+    applySettingsResult(await clearPromotionMonitorShopConfigSettings({
+      shopId,
+      currentShopConfigs: monitorShopConfigs.value
+    }));
+    configModalVisible.value = false;
+  } catch (error) {
+    errorText.value = buildErrorText(error, saveFailedText);
+  } finally {
+    savingConfig.value = false;
+  }
+}
+
+function setShopToggling(shopId, toggling) {
+  const normalizedShopId = normalizeText(shopId);
+
+  if (!normalizedShopId) {
+    return;
+  }
+
+  const nextShopIds = new Set(togglingShopIds.value);
+
+  if (toggling === true) {
+    nextShopIds.add(normalizedShopId);
+  } else {
+    nextShopIds.delete(normalizedShopId);
+  }
+
+  togglingShopIds.value = Array.from(nextShopIds);
+}
+
+async function handleToggleShop(row, checked) {
+  const shopId = normalizeText(row && row.shopId);
+
+  if (!shopId || togglingShopIds.value.includes(shopId)) {
+    return;
+  }
+
+  setShopToggling(shopId, true);
+  errorText.value = '';
+
+  try {
+    snapshot.value = await setPromotionMonitorShopEnabled({
+      shopId,
+      enabled: checked === true
+    });
+  } catch (error) {
+    errorText.value = buildErrorText(error, toggleShopFailedText);
+  } finally {
+    setShopToggling(shopId, false);
+  }
+}
+
+async function handleBatchActiveChange(checked) {
+  if (batchActiveSaving.value) {
+    return;
+  }
+
+  batchActiveSaving.value = true;
+  errorText.value = '';
+
+  try {
+    snapshot.value = await setPromotionMonitorBatchActive(checked === true);
+  } catch (error) {
+    errorText.value = buildErrorText(error, batchActiveFailedText);
+  } finally {
+    batchActiveSaving.value = false;
+  }
+}
+
 onMounted(() => {
-  void loadShopRows();
+  void loadWorkspaceData();
+  startSnapshotRefresh();
+});
+
+onBeforeUnmount(() => {
+  stopSnapshotRefresh();
 });
 </script>

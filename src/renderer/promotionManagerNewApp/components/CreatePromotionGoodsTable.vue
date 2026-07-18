@@ -42,25 +42,40 @@
             <div class="pm-new-goods-main-info">
               <strong :title="record.goodsName">{{ record.goodsName || emptyCellText }}</strong>
               <div class="pm-new-goods-id-grid">
-                <span>{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
-                <span>{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
-                <span>{{ skuLabel }} {{ record.skuEncode || emptyCellText }}</span>
+                <span class="pm-new-goods-id-chip">{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
+                <span class="pm-new-goods-id-chip">{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
+                <span class="pm-new-goods-id-chip">{{ skuLabel }} {{ record.skuEncode || emptyCellText }}</span>
               </div>
-              <div class="pm-new-goods-inline-meta">
-                <span>{{ record.shopName || emptyCellText }}</span>
-                <span>{{ record.regionLabel || emptyCellText }}</span>
-                <span>{{ mallIdLabel }} {{ record.mallId || emptyCellText }}</span>
-                <span>{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
+              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--channel">
+                <span class="pm-new-goods-meta-chip is-shop">{{ record.shopName || emptyCellText }}</span>
+                <span class="pm-new-goods-meta-chip is-region">{{ record.regionLabel || emptyCellText }}</span>
+                <span class="pm-new-goods-meta-chip">{{ mallIdLabel }} {{ record.mallId || emptyCellText }}</span>
+                <span class="pm-new-goods-meta-chip">{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
               </div>
-              <div class="pm-new-goods-inline-meta">
-                <span :title="record.categoryText">{{ categoryLabel }} {{ record.categoryText || emptyCellText }}</span>
-                <span :title="record.siteText">{{ siteLabel }} {{ record.siteText || emptyCellText }}</span>
+              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--taxonomy">
+                <span
+                  class="pm-new-goods-meta-chip"
+                  :title="record.categoryText"
+                >
+                  {{ categoryLabel }} {{ record.categoryText || emptyCellText }}
+                </span>
+                <span
+                  class="pm-new-goods-meta-chip"
+                  :title="record.siteText"
+                >
+                  {{ siteLabel }} {{ record.siteText || emptyCellText }}
+                </span>
               </div>
-              <div class="pm-new-goods-inline-meta">
-                <span>{{ priceLabel }} {{ record.priceText || emptyCellText }}</span>
-                <span>{{ stockLabel }} {{ record.skuTotalQuantity || emptyCellText }}</span>
-                <span>{{ salesLabel }} {{ record.sales || emptyCellText }}</span>
-                <span :title="record.promotionText">{{ promotionLabel }} {{ record.promotionText || emptyCellText }}</span>
+              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--stats">
+                <span class="pm-new-goods-stat-chip">{{ priceLabel }} {{ record.priceText || emptyCellText }}</span>
+                <span class="pm-new-goods-stat-chip">{{ stockLabel }} {{ record.skuTotalQuantity || emptyCellText }}</span>
+                <span class="pm-new-goods-stat-chip">{{ salesLabel }} {{ record.sales || emptyCellText }}</span>
+                <span
+                  class="pm-new-goods-stat-chip"
+                  :title="record.promotionText"
+                >
+                  {{ promotionLabel }} {{ record.promotionText || emptyCellText }}
+                </span>
               </div>
             </div>
           </div>
@@ -70,6 +85,7 @@
         :title="goodsColumnCreateStatus"
         data-index="createStatus"
         :width="goodsColumnCreateStatusWidth"
+        align="center"
       >
         <template #cell="{ record }">
           <div class="pm-new-create-status-cell">
@@ -94,38 +110,41 @@
         :title="goodsColumnDailyBudget"
         data-index="dailyBudget"
         :width="goodsColumnDailyBudgetWidth"
+        align="center"
       >
         <template #cell="{ record }">
           <div class="pm-new-goods-control-cell">
-            <a-radio-group
-              class="pm-new-budget-radio-group"
-              :model-value="getRowDraft(record).budgetMode"
-              type="button"
-              size="small"
-              @change="(value) => $emit('update-row-draft', record, { budgetMode: value })"
-            >
-              <a-radio
-                v-for="option in budgetModeOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </a-radio>
-            </a-radio-group>
-            <div
-              v-if="getRowDraft(record).budgetMode === budgetModeCustom"
-              class="pm-new-control-inline"
-            >
-              <a-input-number
-                :model-value="getRowDraft(record).customBudget"
-                :min="getDailyBudgetMin(record)"
-                :max="getDailyBudgetMax(record)"
-                :precision="0"
+            <div class="pm-new-budget-control-row">
+              <a-radio-group
+                class="pm-new-budget-radio-group"
+                :model-value="getRowDraft(record).budgetMode"
+                type="button"
                 size="small"
-                mode="button"
-                model-event="input"
-                @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
-              />
+                @change="(value) => $emit('update-row-draft', record, { budgetMode: value })"
+              >
+                <a-radio
+                  v-for="option in budgetModeOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </a-radio>
+              </a-radio-group>
+              <div
+                v-if="getRowDraft(record).budgetMode === budgetModeCustom"
+                class="pm-new-control-inline"
+              >
+                <a-input-number
+                  :model-value="getRowDraft(record).customBudget"
+                  :min="getDailyBudgetMin(record)"
+                  :max="getDailyBudgetMax(record)"
+                  :precision="0"
+                  size="small"
+                  mode="button"
+                  model-event="input"
+                  @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
+                />
+              </div>
             </div>
             <span
               v-if="isBudgetCustom(record) && buildDailyBudgetHint(record)"
@@ -140,6 +159,7 @@
         :title="goodsColumnTargetRoas"
         data-index="targetRoas"
         :width="goodsColumnTargetRoasWidth"
+        align="center"
       >
         <template #cell="{ record }">
           <div class="pm-new-goods-roas-cell">
@@ -197,15 +217,16 @@
                       @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
                     />
                   </span>
+                  <span
+                    v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
+                    class="pm-new-roas-custom-range"
+                    :title="`${customRoasRangeLabel} ${buildCustomRoasHint(record)}`"
+                  >
+                    {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
+                  </span>
                 </span>
               </a-radio>
             </a-radio-group>
-            <span
-              v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
-              class="pm-new-goods-field-hint"
-            >
-              {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
-            </span>
           </div>
         </template>
       </a-table-column>
@@ -301,10 +322,10 @@ const noImageText = '\u65e0\u56fe';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const budgetModeCustom = BUDGET_MODE_CUSTOM;
 const roasModeCustom = ROAS_MODE_CUSTOM;
-const goodsColumnProductWidth = 520;
-const goodsColumnCreateStatusWidth = 120;
-const goodsColumnDailyBudgetWidth = 210;
-const goodsColumnTargetRoasWidth = 400;
+const goodsColumnProductWidth = 480;
+const goodsColumnCreateStatusWidth = 108;
+const goodsColumnDailyBudgetWidth = 224;
+const goodsColumnTargetRoasWidth = 360;
 const virtualListThreshold = 120;
 
 const rowSelection = Object.freeze({

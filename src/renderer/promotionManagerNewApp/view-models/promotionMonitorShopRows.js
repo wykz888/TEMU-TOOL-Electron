@@ -1,12 +1,55 @@
 const ENABLED_STATUS_LABEL = '\u5f00\u542f';
 const UNGROUPED_LABEL = '\u672a\u5206\u7ec4';
+const HIDDEN_VISIBLE_VALUES = Object.freeze([
+  '0',
+  'false',
+  'hidden',
+  'hide',
+  'close',
+  'closed',
+  'disable',
+  'disabled',
+  '\u9690\u85cf',
+  '\u5173\u95ed'
+]);
+const SHOWN_VISIBLE_VALUES = Object.freeze([
+  '1',
+  'true',
+  'visible',
+  'show',
+  'open',
+  'opened',
+  'enable',
+  'enabled',
+  '\u663e\u793a',
+  '\u5f00\u542f',
+  '\u542f\u7528'
+]);
 
 export function normalizeText(value) {
   return String(value == null ? '' : value).trim();
 }
 
-function normalizeVisibleFlag(value) {
-  return value !== false;
+function normalizeVisibleFlag(value, fallback = true) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  const normalizedValue = normalizeText(value).toLowerCase();
+
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  if (HIDDEN_VISIBLE_VALUES.includes(normalizedValue)) {
+    return false;
+  }
+
+  if (SHOWN_VISIBLE_VALUES.includes(normalizedValue)) {
+    return true;
+  }
+
+  return fallback;
 }
 
 function normalizeShopRow(shop) {

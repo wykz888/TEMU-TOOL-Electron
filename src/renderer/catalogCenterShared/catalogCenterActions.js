@@ -24,7 +24,6 @@ const FEATURE_ACTION_HANDLERS = Object.freeze({
   }),
   'open-global-category-sync': (bridge) => bridge.openGlobalCategorySync(),
   'open-promotion-manager': (bridge) => bridge.openPromotionManager(),
-  'open-promotion-manager-new': (bridge) => bridge.openPromotionManagerNew(),
   'open-pod-upload-sheet-miaoshou': (bridge) => bridge.openPodUploadSheetMiaoshou({
     promptForNewWindow: true
   }),

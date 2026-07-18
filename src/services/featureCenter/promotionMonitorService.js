@@ -1,15 +1,24 @@
 ﻿const fs = require('node:fs');
 const path = require('node:path');
-const crypto = require('node:crypto');
 const { cosService, COS_SCOPES } = require('../cos');
 const {
   buildOwnerDescriptor,
   normalizeText,
   isShopParticipating
 } = require('../shopManagement/common');
+const {
+  ADS_DETAIL_PAGE_SIZE,
+  ADS_DETAIL_PAUSED_PAGE_SIZE,
+  ADS_DETAIL_SORT_BY_PAUSED_STATUS,
+  ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT,
+  ADS_DETAIL_SORT_BY_TOTAL_SPEND,
+  buildAdsDetailPayload: buildAdsDetailRequestPayload,
+  normalizeAdsDetailSortBy,
+  resolveAdsDetailSummaryValue
+} = require('./promotionAdsDetailUtils');
 
 const SERVICE_VERSION = 1;
-const MODULE_ID = 'campaign-monitor';
+const MODULE_ID = 'promotion-master-new-campaign-monitor';
 const CONFIG_FILE_NAME = 'monitor-config.json';
 const STATE_FILE_NAME = 'monitor-state.json';
 const LOOP_INTERVAL_MS = 4000;
@@ -20,12 +29,7 @@ const RETRY_BASE_DELAY_MS = 20000;
 const RETRY_MAX_DELAY_MS = 180000;
 const ADS_DETAIL_URL = 'https://ads.temu.com/api/v1/coconut/ad/ads_detail';
 const ADS_MODIFY_URL = 'https://ads.temu.com/api/v1/coconut/ad/modify_ads';
-const ADS_DETAIL_PAGE_SIZE = 50;
 const ADS_DETAIL_MAX_PAGES = 20;
-const ADS_DETAIL_PAUSED_PAGE_SIZE = 50;
-const ADS_DETAIL_SORT_BY_PAUSED_STATUS = 0;
-const ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT = 2;
-const ADS_DETAIL_SORT_BY_TOTAL_SPEND = 3;
 const ADS_DETAIL_PAUSED_STATUS_CODE = 7;
 const ADS_DETAIL_RUNNING_STATUS_CODE = 8;
 const ADS_DETAIL_MIN_ORDER_COUNT_FOR_PAGING = 1;
@@ -302,9 +306,26 @@ const RATIO_COLUMN_ID_SET = new Set([
 const MONITOR_ACTION_TYPES = Object.freeze([
   'pause_plan',
   'pause_then_resume',
+  'pause_then_modify',
+  'pause_then_modify_resume',
   'delete_plan',
   'update_roas',
   'increase_roas'
+]);
+const PAUSE_SEQUENCE_ACTION_TYPES = new Set([
+  'pause_then_resume',
+  'pause_then_modify',
+  'pause_then_modify_resume'
+]);
+const RESUME_SEQUENCE_ACTION_TYPES = new Set([
+  'pause_then_resume',
+  'pause_then_modify_resume'
+]);
+const TARGET_ROAS_ACTION_TYPES = new Set([
+  'update_roas',
+  'increase_roas',
+  'pause_then_modify',
+  'pause_then_modify_resume'
 ]);
 
 const MONITOR_EXECUTION_ACTION_TYPES = Object.freeze([
@@ -321,6 +342,7 @@ const MONITOR_OPERATION_REASON_TYPES = Object.freeze([
 ]);
 
 const ADS_DETAIL_ITEM_LIST_KEYS = Object.freeze([
+  'ads_detail',
   'list',
   'items',
   'rows',
@@ -487,6 +509,8 @@ const ADS_DETAIL_TOTAL_PAGE_ALIASES = Object.freeze([
 
 const ADS_DETAIL_TOTAL_COUNT_ALIASES = Object.freeze([
   'total',
+  'total_goods_num',
+  'totalGoodsNum',
   'total_count',
   'totalCount',
   'total_num',
@@ -2227,42 +2251,7 @@ function createPromotionMonitorService({
   }
 
   function buildAdsDetailPayload(options = {}) {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const rawSortBy = Number(options.sortBy);
-    const sortBy = (
-      rawSortBy === ADS_DETAIL_SORT_BY_PAUSED_STATUS
-      || rawSortBy === ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT
-      || rawSortBy === ADS_DETAIL_SORT_BY_TOTAL_SPEND
-    )
-      ? rawSortBy
-      : ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT;
-    const pageNumber = Math.max(1, Number(options.pageNumber) || 1);
-    const pageSize = Math.max(1, Number.parseInt(options.pageSize, 10) || ADS_DETAIL_PAGE_SIZE);
-    const adStatus = Array.isArray(options.adStatus)
-      ? options.adStatus
-        .map((value) => Number.parseInt(value, 10))
-        .filter((value) => Number.isFinite(value) && value >= 0)
-      : [];
-
-    return {
-      ad_status: adStatus,
-      ad_advice_types: [],
-      page_size: pageSize,
-      page_number: pageNumber,
-      specific_query_info: '',
-      sort_by: sortBy,
-      sort_type: 'desc',
-      start_time: startOfDay.getTime(),
-      end_time: now.getTime(),
-      need_calculate_goods_summary: true,
-      list_id: typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`,
-      columns_type: 11,
-      filter_cooperative_ad_type: 0,
-      ad_phase: -1
-    };
+    return buildAdsDetailRequestPayload(options);
   }
 
   function isPlainObject(value) {
@@ -2684,13 +2673,33 @@ function createPromotionMonitorService({
     return text;
   }
 
+  function resolveMonitorSummaryValue(summaryContainer, columnId) {
+    const explicitValue = resolveAdsDetailSummaryValue(summaryContainer, columnId);
+
+    if (explicitValue) {
+      return explicitValue;
+    }
+
+    if (
+      summaryContainer
+      && isPlainObject(summaryContainer.normalizedReportsSummary)
+      && Object.prototype.hasOwnProperty.call(summaryContainer.normalizedReportsSummary, columnId)
+    ) {
+      const reportsValue = extractValueCandidate(summaryContainer.normalizedReportsSummary[columnId]);
+
+      if (reportsValue) {
+        return reportsValue;
+      }
+    }
+
+    return findValueByAlias(summaryContainer, COLUMN_VALUE_ALIASES[columnId] || [columnId]);
+  }
+
   function mapSummaryToMetrics(summaryContainer) {
     return MONITOR_COLUMN_IDS.reduce((result, columnId) => {
-      const aliases = COLUMN_VALUE_ALIASES[columnId] || [columnId];
-
       result[columnId] = normalizeMetricDisplayValue(
         columnId,
-        findValueByAlias(summaryContainer, aliases) || '--'
+        resolveMonitorSummaryValue(summaryContainer, columnId) || '--'
       );
       return result;
     }, {});
@@ -2700,16 +2709,16 @@ function createPromotionMonitorService({
     return Math.max(
       0,
       Math.round(
-        parseMetricNumber(findValueByAlias(summaryContainer, COLUMN_VALUE_ALIASES.order_pay_count_label)) || 0
+        parseMetricNumber(resolveMonitorSummaryValue(summaryContainer, 'order_pay_count_label')) || 0
       )
     );
   }
 
   function resolveSummaryGoodsCount(summaryContainer) {
     const preferredCount =
-      parseMetricNumber(findValueByAlias(summaryContainer, COLUMN_VALUE_ALIASES.goods_num_label));
+      parseMetricNumber(resolveMonitorSummaryValue(summaryContainer, 'goods_num_label'));
     const fallbackCount =
-      parseMetricNumber(findValueByAlias(summaryContainer, COLUMN_VALUE_ALIASES.goods_num_all));
+      parseMetricNumber(resolveMonitorSummaryValue(summaryContainer, 'goods_num_all'));
     const resolvedCount = preferredCount !== null ? preferredCount : fallbackCount;
 
     return Math.max(0, Math.round(resolvedCount || 0));
@@ -2984,6 +2993,119 @@ function createPromotionMonitorService({
     });
   }
 
+  function findDirectValueByKeys(container, keys) {
+    if (!isPlainObject(container)) {
+      return '';
+    }
+
+    for (const key of Array.isArray(keys) ? keys : []) {
+      if (!Object.prototype.hasOwnProperty.call(container, key)) {
+        continue;
+      }
+
+      const candidate = extractValueCandidate(container[key]);
+
+      if (candidate) {
+        return candidate;
+      }
+    }
+
+    return '';
+  }
+
+  function resolveAdsDetailTargetRoasText(item) {
+    return findDirectValueByKeys(item, [
+      'target_roas',
+      'targetRoas',
+      'target_roas_value',
+      'targetRoasValue',
+      'expect_roas',
+      'expectRoas',
+      'roas',
+      'roas_str',
+      'roasStr'
+    ]) || findValueByAlias(item, ADS_DETAIL_TARGET_ROAS_ALIASES);
+  }
+
+  function resolveAdsDetailCurrentRoasText(item) {
+    const summary = item && item.summary && typeof item.summary === 'object'
+      ? item.summary
+      : {};
+
+    return (
+      resolveMonitorSummaryValue(summary, 'roas_label')
+      || findDirectValueByKeys(item, [
+        'real_roas',
+        'realRoas',
+        'current_roas',
+        'currentRoas',
+        'overall_roas',
+        'overallRoas',
+        'overall_roas_str',
+        'overallRoasStr'
+      ])
+    );
+  }
+
+  function resolveAdsDetailSpendText(item) {
+    const summary = item && item.summary && typeof item.summary === 'object'
+      ? item.summary
+      : {};
+
+    return resolveMonitorSummaryValue(summary, 'ad_spend_label')
+      || findValueByAlias(item, COLUMN_VALUE_ALIASES.ad_spend_label);
+  }
+
+  function resolveAdsDetailOrderCountText(item) {
+    const summary = item && item.summary && typeof item.summary === 'object'
+      ? item.summary
+      : {};
+
+    return resolveMonitorSummaryValue(summary, 'order_pay_count_label')
+      || findValueByAlias(item, COLUMN_VALUE_ALIASES.order_pay_count_label);
+  }
+
+  function normalizeAdsDetailSiteNames(item) {
+    const sourceValues = Array.isArray(item && item.site_name_list)
+      ? item.site_name_list
+      : [];
+
+    return sourceValues.map((value) => normalizeText(value)).filter(Boolean);
+  }
+
+  function normalizeOptionalFlag(value) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const numericValue = Number(value);
+
+    return Number.isFinite(numericValue) ? numericValue === 1 : null;
+  }
+
+  function resolveAdsDetailFastStartEnabled(item) {
+    const info = item && item.fast_start_info && typeof item.fast_start_info === 'object'
+      ? item.fast_start_info
+      : {};
+    const candidates = [
+      info.active,
+      item && item.fast_start_state,
+      item && item.fast_start_enable,
+      info.enable,
+      info.state
+    ];
+
+    for (const candidate of candidates) {
+      const flag = normalizeOptionalFlag(candidate);
+
+      if (typeof flag === 'boolean') {
+        return flag;
+      }
+    }
+
+    return false;
+  }
+
   function normalizeAdsDetailItem(item, regionId) {
     if (!isPlainObject(item)) {
       return null;
@@ -2992,6 +3114,9 @@ function createPromotionMonitorService({
     const goodsId = normalizeText(findValueByAlias(item, ADS_DETAIL_GOODS_ID_ALIASES));
     const adId = normalizeText(findValueByAlias(item, ADS_DETAIL_AD_ID_ALIASES));
     const productName = normalizeText(findValueByAlias(item, ADS_DETAIL_PRODUCT_NAME_ALIASES));
+    const summary = item.summary && typeof item.summary === 'object' ? item.summary : {};
+    const currentRoasText = resolveAdsDetailCurrentRoasText(item);
+    const targetRoasText = resolveAdsDetailTargetRoasText(item);
 
     if (!goodsId && !adId) {
       return null;
@@ -3002,10 +3127,18 @@ function createPromotionMonitorService({
       goodsId,
       adId,
       productName,
-      adSpend: normalizeMoneyMetricValue(findValueByAlias(item, COLUMN_VALUE_ALIASES.ad_spend_label)),
-      orderCount: parseMetricNumber(findValueByAlias(item, COLUMN_VALUE_ALIASES.order_pay_count_label)) || 0,
-      currentRoasRaw: normalizeRoasRawValue(findValueByAlias(item, COLUMN_VALUE_ALIASES.roas_label)),
-      targetRoasRaw: normalizeRoasRawValue(findValueByAlias(item, ADS_DETAIL_TARGET_ROAS_ALIASES)),
+      productImageUrl: normalizeText(findDirectValueByKeys(item, ['goods_image_url', 'goodsImageUrl', 'image_url', 'imageUrl'])),
+      siteNames: normalizeAdsDetailSiteNames(item),
+      budget: parseMetricNumber(findDirectValueByKeys(item, ['budget'])),
+      budgetText: findDirectValueByKeys(item, ['budget_str', 'budgetStr']),
+      adSpend: normalizeMoneyMetricValue(resolveAdsDetailSpendText(item)),
+      orderCount: parseMetricNumber(resolveAdsDetailOrderCountText(item)) || 0,
+      currentRoasRaw: normalizeRoasRawValue(currentRoasText),
+      currentRoasText: normalizeText(currentRoasText),
+      targetRoasRaw: normalizeRoasRawValue(targetRoasText),
+      targetRoasText: normalizeText(targetRoasText),
+      fastStartEnabled: resolveAdsDetailFastStartEnabled(item),
+      summary: mapSummaryToMetrics(summary),
       isPaused: resolveAdsDetailPausedState(item),
       raw: item
     };
@@ -3123,6 +3256,14 @@ function createPromotionMonitorService({
       goodsId: normalizeText(nextItem.goodsId) || normalizeText(previousItem.goodsId),
       adId: normalizeText(nextItem.adId) || normalizeText(previousItem.adId),
       productName: normalizeText(nextItem.productName) || normalizeText(previousItem.productName),
+      productImageUrl: normalizeText(nextItem.productImageUrl) || normalizeText(previousItem.productImageUrl),
+      siteNames: Array.isArray(nextItem.siteNames) && nextItem.siteNames.length > 0
+        ? nextItem.siteNames.slice()
+        : (Array.isArray(previousItem.siteNames) ? previousItem.siteNames.slice() : []),
+      budget: nextItem.budget !== null && nextItem.budget !== undefined
+        ? nextItem.budget
+        : previousItem.budget,
+      budgetText: normalizeText(nextItem.budgetText) || normalizeText(previousItem.budgetText),
       adSpend: typeof nextItem.adSpend === 'number' && Number.isFinite(nextItem.adSpend)
         ? nextItem.adSpend
         : previousItem.adSpend,
@@ -3137,6 +3278,14 @@ function createPromotionMonitorService({
       currentRoasRaw: nextItem.currentRoasRaw !== null && nextItem.currentRoasRaw !== undefined
         ? nextItem.currentRoasRaw
         : previousItem.currentRoasRaw,
+      currentRoasText: normalizeText(nextItem.currentRoasText) || normalizeText(previousItem.currentRoasText),
+      targetRoasText: normalizeText(nextItem.targetRoasText) || normalizeText(previousItem.targetRoasText),
+      fastStartEnabled: typeof nextItem.fastStartEnabled === 'boolean'
+        ? nextItem.fastStartEnabled
+        : previousItem.fastStartEnabled,
+      summary: nextItem.summary && typeof nextItem.summary === 'object'
+        ? { ...nextItem.summary }
+        : (previousItem.summary && typeof previousItem.summary === 'object' ? { ...previousItem.summary } : {}),
       isPaused: typeof nextItem.isPaused === 'boolean'
         ? nextItem.isPaused
         : previousItem.isPaused,
@@ -3195,20 +3344,31 @@ function createPromotionMonitorService({
 
   async function fetchAdsDetailItemsBySortForRegion(shopId, regionId, options = {}) {
     const normalizedRegionId = normalizeText(regionId);
-    const rawSortBy = Number(options.sortBy);
-    const sortBy = (
-      rawSortBy === ADS_DETAIL_SORT_BY_PAUSED_STATUS
-      || rawSortBy === ADS_DETAIL_SORT_BY_TOTAL_SPEND
-      || rawSortBy === ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT
-    )
-      ? rawSortBy
-      : ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT;
+    const sortBy = normalizeAdsDetailSortBy(options.sortBy, ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT);
     const spendThreshold = Number.isFinite(Number(options.spendThreshold))
       ? Number(options.spendThreshold)
       : null;
     const pageSize = Math.max(1, Number.parseInt(options.pageSize, 10) || ADS_DETAIL_PAGE_SIZE);
     const adStatus = Array.isArray(options.adStatus) ? options.adStatus : [];
     let firstResponse = options.firstResponse || null;
+    let pagingListId = normalizeText(
+      options.listId
+      || options.list_id
+      || (options.requestPayload && options.requestPayload.list_id)
+      || (options.firstRequestPayload && options.firstRequestPayload.list_id)
+    );
+
+    function buildPagePayload(pageNumber) {
+      const payload = buildAdsDetailPagePayload(pageNumber, {
+        sortBy,
+        adStatus,
+        pageSize,
+        listId: pagingListId
+      });
+
+      pagingListId = normalizeText(payload && payload.list_id) || pagingListId;
+      return payload;
+    }
 
     if (!firstResponse) {
       const initialFetchResult =
@@ -3218,11 +3378,7 @@ function createPromotionMonitorService({
             shopId,
             normalizedRegionId,
             ADS_DETAIL_URL,
-            buildAdsDetailPagePayload(1, {
-              sortBy,
-              adStatus,
-              pageSize
-            }),
+            buildPagePayload(1),
             {
               reason: `${normalizedRegionId}-ads-detail-sort-${sortBy}-page-1`
             }
@@ -3265,11 +3421,7 @@ function createPromotionMonitorService({
         shopId,
         normalizedRegionId,
         ADS_DETAIL_URL,
-        buildAdsDetailPagePayload(pageNumber, {
-          sortBy,
-          adStatus,
-          pageSize
-        }),
+        buildPagePayload(pageNumber),
         {
           reason: `${normalizedRegionId}-ads-detail-sort-${sortBy}-page-${pageNumber}`
         }
@@ -3312,6 +3464,24 @@ function createPromotionMonitorService({
     let firstResponse = options.firstResponse || null;
     let pageNumber = 1;
     let hasMore = true;
+    let pagingListId = normalizeText(
+      options.listId
+      || options.list_id
+      || (options.requestPayload && options.requestPayload.list_id)
+      || (options.firstRequestPayload && options.firstRequestPayload.list_id)
+    );
+
+    function buildPausedPagePayload(targetPageNumber) {
+      const payload = buildAdsDetailPagePayload(targetPageNumber, {
+        sortBy: ADS_DETAIL_SORT_BY_PAUSED_STATUS,
+        adStatus: [ADS_DETAIL_PAUSED_STATUS_CODE],
+        pageSize: ADS_DETAIL_PAUSED_PAGE_SIZE,
+        listId: pagingListId
+      });
+
+      pagingListId = normalizeText(payload && payload.list_id) || pagingListId;
+      return payload;
+    }
 
     if (firstResponse) {
       const firstPayload = firstResponse && firstResponse.data && typeof firstResponse.data === 'object'
@@ -3337,11 +3507,7 @@ function createPromotionMonitorService({
         shopId,
         normalizedRegionId,
         ADS_DETAIL_URL,
-        buildAdsDetailPagePayload(pageNumber, {
-          sortBy: ADS_DETAIL_SORT_BY_PAUSED_STATUS,
-          adStatus: [ADS_DETAIL_PAUSED_STATUS_CODE],
-          pageSize: ADS_DETAIL_PAUSED_PAGE_SIZE
-        }),
+        buildPausedPagePayload(pageNumber),
         {
           reason: `${normalizedRegionId}-ads-detail-paused-page-${pageNumber}`
         }
@@ -3383,7 +3549,10 @@ function createPromotionMonitorService({
 
     if (pausedOnly) {
       const pausedItems = await fetchPausedAdsDetailItemsForRegion(shopId, normalizedRegionId, {
-        firstResponse
+        firstResponse,
+        listId: options.listId,
+        requestPayload: options.requestPayload,
+        firstRequestPayload: options.firstRequestPayload
       });
 
       return mergeAdsDetailItemLists([
@@ -3396,7 +3565,10 @@ function createPromotionMonitorService({
 
     const childOrderSortedItems = await fetchAdsDetailItemsBySortForRegion(shopId, normalizedRegionId, {
       sortBy: ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT,
-      firstResponse
+      firstResponse,
+      listId: options.listId,
+      requestPayload: options.requestPayload,
+      firstRequestPayload: options.firstRequestPayload
     });
     const itemLists = [childOrderSortedItems];
 
@@ -3585,6 +3757,58 @@ function createPromotionMonitorService({
     };
   }
 
+  function isPauseSequenceActionType(actionType) {
+    return PAUSE_SEQUENCE_ACTION_TYPES.has(normalizeText(actionType));
+  }
+
+  function isResumeSequenceActionType(actionType) {
+    return RESUME_SEQUENCE_ACTION_TYPES.has(normalizeText(actionType));
+  }
+
+  function isModifySequenceActionType(actionType) {
+    return normalizeText(actionType) === 'pause_then_modify'
+      || normalizeText(actionType) === 'pause_then_modify_resume';
+  }
+
+  function resolvePauseSequenceExecution(stat, item, monitorConfig) {
+    const effectivePausedState = resolveEffectivePausedState(item, stat);
+    const config = normalizeMonitorConfig(monitorConfig);
+    const targetRoasRaw = normalizeRoasRawValue(config.targetRoas);
+
+    if (effectivePausedState !== true) {
+      return {
+        executionActionType: 'pause_plan',
+        shouldEvaluateConditions: true
+      };
+    }
+
+    if (
+      isModifySequenceActionType(config.actionType)
+      && targetRoasRaw !== null
+      && item
+      && item.targetRoasRaw !== targetRoasRaw
+    ) {
+      return {
+        executionActionType: 'update_roas',
+        shouldEvaluateConditions: false
+      };
+    }
+
+    if (!isResumeSequenceActionType(config.actionType)) {
+      return {
+        executionActionType: '',
+        skipReason: 'action_payload'
+      };
+    }
+
+    const resumeDecision = resolvePauseThenResumeExecution(stat, item, config);
+
+    return {
+      ...resumeDecision,
+      shouldEvaluateConditions: false
+    };
+  }
+
   function resolveOperationStatRegionId(statKey, stat) {
     const keyRegionId = normalizeText(String(statKey || '').split('::')[0]);
     const statRegionId = normalizeText(stat && stat.lastRegionId);
@@ -3619,7 +3843,7 @@ function createPromotionMonitorService({
   function resolvePauseThenResumeNextRunAt(shopState, monitorConfig) {
     const config = normalizeMonitorConfig(monitorConfig);
 
-    if (config.actionType !== 'pause_then_resume') {
+    if (!isResumeSequenceActionType(config.actionType)) {
       return Number.MAX_SAFE_INTEGER;
     }
 
@@ -3647,7 +3871,7 @@ function createPromotionMonitorService({
   function getDuePauseThenResumeRegionIds(shopState, monitorConfig, now = Date.now()) {
     const config = normalizeMonitorConfig(monitorConfig);
 
-    if (config.actionType !== 'pause_then_resume') {
+    if (!isResumeSequenceActionType(config.actionType)) {
       return [];
     }
 
@@ -3708,7 +3932,7 @@ function createPromotionMonitorService({
     if (
       !shopState
       || shopState.enabled !== true
-      || config.actionType !== 'pause_then_resume'
+      || !isResumeSequenceActionType(config.actionType)
       || config.resumeIntervalMinutes === null
     ) {
       return Number.MAX_SAFE_INTEGER;
@@ -3734,7 +3958,7 @@ function createPromotionMonitorService({
     const config = normalizeMonitorConfig(monitorConfig);
 
     if (
-      config.actionType !== 'pause_then_resume'
+      !isResumeSequenceActionType(config.actionType)
       || config.resumeIntervalMinutes === null
     ) {
       return 0;
@@ -3766,11 +3990,11 @@ function createPromotionMonitorService({
       return false;
     }
 
-    if ((config.actionType === 'update_roas' || config.actionType === 'increase_roas') && config.targetRoas === null) {
+    if (TARGET_ROAS_ACTION_TYPES.has(config.actionType) && config.targetRoas === null) {
       return false;
     }
 
-    if (config.actionType === 'pause_then_resume' && config.resumeIntervalMinutes === null) {
+    if (isResumeSequenceActionType(config.actionType) && config.resumeIntervalMinutes === null) {
       return false;
     }
 
@@ -3830,7 +4054,7 @@ function createPromotionMonitorService({
           ad_id: adId,
           roas: targetRoasRaw,
           goods_id: goodsId,
-          roas_type: 0
+          roas_type: 1
         }]
       };
     }
@@ -3845,7 +4069,7 @@ function createPromotionMonitorService({
           ad_id: adId,
           roas: Math.max(0, item.targetRoasRaw + targetRoasRaw),
           goods_id: goodsId,
-          roas_type: 0
+          roas_type: 1
         }]
       };
     }
@@ -3904,6 +4128,8 @@ function createPromotionMonitorService({
     const actionLabelMap = {
       pause_plan: '\u6682\u505c\u8ba1\u5212',
       pause_then_resume: '\u6682\u505c\u540e\u6062\u590d',
+      pause_then_modify: '\u6682\u505c\u540e\u4fee\u6539',
+      pause_then_modify_resume: '\u6682\u505c\u540e\u4fee\u6539\u6062\u590d',
       resume_plan: '\u6062\u590d\u8ba1\u5212',
       delete_plan: '\u5220\u9664\u8ba1\u5212',
       update_roas: '\u4fee\u6539ROAS',
@@ -3918,6 +4144,8 @@ function createPromotionMonitorService({
     const actionLabelMap = {
       pause_plan: '\u672c\u8f6e\u6682\u505c',
       pause_then_resume: '\u672c\u8f6e\u6682\u505c\u540e\u6062\u590d',
+      pause_then_modify: '\u672c\u8f6e\u6682\u505c\u540e\u4fee\u6539',
+      pause_then_modify_resume: '\u672c\u8f6e\u6682\u505c\u540e\u4fee\u6539\u6062\u590d',
       resume_plan: '\u672c\u8f6e\u6062\u590d',
       delete_plan: '\u672c\u8f6e\u5220\u9664',
       update_roas: '\u672c\u8f6e\u4fee\u6539ROAS',
@@ -3940,14 +4168,14 @@ function createPromotionMonitorService({
         return 'auto_pause_roas';
       }
 
-      if (normalizedSourceActionType === 'pause_then_resume') {
+      if (isPauseSequenceActionType(normalizedSourceActionType)) {
         return 'pause_then_resume_pause';
       }
     }
 
     if (
       normalizedExecutionActionType === 'resume_plan'
-      && normalizedSourceActionType === 'pause_then_resume'
+      && isResumeSequenceActionType(normalizedSourceActionType)
     ) {
       return 'pause_then_resume_resume';
     }
@@ -3967,7 +4195,7 @@ function createPromotionMonitorService({
     }
 
     if (normalizedReasonType === 'pause_then_resume_pause') {
-      return '\u6682\u505c\u540e\u6062\u590d-\u6682\u505c';
+      return '\u6682\u505c\u540e\u5904\u7406-\u6682\u505c';
     }
 
     if (normalizedReasonType === 'pause_then_resume_resume') {
@@ -4171,6 +4399,9 @@ function createPromotionMonitorService({
 
       const regionResult = fetchResult && fetchResult.regions ? fetchResult.regions[region.id] : null;
       const response = regionResult && regionResult.response ? regionResult.response : null;
+      const requestPayload = regionResult && isPlainObject(regionResult.requestPayload)
+        ? regionResult.requestPayload
+        : {};
 
       if (!response || response.ok !== true || response.success === false) {
         continue;
@@ -4178,7 +4409,8 @@ function createPromotionMonitorService({
 
       const items = await fetchAdsDetailItemsForRegion(shopId, region.id, response, {
         pausedOnly,
-        spendThreshold: pausedOnly ? null : autoPauseSpendThreshold
+        spendThreshold: pausedOnly ? null : autoPauseSpendThreshold,
+        requestPayload
       });
 
       for (const item of items) {
@@ -4194,7 +4426,7 @@ function createPromotionMonitorService({
         let autoPauseBySpendMatched = false;
         let autoPauseByRoasMatched = false;
 
-        if (operationStat || config.actionType === 'pause_then_resume') {
+        if (operationStat || isPauseSequenceActionType(config.actionType)) {
           if (!operationStat && item.isPaused === true) {
             operationStat = getShopOperationStat(shopState, region.id, item.goodsId, item.adId, {
               create: true
@@ -4235,35 +4467,24 @@ function createPromotionMonitorService({
           autoPauseByRoasMatched = true;
         }
 
-        if (!autoPauseBySpendMatched && !autoPauseByRoasMatched && config.actionType === 'pause_then_resume') {
-          if (!operationStat && item.isPaused !== true) {
-            executionActionType = 'pause_plan';
-            shouldEvaluateConditions = true;
-          } else {
-            if (!operationStat) {
-              operationStat = getShopOperationStat(shopState, region.id, item.goodsId, item.adId, {
-                create: true
-              });
+        if (!autoPauseBySpendMatched && !autoPauseByRoasMatched && isPauseSequenceActionType(config.actionType)) {
+          const pauseSequenceDecision = resolvePauseSequenceExecution(operationStat, item, config);
+
+          if (!pauseSequenceDecision.executionActionType) {
+            operationSummary.skippedCount += 1;
+
+            if (pauseSequenceDecision.skipReason === 'resume_waiting') {
+              operationSummary.skippedByResumeWaiting += 1;
+            } else {
+              operationSummary.skippedByActionPayload += 1;
             }
-
-            const pauseThenResumeDecision = resolvePauseThenResumeExecution(operationStat, item, config);
-
-            if (!pauseThenResumeDecision.executionActionType) {
-              operationSummary.skippedCount += 1;
-
-              if (pauseThenResumeDecision.skipReason === 'resume_waiting') {
-                operationSummary.skippedByResumeWaiting += 1;
-              } else {
-                operationSummary.skippedByActionPayload += 1;
-              }
-              continue;
-            }
-
-            executionActionType = pauseThenResumeDecision.executionActionType;
-            shouldEvaluateConditions = executionActionType !== 'resume_plan';
-            currentDailyCount = Math.max(0, Number(operationStat && operationStat.dailyCount) || 0);
-            currentTotalCount = Math.max(0, Number(operationStat && operationStat.totalCount) || 0);
+            continue;
           }
+
+          executionActionType = pauseSequenceDecision.executionActionType;
+          shouldEvaluateConditions = pauseSequenceDecision.shouldEvaluateConditions !== false;
+          currentDailyCount = Math.max(0, Number(operationStat && operationStat.dailyCount) || 0);
+          currentTotalCount = Math.max(0, Number(operationStat && operationStat.totalCount) || 0);
         }
 
         if (shouldEvaluateConditions) {
@@ -5060,7 +5281,7 @@ function createPromotionMonitorService({
     const shopLogMeta = await resolveShopLogMeta(normalizedShopId);
 
     if (
-      monitorConfig.actionType !== 'pause_then_resume'
+      !isResumeSequenceActionType(monitorConfig.actionType)
       || monitorConfig.resumeIntervalMinutes === null
     ) {
       return;
@@ -5278,7 +5499,7 @@ function createPromotionMonitorService({
       if (
         shopState.startupPauseResumeSweepPending === true
         && monitorConfig
-        && monitorConfig.actionType === 'pause_then_resume'
+        && isResumeSequenceActionType(monitorConfig.actionType)
         && monitorConfig.resumeIntervalMinutes !== null
         && selectedRegionIds.length > 0
       ) {

@@ -14,7 +14,7 @@ function createPromotionManagerNewSettingsStore({
     sessionStore,
     featureCenterProfileService,
     entryId: ENTRY_ID,
-    entryNotRegisteredMessage: '\u63a8\u5e7f\u5927\u5e08-\u65b0\u5efa\u63a8\u5e7f\u6a21\u5757\u672a\u6ce8\u518c\uff0c\u65e0\u6cd5\u8bfb\u5199\u914d\u7f6e\u3002'
+    entryNotRegisteredMessage: '\u63a8\u5e7f\u5927\u5e08\u65b0\u5efa\u63a8\u5e7f\u6a21\u5757\u672a\u6ce8\u518c\uff0c\u65e0\u6cd5\u8bfb\u5199\u914d\u7f6e\u3002'
   });
 
   function getLocalConfigFilePath(owner) {
@@ -103,7 +103,7 @@ function createPromotionManagerNewSettingsStore({
         key: getCloudConfigKey(owner),
         data: payload,
         metadata: {
-          record_type: 'promotion-manager-new-create-settings',
+          record_type: 'promotion-manager-create-settings',
           owner_user_key: owner.userKey,
           owner_username: owner.username,
           updated_at: normalizeText(payload && payload.updatedAt),

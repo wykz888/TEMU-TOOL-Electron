@@ -79,9 +79,6 @@ function createFeatureCenterPreloadApi({
     openPromotionManager() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER);
     },
-    openPromotionManagerNew() {
-      return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_PROMOTION_MANAGER_NEW);
-    },
     openPodUploadSheetMiaoshou(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.OPEN_POD_UPLOAD_SHEET_MIAOSHOU, payload);
     },
@@ -93,12 +90,6 @@ function createFeatureCenterPreloadApi({
       featureChannels: FEATURE_CHANNELS,
       subscribe
     }),
-    getPromotionManagerSettings() {
-      return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_SETTINGS);
-    },
-    savePromotionManagerSettings(payload) {
-      return ipcRenderer.invoke(FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_SETTINGS, payload);
-    },
     getPromotionMonitorSnapshot() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MONITOR_SNAPSHOT);
     },
@@ -114,6 +105,15 @@ function createFeatureCenterPreloadApi({
     savePromotionManagerNewCreateSettings(payload) {
       return ipcRenderer.invoke(
         FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_NEW_CREATE_SETTINGS,
+        toCloneablePayload(payload)
+      );
+    },
+    getPromotionManagerNewMonitorSettings() {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS);
+    },
+    savePromotionManagerNewMonitorSettings(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS,
         toCloneablePayload(payload)
       );
     },

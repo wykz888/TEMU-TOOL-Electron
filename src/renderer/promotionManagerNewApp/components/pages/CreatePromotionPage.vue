@@ -150,12 +150,12 @@ import {
   patchCreateStatusForRows
 } from '../../view-models/createPromotionSubmitStatus.js';
 import {
-  loadCreatePromotionSelection,
+  loadCreatePromotionSettings,
   normalizeRegionIdList,
   normalizeText,
   normalizeTextList,
   resolveFeatureCenterBridge,
-  saveCreatePromotionSelection
+  saveCreatePromotionSettings
 } from '../../services/createPromotionSettings.js';
 
 const selectedShopIds = ref([]);
@@ -424,11 +424,21 @@ function getFeatureCenterBridgeMethod(methodName) {
 async function loadCreateSettings() {
   restoringSettings = true;
   try {
-    const settings = await loadCreatePromotionSelection();
+    const settings = await loadCreatePromotionSettings();
 
     if (settings) {
       selectedShopIds.value = settings.selectedShopIds;
       selectedRegionCodes.value = settings.selectedRegionIds;
+      goodsFilterDraft.value = normalizeGoodsFilterState(settings.goodsFilterDraft);
+      appliedGoodsFilters.value = normalizeGoodsFilterState(settings.appliedGoodsFilters);
+
+      if (settings.batchSettings && typeof settings.batchSettings === 'object') {
+        batchBudgetMode.value = settings.batchSettings.budgetMode || BUDGET_MODE_UNLIMITED;
+        batchRoasMode.value = settings.batchSettings.roasMode || ROAS_MODE_STRONG;
+        batchFastStartMode.value = settings.batchSettings.fastStartMode || FAST_START_MODE_OFF;
+        batchCustomBudget.value = settings.batchSettings.customBudget;
+        batchCustomRoas.value = settings.batchSettings.customRoas;
+      }
     }
   } catch (error) {
     console.warn(settingsLoadFailedText, error);
@@ -447,9 +457,18 @@ function clearSaveSettingsTimer() {
 }
 
 async function persistCreateSettings() {
-  await saveCreatePromotionSelection({
+  await saveCreatePromotionSettings({
     selectedShopIds: selectedShopIds.value,
-    selectedRegionIds: selectedRegionCodes.value
+    selectedRegionIds: selectedRegionCodes.value,
+    goodsFilterDraft: goodsFilterDraft.value,
+    appliedGoodsFilters: appliedGoodsFilters.value,
+    batchSettings: {
+      budgetMode: batchBudgetMode.value,
+      roasMode: batchRoasMode.value,
+      fastStartMode: batchFastStartMode.value,
+      customBudget: batchCustomBudget.value,
+      customRoas: batchCustomRoas.value
+    }
   });
 }
 
@@ -878,7 +897,17 @@ async function handleShopQuery() {
 }
 
 watch(
-  [selectedShopIds, selectedRegionCodes],
+  [
+    selectedShopIds,
+    selectedRegionCodes,
+    goodsFilterDraft,
+    appliedGoodsFilters,
+    batchBudgetMode,
+    batchRoasMode,
+    batchFastStartMode,
+    batchCustomBudget,
+    batchCustomRoas
+  ],
   scheduleSaveCreateSettings,
   { deep: true }
 );
