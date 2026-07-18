@@ -170,8 +170,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ShopSelectDropdown from '../../../shared/shopSelection/ShopSelectDropdown.vue';
+import {
+  loadCreatePromotionSelection,
+  normalizeRegionIdList,
+  normalizeText,
+  normalizeTextList,
+  resolveFeatureCenterBridge,
+  saveCreatePromotionSelection
+} from '../../services/createPromotionSettings.js';
 
 const selectedShopIds = ref([]);
 const queriedShopIds = ref([]);
@@ -181,6 +189,9 @@ const goodsKeyword = ref('');
 const goodsRows = ref([]);
 const queryError = ref('');
 const queryLoading = ref(false);
+const settingsLoaded = ref(false);
+let saveSettingsTimer = null;
+let restoringSettings = false;
 const queryResult = ref({
   updatedAt: '',
   request: {},
@@ -221,6 +232,7 @@ const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\
 const goodsEmptySearchText = '\u6ca1\u6709\u5339\u914d\u7684\u5546\u54c1';
 const goodsEmptyResultText = '\u6682\u65e0\u5546\u54c1\u6570\u636e';
 const queryNoBridgeText = '\u63a8\u5e7f\u5546\u54c1\u67e5\u8be2\u63a5\u53e3\u672a\u52a0\u8f7d';
+const settingsLoadFailedText = '\u65b0\u5efa\u63a8\u5e7f\u914d\u7f6e\u52a0\u8f7d\u5931\u8d25';
 const queryLoadingText = '\u6b63\u5728\u67e5\u8be2...';
 const queryLoadingGoodsText = '\u6b63\u5728\u67e5\u8be2\u5546\u54c1\u6570\u636e';
 const queryShopCountLabel = '\u5e97\u94fa';
@@ -289,19 +301,9 @@ const goodsEmptyText = computed(() => {
   return goodsEmptyDefaultText;
 });
 
-function normalizeText(value) {
-  return String(value == null ? '' : value).trim();
-}
-
-function normalizeTextList(values) {
-  const sourceItems = Array.isArray(values) ? values : [];
-
-  return Array.from(new Set(sourceItems.map(normalizeText).filter(Boolean)));
-}
-
 function buildGoodsQueryPayload() {
   const shopIds = normalizeTextList(selectedShopIds.value);
-  const regionIds = normalizeTextList(selectedRegionCodes.value);
+  const regionIds = normalizeRegionIdList(selectedRegionCodes.value);
 
   queriedShopIds.value = shopIds.slice();
   queriedRegionCodes.value = regionIds.slice();
@@ -317,6 +319,61 @@ function buildGoodsQueryPayload() {
   };
 }
 
+function getFeatureCenterBridgeMethod(methodName) {
+  const featureCenterBridge = resolveFeatureCenterBridge();
+
+  return featureCenterBridge && featureCenterBridge[methodName];
+}
+
+async function loadCreateSettings() {
+  restoringSettings = true;
+  try {
+    const settings = await loadCreatePromotionSelection();
+
+    if (settings) {
+      selectedShopIds.value = settings.selectedShopIds;
+      selectedRegionCodes.value = settings.selectedRegionIds;
+    }
+  } catch (error) {
+    console.warn(settingsLoadFailedText, error);
+  } finally {
+    await nextTick();
+    restoringSettings = false;
+    settingsLoaded.value = true;
+  }
+}
+
+function clearSaveSettingsTimer() {
+  if (saveSettingsTimer) {
+    window.clearTimeout(saveSettingsTimer);
+    saveSettingsTimer = null;
+  }
+}
+
+async function persistCreateSettings() {
+  await saveCreatePromotionSelection({
+    selectedShopIds: selectedShopIds.value,
+    selectedRegionIds: selectedRegionCodes.value
+  });
+}
+
+function scheduleSaveCreateSettings() {
+  if (!settingsLoaded.value || restoringSettings) {
+    return;
+  }
+
+  clearSaveSettingsTimer();
+  saveSettingsTimer = window.setTimeout(async () => {
+    saveSettingsTimer = null;
+
+    try {
+      await persistCreateSettings();
+    } catch (error) {
+      console.warn('\u65b0\u5efa\u63a8\u5e7f\u914d\u7f6e\u4fdd\u5b58\u5931\u8d25', error);
+    }
+  }, 400);
+}
+
 function buildQueryErrorText(error) {
   return [
     normalizeText(error && error.shopName),
@@ -330,9 +387,7 @@ async function handleShopQuery() {
   queryLoading.value = true;
 
   try {
-    const bridge = window.temuApp
-      && window.temuApp.featureCenter
-      && window.temuApp.featureCenter.queryPromotionManagerNewGoods;
+    const bridge = getFeatureCenterBridgeMethod('queryPromotionManagerNewGoods');
 
     if (typeof bridge !== 'function') {
       throw new Error(queryNoBridgeText);
@@ -361,4 +416,26 @@ async function handleShopQuery() {
     queryLoading.value = false;
   }
 }
+
+watch(
+  [selectedShopIds, selectedRegionCodes],
+  scheduleSaveCreateSettings,
+  { deep: true }
+);
+
+onMounted(() => {
+  void loadCreateSettings();
+});
+
+onBeforeUnmount(() => {
+  const hasPendingSave = Boolean(saveSettingsTimer);
+
+  clearSaveSettingsTimer();
+
+  if (hasPendingSave && settingsLoaded.value) {
+    void persistCreateSettings().catch((error) => {
+      console.warn('\u65b0\u5efa\u63a8\u5e7f\u914d\u7f6e\u4fdd\u5b58\u5931\u8d25', error);
+    });
+  }
+});
 </script>

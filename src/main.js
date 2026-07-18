@@ -19,6 +19,9 @@ const { createPromotionAdsSessionService } = require('./services/featureCenter/p
 const {
   createPromotionManagerNewGoodsService
 } = require('./services/featureCenter/promotionManagerNewGoodsService');
+const {
+  createPromotionManagerNewSettingsService
+} = require('./services/featureCenter/promotionManagerNewSettingsService');
 const { createPromotionMonitorService } = require('./services/featureCenter/promotionMonitorService');
 const { createPromotionManagerSettingsService } = require('./services/featureCenter/promotionManagerSettingsService');
 const {
@@ -127,6 +130,10 @@ const appUpdateService = createAppUpdateService({
   runtimeLogger
 });
 const promotionManagerSettingsService = createPromotionManagerSettingsService({
+  sessionStore,
+  featureCenterProfileService
+});
+const promotionManagerNewSettingsService = createPromotionManagerNewSettingsService({
   sessionStore,
   featureCenterProfileService
 });
@@ -3033,6 +3040,8 @@ app.whenReady().then(() => {
         ? promotionMonitorService.setBatchMonitoringActive(payload)
         : { updatedAt: '', batchMonitoringActive: false, enabledShopIds: [], shops: {} }
     ),
+    getPromotionManagerNewCreateSettings: () => promotionManagerNewSettingsService.getSettings(),
+    savePromotionManagerNewCreateSettings: (payload) => promotionManagerNewSettingsService.saveSettings(payload),
     queryPromotionManagerNewGoods: (payload) => (
       promotionManagerNewGoodsService
         ? promotionManagerNewGoodsService.queryGoods(payload)
