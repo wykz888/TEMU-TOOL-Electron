@@ -46,39 +46,47 @@ body {
 }
 
 .pm-new-switch-tabs {
-  display: flex;
-  gap: 6px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
 }
 
-.pm-new-switch-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.pm-new-switch-tabs .arco-tabs-nav-tab {
   gap: 6px;
+}
+
+.pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab {
   height: 30px;
-  flex: 0 0 auto;
-  padding: 0 12px;
+  margin: 0;
   border: 1px solid rgba(49, 66, 89, 0.12);
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.82);
   color: #41536a;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
   transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
-.pm-new-switch-tab:hover,
-.pm-new-switch-tab.is-active {
+.pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab:hover,
+.pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab-active {
   border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.38);
   background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
   color: var(--theme-primary-color-deep);
 }
 
-.pm-new-switch-tab svg {
+.pm-new-switch-tabs .arco-tabs-content {
+  display: none;
+}
+
+.pm-new-switch-tab-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pm-new-switch-tab-title svg {
   width: 14px;
   height: 14px;
 }
@@ -725,14 +733,14 @@ body.dark-theme .pm-new-goods-empty {
   color: #9aa8ba;
 }
 
-body.dark-theme .pm-new-switch-tab {
+body.dark-theme .pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab {
   background: rgba(20, 29, 43, 0.82);
   border-color: rgba(148, 163, 184, 0.16);
   color: #c7d3e1;
 }
 
-body.dark-theme .pm-new-switch-tab:hover,
-body.dark-theme .pm-new-switch-tab.is-active {
+body.dark-theme .pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab:hover,
+body.dark-theme .pm-new-switch-tabs .arco-tabs-nav-type-rounded .arco-tabs-tab-active {
   color: var(--theme-primary-color-deep);
 }
 

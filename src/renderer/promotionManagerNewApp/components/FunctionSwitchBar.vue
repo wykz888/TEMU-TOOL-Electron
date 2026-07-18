@@ -1,18 +1,26 @@
 <template>
   <header class="pm-new-switch-bar">
-    <nav class="pm-new-switch-tabs" aria-label="Promotion function switch">
-      <button
+    <a-tabs
+      class="pm-new-switch-tabs"
+      :active-key="activeModuleId"
+      type="rounded"
+      size="small"
+      hide-content
+      @change="(moduleId) => $emit('change', moduleId)"
+    >
+      <a-tab-pane
         v-for="moduleItem in modules"
         :key="moduleItem.id"
-        class="pm-new-switch-tab"
-        :class="{ 'is-active': moduleItem.id === activeModuleId }"
-        type="button"
-        @click="$emit('change', moduleItem.id)"
+        :title="moduleItem.label"
       >
-        <component :is="resolveIcon(moduleItem.icon)" />
-        <span>{{ moduleItem.label }}</span>
-      </button>
-    </nav>
+        <template #title>
+          <span class="pm-new-switch-tab-title">
+            <component :is="resolveIcon(moduleItem.icon)" />
+            <span>{{ moduleItem.label }}</span>
+          </span>
+        </template>
+      </a-tab-pane>
+    </a-tabs>
 
     <div class="pm-new-switch-actions">
       <a-button type="outline" size="small">

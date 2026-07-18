@@ -1,142 +1,162 @@
 <template>
-  <div
-    ref="rootRef"
-    class="shared-shop-select"
-  >
-    <button
-      class="shared-shop-select-trigger"
-      :class="{ 'is-open': panelOpen }"
-      type="button"
+  <div class="shared-shop-select">
+    <a-trigger
+      :popup-visible="panelOpen"
+      trigger="click"
+      position="bl"
+      popup-container="body"
+      content-class="shared-shop-select-panel"
       :disabled="disabled"
-      @click="togglePanel"
+      :popup-offset="6"
+      :click-to-close="false"
+      :auto-fit-popup-min-width="true"
+      :update-at-scroll="true"
+      @popup-visible-change="handlePanelVisibleChange"
     >
-      <span class="shared-shop-select-trigger-copy">
-        <span class="shared-shop-select-trigger-value">{{ summaryText }}</span>
-        <span class="shared-shop-select-trigger-meta">{{ metaText }}</span>
-      </span>
-      <span class="shared-shop-select-trigger-arrow" aria-hidden="true">&#9662;</span>
-    </button>
+      <a-button
+        class="shared-shop-select-trigger"
+        :class="{ 'is-open': panelOpen }"
+        html-type="button"
+        :disabled="disabled"
+      >
+        <span class="shared-shop-select-trigger-copy">
+          <span class="shared-shop-select-trigger-value">{{ summaryText }}</span>
+          <span class="shared-shop-select-trigger-meta">{{ metaText }}</span>
+        </span>
+        <IconDown class="shared-shop-select-trigger-arrow" />
+      </a-button>
 
-    <div
-      v-if="panelOpen"
-      class="shared-shop-select-panel"
-    >
-      <div class="shared-shop-select-search-shell">
-        <a-input
-          v-model="keyword"
-          allow-clear
-          size="small"
-          :placeholder="searchPlaceholder"
-        />
-      </div>
-
-      <div class="shared-shop-select-toolbar">
-        <a-button
-          size="mini"
-          type="text"
-          :disabled="loading || visibleShopCount <= 0"
-          @click="toggleVisibleSelection"
-        >
-          {{ visibleToggleText }}
-        </a-button>
-        <a-button
-          size="mini"
-          type="text"
-          :disabled="loading || lastSelectionIds.length <= 0"
-          @click="restoreLastSelection"
-        >
-          {{ restoreLastText }}
-        </a-button>
-        <a-button
-          size="mini"
-          type="text"
-          :disabled="loading || selectedIds.length <= 0"
-          @click="clearSelection"
-        >
-          {{ clearText }}
-        </a-button>
-        <span>{{ visibleMetaText }}</span>
-      </div>
-
-      <div class="shared-shop-select-section-list">
+      <template #content>
         <section
-          v-for="section in visibleSections"
-          :key="section.id"
-          class="shared-shop-select-section"
+          class="shared-shop-select-panel-body"
+          @keydown.esc.stop="closePanel"
         >
-          <div class="shared-shop-select-section-head">
-            <div class="shared-shop-select-section-copy">
-              <strong>{{ section.label }}</strong>
-              <span>{{ section.visibleShops.length }} {{ shopUnitText }}</span>
-            </div>
-            <button
-              class="shared-shop-select-section-action"
-              type="button"
-              @click="toggleSectionSelection(section)"
+          <div class="shared-shop-select-search-shell">
+            <a-input
+              v-model="keyword"
+              allow-clear
+              size="small"
+              :placeholder="searchPlaceholder"
             >
-              {{ isSectionSelected(section) ? sectionClearText : sectionSelectText }}
-            </button>
+              <template #prefix>
+                <IconSearch />
+              </template>
+            </a-input>
           </div>
 
-          <div class="shared-shop-select-shop-list">
-            <label
-              v-for="shop in section.visibleShops"
-              :key="shop.id"
-              class="shared-shop-select-shop-item"
+          <div class="shared-shop-select-toolbar">
+            <a-button
+              size="mini"
+              type="text"
+              :disabled="loading || visibleShopCount <= 0"
+              @click="toggleVisibleSelection"
             >
-              <input
-                type="checkbox"
-                :checked="selectedIdSet.has(shop.id)"
-                @change="handleShopToggle(shop.id, $event.target.checked)"
+              {{ visibleToggleText }}
+            </a-button>
+            <a-button
+              size="mini"
+              type="text"
+              :disabled="loading || lastSelectionIds.length <= 0"
+              @click="restoreLastSelection"
+            >
+              {{ restoreLastText }}
+            </a-button>
+            <a-button
+              size="mini"
+              type="text"
+              :disabled="loading || selectedIds.length <= 0"
+              @click="clearSelection"
+            >
+              {{ clearText }}
+            </a-button>
+            <span>{{ visibleMetaText }}</span>
+          </div>
+
+          <a-scrollbar
+            class="shared-shop-select-section-list-scrollbar"
+            outer-class="shared-shop-select-section-scroll"
+            type="embed"
+          >
+            <div class="shared-shop-select-section-list">
+              <section
+                v-for="section in visibleSections"
+                :key="section.id"
+                class="shared-shop-select-section"
+              >
+                <div class="shared-shop-select-section-head">
+                  <div class="shared-shop-select-section-copy">
+                    <strong>{{ section.label }}</strong>
+                    <span>{{ section.visibleShops.length }} {{ shopUnitText }}</span>
+                  </div>
+                  <a-button
+                    class="shared-shop-select-section-action"
+                    size="mini"
+                    type="text"
+                    @click="toggleSectionSelection(section)"
+                  >
+                    {{ isSectionSelected(section) ? sectionClearText : sectionSelectText }}
+                  </a-button>
+                </div>
+
+                <div class="shared-shop-select-shop-list">
+                  <a-checkbox
+                    v-for="shop in section.visibleShops"
+                    :key="shop.id"
+                    class="shared-shop-select-shop-item"
+                    :model-value="selectedIdSet.has(shop.id)"
+                    @change="(checked) => handleShopToggle(shop.id, checked)"
+                  >
+                    <span class="shared-shop-select-shop-copy">
+                      <span
+                        class="shared-shop-select-shop-name"
+                        :title="shop.shopName"
+                      >
+                        {{ shop.shopName }}
+                      </span>
+                      <span class="shared-shop-select-shop-details">
+                        <span
+                          v-if="shop.groupName"
+                          class="shared-shop-select-shop-group"
+                          :title="shop.groupName"
+                        >
+                          {{ shop.groupName }}
+                        </span>
+                        <span
+                          v-if="shop.accountValue"
+                          class="shared-shop-select-shop-account"
+                          :title="shop.accountValue"
+                        >
+                          {{ shop.accountValue }}
+                        </span>
+                      </span>
+                      <span
+                        v-if="shop.note"
+                        class="shared-shop-select-shop-note"
+                        :title="shop.note"
+                      >
+                        {{ shop.note }}
+                      </span>
+                    </span>
+                  </a-checkbox>
+                </div>
+              </section>
+
+              <a-empty
+                v-if="visibleSections.length <= 0"
+                class="shared-shop-select-empty"
+                :description="emptyText"
               />
-              <span class="shared-shop-select-shop-copy">
-                <span
-                  class="shared-shop-select-shop-name"
-                  :title="shop.shopName"
-                >
-                  {{ shop.shopName }}
-                </span>
-                <span class="shared-shop-select-shop-details">
-                  <span
-                    v-if="shop.groupName"
-                    class="shared-shop-select-shop-group"
-                    :title="shop.groupName"
-                  >
-                    {{ shop.groupName }}
-                  </span>
-                  <span
-                    v-if="shop.accountValue"
-                    class="shared-shop-select-shop-account"
-                    :title="shop.accountValue"
-                  >
-                    {{ shop.accountValue }}
-                  </span>
-                </span>
-                <span
-                  v-if="shop.note"
-                  class="shared-shop-select-shop-note"
-                  :title="shop.note"
-                >
-                  {{ shop.note }}
-                </span>
-              </span>
-            </label>
-          </div>
+            </div>
+          </a-scrollbar>
         </section>
-
-        <div
-          v-if="visibleSections.length <= 0"
-          class="shared-shop-select-empty"
-        >
-          {{ emptyText }}
-        </div>
-      </div>
-    </div>
+      </template>
+    </a-trigger>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { IconDown, IconSearch } from '@arco-design/web-vue/es/icon';
+import { computed, onMounted, ref } from 'vue';
 import {
   buildEmptyShopCatalog,
   loadShopCatalog,
@@ -187,7 +207,6 @@ const lastSelectionIds = ref(readStoredSelection());
 const loaded = ref(false);
 const loading = ref(false);
 const panelOpen = ref(false);
-const rootRef = ref(null);
 
 const selectedIds = computed(() => normalizeShopIds(props.modelValue));
 const selectedIdSet = computed(() => new Set(selectedIds.value));
@@ -326,12 +345,12 @@ function commitSelection(nextIds) {
   writeStoredSelection(normalizedIds);
 }
 
-function togglePanel() {
+function handlePanelVisibleChange(nextVisible) {
   if (props.disabled) {
     return;
   }
 
-  panelOpen.value = !panelOpen.value;
+  panelOpen.value = Boolean(nextVisible);
 
   if (panelOpen.value && loaded.value !== true && loading.value !== true) {
     void refreshShops();
@@ -342,24 +361,10 @@ function closePanel() {
   panelOpen.value = false;
 }
 
-function handleDocumentPointerDown(event) {
-  if (!rootRef.value || rootRef.value.contains(event.target)) {
-    return;
-  }
-
-  closePanel();
-}
-
-function handleDocumentKeydown(event) {
-  if (event.key === 'Escape') {
-    closePanel();
-  }
-}
-
 function handleShopToggle(shopId, checked) {
   const nextIds = new Set(selectedIds.value);
 
-  if (checked) {
+  if (Boolean(checked)) {
     nextIds.add(shopId);
   } else {
     nextIds.delete(shopId);
@@ -438,14 +443,7 @@ async function refreshShops() {
 }
 
 onMounted(() => {
-  document.addEventListener('pointerdown', handleDocumentPointerDown);
-  document.addEventListener('keydown', handleDocumentKeydown);
   void refreshShops();
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', handleDocumentPointerDown);
-  document.removeEventListener('keydown', handleDocumentKeydown);
 });
 
 defineExpose({
@@ -460,10 +458,6 @@ defineExpose({
 }
 
 .shared-shop-select-trigger {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
   width: 100%;
   min-height: 34px;
   padding: 5px 10px;
@@ -474,6 +468,14 @@ defineExpose({
   text-align: left;
   cursor: pointer;
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.shared-shop-select-trigger.arco-btn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  justify-content: stretch;
+  height: auto;
 }
 
 .shared-shop-select-trigger:hover,
@@ -491,6 +493,7 @@ defineExpose({
   display: grid;
   gap: 2px;
   min-width: 0;
+  text-align: left;
 }
 
 .shared-shop-select-trigger-value,
@@ -515,26 +518,30 @@ defineExpose({
 
 .shared-shop-select-trigger-meta,
 .shared-shop-select-trigger-arrow {
+  width: 14px;
+  height: 14px;
   color: #75859b;
   font-size: 12px;
   line-height: 1.25;
 }
 
 .shared-shop-select-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 8px;
-  width: min(460px, calc(100vw - 42px));
-  max-height: 460px;
-  padding: 10px;
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 42px));
+  padding: 0;
   border: 1px solid rgba(49, 66, 89, 0.12);
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 16px 34px rgba(31, 45, 61, 0.16);
+}
+
+.shared-shop-select-panel-body {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  max-height: 460px;
+  padding: 10px;
+  overflow: hidden;
 }
 
 .shared-shop-select-search-shell {
@@ -554,12 +561,23 @@ defineExpose({
   font-size: 12px;
 }
 
+.shared-shop-select-section-list-scrollbar,
+.shared-shop-select-section-scroll {
+  min-height: 0;
+}
+
+.shared-shop-select-section-scroll {
+  max-height: 352px;
+}
+
+.shared-shop-select-section-scroll .arco-scrollbar-container {
+  max-height: 352px;
+}
+
 .shared-shop-select-section-list {
   display: grid;
   align-content: start;
   gap: 8px;
-  min-height: 0;
-  overflow: auto;
   padding-right: 2px;
 }
 
@@ -601,12 +619,8 @@ defineExpose({
 
 .shared-shop-select-section-action {
   flex: 0 0 auto;
-  border: 0;
-  background: transparent;
-  color: var(--theme-primary-color-deep);
   font-size: 12px;
   font-weight: 800;
-  cursor: pointer;
 }
 
 .shared-shop-select-shop-list {
@@ -615,9 +629,7 @@ defineExpose({
 }
 
 .shared-shop-select-shop-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
+  display: flex;
   align-items: flex-start;
   min-width: 0;
   padding: 7px 8px;
@@ -625,12 +637,17 @@ defineExpose({
   cursor: pointer;
 }
 
+.shared-shop-select-shop-item .arco-checkbox-label {
+  min-width: 0;
+  margin-left: 8px;
+}
+
 .shared-shop-select-shop-item:hover {
   background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
 }
 
-.shared-shop-select-shop-item input {
-  margin-top: 2px;
+.shared-shop-select-shop-item .arco-checkbox-icon-hover {
+  margin-top: 1px;
 }
 
 .shared-shop-select-shop-copy {
