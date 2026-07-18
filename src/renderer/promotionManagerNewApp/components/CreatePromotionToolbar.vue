@@ -39,13 +39,88 @@
         >
           {{ queryButtonLabel }}
         </a-button>
-        <a-button
-          class="pm-new-toolbar-filter-button"
-          type="outline"
-          @click="$emit('filter')"
-        >
-          {{ filterButtonLabel }}
-        </a-button>
+      </div>
+    </section>
+
+    <section class="pm-new-toolbar-group pm-new-toolbar-filter-group">
+      <span class="pm-new-toolbar-group-title">{{ filterGroupTitle }}</span>
+      <div class="pm-new-toolbar-filter-fields">
+        <a-input
+          :model-value="filterValues.identityText"
+          class="pm-new-toolbar-filter-input pm-new-toolbar-filter-input--wide"
+          allow-clear
+          size="small"
+          :placeholder="identityPlaceholder"
+          @update:model-value="(value) => patchFilterValues({ identityText: value })"
+        />
+        <a-input
+          :model-value="filterValues.categoryText"
+          class="pm-new-toolbar-filter-input pm-new-toolbar-filter-input--wide"
+          allow-clear
+          size="small"
+          :placeholder="categoryPlaceholder"
+          @update:model-value="(value) => patchFilterValues({ categoryText: value })"
+        />
+        <label class="pm-new-toolbar-field pm-new-toolbar-range-field">
+          <span class="pm-new-toolbar-inline-label">{{ priceRangeLabel }}</span>
+          <a-input-number
+            :model-value="filterValues.priceMin"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="2"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ priceMin: value })"
+          />
+          <span class="pm-new-toolbar-range-separator">~</span>
+          <a-input-number
+            :model-value="filterValues.priceMax"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="2"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ priceMax: value })"
+          />
+        </label>
+        <label class="pm-new-toolbar-field pm-new-toolbar-range-field">
+          <span class="pm-new-toolbar-inline-label">{{ salesRangeLabel }}</span>
+          <a-input-number
+            :model-value="filterValues.salesMin"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="0"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ salesMin: value })"
+          />
+          <span class="pm-new-toolbar-range-separator">~</span>
+          <a-input-number
+            :model-value="filterValues.salesMax"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="0"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ salesMax: value })"
+          />
+        </label>
+        <label class="pm-new-toolbar-field pm-new-toolbar-date-field">
+          <span class="pm-new-toolbar-inline-label">{{ createdRangeLabel }}</span>
+          <a-range-picker
+            :model-value="filterValues.createdRange"
+            class="pm-new-toolbar-date-range"
+            size="small"
+            @update:model-value="(value) => patchFilterValues({ createdRange: value })"
+          />
+        </label>
+        <div class="pm-new-toolbar-filter-buttons">
+          <a-button
+            type="primary"
+            @click="$emit('search-filters')"
+          >
+            {{ filterSearchLabel }}
+          </a-button>
+          <a-button @click="$emit('reset-filters')">
+            {{ filterResetLabel }}
+          </a-button>
+        </div>
       </div>
     </section>
 
@@ -134,11 +209,12 @@
 import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
 import {
   BUDGET_MODE_OPTIONS,
+  EMPTY_GOODS_FILTER_STATE,
   FAST_START_MODE_OPTIONS,
   ROAS_MODE_OPTIONS
 } from '../view-models/createPromotionGoodsRows.js';
 
-defineProps({
+const props = defineProps({
   selectedShopIds: {
     type: Array,
     default: () => []
@@ -167,6 +243,10 @@ defineProps({
     type: String,
     default: ''
   },
+  filterValues: {
+    type: Object,
+    default: () => ({ ...EMPTY_GOODS_FILTER_STATE, createdRange: [] })
+  },
   applyAllDisabled: {
     type: Boolean,
     default: false
@@ -187,20 +267,29 @@ const emit = defineEmits([
   'update:budgetMode',
   'update:roasMode',
   'update:fastStartMode',
+  'update:filterValues',
   'query',
-  'filter',
+  'search-filters',
+  'reset-filters',
   'apply-all',
   'apply-selected',
   'reset'
 ]);
 
 const queryGroupTitle = '\u67e5\u8be2\u7ec4';
+const filterGroupTitle = '\u7b5b\u9009\u7ec4';
 const actionGroupTitle = '\u64cd\u4f5c\u7ec4';
 const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
 const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
-const queryButtonLabel = '\u2460\u67e5\u8be2\u5546\u54c1';
-const filterButtonLabel = '\u2461\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
+const queryButtonLabel = '\u67e5\u8be2\u5546\u54c1';
+const identityPlaceholder = '\u8f93\u5165\u5546\u54c1ID/SPUID\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
+const categoryPlaceholder = '\u8f93\u5165\u7c7b\u76ee\uff0c\u591a\u4e2a\u8bf7\u7528\u9017\u53f7\u6216\u7a7a\u683c\u9694\u5f00';
+const priceRangeLabel = '\u4ef7\u683c\u533a\u95f4\uff1a';
+const salesRangeLabel = '\u9500\u91cf\u533a\u95f4\uff1a';
+const createdRangeLabel = '\u521b\u5efa\u65f6\u95f4\u8303\u56f4\uff1a';
+const filterSearchLabel = '\u641c\u7d22';
+const filterResetLabel = '\u91cd\u7f6e';
 const dailyBudgetLabel = '\u5e7f\u544a\u65e5\u9884\u7b97\uff1a';
 const roasLabel = 'ROAS\u503c\uff1a';
 const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
@@ -229,5 +318,13 @@ function emitRoasMode(value) {
 
 function emitFastStartMode(value) {
   emit('update:fastStartMode', value);
+}
+
+function patchFilterValues(patch) {
+  emit('update:filterValues', {
+    ...EMPTY_GOODS_FILTER_STATE,
+    ...(props.filterValues && typeof props.filterValues === 'object' ? props.filterValues : {}),
+    ...(patch && typeof patch === 'object' ? patch : {})
+  });
 }
 </script>

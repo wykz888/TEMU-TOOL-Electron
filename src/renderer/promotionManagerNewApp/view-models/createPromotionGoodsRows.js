@@ -11,6 +11,16 @@ export const ROAS_MODE_CUSTOM = 'custom';
 export const FAST_START_MODE_OFF = 'off';
 export const FAST_START_MODE_ON = 'on';
 
+export const EMPTY_GOODS_FILTER_STATE = Object.freeze({
+  identityText: '',
+  categoryText: '',
+  priceMin: null,
+  priceMax: null,
+  salesMin: null,
+  salesMax: null,
+  createdRange: []
+});
+
 export const BUDGET_MODE_OPTIONS = Object.freeze([
   { value: BUDGET_MODE_UNLIMITED, label: '\u4e0d\u9650' },
   { value: BUDGET_MODE_CUSTOM, label: '\u81ea\u5b9a\u4e49' }
@@ -63,6 +73,23 @@ function pickNumber(...values) {
   return null;
 }
 
+function normalizeRangeNumbers(minValue, maxValue) {
+  const minNumber = normalizeFiniteNumber(minValue);
+  const maxNumber = normalizeFiniteNumber(maxValue);
+
+  if (minNumber !== null && maxNumber !== null && minNumber > maxNumber) {
+    return {
+      min: maxNumber,
+      max: minNumber
+    };
+  }
+
+  return {
+    min: minNumber,
+    max: maxNumber
+  };
+}
+
 function pickPositiveNumber(...values) {
   for (const value of values) {
     const numberValue = normalizeFiniteNumber(value);
@@ -85,6 +112,101 @@ function firstPresentText(...values) {
   }
 
   return '';
+}
+
+function splitFilterTokens(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .split(/[\s,\uFF0C;\uFF1B]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function parseNumberList(value) {
+  return normalizeText(value)
+    .replace(/,/g, '')
+    .match(/-?\d+(?:\.\d+)?/g)
+    ?.map((entry) => Number(entry))
+    .filter((entry) => Number.isFinite(entry)) || [];
+}
+
+function getRowPriceRange(row) {
+  const numbers = [
+    ...parseNumberList(row && row.priceText),
+    ...parseNumberList(row && row.sitePriceText)
+  ];
+
+  if (numbers.length <= 0) {
+    return {
+      min: null,
+      max: null
+    };
+  }
+
+  return {
+    min: Math.min(...numbers),
+    max: Math.max(...numbers)
+  };
+}
+
+function isNumberRangeOverlapping(rowRange, filterRange) {
+  if (filterRange.min === null && filterRange.max === null) {
+    return true;
+  }
+
+  if (rowRange.min === null && rowRange.max === null) {
+    return false;
+  }
+
+  const rowMin = rowRange.min === null ? rowRange.max : rowRange.min;
+  const rowMax = rowRange.max === null ? rowRange.min : rowRange.max;
+
+  if (filterRange.min !== null && rowMax < filterRange.min) {
+    return false;
+  }
+
+  if (filterRange.max !== null && rowMin > filterRange.max) {
+    return false;
+  }
+
+  return true;
+}
+
+function normalizeTimestamp(value) {
+  if (value instanceof Date) {
+    const time = value.getTime();
+
+    return Number.isFinite(time) ? time : null;
+  }
+
+  const numberValue = normalizeFiniteNumber(value);
+
+  if (numberValue !== null) {
+    return numberValue;
+  }
+
+  const text = normalizeText(value);
+
+  if (!text) {
+    return null;
+  }
+
+  const time = new Date(text).getTime();
+
+  return Number.isFinite(time) ? time : null;
+}
+
+function normalizeEndOfDayTimestamp(value) {
+  const timestamp = normalizeTimestamp(value);
+
+  if (timestamp === null) {
+    return null;
+  }
+
+  const date = new Date(timestamp);
+
+  date.setHours(23, 59, 59, 999);
+  return date.getTime();
 }
 
 function getBidInfo(row) {
@@ -231,35 +353,109 @@ export function buildRoasPredictionOptions(row) {
   });
 }
 
-export function buildGoodsSearchText(row) {
-  const bidInfo = getBidInfo(row);
-  const predictionText = getPredictions(row)
-    .map((entry) => [
-      entry && entry.desc,
-      entry && entry.roasText,
-      entry && entry.summaryText
-    ].map(normalizeText).filter(Boolean).join(' '))
-    .join(' ');
+export function createEmptyGoodsFilterState() {
+  return {
+    ...EMPTY_GOODS_FILTER_STATE,
+    createdRange: []
+  };
+}
 
-  return [
-    row && row.goodsName,
-    row && row.goodsId,
-    row && row.spuId,
-    row && row.skuEncode,
-    row && row.shopName,
-    row && row.regionLabel,
-    row && row.categoryText,
-    row && row.siteText,
-    row && row.priceText,
-    row && row.sitePriceText,
-    row && row.promotionText,
-    row && row.bidBestText,
-    row && row.bidBestRoasText,
-    row && row.bidBestDesc,
-    row && row.bidOptionsText,
-    bidInfo.bestText,
-    predictionText
-  ].map(normalizeText).filter(Boolean).join(' ').toLowerCase();
+export function normalizeGoodsFilterState(filters) {
+  const safeFilters = filters && typeof filters === 'object' ? filters : {};
+  const createdRange = Array.isArray(safeFilters.createdRange) ? safeFilters.createdRange : [];
+
+  return {
+    identityText: normalizeText(safeFilters.identityText),
+    categoryText: normalizeText(safeFilters.categoryText),
+    priceMin: normalizeFiniteNumber(safeFilters.priceMin),
+    priceMax: normalizeFiniteNumber(safeFilters.priceMax),
+    salesMin: normalizeFiniteNumber(safeFilters.salesMin),
+    salesMax: normalizeFiniteNumber(safeFilters.salesMax),
+    createdRange: createdRange.slice(0, 2)
+  };
+}
+
+export function isGoodsFilterActive(filters) {
+  const normalizedFilters = normalizeGoodsFilterState(filters);
+
+  return Boolean(
+    normalizedFilters.identityText
+    || normalizedFilters.categoryText
+    || normalizedFilters.priceMin !== null
+    || normalizedFilters.priceMax !== null
+    || normalizedFilters.salesMin !== null
+    || normalizedFilters.salesMax !== null
+    || normalizedFilters.createdRange.length > 0
+  );
+}
+
+export function filterGoodsRows(rows, filters) {
+  const normalizedFilters = normalizeGoodsFilterState(filters);
+  const identityTokens = splitFilterTokens(normalizedFilters.identityText);
+  const categoryTokens = splitFilterTokens(normalizedFilters.categoryText);
+  const priceRange = normalizeRangeNumbers(normalizedFilters.priceMin, normalizedFilters.priceMax);
+  const salesRange = normalizeRangeNumbers(normalizedFilters.salesMin, normalizedFilters.salesMax);
+  const startTime = normalizeTimestamp(normalizedFilters.createdRange[0]);
+  const endTime = normalizeEndOfDayTimestamp(normalizedFilters.createdRange[1]);
+
+  return (Array.isArray(rows) ? rows : []).filter((row) => {
+    if (identityTokens.length > 0) {
+      const rowIdentityText = [
+        row && row.goodsId,
+        row && row.spuId
+      ].map(normalizeText).join(' ').toLowerCase();
+
+      if (!identityTokens.some((token) => rowIdentityText.includes(token))) {
+        return false;
+      }
+    }
+
+    if (categoryTokens.length > 0) {
+      const rowCategoryText = normalizeText(row && row.categoryText).toLowerCase();
+
+      if (!categoryTokens.some((token) => rowCategoryText.includes(token))) {
+        return false;
+      }
+    }
+
+    if (!isNumberRangeOverlapping(getRowPriceRange(row), priceRange)) {
+      return false;
+    }
+
+    if (salesRange.min !== null || salesRange.max !== null) {
+      const sales = normalizeFiniteNumber(row && row.sales);
+
+      if (sales === null) {
+        return false;
+      }
+
+      if (salesRange.min !== null && sales < salesRange.min) {
+        return false;
+      }
+
+      if (salesRange.max !== null && sales > salesRange.max) {
+        return false;
+      }
+    }
+
+    if (startTime !== null || endTime !== null) {
+      const createTimestamp = normalizeTimestamp(row && row.createTimestamp);
+
+      if (createTimestamp === null) {
+        return false;
+      }
+
+      if (startTime !== null && createTimestamp < startTime) {
+        return false;
+      }
+
+      if (endTime !== null && createTimestamp > endTime) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 }
 
 export function buildGoodsRowDraft(row) {

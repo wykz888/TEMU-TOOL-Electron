@@ -1,11 +1,5 @@
 <template>
   <section class="pm-new-feature-page pm-new-feature-page--create">
-    <div class="pm-new-feature-head">
-      <div>
-        <h2>{{ title }}</h2>
-      </div>
-    </div>
-
     <section class="pm-new-page-panel pm-new-product-panel">
       <div class="pm-new-product-query-shell">
         <CreatePromotionToolbar
@@ -14,13 +8,15 @@
           v-model:budget-mode="batchBudgetMode"
           v-model:roas-mode="batchRoasMode"
           v-model:fast-start-mode="batchFastStartMode"
+          v-model:filter-values="goodsFilterDraft"
           :region-options="regionOptions"
           :query-loading="queryLoading"
           :apply-all-disabled="batchApplyAllDisabled"
           :apply-selected-disabled="batchApplySelectedDisabled"
           :reset-disabled="batchResetDisabled"
           @query="handleShopQuery"
-          @filter="openFilterModal"
+          @search-filters="handleApplyGoodsFilters"
+          @reset-filters="handleResetGoodsFilters"
           @apply-all="handleApplyBatchToAll"
           @apply-selected="handleApplyBatchToSelected"
           @reset="handleResetBatchDrafts"
@@ -39,13 +35,10 @@
         <a-tag size="small" bordered>{{ goodsCountText }}</a-tag>
       </div>
 
-      <div class="pm-new-goods-toolbar">
-        <a-input
-          v-model="goodsKeyword"
-          allow-clear
-          size="small"
-          :placeholder="goodsSearchPlaceholder"
-        />
+      <div
+        v-if="querySummaryText"
+        class="pm-new-goods-toolbar"
+      >
         <span>{{ querySummaryText }}</span>
       </div>
 
@@ -70,16 +63,6 @@
         @update-row-draft="handleUpdateGoodsRowDraft"
       />
     </section>
-
-    <a-modal
-      v-model:visible="filterModalVisible"
-      :title="filterModalTitle"
-      :mask-closable="false"
-      :footer="false"
-      width="760px"
-    >
-      <section class="pm-new-filter-modal-body"></section>
-    </a-modal>
   </section>
 </template>
 
@@ -96,8 +79,11 @@ import {
   applyGoodsRowDraftPatchToRows,
   buildGoodsRowDraft,
   buildGoodsRowDraftMap,
-  buildGoodsSearchText,
-  getGoodsRowKey
+  createEmptyGoodsFilterState,
+  filterGoodsRows,
+  getGoodsRowKey,
+  isGoodsFilterActive,
+  normalizeGoodsFilterState
 } from '../../view-models/createPromotionGoodsRows.js';
 import {
   loadCreatePromotionSelection,
@@ -112,16 +98,16 @@ const selectedShopIds = ref([]);
 const queriedShopIds = ref([]);
 const selectedRegionCodes = ref([]);
 const queriedRegionCodes = ref([]);
-const goodsKeyword = ref('');
 const goodsRows = ref([]);
 const selectedGoodsRowKeys = ref([]);
 const goodsRowDrafts = ref({});
+const goodsFilterDraft = ref(createEmptyGoodsFilterState());
+const appliedGoodsFilters = ref(createEmptyGoodsFilterState());
 const batchBudgetMode = ref(BUDGET_MODE_UNLIMITED);
 const batchRoasMode = ref(ROAS_MODE_STRONG);
 const batchFastStartMode = ref(FAST_START_MODE_OFF);
 const queryError = ref('');
 const queryLoading = ref(false);
-const filterModalVisible = ref(false);
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
 let restoringSettings = false;
@@ -137,10 +123,7 @@ const queryResult = ref({
   failedCount: 0
 });
 
-const title = '\u65b0\u5efa\u63a8\u5e7f';
-const filterModalTitle = '\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
-const goodsSearchPlaceholder = '\u641c\u7d22\u5546\u54c1\u540d / ID / SPU / \u5e97\u94fa';
 const goodsEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
 const goodsEmptySearchText = '\u6ca1\u6709\u5339\u914d\u7684\u5546\u54c1';
 const goodsEmptyResultText = '\u6682\u65e0\u5546\u54c1\u6570\u636e';
@@ -158,17 +141,9 @@ const regionOptions = [
   { value: 'global', label: '\u5168\u7403' }
 ];
 
-const filteredGoodsRows = computed(() => {
-  const keyword = String(goodsKeyword.value || '').trim().toLowerCase();
+const filtersActive = computed(() => isGoodsFilterActive(appliedGoodsFilters.value));
 
-  if (!keyword) {
-    return goodsRows.value;
-  }
-
-  return goodsRows.value.filter((row) => [
-    buildGoodsSearchText(row)
-  ].some((value) => String(value || '').toLowerCase().includes(keyword)));
-});
+const filteredGoodsRows = computed(() => filterGoodsRows(goodsRows.value, appliedGoodsFilters.value));
 
 const goodsCountText = computed(() => (
   `${filteredGoodsRows.value.length} / ${goodsRows.value.length}`
@@ -207,7 +182,7 @@ const goodsEmptyText = computed(() => {
     return queryLoadingGoodsText;
   }
 
-  if (goodsKeyword.value && goodsRows.value.length > 0) {
+  if (filtersActive.value && goodsRows.value.length > 0) {
     return goodsEmptySearchText;
   }
 
@@ -401,6 +376,18 @@ function handleResetBatchDrafts() {
   resetGoodsRowDrafts(goodsRows.value);
 }
 
+function handleApplyGoodsFilters() {
+  const nextFilters = normalizeGoodsFilterState(goodsFilterDraft.value);
+
+  appliedGoodsFilters.value = nextFilters;
+  pruneSelectedGoodsRows(filterGoodsRows(goodsRows.value, nextFilters));
+}
+
+function handleResetGoodsFilters() {
+  goodsFilterDraft.value = createEmptyGoodsFilterState();
+  appliedGoodsFilters.value = createEmptyGoodsFilterState();
+}
+
 async function handleShopQuery() {
   queryError.value = '';
   queryLoading.value = true;
@@ -436,10 +423,6 @@ async function handleShopQuery() {
   } finally {
     queryLoading.value = false;
   }
-}
-
-function openFilterModal() {
-  filterModalVisible.value = true;
 }
 
 watch(
