@@ -26,7 +26,6 @@
 
 <script setup>
 import {
-  IconBarChart,
   IconFile,
   IconNotification,
   IconSend,
@@ -47,7 +46,6 @@ defineProps({
 defineEmits(['change']);
 
 const iconMap = Object.freeze({
-  chart: IconBarChart,
   file: IconFile,
   notification: IconNotification,
   send: IconSend
