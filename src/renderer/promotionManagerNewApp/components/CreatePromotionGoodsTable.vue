@@ -1,186 +1,183 @@
 <template>
-  <div class="pm-new-table-scroll pm-new-goods-table-scroll">
-    <table>
-      <colgroup>
-        <col class="pm-new-goods-select-col" />
-        <col class="pm-new-goods-product-col" />
-        <col class="pm-new-goods-budget-col" />
-        <col class="pm-new-goods-roas-col" />
-      </colgroup>
-      <thead>
-        <tr>
-          <th class="pm-new-goods-select-column">
-            <a-checkbox
-              :model-value="allVisibleRowsSelected"
-              :indeterminate="someVisibleRowsSelected"
-              @change="$emit('toggle-all-visible', $event)"
+  <a-table
+    class="pm-new-goods-table"
+    row-key="rowKey"
+    :data="tableRows"
+    :pagination="false"
+    :bordered="false"
+    :hoverable="true"
+    :stripe="false"
+    :table-layout-fixed="true"
+    :scroll="tableScroll"
+    :row-selection="rowSelection"
+    :selected-keys="selectedRowKeys"
+    :row-class="getRowClass"
+    size="small"
+    @selection-change="$emit('selection-change', $event)"
+  >
+    <template #columns>
+      <a-table-column
+        :title="goodsColumnProduct"
+        data-index="goodsName"
+        :width="goodsColumnProductWidth"
+      >
+        <template #cell="{ record }">
+          <div class="pm-new-goods-product-cell">
+            <img
+              v-if="record.thumbUrl"
+              :src="record.thumbUrl"
+              :alt="record.goodsName"
             />
-          </th>
-          <th>{{ goodsColumnProduct }}</th>
-          <th>{{ goodsColumnDailyBudget }}</th>
-          <th>{{ goodsColumnTargetRoas }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="row in rows"
-          :key="getGoodsRowKey(row)"
-          class="pm-new-goods-row"
-        >
-          <td class="pm-new-goods-select-column">
-            <a-checkbox
-              :model-value="isRowSelected(row)"
-              @change="$emit('toggle-row', row, $event)"
-            />
-          </td>
-          <td>
-            <div class="pm-new-goods-product-cell">
-              <img
-                v-if="row.thumbUrl"
-                :src="row.thumbUrl"
-                :alt="row.goodsName"
-              />
-              <span
-                v-else
-                class="pm-new-goods-thumb-empty"
-              >
-                {{ noImageText }}
-              </span>
-              <div class="pm-new-goods-main-info">
-                <strong :title="row.goodsName">{{ row.goodsName || emptyCellText }}</strong>
-                <div class="pm-new-goods-id-grid">
-                  <span>{{ goodsIdLabel }} {{ row.goodsId || emptyCellText }}</span>
-                  <span>{{ spuIdLabel }} {{ row.spuId || emptyCellText }}</span>
-                  <span>{{ skuLabel }} {{ row.skuEncode || emptyCellText }}</span>
-                </div>
-                <div class="pm-new-goods-inline-meta">
-                  <span>{{ row.shopName || emptyCellText }}</span>
-                  <span>{{ row.regionLabel || emptyCellText }}</span>
-                  <span>{{ mallIdLabel }} {{ row.mallId || emptyCellText }}</span>
-                  <span>{{ createdAtLabel }} {{ row.createdAtText || emptyCellText }}</span>
-                </div>
-                <div class="pm-new-goods-inline-meta">
-                  <span :title="row.categoryText">{{ categoryLabel }} {{ row.categoryText || emptyCellText }}</span>
-                  <span :title="row.siteText">{{ siteLabel }} {{ row.siteText || emptyCellText }}</span>
-                </div>
-                <div class="pm-new-goods-inline-meta">
-                  <span>{{ priceLabel }} {{ row.priceText || emptyCellText }}</span>
-                  <span>{{ stockLabel }} {{ row.skuTotalQuantity || emptyCellText }}</span>
-                  <span>{{ salesLabel }} {{ row.sales || emptyCellText }}</span>
-                  <span :title="row.promotionText">{{ promotionLabel }} {{ row.promotionText || emptyCellText }}</span>
-                </div>
+            <span
+              v-else
+              class="pm-new-goods-thumb-empty"
+            >
+              {{ noImageText }}
+            </span>
+            <div class="pm-new-goods-main-info">
+              <strong :title="record.goodsName">{{ record.goodsName || emptyCellText }}</strong>
+              <div class="pm-new-goods-id-grid">
+                <span>{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
+                <span>{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
+                <span>{{ skuLabel }} {{ record.skuEncode || emptyCellText }}</span>
+              </div>
+              <div class="pm-new-goods-inline-meta">
+                <span>{{ record.shopName || emptyCellText }}</span>
+                <span>{{ record.regionLabel || emptyCellText }}</span>
+                <span>{{ mallIdLabel }} {{ record.mallId || emptyCellText }}</span>
+                <span>{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
+              </div>
+              <div class="pm-new-goods-inline-meta">
+                <span :title="record.categoryText">{{ categoryLabel }} {{ record.categoryText || emptyCellText }}</span>
+                <span :title="record.siteText">{{ siteLabel }} {{ record.siteText || emptyCellText }}</span>
+              </div>
+              <div class="pm-new-goods-inline-meta">
+                <span>{{ priceLabel }} {{ record.priceText || emptyCellText }}</span>
+                <span>{{ stockLabel }} {{ record.skuTotalQuantity || emptyCellText }}</span>
+                <span>{{ salesLabel }} {{ record.sales || emptyCellText }}</span>
+                <span :title="record.promotionText">{{ promotionLabel }} {{ record.promotionText || emptyCellText }}</span>
               </div>
             </div>
-          </td>
-          <td>
-            <div class="pm-new-goods-control-cell">
-              <a-radio-group
-                :model-value="getRowDraft(row).budgetMode"
-                type="button"
+          </div>
+        </template>
+      </a-table-column>
+      <a-table-column
+        :title="goodsColumnDailyBudget"
+        data-index="dailyBudget"
+        :width="goodsColumnDailyBudgetWidth"
+      >
+        <template #cell="{ record }">
+          <div class="pm-new-goods-control-cell">
+            <a-radio-group
+              :model-value="getRowDraft(record).budgetMode"
+              type="button"
+              size="small"
+              @change="(value) => $emit('update-row-draft', record, { budgetMode: value })"
+            >
+              <a-radio
+                v-for="option in budgetModeOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </a-radio>
+            </a-radio-group>
+            <div
+              v-if="getRowDraft(record).budgetMode === budgetModeCustom"
+              class="pm-new-control-inline"
+            >
+              <a-input-number
+                :model-value="getRowDraft(record).customBudget"
+                :min="getDailyBudgetMin(record)"
+                :max="getDailyBudgetMax(record)"
+                :precision="0"
                 size="small"
-                @change="(value) => $emit('update-row-draft', row, { budgetMode: value })"
-              >
-                <a-radio
-                  v-for="option in budgetModeOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </a-radio>
-              </a-radio-group>
-              <div
-                v-if="getRowDraft(row).budgetMode === budgetModeCustom"
-                class="pm-new-control-inline"
-              >
-                <a-input-number
-                  :model-value="getRowDraft(row).customBudget"
-                  :min="getDailyBudgetMin(row)"
-                  :max="getDailyBudgetMax(row)"
-                  :precision="0"
-                  size="small"
-                  mode="button"
-                  @change="(value) => $emit('update-row-draft', row, { customBudget: value })"
-                />
-              </div>
-              <span
-                v-if="buildDailyBudgetHint(row)"
-                class="pm-new-goods-field-hint"
-              >
-                {{ dailyBudgetRangeLabel }} {{ buildDailyBudgetHint(row) }}
-              </span>
+                mode="button"
+                @change="(value) => $emit('update-row-draft', record, { customBudget: value })"
+              />
             </div>
-          </td>
-          <td>
-            <div class="pm-new-goods-roas-cell">
-              <label class="pm-new-fast-start-control">
-                <span>{{ fastStartLabel }}</span>
-                <a-switch
-                  :model-value="getRowDraft(row).fastStartEnabled"
-                  size="small"
-                  @change="(value) => $emit('update-row-draft', row, { fastStartEnabled: value })"
-                />
-              </label>
+            <span
+              v-if="buildDailyBudgetHint(record)"
+              class="pm-new-goods-field-hint"
+            >
+              {{ dailyBudgetRangeLabel }} {{ buildDailyBudgetHint(record) }}
+            </span>
+          </div>
+        </template>
+      </a-table-column>
+      <a-table-column
+        :title="goodsColumnTargetRoas"
+        data-index="targetRoas"
+        :width="goodsColumnTargetRoasWidth"
+      >
+        <template #cell="{ record }">
+          <div class="pm-new-goods-roas-cell">
+            <label class="pm-new-fast-start-control">
+              <span>{{ fastStartLabel }}</span>
+              <a-switch
+                :model-value="getRowDraft(record).fastStartEnabled"
+                size="small"
+                @change="(value) => $emit('update-row-draft', record, { fastStartEnabled: value })"
+              />
+            </label>
 
-              <a-radio-group
-                :model-value="getRowDraft(row).roasMode"
-                class="pm-new-roas-radio-group"
-                @change="(value) => $emit('update-row-draft', row, { roasMode: value })"
+            <a-radio-group
+              :model-value="getRowDraft(record).roasMode"
+              class="pm-new-roas-radio-group"
+              @change="(value) => $emit('update-row-draft', record, { roasMode: value })"
+            >
+              <a-radio
+                v-for="option in getRoasOptions(record)"
+                :key="option.value"
+                :value="option.value"
+                :disabled="option.disabled"
               >
-                <a-radio
-                  v-for="option in getRoasOptions(row)"
-                  :key="option.value"
-                  :value="option.value"
-                  :disabled="option.disabled"
+                <span
+                  class="pm-new-roas-option"
+                  :title="option.title"
                 >
-                  <span
-                    class="pm-new-roas-option"
-                    :title="option.title"
-                  >
-                    <strong>{{ option.label }}</strong>
-                    <em v-if="option.roasText">ROAS {{ option.roasText }}</em>
-                  </span>
-                </a-radio>
-                <a-radio :value="roasModeCustom">
-                  <span class="pm-new-roas-option">
-                    <strong>{{ customLabel }}</strong>
-                  </span>
-                </a-radio>
-              </a-radio-group>
+                  <strong>{{ option.label }}</strong>
+                  <em v-if="option.roasText">ROAS {{ option.roasText }}</em>
+                </span>
+              </a-radio>
+              <a-radio :value="roasModeCustom">
+                <span class="pm-new-roas-option">
+                  <strong>{{ customLabel }}</strong>
+                </span>
+              </a-radio>
+            </a-radio-group>
 
-              <div
-                v-if="getRowDraft(row).roasMode === roasModeCustom"
-                class="pm-new-control-inline"
-              >
-                <a-input-number
-                  :model-value="getRowDraft(row).customRoas"
-                  :min="getCustomRoasMin(row)"
-                  :max="getCustomRoasMax(row)"
-                  :precision="2"
-                  :step="0.01"
-                  size="small"
-                  mode="button"
-                  @change="(value) => $emit('update-row-draft', row, { customRoas: value })"
-                />
-              </div>
-              <span
-                v-if="buildCustomRoasHint(row)"
-                class="pm-new-goods-field-hint"
-              >
-                {{ customRoasRangeLabel }} {{ buildCustomRoasHint(row) }}
-              </span>
+            <div
+              v-if="getRowDraft(record).roasMode === roasModeCustom"
+              class="pm-new-control-inline"
+            >
+              <a-input-number
+                :model-value="getRowDraft(record).customRoas"
+                :min="getCustomRoasMin(record)"
+                :max="getCustomRoasMax(record)"
+                :precision="2"
+                :step="0.01"
+                size="small"
+                mode="button"
+                @change="(value) => $emit('update-row-draft', record, { customRoas: value })"
+              />
             </div>
-          </td>
-        </tr>
-        <tr v-if="rows.length <= 0">
-          <td colspan="4">
-            <div class="pm-new-goods-empty">
-              {{ emptyText }}
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <span
+              v-if="buildCustomRoasHint(record)"
+              class="pm-new-goods-field-hint"
+            >
+              {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
+            </span>
+          </div>
+        </template>
+      </a-table-column>
+    </template>
+    <template #empty>
+      <div class="pm-new-goods-empty">
+        {{ emptyText }}
+      </div>
+    </template>
+  </a-table>
 </template>
 
 <script setup>
@@ -217,8 +214,7 @@ const props = defineProps({
 });
 
 defineEmits([
-  'toggle-all-visible',
-  'toggle-row',
+  'selection-change',
   'update-row-draft'
 ]);
 
@@ -245,25 +241,29 @@ const noImageText = '\u65e0\u56fe';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
 const budgetModeCustom = BUDGET_MODE_CUSTOM;
 const roasModeCustom = ROAS_MODE_CUSTOM;
+const goodsColumnProductWidth = 640;
+const goodsColumnDailyBudgetWidth = 250;
+const goodsColumnTargetRoasWidth = 420;
 
-const selectedRowKeySet = computed(() => new Set(props.selectedRowKeys));
+const rowSelection = Object.freeze({
+  type: 'checkbox',
+  showCheckedAll: true,
+  width: 46,
+  fixed: true
+});
 
-const visibleRowKeys = computed(() => props.rows
-  .map(getGoodsRowKey)
-  .filter(Boolean));
+const tableScroll = Object.freeze({
+  x: 1360,
+  y: '100%'
+});
 
-const allVisibleRowsSelected = computed(() => (
-  visibleRowKeys.value.length > 0
-  && visibleRowKeys.value.every((rowKey) => selectedRowKeySet.value.has(rowKey))
-));
+const tableRows = computed(() => props.rows.map((row) => ({
+  ...row,
+  rowKey: getGoodsRowKey(row)
+})));
 
-const someVisibleRowsSelected = computed(() => (
-  visibleRowKeys.value.some((rowKey) => selectedRowKeySet.value.has(rowKey))
-  && !allVisibleRowsSelected.value
-));
-
-function isRowSelected(row) {
-  return selectedRowKeySet.value.has(getGoodsRowKey(row));
+function getRowClass() {
+  return 'pm-new-goods-row';
 }
 
 function getRowDraft(row) {

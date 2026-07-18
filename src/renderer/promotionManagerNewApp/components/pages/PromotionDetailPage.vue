@@ -33,26 +33,24 @@
         <a-input :placeholder="productPlaceholder" />
         <a-button type="outline">{{ queryButtonLabel }}</a-button>
       </div>
-      <div class="pm-new-table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th v-for="column in columns" :key="column">{{ column }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, rowIndex) in rows" :key="rowIndex">
-              <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <a-table
+        class="pm-new-detail-table"
+        row-key="key"
+        :columns="tableColumns"
+        :data="tableRows"
+        :pagination="false"
+        :bordered="false"
+        :scroll="detailTableScroll"
+        size="small"
+      />
     </section>
   </section>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   metrics: {
     type: Array,
     default: () => []
@@ -76,4 +74,27 @@ const shopPlaceholder = '\u5e97\u94fa';
 const campaignPlaceholder = '\u63a8\u5e7f\u6d3b\u52a8';
 const productPlaceholder = '\u5546\u54c1';
 const queryButtonLabel = '\u67e5\u8be2';
+const detailTableScroll = Object.freeze({
+  x: 760
+});
+
+const tableColumns = computed(() => props.columns.map((column, index) => ({
+  title: column,
+  dataIndex: `column${index}`,
+  ellipsis: true,
+  tooltip: true,
+  width: index === props.columns.length - 1 ? 110 : 130
+})));
+
+const tableRows = computed(() => props.rows.map((row, rowIndex) => {
+  const record = {
+    key: String(rowIndex)
+  };
+
+  props.columns.forEach((_column, columnIndex) => {
+    record[`column${columnIndex}`] = Array.isArray(row) ? row[columnIndex] : '';
+  });
+
+  return record;
+}));
 </script>

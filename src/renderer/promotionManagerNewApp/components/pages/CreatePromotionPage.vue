@@ -89,8 +89,7 @@
         :selected-row-keys="selectedGoodsRowKeys"
         :row-drafts="goodsRowDrafts"
         :empty-text="goodsEmptyText"
-        @toggle-all-visible="handleToggleAllVisibleRows"
-        @toggle-row="handleToggleGoodsRow"
+        @selection-change="handleGoodsSelectionChange"
         @update-row-draft="handleUpdateGoodsRowDraft"
       />
     </section>
@@ -346,42 +345,8 @@ function resetGoodsRowState(rows) {
   goodsRowDrafts.value = buildGoodsRowDraftMap(rows);
 }
 
-function handleToggleGoodsRow(row, checked) {
-  const rowKey = getGoodsRowKey(row);
-
-  if (!rowKey) {
-    return;
-  }
-
-  const selectedSet = new Set(selectedGoodsRowKeys.value);
-
-  if (checked) {
-    selectedSet.add(rowKey);
-  } else {
-    selectedSet.delete(rowKey);
-  }
-
-  selectedGoodsRowKeys.value = Array.from(selectedSet);
-}
-
-function handleToggleAllVisibleRows(checked) {
-  const selectedSet = new Set(selectedGoodsRowKeys.value);
-
-  filteredGoodsRows.value.forEach((row) => {
-    const rowKey = getGoodsRowKey(row);
-
-    if (!rowKey) {
-      return;
-    }
-
-    if (checked) {
-      selectedSet.add(rowKey);
-    } else {
-      selectedSet.delete(rowKey);
-    }
-  });
-
-  selectedGoodsRowKeys.value = Array.from(selectedSet);
+function handleGoodsSelectionChange(rowKeys) {
+  selectedGoodsRowKeys.value = Array.isArray(rowKeys) ? rowKeys.map(normalizeText).filter(Boolean) : [];
 }
 
 function handleUpdateGoodsRowDraft(row, patch) {
