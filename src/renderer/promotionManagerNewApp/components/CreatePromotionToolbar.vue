@@ -1,0 +1,233 @@
+<template>
+  <div class="pm-new-create-toolbar">
+    <section class="pm-new-toolbar-group pm-new-toolbar-query-group">
+      <span class="pm-new-toolbar-group-title">{{ queryGroupTitle }}</span>
+      <div class="pm-new-toolbar-query-fields">
+        <ShopSelectDropdown
+          class="pm-new-toolbar-shop-select"
+          :model-value="selectedShopIds"
+          :placeholder="shopSelectPlaceholder"
+          storage-key="promotion-manager-new:create-shop-selection"
+          @update:model-value="emitSelectedShopIds"
+        />
+        <label class="pm-new-toolbar-field pm-new-toolbar-region-field">
+          <span class="pm-new-toolbar-field-label">{{ regionSelectLabel }}</span>
+          <a-select
+            :model-value="selectedRegionCodes"
+            class="pm-new-toolbar-select"
+            multiple
+            allow-clear
+            size="small"
+            :max-tag-count="1"
+            :placeholder="regionSelectPlaceholder"
+            @update:model-value="emitSelectedRegionCodes"
+          >
+            <a-option
+              v-for="region in regionOptions"
+              :key="region.value"
+              :value="region.value"
+            >
+              {{ region.label }}
+            </a-option>
+          </a-select>
+        </label>
+        <a-button
+          class="pm-new-toolbar-query-button"
+          type="primary"
+          :loading="queryLoading"
+          @click="$emit('query')"
+        >
+          {{ queryButtonLabel }}
+        </a-button>
+        <a-button
+          class="pm-new-toolbar-filter-button"
+          type="outline"
+          @click="$emit('filter')"
+        >
+          {{ filterButtonLabel }}
+        </a-button>
+      </div>
+    </section>
+
+    <section class="pm-new-toolbar-group pm-new-toolbar-action-group">
+      <span class="pm-new-toolbar-group-title">{{ actionGroupTitle }}</span>
+      <div class="pm-new-toolbar-action-fields">
+        <label class="pm-new-toolbar-field">
+          <span class="pm-new-toolbar-inline-label">{{ dailyBudgetLabel }}</span>
+          <a-select
+            :model-value="budgetMode"
+            class="pm-new-toolbar-action-select"
+            size="small"
+            @update:model-value="emitBudgetMode"
+          >
+            <a-option
+              v-for="option in budgetModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-option>
+          </a-select>
+        </label>
+        <label class="pm-new-toolbar-field">
+          <span class="pm-new-toolbar-inline-label">{{ roasLabel }}</span>
+          <a-select
+            :model-value="roasMode"
+            class="pm-new-toolbar-action-select"
+            size="small"
+            @update:model-value="emitRoasMode"
+          >
+            <a-option
+              v-for="option in roasModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-option>
+          </a-select>
+        </label>
+        <label class="pm-new-toolbar-field">
+          <span class="pm-new-toolbar-inline-label">{{ fastStartLabel }}</span>
+          <a-select
+            :model-value="fastStartMode"
+            class="pm-new-toolbar-action-select pm-new-toolbar-fast-start-select"
+            size="small"
+            @update:model-value="emitFastStartMode"
+          >
+            <a-option
+              v-for="option in fastStartModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-option>
+          </a-select>
+        </label>
+        <div class="pm-new-toolbar-action-buttons">
+          <a-button
+            type="primary"
+            :disabled="applyAllDisabled"
+            @click="$emit('apply-all')"
+          >
+            {{ applyAllLabel }}
+          </a-button>
+          <a-button
+            type="outline"
+            :disabled="applySelectedDisabled"
+            @click="$emit('apply-selected')"
+          >
+            {{ applySelectedLabel }}
+          </a-button>
+          <a-button
+            :disabled="resetDisabled"
+            @click="$emit('reset')"
+          >
+            {{ resetLabel }}
+          </a-button>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup>
+import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
+import {
+  BUDGET_MODE_OPTIONS,
+  FAST_START_MODE_OPTIONS,
+  ROAS_MODE_OPTIONS
+} from '../view-models/createPromotionGoodsRows.js';
+
+defineProps({
+  selectedShopIds: {
+    type: Array,
+    default: () => []
+  },
+  selectedRegionCodes: {
+    type: Array,
+    default: () => []
+  },
+  regionOptions: {
+    type: Array,
+    default: () => []
+  },
+  queryLoading: {
+    type: Boolean,
+    default: false
+  },
+  budgetMode: {
+    type: String,
+    default: ''
+  },
+  roasMode: {
+    type: String,
+    default: ''
+  },
+  fastStartMode: {
+    type: String,
+    default: ''
+  },
+  applyAllDisabled: {
+    type: Boolean,
+    default: false
+  },
+  applySelectedDisabled: {
+    type: Boolean,
+    default: false
+  },
+  resetDisabled: {
+    type: Boolean,
+    default: false
+  }
+});
+
+const emit = defineEmits([
+  'update:selectedShopIds',
+  'update:selectedRegionCodes',
+  'update:budgetMode',
+  'update:roasMode',
+  'update:fastStartMode',
+  'query',
+  'filter',
+  'apply-all',
+  'apply-selected',
+  'reset'
+]);
+
+const queryGroupTitle = '\u67e5\u8be2\u7ec4';
+const actionGroupTitle = '\u64cd\u4f5c\u7ec4';
+const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
+const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
+const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
+const queryButtonLabel = '\u2460\u67e5\u8be2\u5546\u54c1';
+const filterButtonLabel = '\u2461\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
+const dailyBudgetLabel = '\u5e7f\u544a\u65e5\u9884\u7b97\uff1a';
+const roasLabel = 'ROAS\u503c\uff1a';
+const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
+const applyAllLabel = '\u4e00\u952e\u8bbe\u7f6e\u5168\u90e8';
+const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
+const resetLabel = '\u91cd\u7f6e\u4e3a\u521d\u59cb\u6570\u636e';
+const budgetModeOptions = BUDGET_MODE_OPTIONS;
+const roasModeOptions = ROAS_MODE_OPTIONS;
+const fastStartModeOptions = FAST_START_MODE_OPTIONS;
+
+function emitSelectedShopIds(value) {
+  emit('update:selectedShopIds', Array.isArray(value) ? value : []);
+}
+
+function emitSelectedRegionCodes(value) {
+  emit('update:selectedRegionCodes', Array.isArray(value) ? value : []);
+}
+
+function emitBudgetMode(value) {
+  emit('update:budgetMode', value);
+}
+
+function emitRoasMode(value) {
+  emit('update:roasMode', value);
+}
+
+function emitFastStartMode(value) {
+  emit('update:fastStartMode', value);
+}
+</script>

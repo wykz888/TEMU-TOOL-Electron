@@ -8,46 +8,23 @@
 
     <section class="pm-new-page-panel pm-new-product-panel">
       <div class="pm-new-product-query-shell">
-        <div class="pm-new-shop-query-row">
-          <ShopSelectDropdown
-            v-model="selectedShopIds"
-            :placeholder="shopSelectPlaceholder"
-            storage-key="promotion-manager-new:create-shop-selection"
-          />
-          <label class="pm-new-query-region">
-            <span class="pm-new-query-region-label">{{ regionSelectLabel }}</span>
-            <a-select
-              v-model="selectedRegionCodes"
-              class="pm-new-query-region-control"
-              multiple
-              allow-clear
-              size="small"
-              :max-tag-count="1"
-              :placeholder="regionSelectPlaceholder"
-            >
-              <a-option
-                v-for="region in regionOptions"
-                :key="region.value"
-                :value="region.value"
-              >
-                {{ region.label }}
-              </a-option>
-            </a-select>
-          </label>
-          <a-button
-            type="primary"
-            :loading="queryLoading"
-            @click="handleShopQuery"
-          >
-            {{ queryButtonLabel }}
-          </a-button>
-          <a-button
-            type="outline"
-            @click="openFilterModal"
-          >
-            {{ filterButtonLabel }}
-          </a-button>
-        </div>
+        <CreatePromotionToolbar
+          v-model:selected-shop-ids="selectedShopIds"
+          v-model:selected-region-codes="selectedRegionCodes"
+          v-model:budget-mode="batchBudgetMode"
+          v-model:roas-mode="batchRoasMode"
+          v-model:fast-start-mode="batchFastStartMode"
+          :region-options="regionOptions"
+          :query-loading="queryLoading"
+          :apply-all-disabled="batchApplyAllDisabled"
+          :apply-selected-disabled="batchApplySelectedDisabled"
+          :reset-disabled="batchResetDisabled"
+          @query="handleShopQuery"
+          @filter="openFilterModal"
+          @apply-all="handleApplyBatchToAll"
+          @apply-selected="handleApplyBatchToSelected"
+          @reset="handleResetBatchDrafts"
+        />
 
         <div
           v-if="queryError"
@@ -109,9 +86,14 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
-import ShopSelectDropdown from '../../../shared/shopSelection/ShopSelectDropdown.vue';
+import CreatePromotionToolbar from '../CreatePromotionToolbar.vue';
 import {
+  BUDGET_MODE_UNLIMITED,
+  FAST_START_MODE_OFF,
+  FAST_START_MODE_ON,
   GOODS_QUERY_PAGE_SIZE,
+  ROAS_MODE_STRONG,
+  applyGoodsRowDraftPatchToRows,
   buildGoodsRowDraft,
   buildGoodsRowDraftMap,
   buildGoodsSearchText,
@@ -134,6 +116,9 @@ const goodsKeyword = ref('');
 const goodsRows = ref([]);
 const selectedGoodsRowKeys = ref([]);
 const goodsRowDrafts = ref({});
+const batchBudgetMode = ref(BUDGET_MODE_UNLIMITED);
+const batchRoasMode = ref(ROAS_MODE_STRONG);
+const batchFastStartMode = ref(FAST_START_MODE_OFF);
 const queryError = ref('');
 const queryLoading = ref(false);
 const filterModalVisible = ref(false);
@@ -153,11 +138,6 @@ const queryResult = ref({
 });
 
 const title = '\u65b0\u5efa\u63a8\u5e7f';
-const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
-const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
-const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
-const queryButtonLabel = '\u2460\u67e5\u8be2\u5546\u54c1';
-const filterButtonLabel = '\u2461\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const filterModalTitle = '\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
 const goodsSearchPlaceholder = '\u641c\u7d22\u5546\u54c1\u540d / ID / SPU / \u5e97\u94fa';
@@ -215,6 +195,12 @@ const queryMessages = computed(() => buildUniqueQueryMessages([
   ...queryResult.value.errors,
   ...queryResult.value.warnings
 ]));
+
+const batchApplyAllDisabled = computed(() => goodsRows.value.length <= 0);
+
+const batchApplySelectedDisabled = computed(() => selectedGoodsRowKeys.value.length <= 0);
+
+const batchResetDisabled = computed(() => goodsRows.value.length <= 0);
 
 const goodsEmptyText = computed(() => {
   if (queryLoading.value) {
@@ -340,9 +326,13 @@ function pruneSelectedGoodsRows(rows) {
   selectedGoodsRowKeys.value = selectedGoodsRowKeys.value.filter((rowKey) => availableKeys.has(rowKey));
 }
 
+function resetGoodsRowDrafts(rows) {
+  goodsRowDrafts.value = buildGoodsRowDraftMap(rows);
+}
+
 function resetGoodsRowState(rows) {
   selectedGoodsRowKeys.value = [];
-  goodsRowDrafts.value = buildGoodsRowDraftMap(rows);
+  resetGoodsRowDrafts(rows);
 }
 
 function handleGoodsSelectionChange(rowKeys) {
@@ -365,6 +355,50 @@ function handleUpdateGoodsRowDraft(row, patch) {
       ...(patch && typeof patch === 'object' ? patch : {})
     }
   };
+}
+
+function buildBatchDraftPatch() {
+  return {
+    budgetMode: batchBudgetMode.value,
+    roasMode: batchRoasMode.value,
+    fastStartEnabled: batchFastStartMode.value === FAST_START_MODE_ON
+  };
+}
+
+function applyBatchDraftToRows(rows) {
+  const targetRows = Array.isArray(rows) ? rows : [];
+
+  if (targetRows.length <= 0) {
+    return;
+  }
+
+  goodsRowDrafts.value = applyGoodsRowDraftPatchToRows(
+    goodsRowDrafts.value,
+    targetRows,
+    buildBatchDraftPatch()
+  );
+}
+
+function getSelectedGoodsRows() {
+  const selectedKeySet = new Set(selectedGoodsRowKeys.value.map(normalizeText).filter(Boolean));
+
+  if (selectedKeySet.size <= 0) {
+    return [];
+  }
+
+  return goodsRows.value.filter((row) => selectedKeySet.has(getGoodsRowKey(row)));
+}
+
+function handleApplyBatchToAll() {
+  applyBatchDraftToRows(goodsRows.value);
+}
+
+function handleApplyBatchToSelected() {
+  applyBatchDraftToRows(getSelectedGoodsRows());
+}
+
+function handleResetBatchDrafts() {
+  resetGoodsRowDrafts(goodsRows.value);
 }
 
 async function handleShopQuery() {

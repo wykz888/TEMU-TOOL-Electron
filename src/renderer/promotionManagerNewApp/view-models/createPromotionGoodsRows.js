@@ -8,9 +8,24 @@ export const ROAS_MODE_MEDIUM = 'medium';
 export const ROAS_MODE_WEAK = 'weak';
 export const ROAS_MODE_CUSTOM = 'custom';
 
+export const FAST_START_MODE_OFF = 'off';
+export const FAST_START_MODE_ON = 'on';
+
 export const BUDGET_MODE_OPTIONS = Object.freeze([
   { value: BUDGET_MODE_UNLIMITED, label: '\u4e0d\u9650' },
   { value: BUDGET_MODE_CUSTOM, label: '\u81ea\u5b9a\u4e49' }
+]);
+
+export const ROAS_MODE_OPTIONS = Object.freeze([
+  { value: ROAS_MODE_STRONG, label: '\u7ade\u4e89\u529b\u5f3a' },
+  { value: ROAS_MODE_MEDIUM, label: '\u7ade\u4e89\u529b\u4e2d' },
+  { value: ROAS_MODE_WEAK, label: '\u7ade\u4e89\u529b\u5f31' },
+  { value: ROAS_MODE_CUSTOM, label: '\u81ea\u5b9a\u4e49' }
+]);
+
+export const FAST_START_MODE_OPTIONS = Object.freeze([
+  { value: FAST_START_MODE_OFF, label: '\u5173\u95ed' },
+  { value: FAST_START_MODE_ON, label: '\u5f00\u542f' }
 ]);
 
 const ROAS_MODE_ORDER = Object.freeze([
@@ -276,4 +291,26 @@ export function buildGoodsRowDraftMap(rows) {
 
     return draftMap;
   }, {});
+}
+
+export function applyGoodsRowDraftPatchToRows(currentDraftMap, rows, patch) {
+  const nextDraftMap = {
+    ...(currentDraftMap && typeof currentDraftMap === 'object' ? currentDraftMap : {})
+  };
+  const safePatch = patch && typeof patch === 'object' ? patch : {};
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const rowKey = getGoodsRowKey(row);
+
+    if (!rowKey) {
+      return;
+    }
+
+    nextDraftMap[rowKey] = {
+      ...(nextDraftMap[rowKey] || buildGoodsRowDraft(row)),
+      ...safePatch
+    };
+  });
+
+  return nextDraftMap;
 }
