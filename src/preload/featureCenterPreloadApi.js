@@ -2,6 +2,19 @@ const {
   createFeatureCenterOperationsPreloadApi
 } = require('./featureCenterOperationsPreloadApi');
 
+function toCloneablePayload(payload, fallback = {}) {
+  try {
+    if (payload === undefined) {
+      return fallback;
+    }
+
+    const text = JSON.stringify(payload);
+    return text ? JSON.parse(text) : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+}
+
 function createFeatureCenterPreloadApi({
   ipcRenderer,
   featureChannels,
@@ -96,7 +109,10 @@ function createFeatureCenterPreloadApi({
       return ipcRenderer.invoke(FEATURE_CHANNELS.SET_PROMOTION_MONITOR_BATCH_ACTIVE, payload);
     },
     queryPromotionManagerNewGoods(payload) {
-      return ipcRenderer.invoke(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_GOODS, payload);
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_GOODS,
+        toCloneablePayload(payload)
+      );
     },
     getRuntimeLogEntries(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, payload);

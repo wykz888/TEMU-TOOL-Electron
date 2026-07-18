@@ -293,6 +293,30 @@ function normalizeText(value) {
   return String(value == null ? '' : value).trim();
 }
 
+function normalizeTextList(values) {
+  const sourceItems = Array.isArray(values) ? values : [];
+
+  return Array.from(new Set(sourceItems.map(normalizeText).filter(Boolean)));
+}
+
+function buildGoodsQueryPayload() {
+  const shopIds = normalizeTextList(selectedShopIds.value);
+  const regionIds = normalizeTextList(selectedRegionCodes.value);
+
+  queriedShopIds.value = shopIds.slice();
+  queriedRegionCodes.value = regionIds.slice();
+
+  return {
+    shopIds,
+    regionIds,
+    pageNumber: 1,
+    pageSize: 100,
+    listId: '',
+    isGray: false,
+    selectedRoasType: 1
+  };
+}
+
 function buildQueryErrorText(error) {
   return [
     normalizeText(error && error.shopName),
@@ -302,8 +326,6 @@ function buildQueryErrorText(error) {
 }
 
 async function handleShopQuery() {
-  queriedShopIds.value = selectedShopIds.value.slice();
-  queriedRegionCodes.value = selectedRegionCodes.value.slice();
   queryError.value = '';
   queryLoading.value = true;
 
@@ -316,15 +338,7 @@ async function handleShopQuery() {
       throw new Error(queryNoBridgeText);
     }
 
-    const result = await bridge({
-      shopIds: queriedShopIds.value,
-      regionIds: queriedRegionCodes.value,
-      pageNumber: 1,
-      pageSize: 100,
-      listId: '',
-      isGray: false,
-      selectedRoasType: 1
-    });
+    const result = await bridge(buildGoodsQueryPayload());
 
     const normalizedResult = result && typeof result === 'object'
       ? result
