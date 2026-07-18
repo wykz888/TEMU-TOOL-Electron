@@ -4,10 +4,6 @@
       <div>
         <h2>{{ title }}</h2>
       </div>
-      <div class="pm-new-feature-actions">
-        <a-button type="outline">{{ draftButtonLabel }}</a-button>
-        <a-button type="primary">{{ submitButtonLabel }}</a-button>
-      </div>
     </div>
 
     <section class="pm-new-page-panel pm-new-product-panel">
@@ -44,6 +40,12 @@
             @click="handleShopQuery"
           >
             {{ queryButtonLabel }}
+          </a-button>
+          <a-button
+            type="outline"
+            @click="openFilterModal"
+          >
+            {{ filterButtonLabel }}
           </a-button>
         </div>
 
@@ -166,6 +168,15 @@
       </div>
     </section>
 
+    <a-modal
+      v-model:visible="filterModalVisible"
+      :title="filterModalTitle"
+      :mask-closable="false"
+      :footer="false"
+      width="760px"
+    >
+      <section class="pm-new-filter-modal-body"></section>
+    </a-modal>
   </section>
 </template>
 
@@ -189,6 +200,7 @@ const goodsKeyword = ref('');
 const goodsRows = ref([]);
 const queryError = ref('');
 const queryLoading = ref(false);
+const filterModalVisible = ref(false);
 const settingsLoaded = ref(false);
 let saveSettingsTimer = null;
 let restoringSettings = false;
@@ -204,12 +216,12 @@ const queryResult = ref({
 });
 
 const title = '\u65b0\u5efa\u63a8\u5e7f';
-const draftButtonLabel = '\u4fdd\u5b58\u8349\u7a3f';
-const submitButtonLabel = '\u63d0\u4ea4\u4efb\u52a1';
 const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
 const regionSelectLabel = '\u67e5\u8be2\u5730\u533a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
-const queryButtonLabel = '\u67e5\u8be2';
+const queryButtonLabel = '\u2460\u67e5\u8be2\u5546\u54c1';
+const filterButtonLabel = '\u2461\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
+const filterModalTitle = '\u7b5b\u9009\u63a8\u5e7f\u5546\u54c1';
 const goodsListTitle = '\u5546\u54c1\u5217\u8868';
 const goodsSearchPlaceholder = '\u641c\u7d22\u5546\u54c1\u540d / ID / SPU / \u5e97\u94fa';
 const goodsColumnProduct = '\u5546\u54c1';
@@ -415,6 +427,10 @@ async function handleShopQuery() {
   } finally {
     queryLoading.value = false;
   }
+}
+
+function openFilterModal() {
+  filterModalVisible.value = true;
 }
 
 watch(

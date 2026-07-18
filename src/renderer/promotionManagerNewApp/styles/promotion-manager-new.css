@@ -203,7 +203,7 @@ body {
 
 .pm-new-shop-query-row {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(150px, 178px) auto;
+  grid-template-columns: minmax(260px, 320px) minmax(150px, 178px) auto auto;
   gap: 10px;
   align-items: end;
   justify-content: start;
@@ -231,8 +231,12 @@ body {
 
 .pm-new-shop-query-row > .arco-btn {
   height: 34px;
-  min-width: 62px;
+  min-width: 126px;
   padding: 0 16px;
+}
+
+.pm-new-filter-modal-body {
+  min-height: 420px;
 }
 
 .pm-new-product-query-shell {
