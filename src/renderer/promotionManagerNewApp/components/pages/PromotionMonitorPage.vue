@@ -1,5 +1,10 @@
 <template>
   <section class="pm-new-feature-page pm-new-feature-page--monitor">
+    <PromotionMonitorConfigPanel
+      :config="monitorConfig"
+      @update:config="handleMonitorConfigUpdate"
+    />
+
     <section class="pm-new-page-panel pm-new-monitor-shop-panel">
       <div class="pm-new-section-title">
         <strong>{{ shopListTitle }}</strong>
@@ -52,9 +57,12 @@
 <script setup>
 import { IconRefresh } from '@arco-design/web-vue/es/icon';
 import { computed, onMounted, ref } from 'vue';
+import PromotionMonitorConfigPanel from '../PromotionMonitorConfigPanel.vue';
 import { loadPromotionMonitorShopRows } from '../../services/promotionMonitorShops.js';
+import { createDefaultPromotionMonitorConfig } from '../../view-models/promotionMonitorConfig.js';
 import { normalizeText } from '../../view-models/promotionMonitorShopRows.js';
 
+const monitorConfig = ref(createDefaultPromotionMonitorConfig());
 const shopRows = ref([]);
 const loading = ref(false);
 const errorText = ref('');
@@ -101,6 +109,10 @@ const shopColumns = Object.freeze([
 ]);
 
 const shopCountText = computed(() => `${shopRows.value.length} ${shopCountLabel}`);
+
+function handleMonitorConfigUpdate(nextConfig) {
+  monitorConfig.value = nextConfig;
+}
 
 async function loadShopRows() {
   if (loading.value) {

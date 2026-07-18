@@ -132,6 +132,10 @@ body {
   grid-template-rows: minmax(0, 1fr);
 }
 
+.pm-new-feature-page--monitor {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .pm-new-feature-page > * {
   min-width: 0;
 }
@@ -201,6 +205,114 @@ body {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
+}
+
+.pm-new-monitor-config-panel {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 9px;
+  padding: 10px 12px;
+}
+
+.pm-new-monitor-config-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pm-new-monitor-config-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.pm-new-monitor-config-group {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(49, 66, 89, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pm-new-monitor-config-group-title {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.1);
+  color: var(--theme-primary-color-deep);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pm-new-monitor-config-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(112px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.pm-new-monitor-config-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pm-new-monitor-config-field--wide {
+  grid-column: 1 / -1;
+}
+
+.pm-new-monitor-config-label {
+  overflow: hidden;
+  color: #203048;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-new-monitor-control-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pm-new-monitor-control-row .pm-new-monitor-number {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pm-new-monitor-control-unit {
+  flex: 0 0 auto;
+  color: #718197;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pm-new-monitor-number,
+.pm-new-monitor-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.pm-new-monitor-config-tip.arco-alert {
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .pm-new-monitor-shop-actions {
@@ -1117,6 +1229,19 @@ body.dark-theme .pm-new-monitor-card {
   border-color: rgba(148, 163, 184, 0.12);
 }
 
+body.dark-theme .pm-new-monitor-config-group {
+  border-color: rgba(148, 163, 184, 0.12);
+  background: rgba(20, 29, 43, 0.92);
+}
+
+body.dark-theme .pm-new-monitor-config-label {
+  color: #e4edf8;
+}
+
+body.dark-theme .pm-new-monitor-control-unit {
+  color: #9aa8ba;
+}
+
 body.dark-theme .pm-new-query-message.is-error {
   border-color: rgba(248, 113, 113, 0.22);
   background: rgba(69, 10, 10, 0.32);
@@ -1229,6 +1354,10 @@ body.dark-theme .pm-new-budget-radio-group.arco-radio-group-button {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .pm-new-monitor-config-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .pm-new-metric-row,
   .pm-new-monitor-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1256,6 +1385,11 @@ body.dark-theme .pm-new-budget-radio-group.arco-radio-group-button {
 
   .pm-new-toolbar-group,
   .pm-new-toolbar-query-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-new-monitor-config-grid,
+  .pm-new-monitor-config-fields {
     grid-template-columns: 1fr;
   }
 
