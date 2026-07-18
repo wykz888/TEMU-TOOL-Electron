@@ -64,6 +64,17 @@
           <a-button
             type="outline"
             size="small"
+            @click="openRuntimeLogDrawer"
+          >
+            <template #icon>
+              <IconClockCircle />
+            </template>
+            {{ runtimeLogButtonLabel }}
+          </a-button>
+
+          <a-button
+            type="outline"
+            size="small"
             :loading="loading"
             @click="loadWorkspaceData"
           >
@@ -96,6 +107,16 @@
       v-model:visible="customizeModalVisible"
       :selected-column-ids="selectedColumnIds"
       @apply="handleApplyColumns"
+    />
+
+    <PromotionMonitorRuntimeLogDrawer
+      :visible="runtimeLogDrawerVisible"
+      :entries="runtimeLogEntries"
+      :total-count="runtimeLogTotalCount"
+      :loading="runtimeLogLoading"
+      @close="closeRuntimeLogDrawer"
+      @refresh="loadRuntimeLogs"
+      @clear="handleClearRuntimeLogs"
     />
 
     <a-modal
@@ -153,6 +174,7 @@
 <script setup>
 import {
   IconApps,
+  IconClockCircle,
   IconRefresh,
   IconSettings
 } from '@arco-design/web-vue/es/icon';
@@ -160,6 +182,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import PromotionMonitorConfigPanel from '../PromotionMonitorConfigPanel.vue';
 import PromotionMonitorCustomizeModal from '../PromotionMonitorCustomizeModal.vue';
 import PromotionMonitorDataTable from '../PromotionMonitorDataTable.vue';
+import PromotionMonitorRuntimeLogDrawer from '../PromotionMonitorRuntimeLogDrawer.vue';
 import {
   DEFAULT_MONITOR_COLUMN_IDS,
   MONITOR_FILTER_OPTIONS,
@@ -179,7 +202,9 @@ import {
 } from '../../view-models/promotionMonitorRows.js';
 import {
   clearPromotionMonitorShopConfigSettings,
+  clearPromotionMonitorRuntimeLogs,
   loadPromotionMonitorWorkspaceData,
+  loadPromotionMonitorRuntimeLogs,
   savePromotionMonitorConfigSettings,
   savePromotionMonitorShopConfigSettings,
   savePromotionMonitorViewSettings,
@@ -189,6 +214,7 @@ import {
 } from '../../services/promotionMonitorWorkspace.js';
 
 const SNAPSHOT_REFRESH_INTERVAL_MS = 5000;
+const RUNTIME_LOG_REFRESH_INTERVAL_MS = 3000;
 
 const monitorConfig = ref(createDefaultPromotionMonitorConfig());
 const monitorShopConfigs = shallowRef({});
@@ -206,13 +232,19 @@ const activeShopForConfig = ref(null);
 const savingConfig = ref(false);
 const batchActiveSaving = ref(false);
 const togglingShopIds = ref([]);
+const runtimeLogDrawerVisible = ref(false);
+const runtimeLogLoading = ref(false);
+const runtimeLogEntries = shallowRef([]);
+const runtimeLogTotalCount = ref(0);
 let snapshotRefreshTimer = 0;
 let snapshotRefreshRunning = false;
+let runtimeLogRefreshTimer = 0;
 
 const shopListTitle = '\u5e97\u94fa\u5217\u8868';
 const batchMonitorLabel = '\u6279\u91cf\u76d1\u63a7';
 const configButtonLabel = '\u76d1\u63a7\u914d\u7f6e';
 const customizeButtonLabel = '\u81ea\u5b9a\u4e49\u6570\u636e\u9879';
+const runtimeLogButtonLabel = '\u8fd0\u884c\u65e5\u5fd7';
 const refreshButtonLabel = '\u5237\u65b0';
 const shopCountUnitLabel = '\u5bb6\u5e97\u94fa';
 const metricCountUnitLabel = '\u4e2a\u6570\u636e\u9879';
@@ -228,6 +260,8 @@ const saveFailedText = '\u76d1\u63a7\u914d\u7f6e\u4fdd\u5b58\u5931\u8d25';
 const toggleShopFailedText = '\u5e97\u94fa\u76d1\u63a7\u72b6\u6001\u66f4\u65b0\u5931\u8d25';
 const batchActiveFailedText = '\u6279\u91cf\u76d1\u63a7\u72b6\u6001\u66f4\u65b0\u5931\u8d25';
 const viewSaveFailedText = '\u6570\u636e\u9879\u8bbe\u7f6e\u4fdd\u5b58\u5931\u8d25';
+const runtimeLogLoadFailedText = '\u63a8\u5e7f\u76d1\u63a7\u8fd0\u884c\u65e5\u5fd7\u52a0\u8f7d\u5931\u8d25';
+const runtimeLogClearFailedText = '\u63a8\u5e7f\u76d1\u63a7\u8fd0\u884c\u65e5\u5fd7\u6e05\u7a7a\u5931\u8d25';
 const filterOptions = MONITOR_FILTER_OPTIONS;
 const regionOptions = MONITOR_REGION_OPTIONS;
 
@@ -378,6 +412,77 @@ function stopSnapshotRefresh() {
 
   window.clearInterval(snapshotRefreshTimer);
   snapshotRefreshTimer = 0;
+}
+
+function applyRuntimeLogsResult(result) {
+  const source = result && typeof result === 'object' ? result : {};
+
+  runtimeLogEntries.value = Array.isArray(source.entries) ? source.entries : [];
+  runtimeLogTotalCount.value = Math.max(0, Number(source.totalCount) || 0);
+}
+
+async function loadRuntimeLogs() {
+  if (runtimeLogLoading.value) {
+    return;
+  }
+
+  runtimeLogLoading.value = true;
+
+  try {
+    applyRuntimeLogsResult(await loadPromotionMonitorRuntimeLogs({ limit: 180 }));
+  } catch (error) {
+    errorText.value = buildErrorText(error, runtimeLogLoadFailedText);
+  } finally {
+    runtimeLogLoading.value = false;
+  }
+}
+
+function startRuntimeLogRefresh() {
+  if (runtimeLogRefreshTimer) {
+    return;
+  }
+
+  runtimeLogRefreshTimer = window.setInterval(() => {
+    if (runtimeLogDrawerVisible.value) {
+      void loadRuntimeLogs();
+    }
+  }, RUNTIME_LOG_REFRESH_INTERVAL_MS);
+}
+
+function stopRuntimeLogRefresh() {
+  if (!runtimeLogRefreshTimer) {
+    return;
+  }
+
+  window.clearInterval(runtimeLogRefreshTimer);
+  runtimeLogRefreshTimer = 0;
+}
+
+function openRuntimeLogDrawer() {
+  runtimeLogDrawerVisible.value = true;
+  void loadRuntimeLogs();
+  startRuntimeLogRefresh();
+}
+
+function closeRuntimeLogDrawer() {
+  runtimeLogDrawerVisible.value = false;
+  stopRuntimeLogRefresh();
+}
+
+async function handleClearRuntimeLogs() {
+  if (runtimeLogLoading.value) {
+    return;
+  }
+
+  runtimeLogLoading.value = true;
+
+  try {
+    applyRuntimeLogsResult(await clearPromotionMonitorRuntimeLogs());
+  } catch (error) {
+    errorText.value = buildErrorText(error, runtimeLogClearFailedText);
+  } finally {
+    runtimeLogLoading.value = false;
+  }
 }
 
 async function persistViewSettings() {
@@ -554,5 +659,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopSnapshotRefresh();
+  stopRuntimeLogRefresh();
 });
 </script>

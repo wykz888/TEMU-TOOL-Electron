@@ -49,8 +49,17 @@ function fb_promotionMonitor() {
   };
 }
 
+function fb_promotionMonitorRuntimeLogs() {
+  return {
+    updatedAt: '',
+    totalCount: 0,
+    entries: []
+  };
+}
+
 module.exports = {
   fb_promotionManagerNewCreateSettings,
   fb_promotionManagerNewMonitorSettings,
-  fb_promotionMonitor
+  fb_promotionMonitor,
+  fb_promotionMonitorRuntimeLogs
 };

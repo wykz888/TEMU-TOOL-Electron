@@ -254,6 +254,44 @@ export async function setPromotionMonitorBatchActive(enabled, featureCenterBridg
   return readSnapshotFromResult(await setBatchActive({ enabled: enabled === true }));
 }
 
+export async function loadPromotionMonitorRuntimeLogs(
+  payload,
+  featureCenterBridge = resolveFeatureCenterBridge()
+) {
+  const getRuntimeLogs = getBridgeMethod(
+    featureCenterBridge,
+    'getPromotionMonitorRuntimeLogs',
+    '\u63a8\u5e7f\u76d1\u63a7\u8fd0\u884c\u65e5\u5fd7\u670d\u52a1\u672a\u52a0\u8f7d'
+  );
+  const result = await getRuntimeLogs({
+    limit: Math.max(1, Math.min(500, Number.parseInt(payload && payload.limit, 10) || 180))
+  });
+
+  return normalizeRuntimeLogsResult(result);
+}
+
+export async function clearPromotionMonitorRuntimeLogs(
+  featureCenterBridge = resolveFeatureCenterBridge()
+) {
+  const clearRuntimeLogs = getBridgeMethod(
+    featureCenterBridge,
+    'clearPromotionMonitorRuntimeLogs',
+    '\u63a8\u5e7f\u76d1\u63a7\u8fd0\u884c\u65e5\u5fd7\u6e05\u7a7a\u670d\u52a1\u672a\u52a0\u8f7d'
+  );
+
+  return normalizeRuntimeLogsResult(await clearRuntimeLogs());
+}
+
+function normalizeRuntimeLogsResult(result) {
+  const source = result && typeof result === 'object' ? result : {};
+
+  return {
+    updatedAt: String(source.updatedAt || '').trim(),
+    totalCount: Math.max(0, Number(source.totalCount) || 0),
+    entries: Array.isArray(source.entries) ? source.entries : []
+  };
+}
+
 function readSnapshotFromResult(result) {
   return result && typeof result === 'object'
     ? {

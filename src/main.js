@@ -3022,6 +3022,18 @@ app.whenReady().then(() => {
         ? promotionMonitorService.setBatchMonitoringActive(payload)
         : { updatedAt: '', batchMonitoringActive: false, enabledShopIds: [], shops: {} }
     ),
+    getPromotionMonitorRuntimeLogs: (payload) => (
+      promotionMonitorService
+        && typeof promotionMonitorService.getRuntimeLogs === 'function'
+        ? promotionMonitorService.getRuntimeLogs(payload)
+        : { updatedAt: '', totalCount: 0, entries: [] }
+    ),
+    clearPromotionMonitorRuntimeLogs: () => (
+      promotionMonitorService
+        && typeof promotionMonitorService.clearRuntimeLogs === 'function'
+        ? promotionMonitorService.clearRuntimeLogs()
+        : { updatedAt: '', totalCount: 0, entries: [] }
+    ),
     getPromotionManagerNewCreateSettings: () => promotionManagerNewSettingsService.getSettings(),
     savePromotionManagerNewCreateSettings: (payload) => promotionManagerNewSettingsService.saveSettings(payload),
     queryPromotionManagerNewGoods: (payload) => (

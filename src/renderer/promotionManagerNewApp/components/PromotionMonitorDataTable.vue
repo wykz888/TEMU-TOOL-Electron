@@ -19,6 +19,7 @@
         :title="statusColumnLabel"
         data-index="status"
         :width="statusColumnWidth"
+        :sortable="statusColumnSortable"
         align="center"
         fixed="left"
       >
@@ -43,6 +44,7 @@
             </div>
             <a-button
               class="pm-new-monitor-shop-config-button"
+              :class="{ 'is-active': record.hasIndependentConfig }"
               type="text"
               size="mini"
               :disabled="loading"
@@ -58,6 +60,7 @@
         :title="logColumnLabel"
         data-index="logText"
         :width="logColumnWidth"
+        :sortable="logColumnSortable"
       >
         <template #cell="{ record }">
           <div class="pm-new-monitor-log-cell">
@@ -71,10 +74,14 @@
         :title="shopInfoColumnLabel"
         data-index="shopName"
         :width="shopColumnWidth"
+        :sortable="shopColumnSortable"
       >
         <template #cell="{ record }">
           <div class="pm-new-monitor-shop-cell">
-            <strong :title="record.shopName">{{ record.shopName || emptyText }}</strong>
+            <div class="pm-new-monitor-shop-name-row">
+              <span class="pm-new-monitor-shop-mark"></span>
+              <strong :title="record.shopName">{{ record.shopName || emptyText }}</strong>
+            </div>
             <div class="pm-new-monitor-shop-meta">
               <span
                 class="pm-new-monitor-shop-meta-item is-group"
@@ -101,6 +108,7 @@
         :title="column.shortLabel || column.fullLabel"
         :data-index="column.id"
         :width="metricColumnWidth"
+        :sortable="getMetricColumnSortable(column.id)"
         align="center"
       >
         <template #title>
@@ -153,6 +161,12 @@
 <script setup>
 import { computed } from 'vue';
 import { buildMonitorColumnSummaries } from '../view-models/promotionMonitorColumns.js';
+import {
+  createMonitorMetricColumnSortable,
+  monitorLogColumnSortable,
+  monitorShopColumnSortable,
+  monitorStatusColumnSortable
+} from '../view-models/promotionMonitorSorters.js';
 
 const props = defineProps({
   rows: {
@@ -184,12 +198,15 @@ const emptyText = '-';
 const summaryEmptyText = '\u6c47\u603b -';
 const emptyStateText = '\u6682\u65e0\u53ef\u76d1\u63a7\u5e97\u94fa';
 const independentConfigLabel = '\u72ec\u7acb\u914d\u7f6e';
-const statusColumnWidth = 130;
-const logColumnWidth = 190;
-const shopColumnWidth = 230;
-const metricColumnWidth = 132;
+const statusColumnWidth = 128;
+const logColumnWidth = 172;
+const shopColumnWidth = 218;
+const metricColumnWidth = 128;
 const baseTableWidth = statusColumnWidth + logColumnWidth + shopColumnWidth;
 const virtualListThreshold = 120;
+const statusColumnSortable = monitorStatusColumnSortable;
+const logColumnSortable = monitorLogColumnSortable;
+const shopColumnSortable = monitorShopColumnSortable;
 const defaultMetricRows = Object.freeze([
   {
     regionId: 'us',
@@ -222,6 +239,14 @@ const defaultColumnSummary = Object.freeze({
 const tableRows = computed(() => (Array.isArray(props.rows) ? props.rows : []));
 const togglingShopIdSet = computed(() => new Set(props.togglingShopIds));
 const columnSummaryById = computed(() => buildMonitorColumnSummaries(tableRows.value));
+const metricColumnSortableById = computed(() => (
+  new Map(
+    props.visibleColumns.map((column) => [
+      column.id,
+      createMonitorMetricColumnSortable(column.id)
+    ])
+  )
+));
 const tableScroll = computed(() => ({
   x: baseTableWidth + props.visibleColumns.length * metricColumnWidth,
   y: '100%'
@@ -230,7 +255,7 @@ const tableVirtualListProps = computed(() => (
   tableRows.value.length >= virtualListThreshold
     ? {
       threshold: virtualListThreshold,
-      estimatedSize: 112,
+      estimatedSize: 108,
       buffer: 16
     }
     : undefined
@@ -262,6 +287,10 @@ function getColumnSummary(columnId) {
   return columnSummary && typeof columnSummary === 'object'
     ? columnSummary
     : defaultColumnSummary;
+}
+
+function getMetricColumnSortable(columnId) {
+  return metricColumnSortableById.value.get(columnId);
 }
 
 function isShopToggling(row) {

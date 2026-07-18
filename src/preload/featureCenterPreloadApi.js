@@ -99,6 +99,15 @@ function createFeatureCenterPreloadApi({
     setPromotionMonitorBatchActive(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.SET_PROMOTION_MONITOR_BATCH_ACTIVE, payload);
     },
+    getPromotionMonitorRuntimeLogs(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.GET_PROMOTION_MONITOR_RUNTIME_LOGS,
+        toCloneablePayload(payload)
+      );
+    },
+    clearPromotionMonitorRuntimeLogs() {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.CLEAR_PROMOTION_MONITOR_RUNTIME_LOGS);
+    },
     getPromotionManagerNewCreateSettings() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_CREATE_SETTINGS);
     },

@@ -538,6 +538,7 @@ export function buildMonitorRegionSummary(regionStates, requestedRegionIds) {
       const source = normalizeText(regionState && regionState.summarySource);
       const detailFetched = regionState && regionState.detailFetched === true;
       const productCount = Math.max(0, Number.parseInt(regionState && regionState.productCount, 10) || 0);
+      const detailMessage = normalizeText(regionState && regionState.detailMessage);
 
       if (!fetchedAt && !source && detailFetched !== true) {
         return {
@@ -550,7 +551,10 @@ export function buildMonitorRegionSummary(regionStates, requestedRegionIds) {
       return {
         regionId,
         text: `${REGION_SHORT_LABELS[regionId] || regionId} ${productCount}`,
-        title: `${REGION_LABELS[regionId] || regionId}\uff1a${productCount} \u4e2a\u5546\u54c1`
+        title: [
+          `${REGION_LABELS[regionId] || regionId}\uff1a${productCount} \u4e2a\u5546\u54c1`,
+          detailMessage ? `\u72b6\u6001\uff1a${detailMessage}` : ''
+        ].filter(Boolean).join('\n')
       };
     });
 
