@@ -469,8 +469,10 @@ body {
 .pm-new-goods-roas-cell {
   display: grid;
   align-content: start;
+  justify-items: start;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .pm-new-control-inline {
@@ -483,17 +485,26 @@ body {
 }
 
 .pm-new-budget-radio-group.arco-radio-group-button {
+  justify-self: start;
+  width: fit-content;
   max-width: 100%;
   background: #f3f5f8;
+  overflow: hidden;
 }
 
 .pm-new-budget-radio-group .arco-radio-button {
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .pm-new-budget-radio-group .arco-radio-button-content {
-  padding: 0 10px;
+  box-sizing: border-box;
+  min-width: 54px;
+  padding: 0 8px;
+  overflow: hidden;
   font-size: 12px;
+  text-align: center;
+  text-overflow: ellipsis;
 }
 
 .pm-new-goods-field-hint {

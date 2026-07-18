@@ -360,7 +360,7 @@ function extractGoodsRows(response, context) {
   };
 }
 
-function shouldFetchNextGoodsPage(extracted) {
+function shouldFetchNextGoodsPage(extracted, currentPageNumber) {
   if (!extracted || !Array.isArray(extracted.rows) || extracted.rows.length <= 0) {
     return false;
   }
@@ -370,7 +370,7 @@ function shouldFetchNextGoodsPage(extracted) {
   }
 
   const total = normalizeNonNegativeInteger(extracted.total, 0);
-  const pageNumber = normalizePositiveInteger(extracted.pageNumber, DEFAULT_PAGE_NUMBER);
+  const pageNumber = normalizePositiveInteger(currentPageNumber, normalizePositiveInteger(extracted.pageNumber, DEFAULT_PAGE_NUMBER));
   const pageSize = normalizePositiveInteger(extracted.pageSize, DEFAULT_PAGE_SIZE);
 
   if (total > 0 && pageSize > 0) {
@@ -522,11 +522,12 @@ function createPromotionManagerNewGoodsService({
       if (pageSignature && seenPageSignatures.has(pageSignature)) {
         consecutiveDuplicatePageCount += 1;
         duplicatePageWarnings.push({
-          pageNumber: extracted.pageNumber,
+          pageNumber: requestPayload.page_number,
           message: '\u5546\u54c1\u5217\u8868\u5206\u9875\u8fd4\u56de\u91cd\u590d\u6570\u636e\uff0c\u5df2\u8df3\u8fc7\u8be5\u9875'
         });
         pageDetails.push({
-          pageNumber: extracted.pageNumber,
+          pageNumber: requestPayload.page_number,
+          responsePageNumber: extracted.pageNumber,
           pageSize: extracted.pageSize,
           rowCount: extracted.rows.length,
           uniqueRowCount: 0,
@@ -543,11 +544,11 @@ function createPromotionManagerNewGoodsService({
           break;
         }
 
-        if (!shouldFetchNextGoodsPage(extracted)) {
+        if (!shouldFetchNextGoodsPage(extracted, requestPayload.page_number)) {
           break;
         }
 
-        pageNumber = extracted.pageNumber + 1;
+        pageNumber = requestPayload.page_number + 1;
         continue;
       }
 
@@ -604,7 +605,8 @@ function createPromotionManagerNewGoodsService({
       });
 
       pageDetails.push({
-        pageNumber: extracted.pageNumber,
+        pageNumber: requestPayload.page_number,
+        responsePageNumber: extracted.pageNumber,
         pageSize: extracted.pageSize,
         rowCount: extracted.rows.length,
         uniqueRowCount,
@@ -616,11 +618,11 @@ function createPromotionManagerNewGoodsService({
         bidErrorCount
       });
 
-      if (!shouldFetchNextGoodsPage(extracted)) {
+      if (!shouldFetchNextGoodsPage(extracted, requestPayload.page_number)) {
         break;
       }
 
-      pageNumber = extracted.pageNumber + 1;
+      pageNumber = requestPayload.page_number + 1;
 
       if (pageIndex + 1 >= MAX_GOODS_PAGE_COUNT) {
         stoppedByPageLimit = true;
@@ -727,17 +729,6 @@ function createPromotionManagerNewGoodsService({
             }, warningSignatures);
           });
 
-          extracted.duplicatePageWarnings.forEach((duplicatePageWarning) => {
-            pushUniqueMessage(warnings, {
-              shopId: shop.id,
-              shopName: shop.shopName,
-              regionId,
-              regionLabel: REGION_LABELS[regionId] || regionId,
-              pageNumber: duplicatePageWarning.pageNumber,
-              message: duplicatePageWarning.message
-            }, warningSignatures);
-          });
-
           if (extracted.stoppedByPageLimit === true) {
             pushUniqueMessage(errors, {
               shopId: shop.id,
@@ -758,16 +749,6 @@ function createPromotionManagerNewGoodsService({
               message: bidError.message
             }, warningSignatures);
           });
-
-          if (extracted.stoppedByDuplicatePage === true) {
-            pushUniqueMessage(warnings, {
-              shopId: shop.id,
-              shopName: shop.shopName,
-              regionId,
-              regionLabel: REGION_LABELS[regionId] || regionId,
-              message: '\u5546\u54c1\u5217\u8868\u8fde\u7eed\u8fd4\u56de\u91cd\u590d\u5206\u9875\uff0c\u5df2\u4e3a\u907f\u514d\u65e0\u6548\u8bf7\u6c42\u505c\u6b62'
-            }, warningSignatures);
-          }
         } catch (error) {
           const failure = {
             shopId: shop.id,
