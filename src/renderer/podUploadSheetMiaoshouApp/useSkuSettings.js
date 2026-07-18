@@ -1,13 +1,7 @@
 import { computed, reactive } from 'vue';
 import { POD_SKU_TABLE_SCROLL_X } from './constants/skuTable.js';
 import { buildSkuKey, cloneSkuMap, createSkuEntry } from './utils/skuConfig.js';
-import { normalizeText, splitLines } from './utils/podUploadSheetMiaoshouData.js';
-
-function getCarouselItems(product) {
-  return product && product.materials && Array.isArray(product.materials.carousel)
-    ? product.materials.carousel
-    : [];
-}
+import { getMaterialOriginalOrderItems, normalizeText, splitLines } from './utils/podUploadSheetMiaoshouData.js';
 
 export function useSkuSettings(options = {}) {
   const products = options.products;
@@ -40,7 +34,7 @@ export function useSkuSettings(options = {}) {
   });
   const skuImageOptions = computed(() => {
     const product = activeProduct && activeProduct.value ? activeProduct.value : null;
-    const items = getCarouselItems(product);
+    const items = getMaterialOriginalOrderItems(product, 'carousel');
 
     return items.map((item, index) => ({
       value: String(index + 1),

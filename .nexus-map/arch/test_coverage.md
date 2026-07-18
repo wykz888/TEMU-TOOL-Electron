@@ -10,6 +10,7 @@
 - `npm run validate:feature-catalog`
 - `npm run validate:preload-ipc`
 - `npm run validate:operations-pricing`
+- `npm run validate:pod-upload-sheet-miaoshou`
 - `npm run validate:pod-suite-tool`
 - `npm run validate:auth-bridge`
 
@@ -18,6 +19,7 @@
 - Feature and creation catalog shape, uniqueness, storage key boundaries, and code path existence: `scripts/validateFeatureCatalog.js`.
 - Preload to IPC channel surface for feature center, creation center, POD suite tool, shop management, global config, and updater: `scripts/validatePreloadIpcSurface.js`.
 - Operations pricing and submit payload calculations for traffic boost and price declaration: `scripts/validateOperationsPricingLogic.js`.
+- POD MiaoShou material sequence rules for TEMU and universal SKU image export: `scripts/validatePodUploadSheetMiaoshouMaterialRules.js`.
 - POD suite image rendering, PSD template handling, mask region detection, perspective transforms, and slice export: `scripts/validatePodSuiteToolService.js`.
 - Auth bridge validation is run through Electron by `scripts/validateAuthBridgeRunner.js`.
 

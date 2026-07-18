@@ -101,7 +101,8 @@ export function useProductWorkflowTasks(options = {}) {
           sourceFolder: groupInfo.sourceFolder,
           materials: { carousel: [], assets: [], preview: [] },
           materialPathMap: createEmptyPathMap(),
-          materialImportOrderMap: createEmptyImportOrderMap()
+          materialImportOrderMap: createEmptyImportOrderMap(),
+          materialOriginalOrderMap: createEmptyImportOrderMap()
         });
       }
 
@@ -112,6 +113,7 @@ export function useProductWorkflowTasks(options = {}) {
 
       group.materials[section].push(name);
       group.materialImportOrderMap[section].push(name);
+      group.materialOriginalOrderMap[section].push(name);
 
       if (key && file.path) {
         group.materialPathMap[section][key] = file.path;

@@ -161,7 +161,9 @@ import {
 } from '../shared/dialogPreferenceCache.js';
 import {
   createEmptyImportOrderMap,
-  createImportOrderMap
+  createImportOrderMap,
+  createOriginalOrderMap,
+  getMaterialOriginalOrderItems
 } from '../shared/podUploadSheet/podUploadSheetDisplayData.js';
 import { useBatchAiTitleDialog } from './useBatchAiTitleDialog.js';
 import UniversalProductDataTable from './components/UniversalProductDataTable.vue';
@@ -482,7 +484,7 @@ const {
 const skuRows = computed(() => buildSkuRows());
 const skuImageOptions = computed(() => {
   const product = activeProduct.value;
-  const items = product && product.materials && Array.isArray(product.materials.carousel) ? product.materials.carousel : [];
+  const items = getMaterialOriginalOrderItems(product, 'carousel');
   return items.map((item, index) => ({ value: String(index + 1), label: `\u7b2c${index + 1}\u5f20 ${normalizeText(item)}` }));
 });
 const aiTitleEligibleCount = computed(() => products.value.filter((item) => getPrimaryProductImage(item)).length);
@@ -673,6 +675,12 @@ function cloneSkuMap(source = {}) {
 function createProduct(overrides = {}) {
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
   const materialImportOrderMap = createImportOrderMap(materials, overrides.materialImportOrderMap);
+  const materialOriginalOrderMap = createOriginalOrderMap(
+    materials,
+    overrides.materialOriginalOrderMap,
+    overrides.materialImportOrderMap,
+    overrides.materialPathMap
+  );
   return {
     id: normalizeText(overrides.id) || createId('pod-universal-product'),
     ...DEFAULT_PRODUCT_FIELDS,
@@ -686,6 +694,7 @@ function createProduct(overrides = {}) {
     },
     materialPathMap: clonePathMap(overrides.materialPathMap),
     materialImportOrderMap,
+    materialOriginalOrderMap,
     skuConfigMap: cloneSkuMap(overrides.skuConfigMap)
   };
 }
@@ -730,7 +739,8 @@ function buildProductsFromFiles(files) {
         sourceFolder: groupInfo.sourceFolder,
         materials: { carousel: [], assets: [], preview: [] },
         materialPathMap: createEmptyPathMap(),
-        materialImportOrderMap: createEmptyImportOrderMap()
+        materialImportOrderMap: createEmptyImportOrderMap(),
+        materialOriginalOrderMap: createEmptyImportOrderMap()
       });
     }
 
@@ -741,6 +751,7 @@ function buildProductsFromFiles(files) {
     const filePath = getFilePath(file);
     group.materials[sectionId].push(itemName);
     group.materialImportOrderMap[sectionId].push(itemName);
+    group.materialOriginalOrderMap[sectionId].push(itemName);
     if (itemKey && filePath) group.materialPathMap[sectionId][itemKey] = filePath;
   });
 

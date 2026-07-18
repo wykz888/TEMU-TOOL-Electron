@@ -65,7 +65,7 @@
           :header-cell-style="previewImageHeaderCellStyle"
         >
           <template #title>
-            <span class="pod-table-title">&#x9884;&#x89C8;&#x56FE;<a-tooltip content="&#x9009;&#x62E9;&#x8BE5; SKU &#x5BF9;&#x5E94;&#x7684;&#x8F6E;&#x64AD;&#x56FE;&#x5E8F;&#x53F7;&#xFF0C;&#x5BFC;&#x51FA;&#x5230;&#x9884;&#x89C8;&#x56FE;&#x6216;&#x989C;&#x8272;&#x56FE;&#x5B57;&#x6BB5;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+            <span class="pod-table-title">&#x9884;&#x89C8;&#x56FE;<a-tooltip content="&#x6309;&#x539F;&#x5BFC;&#x5165;&#x987A;&#x5E8F;&#x9009;&#x62E9;&#x56FE;&#x7247;&#xFF0C;&#x968F;&#x673A;&#x4E3B;&#x56FE;&#x4E0D;&#x4F1A;&#x6539;&#x53D8;&#x8FD9;&#x4E2A;&#x5E8F;&#x53F7;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
           </template>
           <template #cell="{ record }"><div class="pod-sku-cell-control"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear popup-container="body" :options="skuImageOptions" @change="syncSkuConfigToProducts" /></div></template>
         </a-table-column>

@@ -2,8 +2,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 const {
+  getMaterialItemByOriginalOrder,
   getSelectedDescriptionImageItems
 } = require('./podUploadSheetMiaoshouExportMaterialUtils');
+const {
+  SUGGESTED_PRICE_COLUMN_ALIASES,
+  getSuggestedPriceValue
+} = require('./podUploadSheetMiaoshouPriceExportUtils');
 
 const SKU_ROW_KEY_SEPARATOR = '__temu_toolbox__';
 const ROW_TWO_NOTE = '字段说明（请勿删除第一列和第二行）';
@@ -18,15 +23,6 @@ const DELIVERY_OPTION_VALUES = Object.freeze(['1', '2', '9']);
 const PRODUCT_CODE_HASH_BASE = 1000000000000;
 const PRODUCT_CODE_HASH_RANGE = 9000000000000;
 const TITLE_MAX_LENGTH = 255;
-const SUGGESTED_PRICE_COLUMN_ALIASES = Object.freeze([
-  '\u5efa\u8bae\u552e\u4ef7',
-  '\u5efa\u8bae\u552e\u4ef7(CNY)',
-  '\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09',
-  '*\u5efa\u8bae\u552e\u4ef7',
-  '*\u5efa\u8bae\u552e\u4ef7(CNY)',
-  '*\u5efa\u8bae\u552e\u4ef7\uff08CNY\uff09'
-]);
-
 function createPodUploadSheetMiaoshouExportService({
   app,
   dialog,
@@ -323,10 +319,6 @@ function createPodUploadSheetMiaoshouExportService({
     }, {});
   }
 
-  function getSuggestedPriceValue(_product, skuRow) {
-    return normalizeText(skuRow && skuRow.price);
-  }
-
   function getSkuValueItems(value) {
     return normalizeSkuMultilineValue(value)
       .split('\n')
@@ -432,14 +424,9 @@ function createPodUploadSheetMiaoshouExportService({
   }
 
   function getSkuImageValue(product, skuRow) {
-    const carouselItems = getCarouselItems(product);
-    const selectedOrder = normalizePositiveInteger(skuRow && skuRow.skuImage);
-
-    if (selectedOrder > 0 && carouselItems[selectedOrder - 1]) {
-      return rewriteExportImageDomain(carouselItems[selectedOrder - 1]);
-    }
-
-    return rewriteExportImageDomain(carouselItems[0] || '');
+    return rewriteExportImageDomain(
+      getMaterialItemByOriginalOrder(product, 'carousel', skuRow && skuRow.skuImage)
+    );
   }
 
   function getUniqueItems(items) {

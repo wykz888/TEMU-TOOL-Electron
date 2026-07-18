@@ -6,10 +6,10 @@
         <span class="pod-panel-tag">&#x672C;&#x5730;&#x5546;&#x54C1;</span>
       </div>
       <div class="pod-actions">
-        <a-button class="pod-red-button" :loading="importingProducts" @click="importProducts"><icon-upload class="pod-action-icon" />&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
-        <a-button class="pod-blue-button" :disabled="!products.length" @click="openCarouselPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-        <a-button class="pod-blue-button" :disabled="products.length < 1" @click="openRandomCarouselPreset"><icon-loop class="pod-action-icon" />&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</a-button>
-        <a-button class="pod-blue-button" :disabled="!products.length" @click="openDescriptionPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x63CF;&#x8FF0;&#x56FE;</a-button>
+        <a-button class="pod-theme-button" :loading="importingProducts" @click="importProducts"><icon-upload class="pod-action-icon" />&#x5BFC;&#x5165;&#x672C;&#x5730;&#x5546;&#x54C1;</a-button>
+        <a-button class="pod-theme-button" :disabled="!products.length" @click="openCarouselPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x8F6E;&#x64AD;&#x56FE;</a-button>
+        <a-button class="pod-theme-button" :disabled="products.length < 1" @click="openRandomCarouselPreset"><icon-loop class="pod-action-icon" />&#x6279;&#x91CF;&#x968F;&#x673A;&#x8F6E;&#x64AD;&#x56FE;</a-button>
+        <a-button class="pod-theme-button" :disabled="!products.length" @click="openDescriptionPreset"><icon-image class="pod-action-icon" />&#x6279;&#x91CF;&#x9884;&#x8BBE;&#x63CF;&#x8FF0;&#x56FE;</a-button>
         <a-button
           :class="uploadingImages ? 'pod-stop-button' : 'pod-theme-button'"
           :disabled="!products.length && !uploadingImages"
@@ -30,7 +30,7 @@
         </a-button>
         <a-button class="pod-theme-button" :loading="exportingTable" :disabled="!products.length" @click="exportTable"><icon-download class="pod-action-icon" />&#x5BFC;&#x51FA;&#x8868;&#x683C;</a-button>
         <a-button class="pod-theme-button" type="primary" :loading="savingTemplate" @click="saveCurrentTemplate"><icon-save class="pod-action-icon" />&#x4FDD;&#x5B58;&#x6A21;&#x677F;</a-button>
-        <a-button class="pod-danger-button" :disabled="!products.length" @click="clearProducts"><icon-delete class="pod-action-icon" />&#x6E05;&#x7A7A;&#x5217;&#x8868;</a-button>
+        <a-button class="pod-theme-button" :disabled="!products.length" @click="clearProducts"><icon-delete class="pod-action-icon" />&#x6E05;&#x7A7A;&#x5217;&#x8868;</a-button>
       </div>
     </div>
     <div v-if="hasUploadProgress || hasAiTitleProgress || uploadProgressText || aiTitleProgressText" class="pod-progress-stack">

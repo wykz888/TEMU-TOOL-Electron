@@ -35,6 +35,56 @@ function createImportOrderMap(materials = {}, source = {}) {
   }, createEmptyImportOrderMap());
 }
 
+function getMaterialItemsByPathMapOrder(materials = {}, materialPathMap = {}, sectionId, fallbackSource = {}) {
+  const pathMap = materialPathMap && materialPathMap[sectionId] && typeof materialPathMap[sectionId] === 'object'
+    ? materialPathMap[sectionId]
+    : {};
+  const pathKeys = Object.keys(pathMap).map((key) => normalizeText(key).toLowerCase()).filter(Boolean);
+  const sourceItems = [
+    ...(fallbackSource && Array.isArray(fallbackSource[sectionId]) ? fallbackSource[sectionId] : []),
+    ...(materials && Array.isArray(materials[sectionId]) ? materials[sectionId] : [])
+  ];
+  const usedIndexes = new Set();
+
+  if (!pathKeys.length || !sourceItems.length) {
+    return [];
+  }
+
+  return pathKeys.reduce((result, pathKey) => {
+    const itemIndex = sourceItems.findIndex((item, index) => {
+      return !usedIndexes.has(index) && getMaterialNameKey(item) === pathKey;
+    });
+
+    if (itemIndex < 0) {
+      return result;
+    }
+
+    usedIndexes.add(itemIndex);
+    result.push(normalizeText(sourceItems[itemIndex]));
+    return result;
+  }, []);
+}
+
+function createOriginalOrderMap(materials = {}, source = {}, fallbackSource = {}, materialPathMap = {}) {
+  return MATERIAL_SECTION_IDS.reduce((result, sectionId) => {
+    const explicitItems = source && Array.isArray(source[sectionId])
+      ? source[sectionId]
+      : [];
+    const pathOrderItems = getMaterialItemsByPathMapOrder(materials, materialPathMap, sectionId, fallbackSource);
+    const fallbackItems = fallbackSource && Array.isArray(fallbackSource[sectionId])
+      ? fallbackSource[sectionId]
+      : materials && materials[sectionId];
+    const sourceItems = explicitItems.length
+      ? explicitItems
+      : pathOrderItems.length
+        ? pathOrderItems
+        : fallbackItems;
+
+    result[sectionId] = normalizeTextArray(sourceItems);
+    return result;
+  }, createEmptyImportOrderMap());
+}
+
 function getFileBaseName(fileName) {
   return normalizeText(fileName).replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
 }
@@ -64,6 +114,22 @@ function getMaterialImportOrderItems(product, sectionId) {
 
   if (source && source.length) return normalizeTextArray(source);
   return getMaterialItems(product, sectionId);
+}
+
+function getMaterialOriginalOrderItems(product, sectionId) {
+  const source = product && product.materialOriginalOrderMap && Array.isArray(product.materialOriginalOrderMap[sectionId])
+    ? product.materialOriginalOrderMap[sectionId]
+    : null;
+
+  if (source && source.length) return normalizeTextArray(source);
+  const pathOrderItems = getMaterialItemsByPathMapOrder(
+    product && product.materials,
+    product && product.materialPathMap,
+    sectionId,
+    product && product.materialImportOrderMap
+  );
+  if (pathOrderItems.length) return pathOrderItems;
+  return getMaterialImportOrderItems(product, sectionId);
 }
 
 function getMaterialDisplayName(product, sectionId, item) {
@@ -146,6 +212,7 @@ function getAiStatusColor(status) {
 export {
   createEmptyImportOrderMap,
   createImportOrderMap,
+  createOriginalOrderMap,
   getAiStatusColor,
   getAiStatusText,
   getDescriptionImageItems,
@@ -156,6 +223,7 @@ export {
   getMaterialDisplayName,
   getMaterialItems,
   getMaterialImportOrderItems,
+  getMaterialOriginalOrderItems,
   getMaterialNameKey,
   getPreviewItems,
   getTextLength,

@@ -36,6 +36,18 @@ function parseSequenceNumbers(value) {
   return Array.from(new Set(values));
 }
 
+function getFileBaseName(value) {
+  return normalizeText(value).replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
+}
+
+function getMaterialNameKey(value) {
+  const base = getFileBaseName(value);
+  const segments = base.split(/[\s._-]+/).filter(Boolean);
+  const suffix = segments.length > 1 ? segments[segments.length - 1] : '';
+
+  return (/^\d{1,3}$/.test(suffix) ? suffix : base).toLowerCase();
+}
+
 function getMaterialItems(product, sectionId) {
   if (!MATERIAL_SECTION_IDS.includes(sectionId)) {
     return [];
@@ -58,6 +70,58 @@ function getMaterialImportOrderItems(product, sectionId) {
   return source.length ? source : getMaterialItems(product, sectionId);
 }
 
+function getMaterialPathMap(product, sectionId) {
+  const pathMap = product && product.materialPathMap && product.materialPathMap[sectionId];
+  return pathMap && typeof pathMap === 'object' && !Array.isArray(pathMap) ? pathMap : {};
+}
+
+function getMaterialItemsByPathMapOrder(product, sectionId) {
+  const pathMap = getMaterialPathMap(product, sectionId);
+  const pathKeys = Object.keys(pathMap).map((key) => normalizeText(key).toLowerCase()).filter(Boolean);
+
+  if (!pathKeys.length) {
+    return [];
+  }
+
+  const sourceItems = [
+    ...getMaterialImportOrderItems(product, sectionId),
+    ...getMaterialItems(product, sectionId)
+  ];
+  const usedIndexes = new Set();
+
+  return pathKeys.reduce((result, pathKey) => {
+    const sourceIndex = sourceItems.findIndex((item, index) => {
+      return !usedIndexes.has(index) && getMaterialNameKey(item) === pathKey;
+    });
+
+    if (sourceIndex < 0) {
+      return result;
+    }
+
+    usedIndexes.add(sourceIndex);
+    result.push(sourceItems[sourceIndex]);
+    return result;
+  }, []);
+}
+
+function getMaterialOriginalOrderItems(product, sectionId) {
+  if (!MATERIAL_SECTION_IDS.includes(sectionId)) {
+    return [];
+  }
+
+  const source = product && product.materialOriginalOrderMap && Array.isArray(product.materialOriginalOrderMap[sectionId])
+    ? normalizeTextArray(product.materialOriginalOrderMap[sectionId])
+    : [];
+
+  if (source.length) {
+    return source;
+  }
+
+  const pathOrderItems = getMaterialItemsByPathMapOrder(product, sectionId);
+
+  return pathOrderItems.length ? pathOrderItems : getMaterialImportOrderItems(product, sectionId);
+}
+
 function resolveMaterialItemByName(product, sectionId, itemName) {
   const selectedName = normalizeText(itemName);
   const currentItems = getMaterialItems(product, sectionId);
@@ -72,10 +136,36 @@ function resolveMaterialItemByName(product, sectionId, itemName) {
     return directItem;
   }
 
+  const selectedKey = getMaterialNameKey(selectedName);
+  const keyedItem = selectedKey
+    ? currentItems.find((item) => getMaterialNameKey(item) === selectedKey)
+    : '';
+
+  if (keyedItem) {
+    return keyedItem;
+  }
+
   const importOrderItems = getMaterialImportOrderItems(product, sectionId);
   const importOrderIndex = importOrderItems.findIndex((item) => normalizeText(item) === selectedName);
 
   return importOrderIndex >= 0 ? currentItems[importOrderIndex] || '' : '';
+}
+
+function getMaterialItemByOriginalOrder(product, sectionId, value) {
+  const originalOrderItems = getMaterialOriginalOrderItems(product, sectionId);
+  const selectedOrder = normalizePositiveInteger(value);
+  const selectedName = selectedOrder > 0 ? originalOrderItems[selectedOrder - 1] : '';
+  const selectedItem = selectedName ? resolveMaterialItemByName(product, sectionId, selectedName) : '';
+
+  if (selectedItem) {
+    return selectedItem;
+  }
+
+  const firstOriginalItem = originalOrderItems.length
+    ? resolveMaterialItemByName(product, sectionId, originalOrderItems[0])
+    : '';
+
+  return firstOriginalItem || getMaterialItems(product, sectionId)[0] || '';
 }
 
 function getSelectedMaterialItemsByOrders(product, sectionId, value) {
@@ -105,8 +195,10 @@ function getSelectedDescriptionImageItems(product) {
 }
 
 module.exports = {
+  getMaterialItemByOriginalOrder,
   getMaterialImportOrderItems,
   getMaterialItems,
+  getMaterialOriginalOrderItems,
   getSelectedDescriptionImageItems,
   getSelectedMaterialItemsByOrders,
   parseSequenceNumbers

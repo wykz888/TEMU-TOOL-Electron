@@ -60,6 +60,56 @@ function createImportOrderMap(materials = {}, source = {}) {
   }, createEmptyImportOrderMap());
 }
 
+function getMaterialItemsByPathMapOrder(materials = {}, materialPathMap = {}, sectionId, fallbackSource = {}) {
+  const pathMap = materialPathMap && materialPathMap[sectionId] && typeof materialPathMap[sectionId] === 'object'
+    ? materialPathMap[sectionId]
+    : {};
+  const pathKeys = Object.keys(pathMap).map((key) => normalizeText(key).toLowerCase()).filter(Boolean);
+  const items = [
+    ...(fallbackSource && Array.isArray(fallbackSource[sectionId]) ? fallbackSource[sectionId] : []),
+    ...(Array.isArray(materials && materials[sectionId]) ? materials[sectionId] : [])
+  ];
+  const usedIndexes = new Set();
+
+  if (!pathKeys.length || !items.length) {
+    return [];
+  }
+
+  return pathKeys.reduce((result, pathKey) => {
+    const itemIndex = items.findIndex((item, index) => {
+      return !usedIndexes.has(index) && getMaterialNameKey(item) === pathKey;
+    });
+
+    if (itemIndex < 0) {
+      return result;
+    }
+
+    usedIndexes.add(itemIndex);
+    result.push(normalizeText(items[itemIndex]));
+    return result;
+  }, []);
+}
+
+function createOriginalOrderMap(materials = {}, source = {}, fallbackSource = {}, materialPathMap = {}) {
+  return ['carousel', 'assets', 'preview'].reduce((result, sectionId) => {
+    const explicitItems = source && Array.isArray(source[sectionId])
+      ? source[sectionId]
+      : [];
+    const pathOrderItems = getMaterialItemsByPathMapOrder(materials, materialPathMap, sectionId, fallbackSource);
+    const fallbackItems = fallbackSource && Array.isArray(fallbackSource[sectionId])
+      ? fallbackSource[sectionId]
+      : materials[sectionId];
+    const items = explicitItems.length
+      ? explicitItems
+      : pathOrderItems.length
+        ? pathOrderItems
+        : fallbackItems;
+
+    result[sectionId] = Array.isArray(items) ? items.map((item) => normalizeText(item)).filter(Boolean) : [];
+    return result;
+  }, createEmptyImportOrderMap());
+}
+
 function getMaterialImportOrderItems(product, sectionId) {
   const source = product && product.materialImportOrderMap && Array.isArray(product.materialImportOrderMap[sectionId])
     ? product.materialImportOrderMap[sectionId]
@@ -67,6 +117,22 @@ function getMaterialImportOrderItems(product, sectionId) {
 
   if (source && source.length) return source;
   return product && product.materials && Array.isArray(product.materials[sectionId]) ? product.materials[sectionId] : [];
+}
+
+function getMaterialOriginalOrderItems(product, sectionId) {
+  const source = product && product.materialOriginalOrderMap && Array.isArray(product.materialOriginalOrderMap[sectionId])
+    ? product.materialOriginalOrderMap[sectionId]
+    : null;
+
+  if (source && source.length) return source;
+  const pathOrderItems = getMaterialItemsByPathMapOrder(
+    product && product.materials,
+    product && product.materialPathMap,
+    sectionId,
+    product && product.materialImportOrderMap
+  );
+  if (pathOrderItems.length) return pathOrderItems;
+  return getMaterialImportOrderItems(product, sectionId);
 }
 
 function getSectionPathMap(product, sectionId) {
@@ -94,6 +160,12 @@ function createPodUploadSheetMiaoshouProduct(overrides = {}, options = {}) {
   const defaultFields = options && typeof options.defaultFields === 'object' ? options.defaultFields : {};
   const materials = overrides.materials && typeof overrides.materials === 'object' ? overrides.materials : {};
   const materialImportOrderMap = createImportOrderMap(materials, overrides.materialImportOrderMap);
+  const materialOriginalOrderMap = createOriginalOrderMap(
+    materials,
+    overrides.materialOriginalOrderMap,
+    overrides.materialImportOrderMap,
+    overrides.materialPathMap
+  );
 
   return {
     id: normalizeText(overrides.id) || createId('pod-product'),
@@ -109,6 +181,7 @@ function createPodUploadSheetMiaoshouProduct(overrides = {}, options = {}) {
       ...(overrides.materialPathMap && typeof overrides.materialPathMap === 'object' ? overrides.materialPathMap : {})
     },
     materialImportOrderMap,
+    materialOriginalOrderMap,
     skuConfigMap: cloneSkuMap(overrides.skuConfigMap),
     aiTitleStatus: normalizeText(overrides.aiTitleStatus),
     aiTitleError: normalizeText(overrides.aiTitleError),
@@ -231,6 +304,7 @@ export {
   createEmptyPathMap,
   createId,
   createImportOrderMap,
+  createOriginalOrderMap,
   createPodUploadSheetMiaoshouProduct,
   getAiStatusColor,
   getAiStatusText,
@@ -242,6 +316,7 @@ export {
   getImportedProductGroup,
   getMaterialDisplayName,
   getMaterialImportOrderItems,
+  getMaterialOriginalOrderItems,
   getMaterialNameKey,
   getMaterialPathByName,
   getPreviewItems,

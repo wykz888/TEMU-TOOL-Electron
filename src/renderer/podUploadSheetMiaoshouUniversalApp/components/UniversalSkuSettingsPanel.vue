@@ -47,7 +47,7 @@
         </a-table-column>
         <a-table-column :width="150">
           <template #title>
-            <span class="pod-table-title">SKU&#x56FE;&#x7247;<a-tooltip content="&#x9009;&#x62E9;&#x8BE5; SKU &#x5BF9;&#x5E94;&#x7684;&#x4E3B;&#x56FE;&#x5E8F;&#x53F7;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
+            <span class="pod-table-title">SKU&#x56FE;&#x7247;<a-tooltip content="&#x6309;&#x539F;&#x5BFC;&#x5165;&#x987A;&#x5E8F;&#x9009;&#x62E9;&#x56FE;&#x7247;&#xFF0C;&#x968F;&#x673A;&#x4E3B;&#x56FE;&#x4E0D;&#x4F1A;&#x6539;&#x53D8;&#x8FD9;&#x4E2A;&#x5E8F;&#x53F7;&#x3002;"><icon-question-circle class="pod-help-icon" /></a-tooltip></span>
           </template>
           <template #cell="{ record }"><a-select v-model="skuConfigMap[record.key].skuImage" allow-clear popup-container="body" :options="skuImageOptions" @change="syncSkuConfigToProducts" /></template>
         </a-table-column>

@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 const {
+  getMaterialItemByOriginalOrder,
   getMaterialItems: getExportMaterialItems,
   getSelectedDescriptionImageItems
 } = require('./podUploadSheetMiaoshouExportMaterialUtils');
@@ -406,14 +407,9 @@ function createPodUploadSheetMiaoshouUniversalExportService({
   }
 
   function getSkuImageValue(product, skuRow) {
-    const carouselItems = getCarouselItems(product);
-    const selectedOrder = normalizePositiveInteger(skuRow && skuRow.skuImage);
-
-    if (selectedOrder > 0 && carouselItems[selectedOrder - 1]) {
-      return rewriteExportImageDomain(carouselItems[selectedOrder - 1]);
-    }
-
-    return rewriteExportImageDomain(carouselItems[0] || '');
+    return rewriteExportImageDomain(
+      getMaterialItemByOriginalOrder(product, 'carousel', skuRow && skuRow.skuImage)
+    );
   }
 
   function getMainNumberValue(product) {
