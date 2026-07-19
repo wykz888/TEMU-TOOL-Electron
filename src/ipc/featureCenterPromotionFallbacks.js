@@ -1,10 +1,22 @@
 const {
   buildDefaultSettings: buildDefaultCreateSettings
 } = require('../services/featureCenter/promotionManagerCreateSettingsModel');
+const {
+  buildDefaultSettings: buildDefaultDetailSettings
+} = require('../services/featureCenter/promotionManagerDetailSettingsModel');
 
 function fb_promotionManagerNewCreateSettings() {
   return {
     settings: buildDefaultCreateSettings(null),
+    source: 'unavailable',
+    cloudSynced: false,
+    warning: ''
+  };
+}
+
+function fb_promotionManagerNewDetailSettings() {
+  return {
+    settings: buildDefaultDetailSettings(null),
     source: 'unavailable',
     cloudSynced: false,
     warning: ''
@@ -59,6 +71,7 @@ function fb_promotionMonitorRuntimeLogs() {
 
 module.exports = {
   fb_promotionManagerNewCreateSettings,
+  fb_promotionManagerNewDetailSettings,
   fb_promotionManagerNewMonitorSettings,
   fb_promotionMonitor,
   fb_promotionMonitorRuntimeLogs

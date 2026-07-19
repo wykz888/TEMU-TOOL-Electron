@@ -207,7 +207,20 @@ function formatMoneyText(value, currency) {
   })}`;
 }
 
-function buildEstimatedChargeText(row, prediction, roasText) {
+function formatPercentText(value) {
+  const numberValue = normalizeFiniteNumber(value);
+
+  if (numberValue === null) {
+    return '';
+  }
+
+  return `${numberValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}%`;
+}
+
+function resolveChargeEstimate(row, prediction, roasText) {
   const roasNumber = pickPositiveNumber(
     prediction && prediction.roasNumber,
     prediction && prediction.roas,
@@ -215,7 +228,7 @@ function buildEstimatedChargeText(row, prediction, roasText) {
   );
 
   if (roasNumber === null) {
-    return '';
+    return null;
   }
 
   const priceRange = getRowPriceRange(row);
@@ -223,17 +236,64 @@ function buildEstimatedChargeText(row, prediction, roasText) {
   const maxPrice = pickPositiveNumber(priceRange.max, priceRange.min);
 
   if (minPrice === null || maxPrice === null) {
+    return null;
+  }
+
+  return {
+    roasNumber,
+    minPrice,
+    maxPrice,
+    currency: normalizeText(getBidInfo(row).currency) || '\u00a5'
+  };
+}
+
+function buildEstimatedChargeText(row, prediction, roasText) {
+  const estimate = resolveChargeEstimate(row, prediction, roasText);
+
+  if (!estimate) {
     return '';
   }
 
-  const currency = normalizeText(getBidInfo(row).currency) || '\u00a5';
-  const minChargeText = formatMoneyText(minPrice / roasNumber, currency);
-  const maxChargeText = formatMoneyText(maxPrice / roasNumber, currency);
+  const minChargeText = formatMoneyText(estimate.minPrice / estimate.roasNumber, estimate.currency);
+  const maxChargeText = formatMoneyText(estimate.maxPrice / estimate.roasNumber, estimate.currency);
   const chargeText = minChargeText && maxChargeText && minChargeText !== maxChargeText
     ? `${minChargeText} - ${maxChargeText}`
     : (minChargeText || maxChargeText);
 
   return chargeText ? `\u9884\u4f30\u6263\u8d39 ${chargeText}` : '';
+}
+
+function buildEstimatedChargeRatioText(row, prediction, roasText) {
+  const estimate = resolveChargeEstimate(row, prediction, roasText);
+
+  if (!estimate) {
+    return '';
+  }
+
+  const minRatioText = formatPercentText(((estimate.minPrice / estimate.roasNumber) / estimate.minPrice) * 100);
+  const maxRatioText = formatPercentText(((estimate.maxPrice / estimate.roasNumber) / estimate.maxPrice) * 100);
+  const ratioText = minRatioText && maxRatioText && minRatioText !== maxRatioText
+    ? `${minRatioText} - ${maxRatioText}`
+    : (minRatioText || maxRatioText);
+
+  return ratioText ? `\u6263\u8d39\u5360\u6bd4 ${ratioText}` : '';
+}
+
+function buildEstimatedChargeTextList(row, prediction, roasText) {
+  return [
+    buildEstimatedChargeText(row, prediction, roasText),
+    buildEstimatedChargeRatioText(row, prediction, roasText)
+  ].filter(Boolean);
+}
+
+export function buildRoasEstimateTextList(row, roasValue) {
+  const roasNumber = pickPositiveNumber(roasValue);
+
+  if (roasNumber === null) {
+    return [];
+  }
+
+  return buildEstimatedChargeTextList(row, { roasNumber }, roasNumber);
 }
 
 function isNumberRangeOverlapping(rowRange, filterRange) {
@@ -424,7 +484,9 @@ export function buildRoasPredictionOptions(row) {
     const impressionText = normalizeText(prediction && prediction.impressionDeltaText);
     const orderText = normalizeText(prediction && prediction.orderDeltaText);
     const estimatedRoasText = roasText ? `\u9884\u4f30ROAS ${roasText}` : '';
-    const estimatedChargeText = prediction ? buildEstimatedChargeText(row, prediction, roasText) : '';
+    const estimateTextList = prediction ? buildEstimatedChargeTextList(row, prediction, roasText) : [];
+    const estimatedChargeText = estimateTextList[0] || '';
+    const estimatedChargeRatioText = estimateTextList[1] || '';
 
     return {
       value: mode,
@@ -433,10 +495,12 @@ export function buildRoasPredictionOptions(row) {
       budgetText,
       estimatedRoasText,
       estimatedChargeText,
+      estimatedChargeRatioText,
       disabled: !prediction,
       title: [
         estimatedRoasText,
         estimatedChargeText,
+        estimatedChargeRatioText,
         impressionText ? `\u66dd\u5149 ${impressionText}` : '',
         orderText ? `\u8ba2\u5355 ${orderText}` : ''
       ].filter(Boolean).join(' / ')

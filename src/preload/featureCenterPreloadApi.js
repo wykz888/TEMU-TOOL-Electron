@@ -117,6 +117,15 @@ function createFeatureCenterPreloadApi({
         toCloneablePayload(payload)
       );
     },
+    getPromotionManagerNewDetailSettings() {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS);
+    },
+    savePromotionManagerNewDetailSettings(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS,
+        toCloneablePayload(payload)
+      );
+    },
     getPromotionManagerNewMonitorSettings() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS);
     },

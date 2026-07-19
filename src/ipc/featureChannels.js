@@ -85,6 +85,8 @@ const FEATURE_CHANNELS = Object.freeze({
   CLEAR_PROMOTION_MONITOR_RUNTIME_LOGS: 'feature-center:clear-promotion-monitor-runtime-logs',
   GET_PROMOTION_MANAGER_NEW_CREATE_SETTINGS: 'feature-center:get-promotion-manager-new-create-settings',
   SAVE_PROMOTION_MANAGER_NEW_CREATE_SETTINGS: 'feature-center:save-promotion-manager-new-create-settings',
+  GET_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS: 'feature-center:get-promotion-manager-new-detail-settings',
+  SAVE_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS: 'feature-center:save-promotion-manager-new-detail-settings',
   GET_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS: 'feature-center:get-promotion-manager-new-monitor-settings',
   SAVE_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS: 'feature-center:save-promotion-manager-new-monitor-settings',
   QUERY_PROMOTION_MANAGER_NEW_GOODS: 'feature-center:query-promotion-manager-new-goods',

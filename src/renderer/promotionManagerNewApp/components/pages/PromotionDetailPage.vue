@@ -115,7 +115,7 @@
 
 <script setup>
 import { IconClose } from '@arco-design/web-vue/es/icon';
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import PromotionDetailTable from '../PromotionDetailTable.vue';
 import PromotionDetailToolbar from '../PromotionDetailToolbar.vue';
 import {
@@ -149,6 +149,11 @@ import {
   resolveFeatureCenterBridge,
   normalizeRegionIdList
 } from '../../services/createPromotionSettings.js';
+import {
+  loadPromotionDetailSettings,
+  normalizePromotionDetailDateRange,
+  savePromotionDetailSettings
+} from '../../services/promotionDetailSettings.js';
 
 const selectedShopIds = ref([]);
 const selectedRegionCodes = ref([]);
@@ -172,9 +177,12 @@ const actionScope = ref('');
 const actionReadyMessage = ref('');
 const actionStatusDismissed = ref(false);
 const activeActionTaskId = ref('');
+const settingsLoaded = ref(false);
 const actionResult = shallowRef(createEmptyActionResult());
 const detailActionStatusMap = ref({});
 let activeQueryToken = 0;
+let saveSettingsTimer = null;
+let restoringSettings = false;
 
 const detailListTitle = '\u63a8\u5e7f\u5217\u8868';
 const detailEmptyDefaultText = '\u8bf7\u9009\u62e9\u5e97\u94fa\u548c\u5730\u533a\u540e\u67e5\u8be2';
@@ -204,6 +212,8 @@ const actionCanceledCountLabel = '\u505c\u6b62';
 const actionNoValidRowsText = '\u6ca1\u6709\u53ef\u6267\u884c\u64cd\u4f5c\u7684\u63a8\u5e7f';
 const actionTargetRoasRequiredText = '\u8bf7\u5148\u8f93\u5165\u76ee\u6807ROAS';
 const actionFailedText = '\u63a8\u5e7f\u64cd\u4f5c\u5931\u8d25';
+const settingsLoadFailedText = '\u63a8\u5e7f\u660e\u7ec6\u914d\u7f6e\u8bfb\u53d6\u5931\u8d25';
+const settingsSaveFailedText = '\u63a8\u5e7f\u660e\u7ec6\u914d\u7f6e\u4fdd\u5b58\u5931\u8d25';
 const actionScopeAll = 'all';
 const actionScopeSelected = 'selected';
 const closeStatusLabel = '\u5173\u95ed';
@@ -525,6 +535,71 @@ function getFeatureCenterBridgeMethod(methodName) {
   const featureCenterBridge = resolveFeatureCenterBridge();
 
   return featureCenterBridge && featureCenterBridge[methodName];
+}
+
+async function loadDetailSettings() {
+  restoringSettings = true;
+
+  try {
+    const settings = await loadPromotionDetailSettings();
+
+    if (settings) {
+      const restoredDateRange = normalizePromotionDetailDateRange(settings.queryDateRange);
+
+      selectedShopIds.value = settings.selectedShopIds;
+      selectedRegionCodes.value = settings.selectedRegionIds;
+      detailFilterDraft.value = normalizePromotionDetailFilterState(settings.detailFilterDraft);
+      appliedDetailFilters.value = normalizePromotionDetailFilterState(settings.appliedDetailFilters);
+      batchActionType.value = settings.batchActionType || DETAIL_ACTION_PAUSE;
+      batchTargetRoas.value = settings.batchTargetRoas;
+
+      if (restoredDateRange.length > 0) {
+        queryDateRange.value = restoredDateRange;
+      }
+    }
+  } catch (error) {
+    console.warn(settingsLoadFailedText, error);
+  } finally {
+    await nextTick();
+    restoringSettings = false;
+    settingsLoaded.value = true;
+  }
+}
+
+function clearSaveSettingsTimer() {
+  if (saveSettingsTimer) {
+    window.clearTimeout(saveSettingsTimer);
+    saveSettingsTimer = null;
+  }
+}
+
+async function persistDetailSettings() {
+  await savePromotionDetailSettings({
+    selectedShopIds: selectedShopIds.value,
+    selectedRegionIds: selectedRegionCodes.value,
+    queryDateRange: queryDateRange.value,
+    detailFilterDraft: detailFilterDraft.value,
+    appliedDetailFilters: appliedDetailFilters.value,
+    batchActionType: batchActionType.value,
+    batchTargetRoas: batchTargetRoas.value
+  });
+}
+
+function scheduleSaveDetailSettings() {
+  if (!settingsLoaded.value || restoringSettings) {
+    return;
+  }
+
+  clearSaveSettingsTimer();
+  saveSettingsTimer = window.setTimeout(async () => {
+    saveSettingsTimer = null;
+
+    try {
+      await persistDetailSettings();
+    } catch (error) {
+      console.warn(settingsSaveFailedText, error);
+    }
+  }, 400);
 }
 
 function buildQueryErrorText(error) {
@@ -867,11 +942,39 @@ async function executeDetailActionsForRows(rows, scope) {
 }
 
 watch(
+  [
+    selectedShopIds,
+    selectedRegionCodes,
+    queryDateRange,
+    detailFilterDraft,
+    appliedDetailFilters,
+    batchActionType,
+    batchTargetRoas
+  ],
+  scheduleSaveDetailSettings,
+  { deep: true }
+);
+
+onMounted(() => {
+  void loadDetailSettings();
+});
+
+watch(
   detailRows,
   pruneSelectedDetailRows
 );
 
 onBeforeUnmount(() => {
+  const hasPendingSave = Boolean(saveSettingsTimer);
+
+  clearSaveSettingsTimer();
+
+  if (hasPendingSave && settingsLoaded.value) {
+    void persistDetailSettings().catch((error) => {
+      console.warn(settingsSaveFailedText, error);
+    });
+  }
+
   if (queryLoading.value) {
     void handleStopDetailQuery();
   }

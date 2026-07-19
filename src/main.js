@@ -31,6 +31,9 @@ const {
 const {
   createPromotionManagerNewSettingsService
 } = require('./services/featureCenter/promotionManagerNewSettingsService');
+const {
+  createPromotionManagerDetailSettingsService
+} = require('./services/featureCenter/promotionManagerDetailSettingsService');
 const { createPromotionMonitorService } = require('./services/featureCenter/promotionMonitorService');
 const { createPromotionManagerSettingsService } = require('./services/featureCenter/promotionManagerSettingsService');
 const {
@@ -146,6 +149,10 @@ const promotionManagerNewMonitorSettingsService = createPromotionManagerSettings
   cloudRecordType: 'promotion-manager-monitor-settings'
 });
 const promotionManagerNewSettingsService = createPromotionManagerNewSettingsService({
+  sessionStore,
+  featureCenterProfileService
+});
+const promotionManagerNewDetailSettingsService = createPromotionManagerDetailSettingsService({
   sessionStore,
   featureCenterProfileService
 });
@@ -3053,6 +3060,10 @@ app.whenReady().then(() => {
     ),
     getPromotionManagerNewCreateSettings: () => promotionManagerNewSettingsService.getSettings(),
     savePromotionManagerNewCreateSettings: (payload) => promotionManagerNewSettingsService.saveSettings(payload),
+    getPromotionManagerNewDetailSettings: () => promotionManagerNewDetailSettingsService.getSettings(),
+    savePromotionManagerNewDetailSettings: (payload) => (
+      promotionManagerNewDetailSettingsService.saveSettings(payload)
+    ),
     queryPromotionManagerNewGoods: (payload) => (
       promotionManagerNewGoodsService
         ? promotionManagerNewGoodsService.queryGoods(payload)

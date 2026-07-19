@@ -26,10 +26,15 @@
       >
         <template #cell="{ record }">
           <div class="pm-new-goods-product-cell">
-            <img
+            <a-image
               v-if="record.thumbUrl"
-              :src="record.thumbUrl"
+              class="pm-new-goods-thumb-image"
+              :src="getThumbnailUrl(record.thumbUrl)"
+              :preview-props="getPreviewProps(record.thumbUrl)"
               :alt="record.goodsName"
+              :width="goodsThumbSize"
+              :height="goodsThumbSize"
+              fit="cover"
               loading="lazy"
               decoding="async"
             />
@@ -140,7 +145,7 @@
                   :max="getDailyBudgetMax(record)"
                   :precision="0"
                   size="small"
-                  mode="button"
+                  hide-button
                   model-event="input"
                   @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
                 />
@@ -189,16 +194,17 @@
                 >
                   <strong>{{ option.label }}</strong>
                   <span
-                    v-if="option.estimatedRoasText || option.estimatedChargeText"
+                    v-if="option.estimatedRoasText || option.estimatedChargeText || option.estimatedChargeRatioText"
                     class="pm-new-roas-option-meta"
                   >
                     <em v-if="option.estimatedRoasText">{{ option.estimatedRoasText }}</em>
                     <em v-if="option.estimatedChargeText">{{ option.estimatedChargeText }}</em>
+                    <em v-if="option.estimatedChargeRatioText">{{ option.estimatedChargeRatioText }}</em>
                   </span>
                 </span>
               </a-radio>
               <a-radio :value="roasModeCustom">
-                <span class="pm-new-roas-option">
+                <span class="pm-new-roas-option pm-new-roas-option--custom">
                   <strong>{{ customLabel }}</strong>
                   <span
                     v-if="getRowDraft(record).roasMode === roasModeCustom"
@@ -211,7 +217,7 @@
                       :precision="2"
                       :step="0.01"
                       size="mini"
-                      mode="button"
+                      hide-button
                       model-event="input"
                       @click.stop
                       @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
@@ -224,6 +230,13 @@
                   >
                     {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
                   </span>
+                  <em
+                    v-for="text in getCustomRoasEstimateTexts(record)"
+                    :key="text"
+                    class="pm-new-roas-custom-estimate"
+                  >
+                    {{ text }}
+                  </em>
                 </span>
               </a-radio>
             </a-radio-group>
@@ -248,6 +261,7 @@ import {
   buildGoodsRowDraft,
   buildCustomRoasHint,
   buildDailyBudgetHint,
+  buildRoasEstimateTextList,
   buildRoasPredictionOptions,
   getCustomRoasBounds,
   getDailyBudgetBounds,
@@ -261,6 +275,10 @@ import {
   CREATE_STATUS_SUCCESS,
   getCreateStatusRecord
 } from '../view-models/createPromotionSubmitStatus.js';
+import {
+  buildPromotionImagePreviewProps,
+  buildPromotionThumbnailUrl
+} from '../utils/promotionImageUrls.js';
 
 const props = defineProps({
   rows: {
@@ -326,7 +344,9 @@ const goodsColumnProductWidth = 480;
 const goodsColumnCreateStatusWidth = 108;
 const goodsColumnDailyBudgetWidth = 224;
 const goodsColumnTargetRoasWidth = 360;
+const goodsThumbSize = 76;
 const virtualListThreshold = 120;
+const thumbnailRequestSize = 160;
 
 const rowSelection = Object.freeze({
   type: 'checkbox',
@@ -391,6 +411,14 @@ function getCreateStatusClass(row) {
   return 'is-pending';
 }
 
+function getThumbnailUrl(url) {
+  return buildPromotionThumbnailUrl(url, thumbnailRequestSize);
+}
+
+function getPreviewProps(url) {
+  return buildPromotionImagePreviewProps(url);
+}
+
 function isBudgetCustom(row) {
   return getRowDraft(row).budgetMode === budgetModeCustom;
 }
@@ -401,6 +429,14 @@ function isRoasCustom(row) {
 
 function getRoasOptions(row) {
   return buildRoasPredictionOptions(row);
+}
+
+function getCustomRoasEstimateTexts(row) {
+  if (!isRoasCustom(row)) {
+    return [];
+  }
+
+  return buildRoasEstimateTextList(row, getRowDraft(row).customRoas);
 }
 
 function getDailyBudgetMin(row) {

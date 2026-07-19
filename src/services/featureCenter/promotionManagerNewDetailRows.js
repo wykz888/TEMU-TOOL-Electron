@@ -28,12 +28,14 @@ const REGION_LABELS = Object.freeze({
 
 const DETAIL_STATUS_RUNNING = 'running';
 const DETAIL_STATUS_PAUSED = 'paused';
+const DETAIL_STATUS_GOODS_OFFLINE = 'goods_offline';
 const DETAIL_STATUS_ENDED = 'ended';
 const DETAIL_STATUS_DELETED = 'deleted';
 
 const DETAIL_STATUS_LABELS = Object.freeze({
   [DETAIL_STATUS_RUNNING]: '\u6295\u653e\u4e2d',
   [DETAIL_STATUS_PAUSED]: '\u5df2\u6682\u505c',
+  [DETAIL_STATUS_GOODS_OFFLINE]: '\u5546\u54c1\u4e0b\u67b6',
   [DETAIL_STATUS_ENDED]: '\u5df2\u7ed3\u675f',
   [DETAIL_STATUS_DELETED]: '\u5df2\u5220\u9664'
 });
@@ -233,10 +235,6 @@ function resolveDetailStatusValue(item) {
   const showStatus = Number(raw.ad_show_status);
   const adPhase = Number(raw.ad_phase);
 
-  if (item && item.isPaused === true) {
-    return DETAIL_STATUS_PAUSED;
-  }
-
   if (showStatus === 7) {
     return DETAIL_STATUS_PAUSED;
   }
@@ -245,12 +243,20 @@ function resolveDetailStatusValue(item) {
     return DETAIL_STATUS_RUNNING;
   }
 
+  if (showStatus === 3) {
+    return DETAIL_STATUS_GOODS_OFFLINE;
+  }
+
   if (showStatus === 9 || adPhase === 3) {
     return DETAIL_STATUS_ENDED;
   }
 
   if (showStatus === 10 || adPhase === 4) {
     return DETAIL_STATUS_DELETED;
+  }
+
+  if (item && item.isPaused === true) {
+    return DETAIL_STATUS_PAUSED;
   }
 
   return DETAIL_STATUS_RUNNING;

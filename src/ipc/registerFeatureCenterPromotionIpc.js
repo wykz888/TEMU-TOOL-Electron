@@ -9,6 +9,8 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     clearPromotionMonitorRuntimeLogs,
     getPromotionManagerNewCreateSettings,
     savePromotionManagerNewCreateSettings,
+    getPromotionManagerNewDetailSettings,
+    savePromotionManagerNewDetailSettings,
     getPromotionManagerNewMonitorSettings,
     savePromotionManagerNewMonitorSettings,
     queryPromotionManagerNewGoods,
@@ -23,6 +25,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
   } = options;
   const {
     fb_promotionManagerNewCreateSettings,
+    fb_promotionManagerNewDetailSettings,
     fb_promotionManagerNewMonitorSettings,
     fb_promotionMonitor,
     fb_promotionMonitorRuntimeLogs,
@@ -68,6 +71,22 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     }
 
     return savePromotionManagerNewCreateSettings(payload);
+  });
+
+  handle(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS, async () => {
+    if (typeof getPromotionManagerNewDetailSettings !== 'function') {
+      return fb_promotionManagerNewDetailSettings();
+    }
+
+    return getPromotionManagerNewDetailSettings();
+  });
+
+  handle(FEATURE_CHANNELS.SAVE_PROMOTION_MANAGER_NEW_DETAIL_SETTINGS, async (_event, payload) => {
+    if (typeof savePromotionManagerNewDetailSettings !== 'function') {
+      return fb_promotionManagerNewDetailSettings();
+    }
+
+    return savePromotionManagerNewDetailSettings(payload);
   });
 
   handle(FEATURE_CHANNELS.GET_PROMOTION_MANAGER_NEW_MONITOR_SETTINGS, async () => {

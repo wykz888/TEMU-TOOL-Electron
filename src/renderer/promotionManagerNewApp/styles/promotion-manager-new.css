@@ -1641,7 +1641,7 @@ body {
   max-width: none;
 }
 
-.pm-new-goods-product-cell img,
+.pm-new-goods-thumb-image,
 .pm-new-goods-thumb-empty {
   width: 76px;
   height: 76px;
@@ -1649,6 +1649,17 @@ body {
   border-radius: 7px;
   background: #f3f7fa;
   box-shadow: 0 6px 14px rgba(31, 45, 61, 0.07);
+  overflow: hidden;
+}
+
+.pm-new-goods-thumb-image {
+  cursor: zoom-in;
+}
+
+.pm-new-goods-thumb-image .arco-image-img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -1847,9 +1858,9 @@ body {
 }
 
 .pm-new-control-inline {
-  flex: 1 1 82px;
+  flex: 1 1 74px;
   width: auto;
-  min-width: 78px;
+  min-width: 70px;
   max-width: 100%;
 }
 
@@ -1930,6 +1941,11 @@ body {
   max-width: 100%;
 }
 
+.pm-new-roas-option--custom {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
 .pm-new-roas-option strong {
   flex: 0 0 auto;
   overflow: hidden;
@@ -1947,6 +1963,7 @@ body {
 .pm-new-roas-option-meta {
   display: inline-flex;
   flex: 1 1 auto;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
   min-width: 0;
@@ -1965,8 +1982,20 @@ body {
   white-space: nowrap;
 }
 
+.pm-new-roas-custom-estimate {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #718197;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pm-new-roas-custom-inline {
-  flex: 0 0 118px;
+  flex: 0 0 86px;
   min-width: 0;
 }
 
@@ -2073,13 +2102,25 @@ body {
   min-width: 0;
 }
 
-.pm-new-detail-product-cell img {
+.pm-new-detail-thumb-image,
+.pm-new-detail-product-cell .pm-new-goods-thumb-empty {
   width: 72px;
   height: 72px;
   border: 1px solid rgba(49, 66, 89, 0.1);
   border-radius: 7px;
   background: #f3f7fa;
   box-shadow: 0 6px 14px rgba(31, 45, 61, 0.07);
+  overflow: hidden;
+}
+
+.pm-new-detail-thumb-image {
+  cursor: zoom-in;
+}
+
+.pm-new-detail-thumb-image .arco-image-img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -2589,7 +2630,7 @@ body.dark-theme .pm-new-roas-option strong {
   color: #e4edf8;
 }
 
-body.dark-theme .pm-new-goods-product-cell img,
+body.dark-theme .pm-new-goods-thumb-image,
 body.dark-theme .pm-new-goods-thumb-empty {
   border-color: rgba(148, 163, 184, 0.14);
   background: rgba(25, 36, 52, 0.92);
@@ -2682,7 +2723,7 @@ body.dark-theme .pm-new-detail-setting-cell span {
   background: rgba(20, 29, 43, 0.82);
 }
 
-body.dark-theme .pm-new-detail-product-cell img {
+body.dark-theme .pm-new-detail-thumb-image {
   border-color: rgba(148, 163, 184, 0.14);
   background: rgba(148, 163, 184, 0.1);
 }

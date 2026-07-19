@@ -21,12 +21,14 @@ export const DETAIL_ACTION_TARGET_ROAS_TYPES = new Set([
 
 export const DETAIL_STATUS_RUNNING = 'running';
 export const DETAIL_STATUS_PAUSED = 'paused';
+export const DETAIL_STATUS_GOODS_OFFLINE = 'goods_offline';
 export const DETAIL_STATUS_ENDED = 'ended';
 export const DETAIL_STATUS_DELETED = 'deleted';
 
 export const DETAIL_STATUS_OPTIONS = Object.freeze([
   { value: DETAIL_STATUS_RUNNING, label: '\u6295\u653e\u4e2d' },
   { value: DETAIL_STATUS_PAUSED, label: '\u5df2\u6682\u505c' },
+  { value: DETAIL_STATUS_GOODS_OFFLINE, label: '\u5546\u54c1\u4e0b\u67b6' },
   { value: DETAIL_STATUS_ENDED, label: '\u5df2\u7ed3\u675f' },
   { value: DETAIL_STATUS_DELETED, label: '\u5df2\u5220\u9664' }
 ]);

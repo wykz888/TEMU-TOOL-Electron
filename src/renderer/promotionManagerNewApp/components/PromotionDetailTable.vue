@@ -26,10 +26,15 @@
       >
         <template #cell="{ record }">
           <div class="pm-new-detail-product-cell">
-            <img
+            <a-image
               v-if="record.productImageUrl"
-              :src="record.productImageUrl"
+              class="pm-new-detail-thumb-image"
+              :src="getThumbnailUrl(record.productImageUrl)"
+              :preview-props="getPreviewProps(record.productImageUrl)"
               :alt="record.productName"
+              :width="detailThumbSize"
+              :height="detailThumbSize"
+              fit="cover"
               loading="lazy"
               decoding="async"
             />
@@ -198,12 +203,17 @@ import { computed } from 'vue';
 import {
   DETAIL_STATUS_DELETED,
   DETAIL_STATUS_ENDED,
+  DETAIL_STATUS_GOODS_OFFLINE,
   DETAIL_STATUS_PAUSED,
   DETAIL_STATUS_RUNNING
 } from '../view-models/promotionDetailRows.js';
 import {
   getDetailActionStatusRecord
 } from '../view-models/promotionDetailActionStatus.js';
+import {
+  buildPromotionImagePreviewProps,
+  buildPromotionThumbnailUrl
+} from '../utils/promotionImageUrls.js';
 
 const props = defineProps({
   rows: {
@@ -262,7 +272,9 @@ const statusColumnWidth = 136;
 const metricsColumnWidth = 330;
 const settingsColumnWidth = 220;
 const actionColumnWidth = 116;
+const detailThumbSize = 72;
 const virtualListThreshold = 120;
+const thumbnailRequestSize = 160;
 
 const rowSelection = Object.freeze({
   type: 'checkbox',
@@ -304,6 +316,10 @@ function getStatusClass(record) {
     return 'is-warning';
   }
 
+  if (statusValue === DETAIL_STATUS_GOODS_OFFLINE) {
+    return 'is-error';
+  }
+
   if (statusValue === DETAIL_STATUS_DELETED) {
     return 'is-error';
   }
@@ -335,6 +351,14 @@ function getActionStatusClass(record) {
   }
 
   return 'is-pending';
+}
+
+function getThumbnailUrl(url) {
+  return buildPromotionThumbnailUrl(url, thumbnailRequestSize);
+}
+
+function getPreviewProps(url) {
+  return buildPromotionImagePreviewProps(url);
 }
 
 function getActionStatusRecord(record) {
