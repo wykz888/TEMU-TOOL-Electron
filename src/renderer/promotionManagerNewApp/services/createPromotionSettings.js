@@ -4,6 +4,8 @@ import {
   FAST_START_MODE_OFF,
   FAST_START_MODE_ON,
   ROAS_MODE_CUSTOM,
+  ROAS_MODE_ESTIMATED_CHARGE,
+  ROAS_MODE_ESTIMATED_RATIO,
   ROAS_MODE_MEDIUM,
   ROAS_MODE_STRONG,
   ROAS_MODE_WEAK,
@@ -21,7 +23,9 @@ const ROAS_MODE_IDS = Object.freeze([
   ROAS_MODE_STRONG,
   ROAS_MODE_MEDIUM,
   ROAS_MODE_WEAK,
-  ROAS_MODE_CUSTOM
+  ROAS_MODE_CUSTOM,
+  ROAS_MODE_ESTIMATED_CHARGE,
+  ROAS_MODE_ESTIMATED_RATIO
 ]);
 const FAST_START_MODE_IDS = Object.freeze([
   FAST_START_MODE_OFF,
@@ -70,7 +74,9 @@ export function normalizeBatchSettings(settings = {}) {
     roasMode: normalizeMode(source.roasMode, ROAS_MODE_IDS, ROAS_MODE_STRONG),
     fastStartMode: normalizeMode(source.fastStartMode, FAST_START_MODE_IDS, FAST_START_MODE_OFF),
     customBudget: normalizeOptionalNumber(source.customBudget),
-    customRoas: normalizeOptionalNumber(source.customRoas)
+    customRoas: normalizeOptionalNumber(source.customRoas),
+    estimatedCharge: normalizeOptionalNumber(source.estimatedCharge),
+    estimatedRatio: normalizeOptionalNumber(source.estimatedRatio)
   };
 }
 

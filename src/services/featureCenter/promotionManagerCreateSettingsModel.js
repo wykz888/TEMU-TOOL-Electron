@@ -1,6 +1,6 @@
 const { normalizeText } = require('../shopManagement/common');
 
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 
 const REGION_IDS = Object.freeze(['us', 'eu', 'global']);
 const BUDGET_MODE_UNLIMITED = 'unlimited';
@@ -9,6 +9,8 @@ const ROAS_MODE_STRONG = 'strong';
 const ROAS_MODE_MEDIUM = 'medium';
 const ROAS_MODE_WEAK = 'weak';
 const ROAS_MODE_CUSTOM = 'custom';
+const ROAS_MODE_ESTIMATED_CHARGE = 'estimated_charge';
+const ROAS_MODE_ESTIMATED_RATIO = 'estimated_ratio';
 const FAST_START_MODE_OFF = 'off';
 const FAST_START_MODE_ON = 'on';
 
@@ -20,7 +22,9 @@ const ROAS_MODE_IDS = Object.freeze([
   ROAS_MODE_STRONG,
   ROAS_MODE_MEDIUM,
   ROAS_MODE_WEAK,
-  ROAS_MODE_CUSTOM
+  ROAS_MODE_CUSTOM,
+  ROAS_MODE_ESTIMATED_CHARGE,
+  ROAS_MODE_ESTIMATED_RATIO
 ]);
 const FAST_START_MODE_IDS = Object.freeze([
   FAST_START_MODE_OFF,
@@ -139,7 +143,9 @@ function normalizeBatchSettings(settings) {
     roasMode: normalizeMode(source.roasMode, ROAS_MODE_IDS, ROAS_MODE_STRONG),
     fastStartMode: normalizeMode(source.fastStartMode, FAST_START_MODE_IDS, FAST_START_MODE_OFF),
     customBudget: normalizeOptionalPositiveNumber(source.customBudget),
-    customRoas: normalizeOptionalPositiveNumber(source.customRoas)
+    customRoas: normalizeOptionalPositiveNumber(source.customRoas),
+    estimatedCharge: normalizeOptionalPositiveNumber(source.estimatedCharge),
+    estimatedRatio: normalizeOptionalPositiveNumber(source.estimatedRatio)
   };
 }
 

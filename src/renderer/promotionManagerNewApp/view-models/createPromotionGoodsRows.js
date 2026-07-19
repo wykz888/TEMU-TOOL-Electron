@@ -1,3 +1,10 @@
+import {
+  buildEstimatedChargeTextList,
+  getRowPriceRange
+} from './createPromotionRoasEstimates.js';
+
+export { buildRoasEstimateTextList } from './createPromotionRoasEstimates.js';
+
 export const GOODS_QUERY_PAGE_SIZE = 100;
 
 export const BUDGET_MODE_UNLIMITED = 'unlimited';
@@ -7,6 +14,8 @@ export const ROAS_MODE_STRONG = 'strong';
 export const ROAS_MODE_MEDIUM = 'medium';
 export const ROAS_MODE_WEAK = 'weak';
 export const ROAS_MODE_CUSTOM = 'custom';
+export const ROAS_MODE_ESTIMATED_CHARGE = 'estimated_charge';
+export const ROAS_MODE_ESTIMATED_RATIO = 'estimated_ratio';
 
 export const FAST_START_MODE_OFF = 'off';
 export const FAST_START_MODE_ON = 'on';
@@ -33,6 +42,12 @@ export const ROAS_MODE_OPTIONS = Object.freeze([
   { value: ROAS_MODE_MEDIUM, label: '\u7ade\u4e89\u529b\u4e2d' },
   { value: ROAS_MODE_WEAK, label: '\u7ade\u4e89\u529b\u5f31' },
   { value: ROAS_MODE_CUSTOM, label: '\u81ea\u5b9a\u4e49' }
+]);
+
+export const BATCH_ROAS_MODE_OPTIONS = Object.freeze([
+  ...ROAS_MODE_OPTIONS,
+  { value: ROAS_MODE_ESTIMATED_CHARGE, label: '\u9884\u4f30\u6263\u8d39' },
+  { value: ROAS_MODE_ESTIMATED_RATIO, label: '\u9884\u4f30\u5360\u6bd4' }
 ]);
 
 export const FAST_START_MODE_OPTIONS = Object.freeze([
@@ -111,18 +126,6 @@ function normalizeRangeNumbers(minValue, maxValue) {
   };
 }
 
-function pickPositiveNumber(...values) {
-  for (const value of values) {
-    const numberValue = normalizeFiniteNumber(value);
-
-    if (numberValue !== null && numberValue > 0) {
-      return numberValue;
-    }
-  }
-
-  return null;
-}
-
 function firstPresentText(...values) {
   for (const value of values) {
     const text = normalizeText(value);
@@ -158,142 +161,6 @@ function splitJoinedTextValues(value) {
     .split(/\s*\/\s*|[\uFF0C,\uFF1B;]+/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-}
-
-function parseNumberList(value) {
-  return normalizeText(value)
-    .replace(/,/g, '')
-    .match(/-?\d+(?:\.\d+)?/g)
-    ?.map((entry) => Number(entry))
-    .filter((entry) => Number.isFinite(entry)) || [];
-}
-
-function getRowPriceRange(row) {
-  const priceMin = normalizeOptionalNumber(row && row.priceMin);
-  const priceMax = normalizeOptionalNumber(row && row.priceMax);
-
-  if (priceMin !== null || priceMax !== null) {
-    return normalizeRangeNumbers(priceMin, priceMax);
-  }
-
-  const numbers = [
-    ...parseNumberList(row && row.priceText),
-    ...parseNumberList(row && row.sitePriceText)
-  ];
-
-  if (numbers.length <= 0) {
-    return {
-      min: null,
-      max: null
-    };
-  }
-
-  return {
-    min: Math.min(...numbers),
-    max: Math.max(...numbers)
-  };
-}
-
-function formatMoneyText(value, currency) {
-  const numberValue = normalizeFiniteNumber(value);
-
-  if (numberValue === null) {
-    return '';
-  }
-
-  return `${normalizeText(currency) || '\u00a5'}${numberValue.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`;
-}
-
-function formatPercentText(value) {
-  const numberValue = normalizeFiniteNumber(value);
-
-  if (numberValue === null) {
-    return '';
-  }
-
-  return `${numberValue.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}%`;
-}
-
-function resolveChargeEstimate(row, prediction, roasText) {
-  const roasNumber = pickPositiveNumber(
-    prediction && prediction.roasNumber,
-    prediction && prediction.roas,
-    roasText
-  );
-
-  if (roasNumber === null) {
-    return null;
-  }
-
-  const priceRange = getRowPriceRange(row);
-  const minPrice = pickPositiveNumber(priceRange.min, priceRange.max);
-  const maxPrice = pickPositiveNumber(priceRange.max, priceRange.min);
-
-  if (minPrice === null || maxPrice === null) {
-    return null;
-  }
-
-  return {
-    roasNumber,
-    minPrice,
-    maxPrice,
-    currency: normalizeText(getBidInfo(row).currency) || '\u00a5'
-  };
-}
-
-function buildEstimatedChargeText(row, prediction, roasText) {
-  const estimate = resolveChargeEstimate(row, prediction, roasText);
-
-  if (!estimate) {
-    return '';
-  }
-
-  const minChargeText = formatMoneyText(estimate.minPrice / estimate.roasNumber, estimate.currency);
-  const maxChargeText = formatMoneyText(estimate.maxPrice / estimate.roasNumber, estimate.currency);
-  const chargeText = minChargeText && maxChargeText && minChargeText !== maxChargeText
-    ? `${minChargeText} - ${maxChargeText}`
-    : (minChargeText || maxChargeText);
-
-  return chargeText ? `\u9884\u4f30\u6263\u8d39 ${chargeText}` : '';
-}
-
-function buildEstimatedChargeRatioText(row, prediction, roasText) {
-  const estimate = resolveChargeEstimate(row, prediction, roasText);
-
-  if (!estimate) {
-    return '';
-  }
-
-  const minRatioText = formatPercentText(((estimate.minPrice / estimate.roasNumber) / estimate.minPrice) * 100);
-  const maxRatioText = formatPercentText(((estimate.maxPrice / estimate.roasNumber) / estimate.maxPrice) * 100);
-  const ratioText = minRatioText && maxRatioText && minRatioText !== maxRatioText
-    ? `${minRatioText} - ${maxRatioText}`
-    : (minRatioText || maxRatioText);
-
-  return ratioText ? `\u6263\u8d39\u5360\u6bd4 ${ratioText}` : '';
-}
-
-function buildEstimatedChargeTextList(row, prediction, roasText) {
-  return [
-    buildEstimatedChargeText(row, prediction, roasText),
-    buildEstimatedChargeRatioText(row, prediction, roasText)
-  ].filter(Boolean);
-}
-
-export function buildRoasEstimateTextList(row, roasValue) {
-  const roasNumber = pickPositiveNumber(roasValue);
-
-  if (roasNumber === null) {
-    return [];
-  }
-
-  return buildEstimatedChargeTextList(row, { roasNumber }, roasNumber);
 }
 
 function isNumberRangeOverlapping(rowRange, filterRange) {

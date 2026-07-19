@@ -10,6 +10,8 @@
           v-model:fast-start-mode="batchFastStartMode"
           v-model:custom-budget="batchCustomBudget"
           v-model:custom-roas="batchCustomRoas"
+          v-model:estimated-charge="batchEstimatedCharge"
+          v-model:estimated-ratio="batchEstimatedRatio"
           v-model:filter-values="goodsFilterDraft"
           :region-options="regionOptions"
           :shop-options="shopFilterOptions"
@@ -118,14 +120,10 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, trigge
 import CreatePromotionGoodsTable from '../CreatePromotionGoodsTable.vue';
 import CreatePromotionToolbar from '../CreatePromotionToolbar.vue';
 import {
-  BUDGET_MODE_CUSTOM,
   BUDGET_MODE_UNLIMITED,
   FAST_START_MODE_OFF,
-  FAST_START_MODE_ON,
   GOODS_QUERY_PAGE_SIZE,
-  ROAS_MODE_CUSTOM,
   ROAS_MODE_STRONG,
-  applyGoodsRowDraftPatchToRows,
   buildGoodsCategoryFilterOptions,
   buildGoodsRowDraft,
   buildGoodsShopFilterOptions,
@@ -137,6 +135,9 @@ import {
   normalizeGoodsFilterState,
   pruneGoodsFilterStateOptions
 } from '../../view-models/createPromotionGoodsRows.js';
+import {
+  applyBatchDraftSettingsToRows
+} from '../../view-models/createPromotionBatchDrafts.js';
 import {
   buildCloneableCreateAdsPayload,
   buildCreateAdsSubmitRows,
@@ -174,6 +175,8 @@ const batchRoasMode = ref(ROAS_MODE_STRONG);
 const batchFastStartMode = ref(FAST_START_MODE_OFF);
 const batchCustomBudget = ref(null);
 const batchCustomRoas = ref(null);
+const batchEstimatedCharge = ref(null);
+const batchEstimatedRatio = ref(null);
 const queryError = ref('');
 const queryLoading = ref(false);
 const activeQueryTaskId = ref('');
@@ -438,6 +441,8 @@ async function loadCreateSettings() {
         batchFastStartMode.value = settings.batchSettings.fastStartMode || FAST_START_MODE_OFF;
         batchCustomBudget.value = settings.batchSettings.customBudget;
         batchCustomRoas.value = settings.batchSettings.customRoas;
+        batchEstimatedCharge.value = settings.batchSettings.estimatedCharge;
+        batchEstimatedRatio.value = settings.batchSettings.estimatedRatio;
       }
     }
   } catch (error) {
@@ -467,7 +472,9 @@ async function persistCreateSettings() {
       roasMode: batchRoasMode.value,
       fastStartMode: batchFastStartMode.value,
       customBudget: batchCustomBudget.value,
-      customRoas: batchCustomRoas.value
+      customRoas: batchCustomRoas.value,
+      estimatedCharge: batchEstimatedCharge.value,
+      estimatedRatio: batchEstimatedRatio.value
     }
   });
 }
@@ -571,27 +578,6 @@ function handleUpdateGoodsRowDraft(row, patch) {
   triggerRef(goodsRowDrafts);
 }
 
-function buildBatchDraftPatch() {
-  const patch = {
-    budgetMode: batchBudgetMode.value,
-    roasMode: batchRoasMode.value,
-    fastStartEnabled: batchFastStartMode.value === FAST_START_MODE_ON
-  };
-
-  const customBudget = normalizeOptionalNumber(batchCustomBudget.value);
-  const customRoas = normalizeOptionalNumber(batchCustomRoas.value);
-
-  if (batchBudgetMode.value === BUDGET_MODE_CUSTOM && customBudget !== null) {
-    patch.customBudget = customBudget;
-  }
-
-  if (batchRoasMode.value === ROAS_MODE_CUSTOM && customRoas !== null) {
-    patch.customRoas = customRoas;
-  }
-
-  return patch;
-}
-
 function applyBatchDraftToRows(rows) {
   const targetRows = Array.isArray(rows) ? rows : [];
 
@@ -599,10 +585,18 @@ function applyBatchDraftToRows(rows) {
     return;
   }
 
-  setGoodsRowDraftMap(applyGoodsRowDraftPatchToRows(
+  setGoodsRowDraftMap(applyBatchDraftSettingsToRows(
     goodsRowDrafts.value,
     targetRows,
-    buildBatchDraftPatch()
+    {
+      budgetMode: batchBudgetMode.value,
+      roasMode: batchRoasMode.value,
+      fastStartMode: batchFastStartMode.value,
+      customBudget: batchCustomBudget.value,
+      customRoas: batchCustomRoas.value,
+      estimatedCharge: batchEstimatedCharge.value,
+      estimatedRatio: batchEstimatedRatio.value
+    }
   ));
 }
 
@@ -804,16 +798,6 @@ function handleResetGoodsFilters() {
   appliedGoodsFilters.value = createEmptyGoodsFilterState();
 }
 
-function normalizeOptionalNumber(value) {
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-
-  const numberValue = Number(value);
-
-  return Number.isFinite(numberValue) ? numberValue : null;
-}
-
 async function handleStopShopQuery() {
   if (!queryLoading.value) {
     return;
@@ -906,7 +890,9 @@ watch(
     batchRoasMode,
     batchFastStartMode,
     batchCustomBudget,
-    batchCustomRoas
+    batchCustomRoas,
+    batchEstimatedCharge,
+    batchEstimatedRatio
   ],
   scheduleSaveCreateSettings,
   { deep: true }

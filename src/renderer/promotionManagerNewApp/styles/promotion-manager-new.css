@@ -1367,6 +1367,14 @@ body {
   white-space: nowrap;
 }
 
+.pm-new-toolbar-help-icon {
+  width: 15px;
+  height: 15px;
+  color: #8a97aa;
+  cursor: help;
+  flex: 0 0 auto;
+}
+
 .pm-new-toolbar-select,
 .pm-new-toolbar-action-select {
   min-width: 0;
@@ -2766,6 +2774,10 @@ body.dark-theme .pm-new-toolbar-group {
 body.dark-theme .pm-new-toolbar-field-label,
 body.dark-theme .pm-new-toolbar-inline-label {
   color: #e4edf8;
+}
+
+body.dark-theme .pm-new-toolbar-help-icon {
+  color: #9aa8ba;
 }
 
 body.dark-theme .pm-new-toolbar-range-separator {

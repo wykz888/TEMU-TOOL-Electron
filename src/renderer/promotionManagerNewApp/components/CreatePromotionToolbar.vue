@@ -257,6 +257,12 @@
           role="group"
         >
           <span class="pm-new-toolbar-inline-label">{{ roasLabel }}</span>
+          <a-tooltip
+            :content="roasHelpText"
+            mini
+          >
+            <IconQuestionCircle class="pm-new-toolbar-help-icon" />
+          </a-tooltip>
           <a-select
             :model-value="roasMode"
             class="pm-new-toolbar-action-select"
@@ -282,8 +288,35 @@
             :precision="2"
             :step="0.01"
             :placeholder="roasPlaceholder"
+            hide-button
             model-event="input"
             @update:model-value="emitCustomRoas"
+          />
+          <a-input-number
+            v-if="roasMode === roasModeEstimatedCharge"
+            :model-value="estimatedCharge"
+            class="pm-new-toolbar-custom-number"
+            size="small"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            :placeholder="estimatedChargePlaceholder"
+            hide-button
+            model-event="input"
+            @update:model-value="emitEstimatedCharge"
+          />
+          <a-input-number
+            v-if="roasMode === roasModeEstimatedRatio"
+            :model-value="estimatedRatio"
+            class="pm-new-toolbar-custom-number"
+            size="small"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            :placeholder="estimatedRatioPlaceholder"
+            hide-button
+            model-event="input"
+            @update:model-value="emitEstimatedRatio"
           />
         </div>
         <div
@@ -362,12 +395,15 @@
 </template>
 
 <script setup>
+import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
 import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
 import {
+  BATCH_ROAS_MODE_OPTIONS,
   BUDGET_MODE_OPTIONS,
   BUDGET_MODE_CUSTOM,
   FAST_START_MODE_OPTIONS,
-  ROAS_MODE_OPTIONS,
+  ROAS_MODE_ESTIMATED_CHARGE,
+  ROAS_MODE_ESTIMATED_RATIO,
   ROAS_MODE_CUSTOM,
   createEmptyGoodsFilterState
 } from '../view-models/createPromotionGoodsRows.js';
@@ -421,6 +457,14 @@ const props = defineProps({
     type: [Number, String],
     default: null
   },
+  estimatedCharge: {
+    type: [Number, String],
+    default: null
+  },
+  estimatedRatio: {
+    type: [Number, String],
+    default: null
+  },
   filterValues: {
     type: Object,
     default: createEmptyGoodsFilterState
@@ -467,6 +511,8 @@ const emit = defineEmits([
   'update:fastStartMode',
   'update:customBudget',
   'update:customRoas',
+  'update:estimatedCharge',
+  'update:estimatedRatio',
   'update:filterValues',
   'query',
   'stop-query',
@@ -509,6 +555,9 @@ const roasLabel = 'ROAS\u503c\uff1a';
 const fastStartLabel = '\u6781\u901f\u8d77\u91cf\uff1a';
 const budgetPlaceholder = '\u8f93\u5165\u9884\u7b97';
 const roasPlaceholder = '\u8f93\u5165ROAS';
+const estimatedChargePlaceholder = '\u8f93\u5165\u6263\u8d39';
+const estimatedRatioPlaceholder = '\u8f93\u5165\u5360\u6bd4%';
+const roasHelpText = '\u7ade\u4e89\u529b\u5f3a/\u4e2d/\u5f31\u4f7f\u7528\u63a5\u53e3\u9884\u4f30\u503c\uff1b\u81ea\u5b9a\u4e49\u76f4\u63a5\u5199\u5165ROAS\uff1b\u9884\u4f30\u6263\u8d39\u6309\u5546\u54c1\u4f9b\u8d27\u4ef7\u4e0a\u9650 / \u8f93\u5165\u6263\u8d39\u6362\u7b97\u6210ROAS\uff1b\u9884\u4f30\u5360\u6bd4\u6309 100 / \u5360\u6bd4 \u6362\u7b97\u6210ROAS\u3002';
 const applyAllLabel = '\u4e00\u952e\u8bbe\u7f6e\u5168\u90e8';
 const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
 const resetLabel = '\u91cd\u7f6e';
@@ -519,10 +568,12 @@ const stopSubmitSelectedLabel = '\u505c\u6b62\u521b\u5efa\u52fe\u9009\u5e7f\u544
 const submitScopeAll = 'all';
 const submitScopeSelected = 'selected';
 const budgetModeOptions = BUDGET_MODE_OPTIONS;
-const roasModeOptions = ROAS_MODE_OPTIONS;
+const roasModeOptions = BATCH_ROAS_MODE_OPTIONS;
 const fastStartModeOptions = FAST_START_MODE_OPTIONS;
 const budgetModeCustom = BUDGET_MODE_CUSTOM;
 const roasModeCustom = ROAS_MODE_CUSTOM;
+const roasModeEstimatedCharge = ROAS_MODE_ESTIMATED_CHARGE;
+const roasModeEstimatedRatio = ROAS_MODE_ESTIMATED_RATIO;
 const stableSelectTriggerProps = Object.freeze({
   autoFitPopupMinWidth: true,
   updateAtScroll: true
@@ -601,6 +652,14 @@ function emitCustomBudget(value) {
 
 function emitCustomRoas(value) {
   emit('update:customRoas', value);
+}
+
+function emitEstimatedCharge(value) {
+  emit('update:estimatedCharge', value);
+}
+
+function emitEstimatedRatio(value) {
+  emit('update:estimatedRatio', value);
 }
 
 function patchFilterValues(patch) {
