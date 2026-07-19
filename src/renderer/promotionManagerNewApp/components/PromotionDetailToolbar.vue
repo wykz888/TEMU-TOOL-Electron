@@ -307,7 +307,31 @@
         </div>
 
         <div
-          v-if="actionNeedsTargetRoas"
+          v-if="actionNeedsRoasMode"
+          class="pm-new-toolbar-field"
+          role="group"
+        >
+          <span class="pm-new-toolbar-inline-label">{{ roasModeLabel }}</span>
+          <a-select
+            :model-value="roasMode"
+            class="pm-new-toolbar-action-select pm-new-detail-roas-mode-select"
+            popup-container="body"
+            size="small"
+            :trigger-props="stableSelectTriggerProps"
+            @update:model-value="emitRoasMode"
+          >
+            <a-option
+              v-for="option in roasModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </a-option>
+          </a-select>
+        </div>
+
+        <div
+          v-if="actionNeedsTargetRoasInput"
           class="pm-new-toolbar-field"
           role="group"
         >
@@ -382,8 +406,11 @@
 import { computed } from 'vue';
 import ShopSelectDropdown from '../../shared/shopSelection/ShopSelectDropdown.vue';
 import {
+  DETAIL_ACTION_ROAS_MODE_OPTIONS,
   DETAIL_ACTION_OPTIONS,
   DETAIL_ACTION_TARGET_ROAS_TYPES,
+  DETAIL_ACTION_UPDATE_ROAS,
+  DETAIL_ROAS_MODE_CUSTOM,
   DETAIL_STATUS_OPTIONS,
   createEmptyPromotionDetailFilterState
 } from '../view-models/promotionDetailRows.js';
@@ -426,6 +453,10 @@ const props = defineProps({
     default: false
   },
   actionType: {
+    type: String,
+    default: ''
+  },
+  roasMode: {
     type: String,
     default: ''
   },
@@ -476,6 +507,7 @@ const emit = defineEmits([
   'update:selectedRegionCodes',
   'update:queryDateRange',
   'update:actionType',
+  'update:roasMode',
   'update:targetRoas',
   'update:filterValues',
   'query',
@@ -517,6 +549,7 @@ const maxNumberPlaceholder = '\u6700\u9ad8';
 const filterSearchLabel = '\u641c\u7d22';
 const filterResetLabel = '\u91cd\u7f6e';
 const actionTypeLabel = '\u64cd\u4f5c\u7c7b\u578b\uff1a';
+const roasModeLabel = 'ROAS\u6863\u4f4d\uff1a';
 const targetRoasLabel = '\u76ee\u6807ROAS\uff1a';
 const targetRoasPlaceholder = '\u8f93\u5165ROAS';
 const applyAllLabel = '\u4e00\u952e\u8bbe\u7f6e\u5168\u90e8';
@@ -529,12 +562,21 @@ const stopExecuteSelectedLabel = '\u505c\u6b62\u6267\u884c\u52fe\u9009\u63a8\u5e
 const executeScopeAll = 'all';
 const executeScopeSelected = 'selected';
 const actionOptions = DETAIL_ACTION_OPTIONS;
+const roasModeOptions = DETAIL_ACTION_ROAS_MODE_OPTIONS;
 const stableSelectTriggerProps = Object.freeze({
   autoFitPopupMinWidth: true,
   updateAtScroll: true
 });
 
-const actionNeedsTargetRoas = computed(() => DETAIL_ACTION_TARGET_ROAS_TYPES.has(props.actionType));
+const actionNeedsRoasMode = computed(() => props.actionType === DETAIL_ACTION_UPDATE_ROAS);
+
+const actionNeedsTargetRoasInput = computed(() => {
+  if (props.actionType === DETAIL_ACTION_UPDATE_ROAS) {
+    return props.roasMode === DETAIL_ROAS_MODE_CUSTOM;
+  }
+
+  return DETAIL_ACTION_TARGET_ROAS_TYPES.has(props.actionType);
+});
 
 function isOptionValue(options, value) {
   return (Array.isArray(options) ? options : []).some((option) => option && option.value === value);
@@ -586,6 +628,12 @@ function emitSiteValues(value) {
 function emitActionType(value) {
   if (isOptionValue(actionOptions, value)) {
     emit('update:actionType', value);
+  }
+}
+
+function emitRoasMode(value) {
+  if (isOptionValue(roasModeOptions, value)) {
+    emit('update:roasMode', value);
   }
 }
 

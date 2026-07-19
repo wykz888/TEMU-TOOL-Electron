@@ -7,7 +7,8 @@ const DETAIL_ACTION_STATUS_VALUES = new Set([
   'failed',
   'skipped',
   'canceled',
-  'warning'
+  'warning',
+  'configured'
 ]);
 
 function normalizeFiniteNumber(value) {
@@ -60,6 +61,7 @@ function sanitizeDetailActionRowResult(row) {
     regionLabel: normalizeText(row && row.regionLabel),
     goodsId: normalizeText(row && row.goodsId),
     adId: normalizeText(row && row.adId),
+    roasMode: normalizeText(row && row.roasMode),
     actionType: normalizeText(row && row.actionType),
     status: normalizeActionStatus(row && row.status),
     message: normalizeText(row && row.message)
@@ -122,7 +124,8 @@ function sanitizeDetailActionRequestSummary(request) {
     groupCount: normalizeNonNegativeInteger(request && request.groupCount),
     shopThreadCount: normalizeNonNegativeInteger(request && request.shopThreadCount),
     chunkSize: normalizeNonNegativeInteger(request && request.chunkSize),
-    actionType: normalizeText(request && request.actionType)
+    actionType: normalizeText(request && request.actionType),
+    roasMode: normalizeText(request && request.roasMode)
   };
 }
 

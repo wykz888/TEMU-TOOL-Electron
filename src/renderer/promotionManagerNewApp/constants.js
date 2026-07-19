@@ -6,6 +6,12 @@ export const MODULES = Object.freeze([
     icon: 'send'
   },
   {
+    id: 'shopData',
+    label: '\u5e97\u94fa\u6570\u636e',
+    description: '\u6309\u5e97\u94fa\u67e5\u8be2\u63a8\u5e7f\u62a5\u8868\u6570\u636e',
+    icon: 'storage'
+  },
+  {
     id: 'detail',
     label: '\u63a8\u5e7f\u660e\u7ec6',
     description: '\u6309\u5e97\u94fa\u3001\u6d3b\u52a8\u3001\u5546\u54c1\u67e5\u770b\u6570\u636e',

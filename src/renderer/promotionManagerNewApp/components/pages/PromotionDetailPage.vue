@@ -8,6 +8,7 @@
           v-model:query-date-range="queryDateRange"
           v-model:filter-values="detailFilterDraft"
           v-model:action-type="batchActionType"
+          v-model:roas-mode="batchRoasMode"
           v-model:target-roas="batchTargetRoas"
           :region-options="regionOptions"
           :shop-options="shopFilterOptions"
@@ -121,7 +122,10 @@ import PromotionDetailToolbar from '../PromotionDetailToolbar.vue';
 import {
   DETAIL_ACTION_PAUSE,
   DETAIL_ACTION_TARGET_ROAS_TYPES,
+  DETAIL_ACTION_UPDATE_ROAS,
   DETAIL_QUERY_PAGE_SIZE,
+  DETAIL_ROAS_MODE_CUSTOM,
+  DETAIL_ROAS_MODE_STRONG,
   DETAIL_STATUS_OPTIONS,
   buildPromotionDetailShopFilterOptions,
   buildPromotionDetailSiteFilterOptions,
@@ -143,6 +147,8 @@ import {
   DETAIL_ACTION_STATUS_FAILED,
   DETAIL_ACTION_STATUS_RUNNING,
   applyDetailActionResultToStatusMap,
+  clearPreviewDetailActionStatuses,
+  patchDetailActionPreviewStatusForPayload,
   patchDetailActionStatusForRows
 } from '../../view-models/promotionDetailActionStatus.js';
 import {
@@ -165,6 +171,7 @@ const selectedDetailRowKeys = ref([]);
 const detailFilterDraft = ref(createEmptyPromotionDetailFilterState());
 const appliedDetailFilters = ref(createEmptyPromotionDetailFilterState());
 const batchActionType = ref(DETAIL_ACTION_PAUSE);
+const batchRoasMode = ref(DETAIL_ROAS_MODE_STRONG);
 const batchTargetRoas = ref(null);
 const queryLoading = ref(false);
 const queryError = ref('');
@@ -551,6 +558,7 @@ async function loadDetailSettings() {
       detailFilterDraft.value = normalizePromotionDetailFilterState(settings.detailFilterDraft);
       appliedDetailFilters.value = normalizePromotionDetailFilterState(settings.appliedDetailFilters);
       batchActionType.value = settings.batchActionType || DETAIL_ACTION_PAUSE;
+      batchRoasMode.value = settings.batchRoasMode || DETAIL_ROAS_MODE_STRONG;
       batchTargetRoas.value = settings.batchTargetRoas;
 
       if (restoredDateRange.length > 0) {
@@ -581,6 +589,7 @@ async function persistDetailSettings() {
     detailFilterDraft: detailFilterDraft.value,
     appliedDetailFilters: appliedDetailFilters.value,
     batchActionType: batchActionType.value,
+    batchRoasMode: batchRoasMode.value,
     batchTargetRoas: batchTargetRoas.value
   });
 }
@@ -754,26 +763,19 @@ function showBatchReadyMessage(count, scopeLabel) {
 }
 
 function handleApplyBatchToAll() {
-  showBatchReadyMessage(filteredDetailRows.value.length, batchAllScopeLabel);
+  applyBatchDraftToRows(filteredDetailRows.value, batchAllScopeLabel);
 }
 
 function handleApplyBatchToSelected() {
-  const selectedRows = getSelectedDetailRows();
-
-  if (selectedRows.length <= 0) {
-    actionError.value = executeNoRowsText;
-    actionReadyMessage.value = '';
-    actionStatusDismissed.value = false;
-    return;
-  }
-
-  showBatchReadyMessage(selectedRows.length, batchSelectedScopeLabel);
+  applyBatchDraftToRows(getSelectedDetailRows(), batchSelectedScopeLabel);
 }
 
 function handleResetBatchDraft() {
   batchActionType.value = DETAIL_ACTION_PAUSE;
+  batchRoasMode.value = DETAIL_ROAS_MODE_STRONG;
   batchTargetRoas.value = null;
   resetActionState();
+  detailActionStatusMap.value = clearPreviewDetailActionStatuses(detailActionStatusMap.value);
 }
 
 function handleExecuteAll() {
@@ -800,15 +802,24 @@ function handleCloseActionStatus() {
 }
 
 function buildDetailActionPayload(rows) {
-  const submitRows = buildDetailActionSubmitRows(rows, batchActionType.value);
+  const submitRows = buildDetailActionSubmitRows(rows, {
+    actionType: batchActionType.value,
+    roasMode: batchRoasMode.value,
+    targetRoas: batchTargetRoas.value
+  });
   const regionIds = queriedRegionCodes.value.length > 0
     ? queriedRegionCodes.value
     : selectedRegionCodes.value;
+  const targetRoas = batchActionType.value === DETAIL_ACTION_UPDATE_ROAS
+    && batchRoasMode.value !== DETAIL_ROAS_MODE_CUSTOM
+    ? null
+    : batchTargetRoas.value;
 
   return buildCloneableDetailActionPayload({
     taskId: activeActionTaskId.value,
     actionType: batchActionType.value,
-    targetRoas: batchTargetRoas.value,
+    roasMode: batchRoasMode.value,
+    targetRoas,
     rows: submitRows,
     regionIds
   });
@@ -819,11 +830,47 @@ function validateActionPayload(payload) {
     return actionNoValidRowsText;
   }
 
+  if (payload.actionType === DETAIL_ACTION_UPDATE_ROAS) {
+    if (payload.roasMode === DETAIL_ROAS_MODE_CUSTOM && !(Number(payload.targetRoas) > 0)) {
+      return actionTargetRoasRequiredText;
+    }
+
+    return '';
+  }
+
   if (DETAIL_ACTION_TARGET_ROAS_TYPES.has(payload.actionType) && !(Number(payload.targetRoas) > 0)) {
     return actionTargetRoasRequiredText;
   }
 
   return '';
+}
+
+function applyBatchDraftToRows(rows, scopeLabel) {
+  const targetRows = Array.isArray(rows) ? rows : [];
+
+  resetActionState();
+  detailActionStatusMap.value = clearPreviewDetailActionStatuses(detailActionStatusMap.value);
+
+  if (targetRows.length <= 0) {
+    actionError.value = executeNoRowsText;
+    actionStatusDismissed.value = false;
+    return;
+  }
+
+  const payload = buildDetailActionPayload(targetRows);
+  const validationMessage = validateActionPayload(payload);
+
+  if (validationMessage) {
+    actionError.value = validationMessage;
+    actionStatusDismissed.value = false;
+    return;
+  }
+
+  detailActionStatusMap.value = patchDetailActionPreviewStatusForPayload(
+    detailActionStatusMap.value,
+    payload
+  );
+  showBatchReadyMessage(payload.rows.length, scopeLabel);
 }
 
 function markActionRowsAsRunning(rows) {
@@ -949,6 +996,7 @@ watch(
     detailFilterDraft,
     appliedDetailFilters,
     batchActionType,
+    batchRoasMode,
     batchTargetRoas
   ],
   scheduleSaveDetailSettings,

@@ -1,6 +1,8 @@
 import {
+  DETAIL_ACTION_ROAS_MODE_OPTIONS,
   DETAIL_ACTION_OPTIONS,
   DETAIL_ACTION_PAUSE,
+  DETAIL_ROAS_MODE_STRONG,
   createEmptyPromotionDetailFilterState,
   normalizePromotionDetailFilterState
 } from '../view-models/promotionDetailRows.js';
@@ -12,11 +14,18 @@ import {
 } from './createPromotionSettings.js';
 
 const DETAIL_ACTION_IDS = Object.freeze(DETAIL_ACTION_OPTIONS.map((option) => option.value));
+const DETAIL_ROAS_MODE_IDS = Object.freeze(DETAIL_ACTION_ROAS_MODE_OPTIONS.map((option) => option.value));
 
 function normalizeActionType(value) {
   const normalizedValue = normalizeText(value);
 
   return DETAIL_ACTION_IDS.includes(normalizedValue) ? normalizedValue : DETAIL_ACTION_PAUSE;
+}
+
+function normalizeRoasMode(value) {
+  const normalizedValue = normalizeText(value);
+
+  return DETAIL_ROAS_MODE_IDS.includes(normalizedValue) ? normalizedValue : DETAIL_ROAS_MODE_STRONG;
 }
 
 function pickFirstPresent(...values) {
@@ -48,6 +57,7 @@ export function createDefaultPromotionDetailSettings() {
     detailFilterDraft: createEmptyPromotionDetailFilterState(),
     appliedDetailFilters: createEmptyPromotionDetailFilterState(),
     batchActionType: DETAIL_ACTION_PAUSE,
+    batchRoasMode: DETAIL_ROAS_MODE_STRONG,
     batchTargetRoas: null
   };
 }
@@ -64,6 +74,7 @@ export function normalizePromotionDetailSettings(settings = {}) {
     detailFilterDraft: normalizePromotionDetailFilterState(source.detailFilterDraft || source.detailFilters),
     appliedDetailFilters: normalizePromotionDetailFilterState(source.appliedDetailFilters || source.detailFilters),
     batchActionType: normalizeActionType(source.batchActionType || source.actionType),
+    batchRoasMode: normalizeRoasMode(source.batchRoasMode || source.roasMode),
     batchTargetRoas: normalizeOptionalNumber(pickFirstPresent(source.batchTargetRoas, source.targetRoas))
   };
 }

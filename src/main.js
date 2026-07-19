@@ -29,6 +29,9 @@ const {
   createPromotionManagerNewAdsCreateService
 } = require('./services/featureCenter/promotionManagerNewAdsCreateService');
 const {
+  createPromotionManagerNewShopDataService
+} = require('./services/featureCenter/promotionManagerNewShopDataService');
+const {
   createPromotionManagerNewSettingsService
 } = require('./services/featureCenter/promotionManagerNewSettingsService');
 const {
@@ -191,6 +194,7 @@ let promotionManagerNewGoodsService = null;
 let promotionManagerNewDetailService = null;
 let promotionManagerNewDetailActionService = null;
 let promotionManagerNewAdsCreateService = null;
+let promotionManagerNewShopDataService = null;
 let promotionMonitorService = null;
 let operationsProductCategoryService = null;
 let operationsSharedCostService = null;
@@ -1679,6 +1683,11 @@ app.whenReady().then(() => {
     runtimeLogger
   });
   promotionManagerNewAdsCreateService = createPromotionManagerNewAdsCreateService({
+    promotionAdsSessionService,
+    runtimeLogger
+  });
+  promotionManagerNewShopDataService = createPromotionManagerNewShopDataService({
+    shopManagementService,
     promotionAdsSessionService,
     runtimeLogger
   });
@@ -3192,6 +3201,26 @@ app.whenReady().then(() => {
           canceled: false,
           taskId: '',
           message: '\u521b\u5efa\u5e7f\u544a\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+        }
+    ),
+    queryPromotionManagerNewShopData: (payload) => (
+      promotionManagerNewShopDataService
+        ? promotionManagerNewShopDataService.queryShopData(payload)
+        : {
+          updatedAt: '',
+          request: {},
+          rows: [],
+          errors: [{
+            shopId: '',
+            shopName: '',
+            regionId: '',
+            regionLabel: '',
+            message: '\u5e97\u94fa\u6570\u636e\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+          }],
+          warnings: [],
+          totalCount: 0,
+          successCount: 0,
+          failedCount: 1
         }
     ),
     getRuntimeLogEntries: (payload) => runtimeLogger.readEntries(payload),

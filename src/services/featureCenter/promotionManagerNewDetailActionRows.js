@@ -31,6 +31,17 @@ const TARGET_ROAS_ACTION_TYPES = new Set([
   'increase_roas'
 ]);
 
+const DETAIL_ROAS_MODE_STRONG = 'strong';
+const DETAIL_ROAS_MODE_MEDIUM = 'medium';
+const DETAIL_ROAS_MODE_WEAK = 'weak';
+const DETAIL_ROAS_MODE_CUSTOM = 'custom';
+const DETAIL_ROAS_MODE_IDS = Object.freeze([
+  DETAIL_ROAS_MODE_STRONG,
+  DETAIL_ROAS_MODE_MEDIUM,
+  DETAIL_ROAS_MODE_WEAK,
+  DETAIL_ROAS_MODE_CUSTOM
+]);
+
 function normalizeFiniteNumber(value) {
   const numberValue = Number(value);
 
@@ -120,6 +131,32 @@ function normalizeExistingTargetRoasRaw(row) {
     : null;
 }
 
+function normalizeActionTargetRoasRaw(row) {
+  const rawCandidate = normalizeFiniteNumber(row && (
+    row.actionTargetRoasRaw
+    || row.action_target_roas_raw
+    || row.nextTargetRoasRaw
+    || row.next_target_roas_raw
+  ));
+
+  if (rawCandidate !== null && rawCandidate > 0) {
+    return Math.trunc(rawCandidate);
+  }
+
+  const displayValue = parseRoasDisplayValue(
+    row && (
+      row.actionTargetRoas
+      || row.action_target_roas
+      || row.nextTargetRoas
+      || row.next_target_roas
+    )
+  );
+
+  return displayValue !== null && displayValue > 0
+    ? Math.round(displayValue * 10000)
+    : null;
+}
+
 function buildActionTaskId() {
   return `detail_action_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 10)}`;
 }
@@ -142,7 +179,13 @@ function normalizeActionType(value) {
     : 'pause_plan';
 }
 
-function buildSkippedRow(row, messages, actionType) {
+function normalizeRoasMode(value) {
+  const roasMode = normalizeText(value);
+
+  return DETAIL_ROAS_MODE_IDS.includes(roasMode) ? roasMode : DETAIL_ROAS_MODE_STRONG;
+}
+
+function buildSkippedRow(row, messages, actionType, fallbackRoasMode) {
   return {
     rowKey: normalizeText(row && row.rowKey),
     shopId: normalizeText(row && (row.shopId || row.shop_id)),
@@ -151,6 +194,7 @@ function buildSkippedRow(row, messages, actionType) {
     regionLabel: normalizeText(row && (row.regionLabel || row.region_label)),
     goodsId: normalizeText(row && (row.goodsId || row.goods_id)),
     adId: normalizeText(row && (row.adId || row.ad_id)),
+    roasMode: normalizeRoasMode(row && (row.roasMode || row.roas_mode) || fallbackRoasMode),
     actionType,
     message: messages.join('\uff1b')
   };
@@ -165,13 +209,14 @@ function buildRowResult(row, status, message = '') {
     regionLabel: normalizeText(row && row.regionLabel),
     goodsId: normalizeText(row && row.goodsId),
     adId: normalizeText(row && row.adId),
+    roasMode: normalizeRoasMode(row && row.roasMode),
     actionType: normalizeText(row && row.actionType),
     status,
     message: normalizeText(message)
   };
 }
 
-function normalizeDetailActionRow(row, actionType) {
+function normalizeDetailActionRow(row, actionType, fallbackRoasMode) {
   const safeRow = row && typeof row === 'object' ? row : {};
   const normalizedActionType = normalizeActionType(actionType);
   const shopId = normalizeText(safeRow.shopId || safeRow.shop_id);
@@ -181,6 +226,8 @@ function normalizeDetailActionRow(row, actionType) {
   const goodsId = normalizeText(safeRow.goodsId || safeRow.goods_id);
   const adId = normalizeText(safeRow.adId || safeRow.ad_id);
   const targetRoasRaw = normalizeExistingTargetRoasRaw(safeRow);
+  const actionTargetRoasRaw = normalizeActionTargetRoasRaw(safeRow);
+  const roasMode = normalizeRoasMode(safeRow.roasMode || safeRow.roas_mode || fallbackRoasMode);
   const errors = [];
 
   if (!shopId) {
@@ -206,7 +253,7 @@ function normalizeDetailActionRow(row, actionType) {
   if (errors.length > 0) {
     return {
       row: null,
-      skipped: buildSkippedRow(safeRow, errors, normalizedActionType)
+      skipped: buildSkippedRow(safeRow, errors, normalizedActionType, roasMode)
     };
   }
 
@@ -220,7 +267,9 @@ function normalizeDetailActionRow(row, actionType) {
       goodsId,
       adId,
       actionType: normalizedActionType,
-      targetRoasRaw
+      roasMode,
+      targetRoasRaw,
+      actionTargetRoasRaw
     },
     skipped: null
   };
@@ -228,12 +277,13 @@ function normalizeDetailActionRow(row, actionType) {
 
 function normalizeDetailActionRows(payload = {}) {
   const actionType = normalizeActionType(payload.actionType || payload.action_type);
+  const roasMode = normalizeRoasMode(payload.roasMode || payload.roas_mode);
   const normalizedRows = [];
   const skippedRows = [];
   const seenKeys = new Set();
 
   getSourceRows(payload).forEach((sourceRow) => {
-    const normalized = normalizeDetailActionRow(sourceRow, actionType);
+    const normalized = normalizeDetailActionRow(sourceRow, actionType, roasMode);
 
     if (!normalized.row) {
       skippedRows.push(normalized.skipped);
@@ -334,15 +384,38 @@ function buildRegionIdsByShop(rows, requestedRegionIds) {
   ]));
 }
 
+function resolveTargetRoasRawForRow(row, actionType, targetRoas) {
+  const sharedTargetRoasRaw = normalizeRoasRawValue(targetRoas);
+  const rowTargetRoasRaw = normalizeFiniteNumber(row && row.actionTargetRoasRaw);
+
+  if (actionType === 'update_roas') {
+    return rowTargetRoasRaw !== null && rowTargetRoasRaw > 0
+      ? Math.trunc(rowTargetRoasRaw)
+      : sharedTargetRoasRaw;
+  }
+
+  if (actionType === 'increase_roas') {
+    return sharedTargetRoasRaw;
+  }
+
+  return null;
+}
+
 function buildModifyPayloadForRows(rows, actionType, targetRoas) {
-  const monitorConfig = {
-    targetRoas
-  };
-  const targetRoasRaw = normalizeRoasRawValue(targetRoas);
   const rowPayloads = [];
   const skippedRows = [];
 
   rows.forEach((row) => {
+    const targetRoasRaw = resolveTargetRoasRawForRow(row, actionType, targetRoas);
+
+    if (TARGET_ROAS_ACTION_TYPES.has(actionType) && !(targetRoasRaw > 0)) {
+      skippedRows.push({
+        ...row,
+        message: normalizeText(row && row.actionTargetRoasMessage) || '\u76ee\u6807ROAS\u7f3a\u5931'
+      });
+      return;
+    }
+
     if (actionType === 'update_roas' && row.targetRoasRaw !== null && row.targetRoasRaw === targetRoasRaw) {
       skippedRows.push({
         ...row,
@@ -355,7 +428,9 @@ function buildModifyPayloadForRows(rows, actionType, targetRoas) {
       goodsId: row.goodsId,
       adId: row.adId,
       targetRoasRaw: row.targetRoasRaw
-    }, monitorConfig);
+    }, {
+      targetRoas: targetRoasRaw
+    });
 
     if (!payload || !Array.isArray(payload.modify_ad_dtos) || payload.modify_ad_dtos.length <= 0) {
       skippedRows.push({
@@ -386,6 +461,10 @@ module.exports = {
   DETAIL_ACTION_STATUS_SKIPPED,
   DETAIL_ACTION_STATUS_CANCELED,
   DETAIL_ACTION_STATUS_WARNING,
+  DETAIL_ROAS_MODE_STRONG,
+  DETAIL_ROAS_MODE_MEDIUM,
+  DETAIL_ROAS_MODE_WEAK,
+  DETAIL_ROAS_MODE_CUSTOM,
   REGION_LABELS,
   TARGET_ROAS_ACTION_TYPES,
   buildActionTaskId,
@@ -400,5 +479,6 @@ module.exports = {
   normalizeDetailActionRows,
   normalizePositiveInteger,
   normalizeRegionIds,
+  normalizeRoasMode,
   parseRoasDisplayValue
 };

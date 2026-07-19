@@ -80,6 +80,7 @@ const {
   hasOwnField,
   normalizeMonitorConfig,
   normalizeMonitorConfigBundle,
+  normalizeMonitorIntervalSecondsValue,
   normalizeNullableBoolean,
   resolveRequestedRegionEntries,
   resolveShopMonitorConfig
@@ -98,6 +99,12 @@ const EMPTY_PROMOTION_REGION_RECHECK_INTERVAL_MINUTES = Math.max(
   1,
   Math.round(EMPTY_PROMOTION_REGION_RECHECK_INTERVAL_MS / 60000)
 );
+const MONITOR_LOG_JOINED_WAITING = '\u5df2\u52a0\u5165\u6279\u91cf\u76d1\u63a7\u540d\u5355\uff0c\u7b49\u5f85\u5f00\u59cb';
+const MONITOR_LOG_NOT_JOINED = '\u672a\u52a0\u5165\u6279\u91cf\u76d1\u63a7';
+const MONITOR_LOG_ENABLED_WAIT_SYNC = '\u5df2\u5f00\u542f\u76d1\u63a7\uff0c\u7b49\u5f85\u4e0b\u4e00\u8f6e\u540c\u6b65';
+const MONITOR_LOG_ENABLED_PREPARING = '\u5df2\u5f00\u542f\u76d1\u63a7\uff0c\u6b63\u5728\u51c6\u5907\u540c\u6b65';
+const MONITOR_LOG_BATCH_STARTED_WAIT_SYNC = '\u6279\u91cf\u76d1\u63a7\u5df2\u542f\u52a8\uff0c\u7b49\u5f85\u4e0b\u4e00\u8f6e\u540c\u6b65';
+const MONITOR_LOG_BATCH_STARTED_WAIT_RUN = '\u6279\u91cf\u76d1\u63a7\u5df2\u542f\u52a8\uff0c\u7b49\u5f85\u6267\u884c';
 
 function createPromotionMonitorService({
   sessionStore,
@@ -2276,7 +2283,7 @@ function createPromotionMonitorService({
           : {};
         const detailProductCount = resolveAdsDetailProductCount(responseData, regionId);
 
-        if (detailProductCount > 0) {
+        if (nextRegions[regionId]) {
           regionProductCounts[regionId] = detailProductCount;
           nextRegions[regionId].productCount = detailProductCount;
         }
@@ -2967,6 +2974,7 @@ function createPromotionMonitorService({
       const owner = await ensureLoaded();
       const shopId = normalizeText(payload && payload.shopId);
       const enabled = payload && payload.enabled === true;
+      const changedAt = nowIso();
       let matchedShop = null;
 
       if (!owner) {
@@ -3014,7 +3022,7 @@ function createPromotionMonitorService({
       }
 
       configCache.enabledShopIds = Array.from(nextEnabledShopIds);
-      configCache.updatedAt = nowIso();
+      configCache.updatedAt = changedAt;
 
       const shopState = getShopRuntimeState(shopId);
 
@@ -3023,22 +3031,23 @@ function createPromotionMonitorService({
         shopState.taskRunning = false;
         shopState.retryCount = 0;
         shopState.startupPauseResumeSweepPending = true;
+        shopState.lastUpdatedAt = changedAt;
 
         if (enabled) {
           if (configCache.batchMonitoringActive === true) {
             shopState.status = shopState.lastSuccessAt ? 'online' : 'idle';
-          shopState.log = shopState.lastSuccessAt
-            ? (normalizeText(shopState.log) || '已开启监控，等待下一轮同步')
-            : '已开启监控，正在准备同步';
+            shopState.log = shopState.lastSuccessAt
+              ? (normalizeText(shopState.log) || MONITOR_LOG_ENABLED_WAIT_SYNC)
+              : MONITOR_LOG_ENABLED_PREPARING;
             shopState.nextRunAt = 0;
           } else {
             shopState.status = 'idle';
-            shopState.log = '已加入批量监控名单，等待开始';
+            shopState.log = MONITOR_LOG_JOINED_WAITING;
             shopState.nextRunAt = Number.MAX_SAFE_INTEGER;
           }
         } else {
           shopState.status = 'disabled';
-          shopState.log = '未加入批量监控';
+          shopState.log = MONITOR_LOG_NOT_JOINED;
           shopState.lastError = '';
           shopState.nextRunAt = Number.MAX_SAFE_INTEGER;
           shopState.cookieHeaderByRegion = {};
@@ -3052,7 +3061,7 @@ function createPromotionMonitorService({
         }
       }
 
-      stateCache.updatedAt = nowIso();
+      stateCache.updatedAt = changedAt;
       await persistConfig();
       scheduleStatePersist(0);
       scheduleScheduler(configCache.batchMonitoringActive === true && enabled ? 200 : 500);
@@ -3077,6 +3086,7 @@ function createPromotionMonitorService({
     async setBatchMonitoringActive(payload) {
       const owner = await ensureLoaded();
       const enabled = payload && payload.enabled === true;
+      const changedAt = nowIso();
 
       if (!owner) {
         throw new Error('当前未登录，无法更新批量监控状态。');
@@ -3092,10 +3102,11 @@ function createPromotionMonitorService({
         shopState.taskRunning = false;
         shopState.retryCount = 0;
         shopState.startupPauseResumeSweepPending = true;
+        shopState.lastUpdatedAt = changedAt;
 
         if (shopState.enabled !== true) {
           shopState.status = 'disabled';
-          shopState.log = '未加入批量监控';
+          shopState.log = MONITOR_LOG_NOT_JOINED;
           shopState.nextRunAt = Number.MAX_SAFE_INTEGER;
           return;
         }
@@ -3103,19 +3114,19 @@ function createPromotionMonitorService({
         if (enabled) {
           shopState.status = shopState.lastSuccessAt ? 'online' : 'idle';
           shopState.log = shopState.lastSuccessAt
-            ? (normalizeText(shopState.log) || '批量监控已启动，等待下一轮同步')
-            : '批量监控已启动，等待执行';
+            ? (normalizeText(shopState.log) || MONITOR_LOG_BATCH_STARTED_WAIT_SYNC)
+            : MONITOR_LOG_BATCH_STARTED_WAIT_RUN;
           shopState.nextRunAt = 0;
           return;
         }
 
         shopState.status = 'idle';
-        shopState.log = '已加入批量监控名单，等待开始';
+        shopState.log = MONITOR_LOG_JOINED_WAITING;
         shopState.lastError = '';
         shopState.nextRunAt = Number.MAX_SAFE_INTEGER;
       });
 
-      stateCache.updatedAt = nowIso();
+      stateCache.updatedAt = changedAt;
       scheduleStatePersist(0);
       scheduleScheduler(enabled ? 80 : 500);
 

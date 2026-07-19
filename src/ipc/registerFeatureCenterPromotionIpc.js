@@ -21,6 +21,7 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     cancelPromotionManagerNewDetailActions,
     createPromotionManagerNewAds,
     cancelPromotionManagerNewAdsCreate,
+    queryPromotionManagerNewShopData,
     getRuntimeLogEntries
   } = options;
   const {
@@ -258,6 +259,29 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     }
 
     return cancelPromotionManagerNewAdsCreate(payload);
+  });
+
+  handle(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_SHOP_DATA, async (_event, payload) => {
+    if (typeof queryPromotionManagerNewShopData !== 'function') {
+      return {
+        updatedAt: new Date().toISOString(),
+        request: {},
+        rows: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u5e97\u94fa\u6570\u636e\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+        }],
+        warnings: [],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1
+      };
+    }
+
+    return queryPromotionManagerNewShopData(payload);
   });
 
   handle(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, async (_event, payload) => {

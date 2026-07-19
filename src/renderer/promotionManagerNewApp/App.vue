@@ -25,12 +25,14 @@ import FunctionSwitchBar from './components/FunctionSwitchBar.vue';
 import CreatePromotionPage from './components/pages/CreatePromotionPage.vue';
 import PromotionDetailPage from './components/pages/PromotionDetailPage.vue';
 import PromotionMonitorPage from './components/pages/PromotionMonitorPage.vue';
+import PromotionShopDataPage from './components/pages/PromotionShopDataPage.vue';
 
 const modules = MODULES;
 const activeModuleId = ref('create');
 
 const pageComponentMap = Object.freeze({
   create: CreatePromotionPage,
+  shopData: PromotionShopDataPage,
   detail: PromotionDetailPage,
   monitor: PromotionMonitorPage
 });

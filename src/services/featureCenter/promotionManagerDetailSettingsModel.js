@@ -10,6 +10,13 @@ const DETAIL_ACTION_IDS = Object.freeze([
   'increase_roas',
   'delete_plan'
 ]);
+const DETAIL_ROAS_MODE_STRONG = 'strong';
+const DETAIL_ROAS_MODE_IDS = Object.freeze([
+  DETAIL_ROAS_MODE_STRONG,
+  'medium',
+  'weak',
+  'custom'
+]);
 const DETAIL_STATUS_IDS = Object.freeze([
   'running',
   'paused',
@@ -85,6 +92,12 @@ function normalizeActionType(value) {
   return DETAIL_ACTION_IDS.includes(normalizedValue) ? normalizedValue : DETAIL_ACTION_PAUSE;
 }
 
+function normalizeRoasMode(value) {
+  const normalizedValue = normalizeText(value);
+
+  return DETAIL_ROAS_MODE_IDS.includes(normalizedValue) ? normalizedValue : DETAIL_ROAS_MODE_STRONG;
+}
+
 function createEmptyDetailFilterState() {
   return {
     identityText: '',
@@ -142,6 +155,7 @@ function normalizeDetailSettings(value) {
     detailFilterDraft: normalizeDetailFilterState(source.detailFilterDraft || legacyFilters),
     appliedDetailFilters: normalizeDetailFilterState(source.appliedDetailFilters || legacyFilters),
     batchActionType: normalizeActionType(source.batchActionType || source.actionType),
+    batchRoasMode: normalizeRoasMode(source.batchRoasMode || source.roasMode),
     batchTargetRoas: normalizeOptionalNonNegativeNumber(
       pickFirstPresent(source.batchTargetRoas, source.targetRoas)
     )

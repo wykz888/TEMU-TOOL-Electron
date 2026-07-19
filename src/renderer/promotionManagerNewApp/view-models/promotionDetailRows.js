@@ -1,3 +1,5 @@
+import { buildShopFilterOptionsWithCounts } from './promotionShopFilterOptions.js';
+
 export const DETAIL_QUERY_PAGE_SIZE = 50;
 
 export const DETAIL_ACTION_PAUSE = 'pause_plan';
@@ -17,6 +19,18 @@ export const DETAIL_ACTION_OPTIONS = Object.freeze([
 export const DETAIL_ACTION_TARGET_ROAS_TYPES = new Set([
   DETAIL_ACTION_UPDATE_ROAS,
   DETAIL_ACTION_INCREASE_ROAS
+]);
+
+export const DETAIL_ROAS_MODE_STRONG = 'strong';
+export const DETAIL_ROAS_MODE_MEDIUM = 'medium';
+export const DETAIL_ROAS_MODE_WEAK = 'weak';
+export const DETAIL_ROAS_MODE_CUSTOM = 'custom';
+
+export const DETAIL_ACTION_ROAS_MODE_OPTIONS = Object.freeze([
+  { value: DETAIL_ROAS_MODE_STRONG, label: '\u7ade\u4e89\u529b\u5f3a' },
+  { value: DETAIL_ROAS_MODE_MEDIUM, label: '\u7ade\u4e89\u529b\u4e2d' },
+  { value: DETAIL_ROAS_MODE_WEAK, label: '\u7ade\u4e89\u529b\u5f31' },
+  { value: DETAIL_ROAS_MODE_CUSTOM, label: '\u81ea\u5b9a\u4e49' }
 ]);
 
 export const DETAIL_STATUS_RUNNING = 'running';
@@ -221,26 +235,7 @@ function buildUniqueTextOptions(rows, resolveValues) {
 }
 
 export function buildPromotionDetailShopFilterOptions(rows) {
-  const optionMap = new Map();
-
-  (Array.isArray(rows) ? rows : []).forEach((row) => {
-    const value = firstPresentText(row && row.shopId, row && row.shopName);
-    const label = firstPresentText(row && row.shopName, row && row.shopId);
-
-    if (value && !optionMap.has(value)) {
-      optionMap.set(value, label);
-    }
-  });
-
-  return Array.from(optionMap.entries())
-    .sort((left, right) => left[1].localeCompare(right[1], 'zh-CN', {
-      numeric: true,
-      sensitivity: 'base'
-    }))
-    .map(([value, label]) => ({
-      value,
-      label
-    }));
+  return buildShopFilterOptionsWithCounts(rows);
 }
 
 export function buildPromotionDetailSiteFilterOptions(rows) {

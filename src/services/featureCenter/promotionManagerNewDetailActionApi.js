@@ -88,6 +88,55 @@ function getResponseRowMessage(row) {
   ));
 }
 
+function formatRoasRawForMessage(value) {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue) || numberValue <= 0) {
+    return '';
+  }
+
+  return (numberValue / 10000)
+    .toFixed(2)
+    .replace(/\.?0+$/, '');
+}
+
+function resolveRoasModeLabel(value) {
+  const roasMode = normalizeText(value);
+
+  if (roasMode === 'strong') {
+    return '\u7ade\u4e89\u529b\u5f3a';
+  }
+
+  if (roasMode === 'medium') {
+    return '\u7ade\u4e89\u529b\u4e2d';
+  }
+
+  if (roasMode === 'weak') {
+    return '\u7ade\u4e89\u529b\u5f31';
+  }
+
+  if (roasMode === 'custom') {
+    return '\u81ea\u5b9a\u4e49';
+  }
+
+  return '';
+}
+
+function buildSuccessRowMessage(row) {
+  const actionType = normalizeText(row && row.actionType);
+
+  if (actionType === 'update_roas') {
+    const targetRoasText = formatRoasRawForMessage(row && row.actionTargetRoasRaw);
+    const roasModeLabel = resolveRoasModeLabel(row && row.roasMode);
+
+    return targetRoasText
+      ? `\u64cd\u4f5c\u6210\u529f\uff1a\u4fee\u6539ROAS ${[roasModeLabel, targetRoasText].filter(Boolean).join(' ')}`
+      : '\u64cd\u4f5c\u6210\u529f';
+  }
+
+  return '\u64cd\u4f5c\u6210\u529f';
+}
+
 function resolveReportedSuccessCount(result) {
   const keys = [
     'success_modify_product_num',
@@ -168,7 +217,7 @@ function buildModifyChunkRowResults(rows, stats) {
 
   if (successKeys.size <= 0 && failedByKey.size <= 0) {
     if (stats.successCount >= rows.length) {
-      return rows.map((row) => buildRowResult(row, DETAIL_ACTION_STATUS_SUCCESS, '\u64cd\u4f5c\u6210\u529f'));
+      return rows.map((row) => buildRowResult(row, DETAIL_ACTION_STATUS_SUCCESS, buildSuccessRowMessage(row)));
     }
 
     if (stats.successCount <= 0) {
@@ -194,7 +243,7 @@ function buildModifyChunkRowResults(rows, stats) {
       return buildRowResult(row, DETAIL_ACTION_STATUS_FAILED, '\u64cd\u4f5c\u5931\u8d25');
     }
 
-    return buildRowResult(row, DETAIL_ACTION_STATUS_SUCCESS, '\u64cd\u4f5c\u6210\u529f');
+    return buildRowResult(row, DETAIL_ACTION_STATUS_SUCCESS, buildSuccessRowMessage(row));
   });
 }
 

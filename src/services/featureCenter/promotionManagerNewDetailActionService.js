@@ -3,9 +3,16 @@ const {
   normalizeRoasRawValue
 } = require('./promotionMonitorMetricUtils');
 const {
+  createPromotionManagerNewBidFetcher
+} = require('./promotionManagerNewBidService');
+const {
   sanitizeDetailActionResult
 } = require('./promotionManagerNewDetailActionResult');
 const {
+  DETAIL_ROAS_MODE_CUSTOM,
+  DETAIL_ROAS_MODE_MEDIUM,
+  DETAIL_ROAS_MODE_STRONG,
+  DETAIL_ROAS_MODE_WEAK,
   DETAIL_ACTION_STATUS_CANCELED,
   DETAIL_ACTION_STATUS_FAILED,
   DETAIL_ACTION_STATUS_SKIPPED,
@@ -23,6 +30,7 @@ const {
   normalizeDetailActionRows,
   normalizePositiveInteger,
   normalizeRegionIds,
+  normalizeRoasMode,
   parseRoasDisplayValue
 } = require('./promotionManagerNewDetailActionRows');
 const {
@@ -34,6 +42,16 @@ const {
 const DETAIL_ACTION_MODIFY_ADS_URL = 'https://ads.temu.com/api/v1/coconut/ad/modify_ads';
 const DEFAULT_DETAIL_ACTION_CHUNK_SIZE = 50;
 const MAX_DETAIL_ACTION_CHUNK_SIZE = 50;
+const DETAIL_ROAS_MODE_ORDER = Object.freeze([
+  DETAIL_ROAS_MODE_STRONG,
+  DETAIL_ROAS_MODE_MEDIUM,
+  DETAIL_ROAS_MODE_WEAK
+]);
+const DETAIL_ROAS_MODE_LABELS = Object.freeze({
+  [DETAIL_ROAS_MODE_STRONG]: '\u7ade\u4e89\u529b\u5f3a',
+  [DETAIL_ROAS_MODE_MEDIUM]: '\u7ade\u4e89\u529b\u4e2d',
+  [DETAIL_ROAS_MODE_WEAK]: '\u7ade\u4e89\u529b\u5f31'
+});
 
 function buildMessageSignature(entry) {
   return [
@@ -55,6 +73,107 @@ function pushUniqueMessage(target, entry, signatureSet) {
   return true;
 }
 
+function hasSourceRowActionTargetRoas(rows) {
+  return (Array.isArray(rows) ? rows : []).some((row) => {
+    const source = row && typeof row === 'object' ? row : {};
+
+    return normalizeRoasRawValue(
+      source.actionTargetRoasRaw
+      || source.action_target_roas_raw
+      || source.actionTargetRoas
+      || source.action_target_roas
+      || source.nextTargetRoasRaw
+      || source.next_target_roas_raw
+      || source.nextTargetRoas
+      || source.next_target_roas
+    ) !== null;
+  });
+}
+
+function resolvePredictionMode(prediction, index) {
+  const desc = normalizeText(prediction && prediction.desc);
+
+  if (desc.includes(DETAIL_ROAS_MODE_LABELS[DETAIL_ROAS_MODE_STRONG])) {
+    return DETAIL_ROAS_MODE_STRONG;
+  }
+
+  if (desc.includes(DETAIL_ROAS_MODE_LABELS[DETAIL_ROAS_MODE_MEDIUM])) {
+    return DETAIL_ROAS_MODE_MEDIUM;
+  }
+
+  if (desc.includes(DETAIL_ROAS_MODE_LABELS[DETAIL_ROAS_MODE_WEAK])) {
+    return DETAIL_ROAS_MODE_WEAK;
+  }
+
+  return DETAIL_ROAS_MODE_ORDER[index] || '';
+}
+
+function findPredictionByMode(bidInfo, mode) {
+  const predictions = Array.isArray(bidInfo && bidInfo.predictions)
+    ? bidInfo.predictions
+    : [];
+  const predictionByMode = new Map();
+
+  predictions.forEach((prediction, index) => {
+    const predictionMode = resolvePredictionMode(prediction, index);
+
+    if (predictionMode && !predictionByMode.has(predictionMode)) {
+      predictionByMode.set(predictionMode, prediction);
+    }
+  });
+
+  return predictionByMode.get(mode) || null;
+}
+
+function resolvePredictionTargetRoasRaw(prediction) {
+  const roasRaw = normalizeRoasRawValue(prediction && prediction.roasValueNumber);
+
+  if (roasRaw !== null) {
+    return roasRaw;
+  }
+
+  return normalizeRoasRawValue(prediction && prediction.roasNumber);
+}
+
+function needsLazyBidTarget(row, actionType) {
+  return (
+    actionType === 'update_roas'
+    && normalizeRoasMode(row && row.roasMode) !== DETAIL_ROAS_MODE_CUSTOM
+    && !(Number(row && row.actionTargetRoasRaw) > 0)
+  );
+}
+
+function applyBidLookupToActionRows(rows, bidLookup, actionType) {
+  if (actionType !== 'update_roas') {
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  const lookup = bidLookup instanceof Map ? bidLookup : new Map();
+
+  return (Array.isArray(rows) ? rows : []).map((row) => {
+    if (!needsLazyBidTarget(row, actionType)) {
+      return row;
+    }
+
+    const roasMode = normalizeRoasMode(row && row.roasMode);
+    const bidInfo = lookup.get(normalizeText(row && row.goodsId)) || null;
+    const prediction = findPredictionByMode(bidInfo, roasMode);
+    const actionTargetRoasRaw = resolvePredictionTargetRoasRaw(prediction);
+
+    if (!(actionTargetRoasRaw > 0)) {
+      return {
+        ...row,
+        actionTargetRoasMessage: `\u672a\u83b7\u53d6\u5230${DETAIL_ROAS_MODE_LABELS[roasMode] || '\u5bf9\u5e94\u6863\u4f4d'}ROAS\u9884\u4f30`
+      };
+    }
+
+    return {
+      ...row,
+      actionTargetRoasRaw
+    };
+  });
+}
+
 function createPromotionManagerNewDetailActionService({
   promotionAdsSessionService,
   promotionMasterSessionService,
@@ -73,6 +192,57 @@ function createPromotionManagerNewDetailActionService({
   function logError(eventName, error, payload) {
     if (runtimeLogger && typeof runtimeLogger.logError === 'function') {
       runtimeLogger.logError(eventName, error, payload);
+    }
+  }
+
+  const bidFetcher = createPromotionManagerNewBidFetcher({
+    adsSessionService,
+    assertApiSuccess: assertModifyAdsResponseSuccess
+  });
+
+  async function resolveRowsWithLazyBidTargets(group, rows, actionType, chunkIndex, allRegionIds, signal) {
+    const sourceRows = Array.isArray(rows) ? rows : [];
+    const rowsNeedingBid = sourceRows.filter((row) => needsLazyBidTarget(row, actionType));
+
+    if (rowsNeedingBid.length <= 0) {
+      return sourceRows;
+    }
+
+    try {
+      const bidResult = await bidFetcher.fetchBidInfoForRows({
+        shop: {
+          id: group.shopId,
+          shopName: group.shopName
+        },
+        regionId: group.regionId,
+        regionIds: allRegionIds,
+        rows: rowsNeedingBid,
+        roasType: 1,
+        pageNumber: chunkIndex + 1,
+        signal
+      });
+
+      return applyBidLookupToActionRows(sourceRows, bidResult.lookup, actionType);
+    } catch (error) {
+      const message = normalizeText(error && error.message) || '\u51fa\u4ef7\u9884\u6d4b\u67e5\u8be2\u5931\u8d25';
+
+      logError('promotion_manager_new_detail_action_bid_query_failed', error, {
+        shopId: group.shopId,
+        shopName: group.shopName,
+        regionId: group.regionId,
+        actionType,
+        chunkIndex: chunkIndex + 1,
+        requestCount: rowsNeedingBid.length
+      });
+
+      return sourceRows.map((row) => (
+        needsLazyBidTarget(row, actionType)
+          ? {
+            ...row,
+            actionTargetRoasMessage: message
+          }
+          : row
+      ));
     }
   }
 
@@ -165,11 +335,24 @@ function createPromotionManagerNewDetailActionService({
     };
   }
 
-  async function submitGroupChunk(group, rows, actionType, targetRoas, chunkIndex, allRegionIds) {
-    const prepared = buildModifyPayloadForRows(rows, actionType, targetRoas);
+  async function submitGroupChunk(group, rows, actionType, targetRoas, chunkIndex, allRegionIds, signal) {
+    const preparedRows = await resolveRowsWithLazyBidTargets(
+      group,
+      rows,
+      actionType,
+      chunkIndex,
+      allRegionIds,
+      signal
+    );
+
+    if (signal && signal.canceled === true) {
+      return buildCanceledChunkResult(preparedRows, chunkIndex);
+    }
+
+    const prepared = buildModifyPayloadForRows(preparedRows, actionType, targetRoas);
 
     if (prepared.rowPayloads.length <= 0) {
-      return buildSkippedChunkResult(rows, prepared.skippedRows, chunkIndex);
+      return buildSkippedChunkResult(preparedRows, prepared.skippedRows, chunkIndex);
     }
 
     const sessionResult = await adsSessionService.postWithRegionCookie(
@@ -196,7 +379,7 @@ function createPromotionManagerNewDetailActionService({
 
     return {
       chunkIndex: chunkIndex + 1,
-      requestCount: rows.length,
+      requestCount: preparedRows.length,
       successCount: stats.successCount,
       failedCount: stats.failedCount,
       canceledCount: 0,
@@ -286,7 +469,8 @@ function createPromotionManagerNewDetailActionService({
             actionType,
             targetRoas,
             chunkIndex,
-            allRegionIds
+            allRegionIds,
+            signal
           );
 
           appendChunkResult(groupResult, summary, chunkResult);
@@ -358,11 +542,21 @@ function createPromotionManagerNewDetailActionService({
     }
 
     const actionType = normalizeActionType(payload.actionType || payload.action_type);
+    const roasMode = normalizeRoasMode(payload.roasMode || payload.roas_mode);
     const targetRoas = TARGET_ROAS_ACTION_TYPES.has(actionType)
       ? parseRoasDisplayValue(payload.targetRoas || payload.target_roas)
       : null;
 
-    if (TARGET_ROAS_ACTION_TYPES.has(actionType) && normalizeRoasRawValue(targetRoas) === null) {
+    if (actionType === 'increase_roas' && normalizeRoasRawValue(targetRoas) === null) {
+      throw new Error('\u8bf7\u5148\u8f93\u5165\u76ee\u6807ROAS');
+    }
+
+    if (
+      actionType === 'update_roas'
+      && roasMode === DETAIL_ROAS_MODE_CUSTOM
+      && normalizeRoasRawValue(targetRoas) === null
+      && !hasSourceRowActionTargetRoas(sourceRows)
+    ) {
       throw new Error('\u8bf7\u5148\u8f93\u5165\u76ee\u6807ROAS');
     }
 
@@ -450,7 +644,8 @@ function createPromotionManagerNewDetailActionService({
           groupCount: groups.length,
           shopThreadCount: shopGroups.length,
           chunkSize,
-          actionType
+          actionType,
+          roasMode
         },
         groups: groupResults,
         rowResults,
@@ -468,6 +663,7 @@ function createPromotionManagerNewDetailActionService({
         taskId: taskSignal.taskId,
         canceled: taskSignal.canceled === true,
         actionType,
+        roasMode,
         rowCount: sourceRows.length,
         validCount: normalized.rows.length,
         skippedCount,

@@ -8,6 +8,7 @@ const EMPTY_TEXT = '-';
 const UNGROUPED_LABEL = '\u672a\u5206\u7ec4';
 const MONITOR_ENABLED_TEXT = '\u76d1\u63a7\u4e2d';
 const MONITOR_DISABLED_TEXT = '\u672a\u76d1\u63a7';
+const MONITOR_LOG_JOINED_WAITING = '\u5df2\u52a0\u5165\u6279\u91cf\u76d1\u63a7\u540d\u5355\uff0c\u7b49\u5f85\u5f00\u59cb';
 const HIDDEN_VISIBLE_VALUES = Object.freeze([
   '0',
   'false',
@@ -144,13 +145,47 @@ function getStatusTone(status, enabled) {
   return STATUS_TONE_MAP[normalizeText(status)] || STATUS_TONE_MAP.idle;
 }
 
-function buildLogText(shopState) {
-  const lastError = normalizeText(shopState && shopState.lastError);
+function formatHourMinute(value) {
+  const timestamp = Date.parse(normalizeText(value));
 
+  if (!Number.isFinite(timestamp)) {
+    return '';
+  }
+
+  const date = new Date(timestamp);
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function buildLogText(shopState, fallbackUpdatedAt = '') {
+  const lastError = normalizeText(shopState && shopState.lastError);
+  const logText = normalizeText(shopState && shopState.log);
+
+  if (lastError) {
+    return lastError;
+  }
+
+  if (!logText) {
+    return EMPTY_TEXT;
+  }
+
+  if (logText === MONITOR_LOG_JOINED_WAITING) {
+    const timeText = formatHourMinute(
+      (shopState && shopState.lastUpdatedAt)
+      || (shopState && shopState.lastSuccessAt)
+      || fallbackUpdatedAt
+    );
+
+    return timeText ? `${timeText} ${logText}` : logText;
+  }
+
+  return logText;
+}
+
+function resolveShopLastUpdatedAt(shopState, snapshotUpdatedAt) {
   return (
-    lastError
-    || normalizeText(shopState && shopState.log)
-    || EMPTY_TEXT
+    normalizeText(shopState && shopState.lastUpdatedAt)
+    || normalizeText(snapshotUpdatedAt)
   );
 }
 
@@ -215,8 +250,8 @@ export function buildPromotionMonitorRows({
         status,
         statusLabel: getStatusLabel(status, enabled),
         statusTone: getStatusTone(status, enabled),
-        logText: buildLogText(shopState),
-        lastUpdatedAt: normalizeText(shopState.lastUpdatedAt) || snapshotUpdatedAt,
+        logText: buildLogText(shopState, snapshotUpdatedAt),
+        lastUpdatedAt: resolveShopLastUpdatedAt(shopState, snapshotUpdatedAt),
         lastSuccessAt: normalizeText(shopState.lastSuccessAt),
         nextRunAt: Math.max(0, Number(shopState.nextRunAt) || 0),
         hasIndependentConfig,

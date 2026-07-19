@@ -389,6 +389,7 @@ module.exports = {
   normalizeEnabledShopIds,
   normalizeMonitorConfig,
   normalizeMonitorConfigPatch,
+  normalizeMonitorIntervalSecondsValue,
   mergeMonitorConfig,
   normalizeMonitorShopConfigs,
   buildDefaultMonitorConfig,

@@ -170,7 +170,7 @@
         align="center"
       >
         <template #cell="{ record }">
-          <div class="pm-new-create-status-cell">
+          <div class="pm-new-create-status-cell pm-new-detail-action-status-cell">
             <a-tag
               class="pm-new-create-status-tag"
               :class="getActionStatusClass(record)"
@@ -269,9 +269,9 @@ const emptyCellText = '-';
 const pendingActionLabel = '\u5f85\u5904\u7406';
 const promotionColumnWidth = 420;
 const statusColumnWidth = 136;
-const metricsColumnWidth = 330;
-const settingsColumnWidth = 220;
-const actionColumnWidth = 116;
+const metricsColumnWidth = 300;
+const settingsColumnWidth = 200;
+const actionColumnWidth = 164;
 const detailThumbSize = 72;
 const virtualListThreshold = 120;
 const thumbnailRequestSize = 160;
@@ -346,7 +346,7 @@ function getActionStatusClass(record) {
     return 'is-warning';
   }
 
-  if (statusValue === 'running') {
+  if (statusValue === 'running' || statusValue === 'configured') {
     return 'is-info';
   }
 

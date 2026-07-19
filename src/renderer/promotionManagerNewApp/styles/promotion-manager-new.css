@@ -127,6 +127,7 @@ body {
   grid-template-rows: minmax(0, 1fr);
 }
 
+.pm-new-feature-page--shop-data,
 .pm-new-feature-page--detail,
 .pm-new-feature-page--monitor {
   grid-template-rows: minmax(0, 1fr);
@@ -181,6 +182,14 @@ body {
   line-height: 1.3;
 }
 
+.pm-new-section-title-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .pm-new-create-grid,
 .pm-new-monitor-grid {
   display: grid;
@@ -199,6 +208,13 @@ body {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
+}
+
+.pm-new-shop-data-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
 }
 
 .pm-new-monitor-shop-panel {
@@ -503,6 +519,10 @@ body {
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 10px 26px rgba(47, 60, 84, 0.04);
+}
+
+.pm-new-shop-data-table {
+  grid-row: auto;
 }
 
 .pm-new-monitor-data-table .arco-table-container,
@@ -1785,10 +1805,23 @@ body {
   white-space: nowrap;
 }
 
+.pm-new-detail-action-status-cell span {
+  display: -webkit-box;
+  max-width: 148px;
+  text-overflow: ellipsis;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .pm-new-create-status-tag.arco-tag {
   width: fit-content;
   max-width: 112px;
   font-weight: 800;
+}
+
+.pm-new-detail-action-status-cell .pm-new-create-status-tag.arco-tag {
+  max-width: 136px;
 }
 
 .pm-new-create-status-tag.is-pending.arco-tag {
@@ -2094,6 +2127,10 @@ body {
 
 .pm-new-detail-action-select {
   width: 168px;
+}
+
+.pm-new-detail-roas-mode-select {
+  width: 122px;
 }
 
 .pm-new-detail-row .arco-table-td {

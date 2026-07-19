@@ -183,6 +183,12 @@ function createFeatureCenterPreloadApi({
         toCloneablePayload(payload)
       );
     },
+    queryPromotionManagerNewShopData(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_SHOP_DATA,
+        toCloneablePayload(payload)
+      );
+    },
     getRuntimeLogEntries(payload) {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_RUNTIME_LOG_ENTRIES, payload);
     },

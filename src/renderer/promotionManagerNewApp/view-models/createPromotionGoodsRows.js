@@ -2,6 +2,7 @@ import {
   buildEstimatedChargeTextList,
   getRowPriceRange
 } from './createPromotionRoasEstimates.js';
+import { buildShopFilterOptionsWithCounts } from './promotionShopFilterOptions.js';
 
 export { buildRoasEstimateTextList } from './createPromotionRoasEstimates.js';
 
@@ -448,26 +449,7 @@ function buildUniqueTextOptions(rows, resolveValues) {
 }
 
 export function buildGoodsShopFilterOptions(rows) {
-  const optionMap = new Map();
-
-  (Array.isArray(rows) ? rows : []).forEach((row) => {
-    const value = firstPresentText(row && row.shopId, row && row.shopName);
-    const label = firstPresentText(row && row.shopName, row && row.shopId);
-
-    if (value && !optionMap.has(value)) {
-      optionMap.set(value, label);
-    }
-  });
-
-  return Array.from(optionMap.entries())
-    .sort((left, right) => left[1].localeCompare(right[1], 'zh-CN', {
-      numeric: true,
-      sensitivity: 'base'
-    }))
-    .map(([value, label]) => ({
-      value,
-      label
-    }));
+  return buildShopFilterOptionsWithCounts(rows);
 }
 
 export function buildGoodsCategoryFilterOptions(rows) {

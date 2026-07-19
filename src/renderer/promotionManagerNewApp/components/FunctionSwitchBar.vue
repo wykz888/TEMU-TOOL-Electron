@@ -29,6 +29,7 @@ import {
   IconFile,
   IconNotification,
   IconSend,
+  IconStorage,
   IconTool
 } from '@arco-design/web-vue/es/icon';
 
@@ -48,7 +49,8 @@ defineEmits(['change']);
 const iconMap = Object.freeze({
   file: IconFile,
   notification: IconNotification,
-  send: IconSend
+  send: IconSend,
+  storage: IconStorage
 });
 
 function resolveIcon(iconName) {
