@@ -1,255 +1,265 @@
 <template>
-  <a-table
-    class="pm-new-goods-table"
+  <div
+    class="pm-new-table-shell pm-new-create-table-shell"
     :class="{ 'is-empty': tableRows.length <= 0 }"
-    row-key="id"
-    :data="tableRows"
-    :pagination="false"
-    :bordered="false"
-    :hoverable="true"
-    :stripe="false"
-    :table-layout-fixed="true"
-    :scroll="tableScroll"
-    :virtual-list-props="tableVirtualListProps"
-    :row-selection="rowSelection"
-    :selected-keys="selectedRowKeys"
-    :row-class="getRowClass"
-    :loading="loading"
-    size="small"
-    @selection-change="$emit('selection-change', $event)"
   >
-    <template #columns>
-      <a-table-column
-        :title="goodsColumnProduct"
-        data-index="goodsName"
-        :width="goodsColumnProductWidth"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-goods-product-cell">
-            <a-image
-              v-if="record.thumbUrl"
-              class="pm-new-goods-thumb-image"
-              :src="getThumbnailUrl(record.thumbUrl)"
-              :preview-props="getPreviewProps(record.thumbUrl)"
-              :alt="record.goodsName"
-              :width="goodsThumbSize"
-              :height="goodsThumbSize"
-              fit="cover"
-              loading="lazy"
-              decoding="async"
-            />
-            <span
-              v-else
-              class="pm-new-goods-thumb-empty"
-            >
-              {{ noImageText }}
-            </span>
-            <div class="pm-new-goods-main-info">
-              <strong :title="record.goodsName">{{ record.goodsName || emptyCellText }}</strong>
-              <div class="pm-new-goods-id-grid">
-                <span class="pm-new-goods-id-chip">{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
-                <span class="pm-new-goods-id-chip">{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
-                <span class="pm-new-goods-id-chip">{{ skuLabel }} {{ record.skuEncode || emptyCellText }}</span>
-              </div>
-              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--channel">
-                <span class="pm-new-goods-meta-chip is-shop">{{ record.shopName || emptyCellText }}</span>
-                <span class="pm-new-goods-meta-chip is-region">{{ record.regionLabel || emptyCellText }}</span>
-                <span class="pm-new-goods-meta-chip">{{ mallIdLabel }} {{ record.mallId || emptyCellText }}</span>
-                <span class="pm-new-goods-meta-chip">{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
-              </div>
-              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--taxonomy">
-                <span
-                  class="pm-new-goods-meta-chip"
-                  :title="record.categoryText"
-                >
-                  {{ categoryLabel }} {{ record.categoryText || emptyCellText }}
-                </span>
-                <span
-                  class="pm-new-goods-meta-chip"
-                  :title="record.siteText"
-                >
-                  {{ siteLabel }} {{ record.siteText || emptyCellText }}
-                </span>
-              </div>
-              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--stats">
-                <span class="pm-new-goods-stat-chip">{{ priceLabel }} {{ record.priceText || emptyCellText }}</span>
-                <span class="pm-new-goods-stat-chip">{{ stockLabel }} {{ record.skuTotalQuantity || emptyCellText }}</span>
-                <span class="pm-new-goods-stat-chip">{{ salesLabel }} {{ record.sales || emptyCellText }}</span>
-                <span
-                  class="pm-new-goods-stat-chip"
-                  :title="record.promotionText"
-                >
-                  {{ promotionLabel }} {{ record.promotionText || emptyCellText }}
-                </span>
+    <a-table
+      class="pm-new-goods-table"
+      :class="{ 'is-empty': tableRows.length <= 0 }"
+      row-key="id"
+      :data="tableRows"
+      :pagination="false"
+      :bordered="false"
+      :hoverable="true"
+      :stripe="false"
+      :table-layout-fixed="true"
+      :scroll="tableScroll"
+      :virtual-list-props="tableVirtualListProps"
+      :row-selection="rowSelection"
+      :selected-keys="selectedRowKeys"
+      :row-class="getRowClass"
+      :loading="loading"
+      size="small"
+      @selection-change="$emit('selection-change', $event)"
+    >
+      <template #columns>
+        <a-table-column
+          :title="goodsColumnProduct"
+          data-index="goodsName"
+          :width="goodsColumnProductWidth"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-goods-product-cell">
+              <a-image
+                v-if="record.thumbUrl"
+                class="pm-new-goods-thumb-image"
+                :src="getThumbnailUrl(record.thumbUrl)"
+                :preview-props="getPreviewProps(record.thumbUrl)"
+                :alt="record.goodsName"
+                :width="goodsThumbSize"
+                :height="goodsThumbSize"
+                fit="cover"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                v-else
+                class="pm-new-goods-thumb-empty"
+              >
+                {{ noImageText }}
+              </span>
+              <div class="pm-new-goods-main-info">
+                <strong :title="record.goodsName">{{ record.goodsName || emptyCellText }}</strong>
+                <div class="pm-new-goods-id-grid">
+                  <span class="pm-new-goods-id-chip">{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
+                  <span class="pm-new-goods-id-chip">{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
+                  <span class="pm-new-goods-id-chip">{{ skuLabel }} {{ record.skuEncode || emptyCellText }}</span>
+                </div>
+                <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--channel">
+                  <span class="pm-new-goods-meta-chip is-shop">{{ record.shopName || emptyCellText }}</span>
+                  <span class="pm-new-goods-meta-chip is-region">{{ record.regionLabel || emptyCellText }}</span>
+                  <span class="pm-new-goods-meta-chip">{{ mallIdLabel }} {{ record.mallId || emptyCellText }}</span>
+                  <span class="pm-new-goods-meta-chip">{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
+                </div>
+                <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--taxonomy">
+                  <span
+                    class="pm-new-goods-meta-chip"
+                    :title="record.categoryText"
+                  >
+                    {{ categoryLabel }} {{ record.categoryText || emptyCellText }}
+                  </span>
+                  <span
+                    class="pm-new-goods-meta-chip"
+                    :title="record.siteText"
+                  >
+                    {{ siteLabel }} {{ record.siteText || emptyCellText }}
+                  </span>
+                </div>
+                <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--stats">
+                  <span class="pm-new-goods-stat-chip">{{ priceLabel }} {{ record.priceText || emptyCellText }}</span>
+                  <span class="pm-new-goods-stat-chip">{{ stockLabel }} {{ record.skuTotalQuantity || emptyCellText }}</span>
+                  <span class="pm-new-goods-stat-chip">{{ salesLabel }} {{ record.sales || emptyCellText }}</span>
+                  <span
+                    class="pm-new-goods-stat-chip"
+                    :title="record.promotionText"
+                  >
+                    {{ promotionLabel }} {{ record.promotionText || emptyCellText }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-      </a-table-column>
-      <a-table-column
-        :title="goodsColumnCreateStatus"
-        data-index="createStatus"
-        :width="goodsColumnCreateStatusWidth"
-        align="center"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-create-status-cell">
-            <a-tag
-              class="pm-new-create-status-tag"
-              :class="getCreateStatusClass(record)"
-              size="small"
-              bordered
-            >
-              {{ getCreateStatus(record).label }}
-            </a-tag>
-            <span
-              v-if="getCreateStatus(record).message"
-              :title="getCreateStatus(record).message"
-            >
-              {{ getCreateStatus(record).message }}
-            </span>
-          </div>
-        </template>
-      </a-table-column>
-      <a-table-column
-        :title="goodsColumnDailyBudget"
-        data-index="dailyBudget"
-        :width="goodsColumnDailyBudgetWidth"
-        align="center"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-goods-control-cell">
-            <div class="pm-new-budget-control-row">
-              <a-radio-group
-                class="pm-new-budget-radio-group"
-                :model-value="getRowDraft(record).budgetMode"
-                type="button"
+          </template>
+        </a-table-column>
+        <a-table-column
+          :title="goodsColumnCreateStatus"
+          data-index="createStatus"
+          :width="goodsColumnCreateStatusWidth"
+          align="center"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-create-status-cell">
+              <a-tag
+                class="pm-new-create-status-tag"
+                :class="getCreateStatusClass(record)"
                 size="small"
-                @change="(value) => $emit('update-row-draft', record, { budgetMode: value })"
+                bordered
+              >
+                {{ getCreateStatus(record).label }}
+              </a-tag>
+              <span
+                v-if="getCreateStatus(record).message"
+                :title="getCreateStatus(record).message"
+              >
+                {{ getCreateStatus(record).message }}
+              </span>
+            </div>
+          </template>
+        </a-table-column>
+        <a-table-column
+          :title="goodsColumnDailyBudget"
+          data-index="dailyBudget"
+          :width="goodsColumnDailyBudgetWidth"
+          align="center"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-goods-control-cell">
+              <div class="pm-new-budget-control-row">
+                <a-radio-group
+                  class="pm-new-budget-radio-group"
+                  :model-value="getRowDraft(record).budgetMode"
+                  type="button"
+                  size="small"
+                  @change="(value) => $emit('update-row-draft', record, { budgetMode: value })"
+                >
+                  <a-radio
+                    v-for="option in budgetModeOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </a-radio>
+                </a-radio-group>
+                <div
+                  v-if="getRowDraft(record).budgetMode === budgetModeCustom"
+                  class="pm-new-control-inline"
+                >
+                  <a-input-number
+                    :model-value="getRowDraft(record).customBudget"
+                    :min="getDailyBudgetMin(record)"
+                    :max="getDailyBudgetMax(record)"
+                    :precision="0"
+                    size="small"
+                    hide-button
+                    model-event="input"
+                    @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
+                  />
+                </div>
+              </div>
+              <span
+                v-if="isBudgetCustom(record) && buildDailyBudgetHint(record)"
+                class="pm-new-goods-field-hint"
+              >
+                {{ dailyBudgetRangeLabel }} {{ buildDailyBudgetHint(record) }}
+              </span>
+            </div>
+          </template>
+        </a-table-column>
+        <a-table-column
+          :title="goodsColumnTargetRoas"
+          data-index="targetRoas"
+          :width="goodsColumnTargetRoasWidth"
+          align="center"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-goods-roas-cell">
+              <label class="pm-new-fast-start-control">
+                <span>{{ fastStartLabel }}</span>
+                <a-switch
+                  :model-value="getRowDraft(record).fastStartEnabled"
+                  size="small"
+                  @change="(value) => $emit('update-row-draft', record, { fastStartEnabled: value })"
+                />
+              </label>
+
+              <a-radio-group
+                :model-value="getRowDraft(record).roasMode"
+                class="pm-new-roas-radio-group"
+                @change="(value) => $emit('update-row-draft', record, { roasMode: value })"
               >
                 <a-radio
-                  v-for="option in budgetModeOptions"
+                  v-for="option in getRoasOptions(record)"
                   :key="option.value"
                   :value="option.value"
+                  :disabled="option.disabled"
                 >
-                  {{ option.label }}
+                  <span
+                    class="pm-new-roas-option"
+                    :title="option.title"
+                  >
+                    <strong>{{ option.label }}</strong>
+                    <span
+                      v-if="option.estimatedRoasText || option.estimatedChargeText || option.estimatedChargeRatioText"
+                      class="pm-new-roas-option-meta"
+                    >
+                      <em v-if="option.estimatedRoasText">{{ option.estimatedRoasText }}</em>
+                      <em v-if="option.estimatedChargeText">{{ option.estimatedChargeText }}</em>
+                      <em v-if="option.estimatedChargeRatioText">{{ option.estimatedChargeRatioText }}</em>
+                    </span>
+                  </span>
+                </a-radio>
+                <a-radio :value="roasModeCustom">
+                  <span class="pm-new-roas-option pm-new-roas-option--custom">
+                    <strong>{{ customLabel }}</strong>
+                    <span
+                      v-if="getRowDraft(record).roasMode === roasModeCustom"
+                      class="pm-new-roas-custom-inline"
+                    >
+                      <a-input-number
+                        :model-value="getRowDraft(record).customRoas"
+                        :min="getCustomRoasMin(record)"
+                        :max="getCustomRoasMax(record)"
+                        :precision="2"
+                        :step="0.01"
+                        size="mini"
+                        hide-button
+                        model-event="input"
+                        @click.stop
+                        @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
+                      />
+                    </span>
+                    <span
+                      v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
+                      class="pm-new-roas-custom-range"
+                      :title="`${customRoasRangeLabel} ${buildCustomRoasHint(record)}`"
+                    >
+                      {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
+                    </span>
+                    <em
+                      v-for="text in getCustomRoasEstimateTexts(record)"
+                      :key="text"
+                      class="pm-new-roas-custom-estimate"
+                    >
+                      {{ text }}
+                    </em>
+                  </span>
                 </a-radio>
               </a-radio-group>
-              <div
-                v-if="getRowDraft(record).budgetMode === budgetModeCustom"
-                class="pm-new-control-inline"
-              >
-                <a-input-number
-                  :model-value="getRowDraft(record).customBudget"
-                  :min="getDailyBudgetMin(record)"
-                  :max="getDailyBudgetMax(record)"
-                  :precision="0"
-                  size="small"
-                  hide-button
-                  model-event="input"
-                  @update:model-value="(value) => $emit('update-row-draft', record, { customBudget: value })"
-                />
-              </div>
             </div>
-            <span
-              v-if="isBudgetCustom(record) && buildDailyBudgetHint(record)"
-              class="pm-new-goods-field-hint"
-            >
-              {{ dailyBudgetRangeLabel }} {{ buildDailyBudgetHint(record) }}
-            </span>
-          </div>
-        </template>
-      </a-table-column>
-      <a-table-column
-        :title="goodsColumnTargetRoas"
-        data-index="targetRoas"
-        :width="goodsColumnTargetRoasWidth"
-        align="center"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-goods-roas-cell">
-            <label class="pm-new-fast-start-control">
-              <span>{{ fastStartLabel }}</span>
-              <a-switch
-                :model-value="getRowDraft(record).fastStartEnabled"
-                size="small"
-                @change="(value) => $emit('update-row-draft', record, { fastStartEnabled: value })"
-              />
-            </label>
+          </template>
+        </a-table-column>
+      </template>
+      <template #empty>
+        <span class="pm-new-table-native-empty"></span>
+      </template>
+    </a-table>
 
-            <a-radio-group
-              :model-value="getRowDraft(record).roasMode"
-              class="pm-new-roas-radio-group"
-              @change="(value) => $emit('update-row-draft', record, { roasMode: value })"
-            >
-              <a-radio
-                v-for="option in getRoasOptions(record)"
-                :key="option.value"
-                :value="option.value"
-                :disabled="option.disabled"
-              >
-                <span
-                  class="pm-new-roas-option"
-                  :title="option.title"
-                >
-                  <strong>{{ option.label }}</strong>
-                  <span
-                    v-if="option.estimatedRoasText || option.estimatedChargeText || option.estimatedChargeRatioText"
-                    class="pm-new-roas-option-meta"
-                  >
-                    <em v-if="option.estimatedRoasText">{{ option.estimatedRoasText }}</em>
-                    <em v-if="option.estimatedChargeText">{{ option.estimatedChargeText }}</em>
-                    <em v-if="option.estimatedChargeRatioText">{{ option.estimatedChargeRatioText }}</em>
-                  </span>
-                </span>
-              </a-radio>
-              <a-radio :value="roasModeCustom">
-                <span class="pm-new-roas-option pm-new-roas-option--custom">
-                  <strong>{{ customLabel }}</strong>
-                  <span
-                    v-if="getRowDraft(record).roasMode === roasModeCustom"
-                    class="pm-new-roas-custom-inline"
-                  >
-                    <a-input-number
-                      :model-value="getRowDraft(record).customRoas"
-                      :min="getCustomRoasMin(record)"
-                      :max="getCustomRoasMax(record)"
-                      :precision="2"
-                      :step="0.01"
-                      size="mini"
-                      hide-button
-                      model-event="input"
-                      @click.stop
-                      @update:model-value="(value) => $emit('update-row-draft', record, { customRoas: value })"
-                    />
-                  </span>
-                  <span
-                    v-if="isRoasCustom(record) && buildCustomRoasHint(record)"
-                    class="pm-new-roas-custom-range"
-                    :title="`${customRoasRangeLabel} ${buildCustomRoasHint(record)}`"
-                  >
-                    {{ customRoasRangeLabel }} {{ buildCustomRoasHint(record) }}
-                  </span>
-                  <em
-                    v-for="text in getCustomRoasEstimateTexts(record)"
-                    :key="text"
-                    class="pm-new-roas-custom-estimate"
-                  >
-                    {{ text }}
-                  </em>
-                </span>
-              </a-radio>
-            </a-radio-group>
-          </div>
-        </template>
-      </a-table-column>
-    </template>
-    <template #empty>
-      <div class="pm-new-goods-empty">
-        {{ emptyText }}
-      </div>
-    </template>
-  </a-table>
+    <div
+      v-if="tableRows.length <= 0"
+      class="pm-new-table-empty-overlay pm-new-goods-empty"
+    >
+      {{ emptyText }}
+    </div>
+  </div>
 </template>
 
 <script setup>

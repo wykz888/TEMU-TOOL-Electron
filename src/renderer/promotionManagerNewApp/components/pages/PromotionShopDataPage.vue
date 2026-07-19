@@ -5,7 +5,9 @@
         <ShopDataToolbar
           v-model:selected-shop-ids="selectedShopIds"
           v-model:selected-region-ids="selectedRegionIds"
+          v-model:query-date-range="queryDateRange"
           :region-options="regionOptions"
+          :date-shortcuts="dateShortcuts"
           :query-loading="queryLoading"
           :query-disabled="queryDisabled"
           @query="handleShopDataQuery"
@@ -68,19 +70,26 @@ import {
 import {
   queryPromotionShopData
 } from '../../services/promotionShopData.js';
+import {
+  createDefaultDateShortcuts,
+  createTodayDateRange
+} from '../../view-models/promotionDateRanges.js';
 
 const REGION_OPTIONS = Object.freeze([
   { value: 'us', label: '\u7f8e\u56fd' },
   { value: 'eu', label: '\u6b27\u533a' },
   { value: 'global', label: '\u5168\u7403' }
 ]);
+const regionOptions = REGION_OPTIONS;
 
 const selectedShopIds = ref([]);
 const selectedRegionIds = ref(['us', 'eu', 'global']);
+const queryDateRange = ref(createTodayDateRange());
 const queryLoading = ref(false);
 const queryError = ref('');
 const queryResult = ref(normalizePromotionShopDataResult());
 const queriedRegionIds = ref(['us', 'eu', 'global']);
+const dateShortcuts = createDefaultDateShortcuts();
 
 const shopListTitle = '\u5e97\u94fa\u5217\u8868';
 const queryLoadingText = '\u6b63\u5728\u67e5\u8be2\u5e97\u94fa\u6570\u636e';
@@ -181,7 +190,8 @@ async function handleShopDataQuery() {
   try {
     const result = await queryPromotionShopData({
       shopIds: selectedShopIds.value,
-      regionIds: selectedRegionIds.value
+      regionIds: selectedRegionIds.value,
+      dateRange: Array.isArray(queryDateRange.value) ? queryDateRange.value.slice(0, 2) : []
     });
     const normalizedResult = normalizePromotionShopDataResult(result);
 

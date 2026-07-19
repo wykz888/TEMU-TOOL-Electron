@@ -23,12 +23,13 @@
           <span class="pm-new-toolbar-field-label">{{ regionSelectLabel }}</span>
           <a-select
             :model-value="props.selectedRegionIds"
-            class="pm-new-toolbar-select"
+            class="pm-new-toolbar-select pm-new-toolbar-region-select"
             multiple
             allow-clear
             popup-container="body"
             size="small"
             :max-tag-count="1"
+            tag-nowrap
             :placeholder="regionSelectPlaceholder"
             :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitSelectedRegionIds"
@@ -37,10 +38,30 @@
               v-for="region in props.regionOptions"
               :key="region.value"
               :value="region.value"
+              :label="region.label"
             >
               {{ region.label }}
             </a-option>
           </a-select>
+        </div>
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-date-field"
+          role="group"
+        >
+          <span class="pm-new-toolbar-inline-label">{{ dateRangeLabel }}</span>
+          <a-range-picker
+            :model-value="props.queryDateRange"
+            class="pm-new-toolbar-date-range"
+            popup-container="body"
+            size="small"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            :placeholder="dateRangePlaceholder"
+            :shortcuts="props.dateShortcuts"
+            shortcuts-position="bottom"
+            :trigger-props="stableSelectTriggerProps"
+            @update:model-value="emitQueryDateRange"
+          />
         </div>
         <div class="pm-new-toolbar-query-buttons pm-new-shop-data-query-buttons">
           <a-button
@@ -85,12 +106,21 @@ const props = defineProps({
   queryDisabled: {
     type: Boolean,
     default: false
+  },
+  queryDateRange: {
+    type: Array,
+    default: () => []
+  },
+  dateShortcuts: {
+    type: Array,
+    default: () => []
   }
 });
 
 const emit = defineEmits([
   'update:selectedShopIds',
   'update:selectedRegionIds',
+  'update:queryDateRange',
   'query'
 ]);
 
@@ -99,6 +129,11 @@ const shopSelectLabel = '\u5e97\u94fa\u9009\u62e9\uff1a';
 const shopSelectPlaceholder = '\u5e97\u94fa\u9009\u62e9';
 const regionSelectLabel = '\u67e5\u8be2\u5730\u533a\uff1a';
 const regionSelectPlaceholder = '\u9009\u62e9\u5730\u533a';
+const dateRangeLabel = '\u6570\u636e\u65f6\u95f4\uff1a';
+const dateRangePlaceholder = Object.freeze([
+  '\u5f00\u59cb\u65e5\u671f',
+  '\u7ed3\u675f\u65e5\u671f'
+]);
 const queryButtonLabel = '\u67e5\u8be2\u6570\u636e';
 const stableSelectTriggerProps = Object.freeze({
   autoFitPopupMinWidth: true,
@@ -117,5 +152,9 @@ function emitSelectedRegionIds(value) {
     .filter((entry) => validRegionValues.has(entry));
 
   emit('update:selectedRegionIds', nextValues);
+}
+
+function emitQueryDateRange(value) {
+  emit('update:queryDateRange', Array.isArray(value) ? value.slice(0, 2) : []);
 }
 </script>

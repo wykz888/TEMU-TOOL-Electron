@@ -71,6 +71,100 @@ function buildRegionSummaryTitle(regionReports, regionIds) {
     .join('\n');
 }
 
+function parseProductCountValue(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
+  }
+
+  const text = normalizeText(value);
+
+  if (!text || text === EMPTY_TEXT || text === '--') {
+    return null;
+  }
+
+  const normalizedText = text
+    .replace(/[%\uff05,\s]/g, '')
+    .replace(/[^\d.-]/g, '');
+  const parsedValue = Number(normalizedText);
+
+  return Number.isFinite(parsedValue)
+    ? Math.max(0, Math.round(parsedValue))
+    : null;
+}
+
+function resolveRegionProductCount(report) {
+  const source = report && typeof report === 'object' ? report : {};
+  const directCount = parseProductCountValue(
+    source.productCount
+    ?? source.product_count
+    ?? source.goodsCount
+    ?? source.goods_count
+  );
+
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  const metrics = source.metrics && typeof source.metrics === 'object' ? source.metrics : {};
+  const summary = source.summary && typeof source.summary === 'object' ? source.summary : {};
+
+  return parseProductCountValue(
+    metrics.goods_num_label
+    || metrics.goods_num_all
+    || summary.goods_num_label
+    || summary.goods_num_all
+  );
+}
+
+function formatProductCount(report) {
+  const source = report && typeof report === 'object' ? report : null;
+
+  if (!source || normalizeText(source.status) !== 'success') {
+    return EMPTY_TEXT;
+  }
+
+  const count = resolveRegionProductCount(source);
+
+  return count === null
+    ? EMPTY_TEXT
+    : count.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+}
+
+function buildProductCountSummaryText(regionReports, regionIds) {
+  const reports = regionReports && typeof regionReports === 'object' ? regionReports : {};
+  const sourceRegionIds = normalizeRegionIds(regionIds);
+
+  if (sourceRegionIds.length <= 0) {
+    return '';
+  }
+
+  const countText = sourceRegionIds
+    .map((regionId) => {
+      const shortLabel = REGION_SHORT_LABELS[regionId] || regionId;
+
+      return `${shortLabel}${formatProductCount(reports[regionId])}`;
+    })
+    .join(' / ');
+
+  return countText ? `\u63a8\u5e7f\u5546\u54c1\uff1a${countText}` : '';
+}
+
+function buildProductCountSummaryTitle(regionReports, regionIds) {
+  const reports = regionReports && typeof regionReports === 'object' ? regionReports : {};
+  const sourceRegionIds = normalizeRegionIds(regionIds);
+
+  return sourceRegionIds
+    .map((regionId) => {
+      const label = REGION_LABELS[regionId] || regionId;
+      const countText = formatProductCount(reports[regionId]);
+
+      return countText === EMPTY_TEXT
+        ? `${label}\uff1a${EMPTY_TEXT}`
+        : `${label}\uff1a${countText} \u4e2a\u5546\u54c1`;
+    })
+    .join('\n');
+}
+
 function resolveShopQuerySummaryText(row, regionIds) {
   const successCount = Math.max(0, Number(row && row.successCount) || 0);
   const failedCount = Math.max(0, Number(row && row.failedCount) || 0);
@@ -114,6 +208,16 @@ export function buildPromotionShopDataRows(rows, selectedRegionIds) {
       || EMPTY_TEXT;
     const normalizedRegionSummaryTitle = normalizeText(sourceRow.regionSummaryTitle)
       || buildRegionSummaryTitle(regionReports, regionIds);
+    const productCountText = normalizeText(sourceRow.productCountText)
+      || buildProductCountSummaryText(regionReports, regionIds)
+      || EMPTY_TEXT;
+    const productCountTitle = normalizeText(sourceRow.productCountTitle)
+      || buildProductCountSummaryTitle(regionReports, regionIds);
+    const summaryTitle = normalizeText(sourceRow.summaryTitle)
+      || [
+        normalizedRegionSummaryTitle,
+        productCountTitle
+      ].filter(Boolean).join('\n');
 
     return {
       id: normalizeText(sourceRow.id) || shopId || `${index + 1}`,
@@ -129,6 +233,9 @@ export function buildPromotionShopDataRows(rows, selectedRegionIds) {
       querySummaryText: normalizeText(sourceRow.querySummaryText) || resolveShopQuerySummaryText(sourceRow, regionIds),
       regionSummaryText: normalizedRegionSummaryText,
       regionSummaryTitle: normalizedRegionSummaryTitle,
+      productCountText,
+      productCountTitle,
+      summaryTitle,
       metrics
     };
   });

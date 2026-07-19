@@ -1,159 +1,175 @@
 <template>
-  <a-table
-    class="pm-new-monitor-data-table pm-new-shop-data-table"
+  <div
+    class="pm-new-table-shell pm-new-shop-data-table-shell"
     :class="{ 'is-empty': tableRows.length <= 0 }"
-    row-key="id"
-    :data="tableRows"
-    :pagination="false"
-    :bordered="false"
-    :hoverable="true"
-    :stripe="false"
-    :table-layout-fixed="true"
-    :scroll="tableScroll"
-    :virtual-list-props="tableVirtualListProps"
-    :loading="props.loading"
-    size="small"
   >
-    <template #columns>
-      <a-table-column
-        :title="statusColumnLabel"
-        data-index="status"
-        :width="statusColumnWidth"
-        align="center"
-        fixed="left"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-monitor-status-cell pm-new-shop-data-status-cell">
-            <a-tag
-              class="pm-new-shop-data-status-tag"
-              :color="record.statusTone"
-              size="small"
-              bordered
-            >
-              {{ record.statusLabel }}
-            </a-tag>
-            <span :title="record.queriedAt">
-              {{ formatQueryTime(record.queriedAt) }}
-            </span>
-          </div>
-        </template>
-      </a-table-column>
-
-      <a-table-column
-        :title="shopInfoColumnLabel"
-        data-index="shopName"
-        :width="shopColumnWidth"
-        :sortable="shopColumnSortable"
-        fixed="left"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-monitor-shop-cell pm-new-shop-data-shop-cell">
-            <div class="pm-new-monitor-shop-name-row">
-              <span class="pm-new-monitor-shop-mark"></span>
-              <strong :title="record.shopName">{{ record.shopName || emptyText }}</strong>
-            </div>
-            <div class="pm-new-monitor-shop-meta">
-              <span
-                class="pm-new-monitor-shop-meta-item is-group"
-                :title="record.groupName"
+    <a-table
+      class="pm-new-monitor-data-table pm-new-shop-data-table"
+      :class="{ 'is-empty': tableRows.length <= 0 }"
+      row-key="id"
+      :data="tableRows"
+      :pagination="false"
+      :bordered="false"
+      :hoverable="true"
+      :stripe="false"
+      :table-layout-fixed="true"
+      :scroll="tableScroll"
+      :virtual-list-props="tableVirtualListProps"
+      :loading="props.loading"
+      size="small"
+    >
+      <template #columns>
+        <a-table-column
+          :title="statusColumnLabel"
+          data-index="status"
+          :width="statusColumnWidth"
+          align="center"
+          fixed="left"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-monitor-status-cell pm-new-shop-data-status-cell">
+              <a-tag
+                class="pm-new-shop-data-status-tag"
+                :color="record.statusTone"
+                size="small"
+                bordered
               >
-                <b>{{ groupInlineLabel }}</b>
-                {{ record.groupName || emptyText }}
-              </span>
-              <span
-                class="pm-new-monitor-shop-meta-item is-note"
-                :title="record.note"
-              >
-                <b>{{ noteInlineLabel }}</b>
-                {{ record.note || emptyText }}
-              </span>
-              <span
-                v-if="record.accountValue"
-                class="pm-new-monitor-shop-meta-item is-note"
-                :title="record.accountValue"
-              >
-                <b>{{ accountInlineLabel }}</b>
-                {{ record.accountValue }}
+                {{ record.statusLabel }}
+              </a-tag>
+              <span :title="record.queriedAt">
+                {{ formatQueryTime(record.queriedAt) }}
               </span>
             </div>
-          </div>
-        </template>
-      </a-table-column>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        :title="summaryColumnLabel"
-        data-index="querySummaryText"
-        :width="summaryColumnWidth"
-      >
-        <template #cell="{ record }">
-          <div
-            class="pm-new-monitor-log-cell pm-new-shop-data-summary-cell"
-            :title="record.regionSummaryTitle"
-          >
-            <strong :title="record.querySummaryText">
-              {{ record.querySummaryText || emptyText }}
-            </strong>
-            <span :title="record.regionSummaryText">
-              {{ record.regionSummaryText || emptyText }}
-            </span>
-          </div>
-        </template>
-      </a-table-column>
+        <a-table-column
+          :title="shopInfoColumnLabel"
+          data-index="shopName"
+          :width="shopColumnWidth"
+          :sortable="shopColumnSortable"
+          fixed="left"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-monitor-shop-cell pm-new-shop-data-shop-cell">
+              <div class="pm-new-monitor-shop-name-row">
+                <span class="pm-new-monitor-shop-mark"></span>
+                <strong :title="record.shopName">{{ record.shopName || emptyText }}</strong>
+              </div>
+              <div class="pm-new-monitor-shop-meta">
+                <span
+                  class="pm-new-monitor-shop-meta-item is-group"
+                  :title="record.groupName"
+                >
+                  <b>{{ groupInlineLabel }}</b>
+                  {{ record.groupName || emptyText }}
+                </span>
+                <span
+                  class="pm-new-monitor-shop-meta-item is-note"
+                  :title="record.note"
+                >
+                  <b>{{ noteInlineLabel }}</b>
+                  {{ record.note || emptyText }}
+                </span>
+                <span
+                  v-if="record.accountValue"
+                  class="pm-new-monitor-shop-meta-item is-note"
+                  :title="record.accountValue"
+                >
+                  <b>{{ accountInlineLabel }}</b>
+                  {{ record.accountValue }}
+                </span>
+              </div>
+            </div>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        v-for="column in props.visibleColumns"
-        :key="column.id"
-        :title="column.shortLabel || column.fullLabel"
-        :data-index="column.id"
-        :width="metricColumnWidth"
-        :sortable="getMetricColumnSortable(column.id)"
-        align="center"
-      >
-        <template #title>
-          <div
-            class="pm-new-monitor-column-head"
-            :title="getColumnSummary(column.id).title"
-          >
-            <span class="pm-new-monitor-column-title">
-              {{ column.shortLabel || column.fullLabel }}
-            </span>
-            <span class="pm-new-monitor-column-summary">
-              {{ getColumnSummary(column.id).text }}
-            </span>
-          </div>
-        </template>
-        <template #cell="{ record }">
-          <div
-            class="pm-new-monitor-metric-cell pm-new-shop-data-metric-cell"
-            :class="`theme-${column.theme || 'slate'}`"
-            :title="getMetricCell(record, column.id).title"
-          >
+        <a-table-column
+          :title="summaryColumnLabel"
+          data-index="querySummaryText"
+          :width="summaryColumnWidth"
+        >
+          <template #cell="{ record }">
             <div
-              v-for="regionRow in getMetricRows(record, column.id)"
-              :key="regionRow.regionId"
-              class="pm-new-monitor-metric-row"
-              :class="{
-                'is-empty': regionRow.empty,
-                'is-inactive': regionRow.active === false
-              }"
+              class="pm-new-monitor-log-cell pm-new-shop-data-summary-cell"
+              :title="record.summaryTitle || record.regionSummaryTitle"
             >
-              <span class="pm-new-monitor-metric-region">
-                {{ regionRow.regionLabel }}
+              <strong :title="record.querySummaryText">
+                {{ record.querySummaryText || emptyText }}
+              </strong>
+              <span :title="record.regionSummaryText">
+                {{ record.regionSummaryText || emptyText }}
               </span>
-              <span class="pm-new-monitor-metric-value">
-                {{ regionRow.text || emptyText }}
+              <div
+                class="pm-new-shop-data-summary-detail"
+                :title="record.productCountTitle"
+              >
+                {{ record.productCountText || emptyText }}
+              </div>
+            </div>
+          </template>
+        </a-table-column>
+
+        <a-table-column
+          v-for="column in props.visibleColumns"
+          :key="column.id"
+          :title="column.shortLabel || column.fullLabel"
+          :data-index="column.id"
+          :width="metricColumnWidth"
+          :sortable="getMetricColumnSortable(column.id)"
+          align="center"
+        >
+          <template #title>
+            <div
+              class="pm-new-monitor-column-head"
+              :title="getColumnSummary(column.id).title"
+            >
+              <span class="pm-new-monitor-column-title">
+                {{ column.shortLabel || column.fullLabel }}
+              </span>
+              <span class="pm-new-monitor-column-summary">
+                {{ getColumnSummary(column.id).text }}
               </span>
             </div>
-          </div>
-        </template>
-      </a-table-column>
-    </template>
-    <template #empty>
-      <div class="pm-new-monitor-empty">
-        {{ props.emptyText || emptyStateText }}
-      </div>
-    </template>
-  </a-table>
+          </template>
+          <template #cell="{ record }">
+            <div
+              class="pm-new-monitor-metric-cell pm-new-shop-data-metric-cell"
+              :class="`theme-${column.theme || 'slate'}`"
+              :title="getMetricCell(record, column.id).title"
+            >
+              <div
+                v-for="regionRow in getMetricRows(record, column.id)"
+                :key="regionRow.regionId"
+                class="pm-new-monitor-metric-row"
+                :class="{
+                  'is-empty': regionRow.empty,
+                  'is-inactive': regionRow.active === false
+                }"
+              >
+                <span class="pm-new-monitor-metric-region">
+                  {{ regionRow.regionLabel }}
+                </span>
+                <span class="pm-new-monitor-metric-value">
+                  {{ regionRow.text || emptyText }}
+                </span>
+              </div>
+            </div>
+          </template>
+        </a-table-column>
+      </template>
+      <template #empty>
+        <span class="pm-new-table-native-empty"></span>
+      </template>
+    </a-table>
+
+    <div
+      v-if="tableRows.length <= 0"
+      class="pm-new-table-empty-overlay pm-new-monitor-empty"
+    >
+      {{ props.emptyText || emptyStateText }}
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -190,7 +206,7 @@ const emptyText = '-';
 const emptyStateText = '\u6682\u65e0\u5e97\u94fa\u6570\u636e';
 const statusColumnWidth = 128;
 const shopColumnWidth = 248;
-const summaryColumnWidth = 180;
+const summaryColumnWidth = 208;
 const metricColumnWidth = 128;
 const baseTableWidth = statusColumnWidth + shopColumnWidth + summaryColumnWidth;
 const virtualListThreshold = 120;
@@ -234,10 +250,14 @@ const metricColumnSortableById = computed(() => (
     ])
   )
 ));
-const tableScroll = computed(() => ({
-  x: baseTableWidth + props.visibleColumns.length * metricColumnWidth,
-  y: '100%'
-}));
+const tableScroll = computed(() => (
+  tableRows.value.length > 0
+    ? {
+      x: baseTableWidth + props.visibleColumns.length * metricColumnWidth,
+      y: '100%'
+    }
+    : undefined
+));
 const tableVirtualListProps = computed(() => (
   tableRows.value.length >= virtualListThreshold
     ? {

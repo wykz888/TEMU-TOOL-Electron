@@ -26,6 +26,7 @@ export function buildShopDataQueryPayload(payload = {}) {
   return {
     shopIds: normalizeTextList(source.shopIds),
     regionIds: normalizeShopDataRegionIds(source.regionIds),
+    dateRange: Array.isArray(source.dateRange) ? source.dateRange.slice(0, 2).map(normalizeText).filter(Boolean) : [],
     startTime: source.startTime || null,
     endTime: source.endTime || null
   };

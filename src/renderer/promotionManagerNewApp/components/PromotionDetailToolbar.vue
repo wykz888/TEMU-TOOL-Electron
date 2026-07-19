@@ -38,6 +38,7 @@
               v-for="region in regionOptions"
               :key="region.value"
               :value="region.value"
+              :label="region.label"
             >
               {{ region.label }}
             </a-option>

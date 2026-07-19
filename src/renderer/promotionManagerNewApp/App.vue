@@ -28,7 +28,8 @@ import PromotionMonitorPage from './components/pages/PromotionMonitorPage.vue';
 import PromotionShopDataPage from './components/pages/PromotionShopDataPage.vue';
 
 const modules = MODULES;
-const activeModuleId = ref('create');
+const defaultModuleId = modules[0] && modules[0].id ? modules[0].id : 'create';
+const activeModuleId = ref(defaultModuleId);
 
 const pageComponentMap = Object.freeze({
   create: CreatePromotionPage,

@@ -3,6 +3,9 @@ const {
   buildReportsQueryPayload,
   buildReportsQuerySummaryContainer
 } = require('./promotionReportsQueryUtils');
+const {
+  resolveSummaryGoodsCount
+} = require('./promotionMonitorMetricUtils');
 
 const ADS_REPORTS_QUERY_URL = 'https://ads.temu.com/api/v1/coconut/reports/queryReports';
 const DEFAULT_QUERY_CONCURRENCY = 4;
@@ -45,17 +48,49 @@ function normalizePositiveInteger(value, fallback, options = {}) {
   return Math.min(parsedValue, maximum);
 }
 
-function normalizeTimestamp(value) {
-  if (value instanceof Date) {
-    const time = value.getTime();
+function parseLocalDateText(value, endOfDay = false) {
+  const text = normalizeText(value);
+  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(text);
 
-    return Number.isFinite(time) && time > 0 ? time : null;
+  if (!match) {
+    return null;
   }
 
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(
+    year,
+    monthIndex,
+    day,
+    endOfDay ? 23 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 999 : 0
+  );
+
+  if (
+    date.getFullYear() !== year
+    || date.getMonth() !== monthIndex
+    || date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date.getTime();
+}
+
+function parseDateRangeTimestamp(value, endOfDay = false) {
   const numberValue = Number(value);
 
   if (Number.isFinite(numberValue) && numberValue > 0) {
     return numberValue;
+  }
+
+  const localDateTimestamp = parseLocalDateText(value, endOfDay);
+
+  if (localDateTimestamp !== null) {
+    return localDateTimestamp;
   }
 
   const text = normalizeText(value);
@@ -64,9 +99,20 @@ function normalizeTimestamp(value) {
     return null;
   }
 
-  const parsedTime = new Date(text).getTime();
+  const parsedDate = new Date(text);
+  const parsedTimestamp = parsedDate.getTime();
 
-  return Number.isFinite(parsedTime) && parsedTime > 0 ? parsedTime : null;
+  if (Number.isNaN(parsedTimestamp)) {
+    return null;
+  }
+
+  if (endOfDay) {
+    parsedDate.setHours(23, 59, 59, 999);
+  } else {
+    parsedDate.setHours(0, 0, 0, 0);
+  }
+
+  return parsedDate.getTime();
 }
 
 function buildShopDataReportsPayload(payload = {}) {
@@ -75,19 +121,21 @@ function buildShopDataReportsPayload(payload = {}) {
     ? (source.dateRange || source.date_range)
     : [];
   const basePayload = buildReportsQueryPayload();
-  const startTime = normalizeTimestamp(
+  const startTime = parseDateRangeTimestamp(
     source.startTime
     || source.start_time
     || source.startTs
     || source.start_ts
-    || dateRange[0]
+    || dateRange[0],
+    false
   ) || basePayload.start_ts;
-  const endTime = normalizeTimestamp(
+  const endTime = parseDateRangeTimestamp(
     source.endTime
     || source.end_time
     || source.endTs
     || source.end_ts
-    || dateRange[1]
+    || dateRange[1],
+    true
   ) || basePayload.end_ts;
 
   return {
@@ -187,6 +235,7 @@ function extractReportsSummary(response, regionId, context = {}) {
     : {};
   const summary = buildReportsQuerySummaryContainer(resultData, responseData);
   const metrics = normalizeSummaryMetrics(summary);
+  const productCount = resolveSummaryGoodsCount(summary);
   const fetchedAt = new Date().toISOString();
 
   return {
@@ -199,6 +248,7 @@ function extractReportsSummary(response, regionId, context = {}) {
     summary: metrics,
     metrics,
     metricCount: Object.keys(metrics).length,
+    productCount,
     cookieSyncMode: normalizeText(context.cookieSyncMode),
     refreshedCookies: context.refreshedCookies === true,
     message: ''
@@ -216,6 +266,7 @@ function buildFailedRegionReport(regionId, error) {
     summary: {},
     metrics: {},
     metricCount: 0,
+    productCount: 0,
     cookieSyncMode: '',
     refreshedCookies: false,
     message: normalizeText(error && error.message) || '\u5e97\u94fa\u6570\u636e\u67e5\u8be2\u5931\u8d25'

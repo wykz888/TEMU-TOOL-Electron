@@ -1,201 +1,211 @@
 <template>
-  <a-table
-    class="pm-new-goods-table pm-new-detail-table"
+  <div
+    class="pm-new-table-shell pm-new-detail-table-shell"
     :class="{ 'is-empty': tableRows.length <= 0 }"
-    row-key="id"
-    :data="tableRows"
-    :pagination="false"
-    :bordered="false"
-    :hoverable="true"
-    :stripe="false"
-    :table-layout-fixed="true"
-    :scroll="tableScroll"
-    :virtual-list-props="tableVirtualListProps"
-    :row-selection="rowSelection"
-    :selected-keys="selectedRowKeys"
-    :row-class="getRowClass"
-    :loading="loading"
-    size="small"
-    @selection-change="$emit('selection-change', $event)"
   >
-    <template #columns>
-      <a-table-column
-        :title="detailColumnPromotion"
-        data-index="productName"
-        :width="promotionColumnWidth"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-detail-product-cell">
-            <a-image
-              v-if="record.productImageUrl"
-              class="pm-new-detail-thumb-image"
-              :src="getThumbnailUrl(record.productImageUrl)"
-              :preview-props="getPreviewProps(record.productImageUrl)"
-              :alt="record.productName"
-              :width="detailThumbSize"
-              :height="detailThumbSize"
-              fit="cover"
-              loading="lazy"
-              decoding="async"
-            />
-            <span
-              v-else
-              class="pm-new-goods-thumb-empty"
-            >
-              {{ noImageText }}
-            </span>
-            <div class="pm-new-detail-product-main">
-              <strong :title="record.productName">{{ record.productName || emptyCellText }}</strong>
-              <div class="pm-new-goods-id-grid">
-                <span class="pm-new-goods-id-chip">{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
-                <span class="pm-new-goods-id-chip">{{ adIdLabel }} {{ record.adId || emptyCellText }}</span>
-                <span class="pm-new-goods-id-chip">{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
-              </div>
-              <div class="pm-new-goods-inline-meta">
-                <span class="pm-new-goods-meta-chip is-shop">{{ record.shopName || emptyCellText }}</span>
-                <span class="pm-new-goods-meta-chip is-region">{{ record.regionLabel || emptyCellText }}</span>
-                <span
-                  class="pm-new-goods-meta-chip"
-                  :title="record.siteText"
-                >
-                  {{ siteLabel }} {{ record.siteText || emptyCellText }}
-                </span>
-              </div>
-              <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--taxonomy">
-                <span
-                  class="pm-new-goods-meta-chip"
-                  :title="record.categoryText"
-                >
-                  {{ categoryLabel }} {{ record.categoryText || emptyCellText }}
-                </span>
-                <span class="pm-new-goods-meta-chip">{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
+    <a-table
+      class="pm-new-goods-table pm-new-detail-table"
+      :class="{ 'is-empty': tableRows.length <= 0 }"
+      row-key="id"
+      :data="tableRows"
+      :pagination="false"
+      :bordered="false"
+      :hoverable="true"
+      :stripe="false"
+      :table-layout-fixed="true"
+      :scroll="tableScroll"
+      :virtual-list-props="tableVirtualListProps"
+      :row-selection="rowSelection"
+      :selected-keys="selectedRowKeys"
+      :row-class="getRowClass"
+      :loading="loading"
+      size="small"
+      @selection-change="$emit('selection-change', $event)"
+    >
+      <template #columns>
+        <a-table-column
+          :title="detailColumnPromotion"
+          data-index="productName"
+          :width="promotionColumnWidth"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-detail-product-cell">
+              <a-image
+                v-if="record.productImageUrl"
+                class="pm-new-detail-thumb-image"
+                :src="getThumbnailUrl(record.productImageUrl)"
+                :preview-props="getPreviewProps(record.productImageUrl)"
+                :alt="record.productName"
+                :width="detailThumbSize"
+                :height="detailThumbSize"
+                fit="cover"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                v-else
+                class="pm-new-goods-thumb-empty"
+              >
+                {{ noImageText }}
+              </span>
+              <div class="pm-new-detail-product-main">
+                <strong :title="record.productName">{{ record.productName || emptyCellText }}</strong>
+                <div class="pm-new-goods-id-grid">
+                  <span class="pm-new-goods-id-chip">{{ goodsIdLabel }} {{ record.goodsId || emptyCellText }}</span>
+                  <span class="pm-new-goods-id-chip">{{ adIdLabel }} {{ record.adId || emptyCellText }}</span>
+                  <span class="pm-new-goods-id-chip">{{ spuIdLabel }} {{ record.spuId || emptyCellText }}</span>
+                </div>
+                <div class="pm-new-goods-inline-meta">
+                  <span class="pm-new-goods-meta-chip is-shop">{{ record.shopName || emptyCellText }}</span>
+                  <span class="pm-new-goods-meta-chip is-region">{{ record.regionLabel || emptyCellText }}</span>
+                  <span
+                    class="pm-new-goods-meta-chip"
+                    :title="record.siteText"
+                  >
+                    {{ siteLabel }} {{ record.siteText || emptyCellText }}
+                  </span>
+                </div>
+                <div class="pm-new-goods-inline-meta pm-new-goods-inline-meta--taxonomy">
+                  <span
+                    class="pm-new-goods-meta-chip"
+                    :title="record.categoryText"
+                  >
+                    {{ categoryLabel }} {{ record.categoryText || emptyCellText }}
+                  </span>
+                  <span class="pm-new-goods-meta-chip">{{ createdAtLabel }} {{ record.createdAtText || emptyCellText }}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-      </a-table-column>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        :title="detailColumnStatus"
-        data-index="statusLabel"
-        :width="statusColumnWidth"
-        align="center"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-detail-status-cell">
-            <a-tag
-              class="pm-new-detail-status-tag"
-              :class="getStatusClass(record)"
-              size="small"
-              bordered
-            >
-              {{ record.statusLabel || emptyCellText }}
-            </a-tag>
-            <span>{{ fastStartLabel }} {{ record.fastStartText || emptyCellText }}</span>
-            <span>{{ roasTypeLabel }} {{ record.roasTypeText || emptyCellText }}</span>
-          </div>
-        </template>
-      </a-table-column>
+        <a-table-column
+          :title="detailColumnStatus"
+          data-index="statusLabel"
+          :width="statusColumnWidth"
+          align="center"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-detail-status-cell">
+              <a-tag
+                class="pm-new-detail-status-tag"
+                :class="getStatusClass(record)"
+                size="small"
+                bordered
+              >
+                {{ record.statusLabel || emptyCellText }}
+              </a-tag>
+              <span>{{ fastStartLabel }} {{ record.fastStartText || emptyCellText }}</span>
+              <span>{{ roasTypeLabel }} {{ record.roasTypeText || emptyCellText }}</span>
+            </div>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        :title="detailColumnMetrics"
-        data-index="metrics"
-        :width="metricsColumnWidth"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-detail-metrics-grid">
-            <span>
-              <em>{{ spendLabel }}</em>
-              <strong>{{ record.spendText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ netSpendLabel }}</em>
-              <strong>{{ record.netSpendText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ salesAmountLabel }}</em>
-              <strong>{{ record.salesAmountText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ roasLabel }}</em>
-              <strong>{{ record.roasText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ costPerOrderLabel }}</em>
-              <strong>{{ record.costPerOrderText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ orderCountLabel }}</em>
-              <strong>{{ record.orderCountText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ exposureLabel }}</em>
-              <strong>{{ record.impressionText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ clickLabel }}</em>
-              <strong>{{ record.clickText || emptyCellText }}</strong>
-            </span>
-          </div>
-        </template>
-      </a-table-column>
+        <a-table-column
+          :title="detailColumnMetrics"
+          data-index="metrics"
+          :width="metricsColumnWidth"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-detail-metrics-grid">
+              <span>
+                <em>{{ spendLabel }}</em>
+                <strong>{{ record.spendText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ netSpendLabel }}</em>
+                <strong>{{ record.netSpendText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ salesAmountLabel }}</em>
+                <strong>{{ record.salesAmountText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ roasLabel }}</em>
+                <strong>{{ record.roasText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ costPerOrderLabel }}</em>
+                <strong>{{ record.costPerOrderText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ orderCountLabel }}</em>
+                <strong>{{ record.orderCountText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ exposureLabel }}</em>
+                <strong>{{ record.impressionText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ clickLabel }}</em>
+                <strong>{{ record.clickText || emptyCellText }}</strong>
+              </span>
+            </div>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        :title="detailColumnSettings"
-        data-index="settings"
-        :width="settingsColumnWidth"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-detail-setting-cell">
-            <span>
-              <em>{{ dailyBudgetLabel }}</em>
-              <strong>{{ record.dailyBudgetText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ targetRoasLabel }}</em>
-              <strong>{{ record.targetRoasText || emptyCellText }}</strong>
-            </span>
-            <span>
-              <em>{{ updatedAtLabel }}</em>
-              <strong>{{ record.updatedAtText || emptyCellText }}</strong>
-            </span>
-          </div>
-        </template>
-      </a-table-column>
+        <a-table-column
+          :title="detailColumnSettings"
+          data-index="settings"
+          :width="settingsColumnWidth"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-detail-setting-cell">
+              <span>
+                <em>{{ dailyBudgetLabel }}</em>
+                <strong>{{ record.dailyBudgetText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ targetRoasLabel }}</em>
+                <strong>{{ record.targetRoasText || emptyCellText }}</strong>
+              </span>
+              <span>
+                <em>{{ updatedAtLabel }}</em>
+                <strong>{{ record.updatedAtText || emptyCellText }}</strong>
+              </span>
+            </div>
+          </template>
+        </a-table-column>
 
-      <a-table-column
-        :title="detailColumnAction"
-        data-index="actionStatus"
-        :width="actionColumnWidth"
-        align="center"
-      >
-        <template #cell="{ record }">
-          <div class="pm-new-create-status-cell pm-new-detail-action-status-cell">
-            <a-tag
-              class="pm-new-create-status-tag"
-              :class="getActionStatusClass(record)"
-              size="small"
-              bordered
-            >
-              {{ getActionStatusRecord(record).label || pendingActionLabel }}
-            </a-tag>
-            <span
-              v-if="getActionStatusRecord(record).message"
-              :title="getActionStatusRecord(record).message"
-            >
-              {{ getActionStatusRecord(record).message }}
-            </span>
-          </div>
-        </template>
-      </a-table-column>
-    </template>
+        <a-table-column
+          :title="detailColumnAction"
+          data-index="actionStatus"
+          :width="actionColumnWidth"
+          align="center"
+        >
+          <template #cell="{ record }">
+            <div class="pm-new-create-status-cell pm-new-detail-action-status-cell">
+              <a-tag
+                class="pm-new-create-status-tag"
+                :class="getActionStatusClass(record)"
+                size="small"
+                bordered
+              >
+                {{ getActionStatusRecord(record).label || pendingActionLabel }}
+              </a-tag>
+              <span
+                v-if="getActionStatusRecord(record).message"
+                :title="getActionStatusRecord(record).message"
+              >
+                {{ getActionStatusRecord(record).message }}
+              </span>
+            </div>
+          </template>
+        </a-table-column>
+      </template>
 
-    <template #empty>
-      <div class="pm-new-goods-empty">
-        {{ emptyText }}
-      </div>
-    </template>
-  </a-table>
+      <template #empty>
+        <span class="pm-new-table-native-empty"></span>
+      </template>
+    </a-table>
+
+    <div
+      v-if="tableRows.length <= 0"
+      class="pm-new-table-empty-overlay pm-new-goods-empty"
+    >
+      {{ emptyText }}
+    </div>
+  </div>
 </template>
 
 <script setup>
