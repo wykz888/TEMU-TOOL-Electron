@@ -194,6 +194,10 @@ async function collectPagedAdsDetailItems(shopId, regionId, options) {
       detectAdsDetailHasMore(firstPayload, pageNumber, firstItems.length, pageSize)
       && shouldContinue(firstItems);
     pageNumber += 1;
+
+    if (hasMore && !postWithRegionCookie) {
+      throw new Error(buildAdsDetailRequestFailureMessage(null, `${normalizedRegionId} ads_detail pagination unavailable`));
+    }
   }
 
   while (
@@ -229,15 +233,29 @@ async function collectPagedAdsDetailItems(shopId, regionId, options) {
 }
 
 function createAdsDetailPayloadBuilder(options) {
+  const sourceRequestPayload =
+    options.requestPayload && typeof options.requestPayload === 'object'
+      ? options.requestPayload
+      : (
+        options.firstRequestPayload && typeof options.firstRequestPayload === 'object'
+          ? options.firstRequestPayload
+          : {}
+      );
   let pagingListId = normalizeText(
     options.listId
     || options.list_id
-    || (options.requestPayload && options.requestPayload.list_id)
-    || (options.firstRequestPayload && options.firstRequestPayload.list_id)
+    || sourceRequestPayload.list_id
   );
   const sortBy = normalizeAdsDetailSortBy(options.sortBy, ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT);
   const pageSize = normalizeAdsDetailPageSize(options.pageSize, ADS_DETAIL_PAGE_SIZE);
   const adStatus = Array.isArray(options.adStatus) ? options.adStatus : [];
+  const startTime = options.startTime || options.start_time || sourceRequestPayload.start_time;
+  const endTime = options.endTime || options.end_time || sourceRequestPayload.end_time;
+  const columnsType = options.columnsType || options.columns_type || sourceRequestPayload.columns_type;
+  const selectedRoasType =
+    options.selectedRoasType
+    || options.selected_roas_type
+    || sourceRequestPayload.selected_roas_type;
 
   return {
     pageSize,
@@ -247,7 +265,11 @@ function createAdsDetailPayloadBuilder(options) {
         sortBy,
         adStatus,
         pageSize,
-        listId: pagingListId
+        listId: pagingListId,
+        startTime,
+        endTime,
+        columnsType,
+        selectedRoasType
       });
 
       pagingListId = normalizeText(payload && payload.list_id) || pagingListId;

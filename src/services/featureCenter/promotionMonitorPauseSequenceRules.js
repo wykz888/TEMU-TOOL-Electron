@@ -65,6 +65,15 @@ function resolvePauseThenResumeDueAtFromPausedAt(pausedAtTimestamp, resumeInterv
   return pausedAtTimestamp + (normalizedResumeIntervalMinutes * 60 * 1000);
 }
 
+function resolvePauseThenResumeBaselineTimestamp(stat) {
+  const normalizedStat = normalizeOperationStat(stat);
+
+  return (
+    parseIsoTimestamp(normalizedStat.pausedAt)
+    || parseIsoTimestamp(normalizedStat.pauseStateUpdatedAt)
+  );
+}
+
 function isPauseSequenceActionType(actionType) {
   return PAUSE_SEQUENCE_ACTION_TYPES.has(normalizeText(actionType));
 }
@@ -76,6 +85,17 @@ function isResumeSequenceActionType(actionType) {
 function isModifySequenceActionType(actionType) {
   return normalizeText(actionType) === 'pause_then_modify'
     || normalizeText(actionType) === 'pause_then_modify_resume';
+}
+
+function shouldSkipUntrackedPausedSequenceItem(stat, item, monitorConfig) {
+  const config = normalizeMonitorConfig(monitorConfig);
+
+  return (
+    isPauseSequenceActionType(config.actionType)
+    && item
+    && item.isPaused === true
+    && resolveStoredPausedState(stat) !== true
+  );
 }
 
 function resolvePauseThenResumeExecution(stat, item, monitorConfig) {
@@ -95,12 +115,12 @@ function resolvePauseThenResumeExecution(stat, item, monitorConfig) {
     };
   }
 
-  const pausedAt = normalizeText(stat && stat.pausedAt);
-  const pausedAtTimestamp = parseIsoTimestamp(pausedAt);
+  const pausedAtTimestamp = resolvePauseThenResumeBaselineTimestamp(stat);
 
   if (!pausedAtTimestamp) {
     return {
-      executionActionType: 'resume_plan'
+      executionActionType: '',
+      skipReason: 'resume_waiting'
     };
   }
 
@@ -179,10 +199,10 @@ function resolvePauseThenResumeCheckDueAt(stat, monitorConfig) {
     return Number.MAX_SAFE_INTEGER;
   }
 
-  const pausedAtTimestamp = parseIsoTimestamp(normalizeText(stat && stat.pausedAt));
+  const pausedAtTimestamp = resolvePauseThenResumeBaselineTimestamp(stat);
 
   if (!pausedAtTimestamp) {
-    return 0;
+    return Number.MAX_SAFE_INTEGER;
   }
 
   return resolvePauseThenResumeDueAtFromPausedAt(
@@ -255,9 +275,11 @@ module.exports = {
   resolveEffectivePausedState,
   resolveResumeIntervalMs,
   resolvePauseThenResumeDueAtFromPausedAt,
+  resolvePauseThenResumeBaselineTimestamp,
   isPauseSequenceActionType,
   isResumeSequenceActionType,
   isModifySequenceActionType,
+  shouldSkipUntrackedPausedSequenceItem,
   resolvePauseThenResumeExecution,
   resolvePauseSequenceExecution,
   resolveOperationStatRegionId,

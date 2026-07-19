@@ -33,6 +33,7 @@ const {
   buildOperationDateKey,
   buildDefaultOperationStat,
   buildEmptyOperationSummary,
+  normalizeOperationStat,
   normalizeOperationStats,
   buildOperationStatKey,
   buildDefaultConfig,
@@ -45,6 +46,7 @@ const {
   normalizeState,
   buildSharedCloudState,
   compactStateOperationStats,
+  parseIsoTimestamp,
   mergeSharedCloudStateInto,
   buildPersistableState
 } = require('./promotionMonitorStateModel');
@@ -66,6 +68,7 @@ const {
   resolveResumeIntervalMs,
   isPauseSequenceActionType,
   isResumeSequenceActionType,
+  shouldSkipUntrackedPausedSequenceItem,
   resolvePauseSequenceExecution,
   resolvePauseThenResumeNextRunAt,
   getDuePauseThenResumeRegionIds
@@ -189,8 +192,11 @@ function createPromotionMonitorService({
       return;
     }
 
+    const updatedAt = nowIso();
+
     shopState.log = normalizedMessage;
-    stateCache.updatedAt = nowIso();
+    shopState.lastUpdatedAt = updatedAt;
+    stateCache.updatedAt = updatedAt;
     scheduleStatePersist(0);
 
     if (options.writeRuntimeLog === true) {
@@ -1109,22 +1115,72 @@ function createPromotionMonitorService({
     return monitorConfigCache;
   }
 
+  function resolveOperationStatLookupTimestamp(stat) {
+    const normalizedStat = normalizeOperationStat(stat);
+
+    return Math.max(
+      parseIsoTimestamp(normalizedStat.lastExecutedAt),
+      parseIsoTimestamp(normalizedStat.pauseStateUpdatedAt),
+      parseIsoTimestamp(normalizedStat.pausedAt)
+    );
+  }
+
+  function findShopOperationStatKey(shopState, regionId, goodsId, adId) {
+    const operationStats = shopState && shopState.operationStats && typeof shopState.operationStats === 'object'
+      ? shopState.operationStats
+      : {};
+    const exactStatKey = buildOperationStatKey(regionId, goodsId, adId);
+
+    if (Object.prototype.hasOwnProperty.call(operationStats, exactStatKey)) {
+      return exactStatKey;
+    }
+
+    const normalizedRegionId = normalizeText(regionId) || 'all';
+    const normalizedGoodsId = normalizeText(goodsId) || '-';
+
+    if (normalizedGoodsId === '-') {
+      return '';
+    }
+
+    let matchedStatKey = '';
+    let matchedTimestamp = -1;
+
+    Object.entries(operationStats).forEach(([statKey, stat]) => {
+      const parts = normalizeText(statKey).split('::');
+
+      if (parts.length < 3 || parts[0] !== normalizedRegionId || parts[1] !== normalizedGoodsId) {
+        return;
+      }
+
+      const statTimestamp = resolveOperationStatLookupTimestamp(stat);
+
+      if (!matchedStatKey || statTimestamp > matchedTimestamp) {
+        matchedStatKey = statKey;
+        matchedTimestamp = statTimestamp;
+      }
+    });
+
+    return matchedStatKey;
+  }
+
   function getShopOperationStat(shopState, regionId, goodsId, adId, options = {}) {
     if (!shopState.operationStats || typeof shopState.operationStats !== 'object') {
       shopState.operationStats = {};
     }
 
     const statKey = buildOperationStatKey(regionId, goodsId, adId);
+    const existingStatKey = findShopOperationStatKey(shopState, regionId, goodsId, adId);
+    const resolvedStatKey = existingStatKey || statKey;
 
-    if (!shopState.operationStats[statKey]) {
+    if (!shopState.operationStats[resolvedStatKey]) {
       if (options.create !== true) {
         return null;
       }
 
-      shopState.operationStats[statKey] = buildDefaultOperationStat();
+      shopState.operationStats[resolvedStatKey] = buildDefaultOperationStat();
     }
 
-    const stat = shopState.operationStats[statKey];
+    const stat = shopState.operationStats[resolvedStatKey];
     const dailyBucket = buildOperationDateKey();
 
     if (stat.dailyBucket !== dailyBucket) {
@@ -1140,7 +1196,9 @@ function createPromotionMonitorService({
       return false;
     }
 
-    const statKey = buildOperationStatKey(regionId, goodsId, adId);
+    const statKey =
+      findShopOperationStatKey(shopState, regionId, goodsId, adId)
+      || buildOperationStatKey(regionId, goodsId, adId);
 
     if (!Object.prototype.hasOwnProperty.call(shopState.operationStats, statKey)) {
       return false;
@@ -1192,8 +1250,10 @@ function createPromotionMonitorService({
 
     const currentPausedState = resolveStoredPausedState(stat);
     const currentPausedAt = normalizeText(stat.pausedAt);
+    const knownPausedState = normalizeNullableBoolean(stat.knownPausedState);
+    const observedAt = nowIso();
 
-    if (itemPaused === true && currentPausedState === true) {
+    if (itemPaused === true && currentPausedState === true && currentPausedAt && knownPausedState === true) {
       return false;
     }
 
@@ -1202,8 +1262,8 @@ function createPromotionMonitorService({
     }
 
     return setOperationPausedState(stat, itemPaused, {
-      eventAt: nowIso(),
-      pausedAt: itemPaused ? currentPausedAt : ''
+      eventAt: observedAt,
+      pausedAt: itemPaused ? (currentPausedAt || observedAt) : ''
     });
   }
 
@@ -1647,16 +1707,14 @@ function createPromotionMonitorService({
         let autoPauseBySpendMatched = false;
         let autoPauseByRoasMatched = false;
 
-        if (operationStat || isPauseSequenceActionType(config.actionType)) {
-          if (!operationStat && item.isPaused === true) {
-            operationStat = getShopOperationStat(shopState, region.id, item.goodsId, item.adId, {
-              create: true
-            });
-          }
+        if (shouldSkipUntrackedPausedSequenceItem(operationStat, item, config)) {
+          operationSummary.skippedCount += 1;
+          operationSummary.skippedByUntrackedPaused += 1;
+          continue;
+        }
 
-          if (operationStat) {
-            syncOperationPausedStateFromItem(operationStat, item.isPaused);
-          }
+        if (operationStat) {
+          syncOperationPausedStateFromItem(operationStat, item.isPaused);
         }
 
         const effectivePausedState = resolveEffectivePausedState(item, operationStat);
@@ -1943,6 +2001,10 @@ function createPromotionMonitorService({
 
     if (summary.skippedByResumeWaiting > 0) {
       conditionParts.push(`\u5f85\u6062\u590d ${summary.skippedByResumeWaiting}`);
+    }
+
+    if (summary.skippedByUntrackedPaused > 0) {
+      conditionParts.push(`\u672a\u63a5\u7ba1\u6682\u505c ${summary.skippedByUntrackedPaused}`);
     }
 
     if (summary.skippedByActionPayload > 0) {
@@ -2792,9 +2854,14 @@ function createPromotionMonitorService({
         && monitorConfig.resumeIntervalMinutes !== null
         && selectedRegionIds.length > 0
       ) {
+        const startupDueRegionIds = getDuePauseThenResumeRegionIds(shopState, monitorConfig);
+
         shopState.startupPauseResumeSweepPending = false;
-        immediatePauseResumeSweepRegionIds = selectedRegionIds.slice();
-        immediatePauseResumeSweepMonitorConfig = monitorConfig;
+
+        if (startupDueRegionIds.length > 0) {
+          immediatePauseResumeSweepRegionIds = startupDueRegionIds;
+          immediatePauseResumeSweepMonitorConfig = monitorConfig;
+        }
       }
 
       log('promotion_monitor_shop_synced', {

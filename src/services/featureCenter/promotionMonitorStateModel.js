@@ -72,6 +72,7 @@ function buildEmptyOperationSummary() {
     autoPausedBySpendCount: 0,
     autoPausedByRoasCount: 0,
     skippedByResumeWaiting: 0,
+    skippedByUntrackedPaused: 0,
     skippedByActionPayload: 0,
     successfulActionCounts: {},
     executedItems: [],

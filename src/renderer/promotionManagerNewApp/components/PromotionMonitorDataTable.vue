@@ -33,6 +33,12 @@
                 :disabled="loading"
                 @change="(checked) => $emit('toggle-shop', record, checked)"
               />
+              <span
+                v-if="record.statusTimeText"
+                class="pm-new-monitor-status-time"
+              >
+                {{ record.statusTimeText }}
+              </span>
               <a-tag
                 class="pm-new-monitor-status-tag"
                 :color="record.statusTone"
@@ -198,7 +204,7 @@ const emptyText = '-';
 const summaryEmptyText = '\u6c47\u603b -';
 const emptyStateText = '\u6682\u65e0\u53ef\u76d1\u63a7\u5e97\u94fa';
 const independentConfigLabel = '\u72ec\u7acb\u914d\u7f6e';
-const statusColumnWidth = 128;
+const statusColumnWidth = 146;
 const logColumnWidth = 172;
 const shopColumnWidth = 218;
 const metricColumnWidth = 128;

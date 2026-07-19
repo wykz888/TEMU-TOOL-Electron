@@ -8,7 +8,7 @@ const EMPTY_TEXT = '-';
 const UNGROUPED_LABEL = '\u672a\u5206\u7ec4';
 const MONITOR_ENABLED_TEXT = '\u76d1\u63a7\u4e2d';
 const MONITOR_DISABLED_TEXT = '\u672a\u76d1\u63a7';
-const MONITOR_LOG_JOINED_WAITING = '\u5df2\u52a0\u5165\u6279\u91cf\u76d1\u63a7\u540d\u5355\uff0c\u7b49\u5f85\u5f00\u59cb';
+const LOG_TIME_PREFIX_PATTERN = /^\d{2}:\d{2}(?::\d{2})?\s+/;
 const HIDDEN_VISIBLE_VALUES = Object.freeze([
   '0',
   'false',
@@ -157,29 +157,43 @@ function formatHourMinute(value) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+function resolveShopStatusTimeText(shopState, fallbackUpdatedAt = '') {
+  return formatHourMinute(
+    (shopState && shopState.lastUpdatedAt)
+    || (shopState && shopState.lastSuccessAt)
+    || fallbackUpdatedAt
+  );
+}
+
+function buildTimedStatusText(text, timeText) {
+  const normalizedText = normalizeText(text);
+  const normalizedTimeText = normalizeText(timeText);
+
+  if (!normalizedText) {
+    return EMPTY_TEXT;
+  }
+
+  if (!normalizedTimeText) {
+    return normalizedText;
+  }
+
+  return `${normalizedTimeText} ${normalizedText.replace(LOG_TIME_PREFIX_PATTERN, '')}`;
+}
+
 function buildLogText(shopState, fallbackUpdatedAt = '') {
   const lastError = normalizeText(shopState && shopState.lastError);
   const logText = normalizeText(shopState && shopState.log);
+  const timeText = resolveShopStatusTimeText(shopState, fallbackUpdatedAt);
 
   if (lastError) {
-    return lastError;
+    return buildTimedStatusText(lastError, timeText);
   }
 
   if (!logText) {
     return EMPTY_TEXT;
   }
 
-  if (logText === MONITOR_LOG_JOINED_WAITING) {
-    const timeText = formatHourMinute(
-      (shopState && shopState.lastUpdatedAt)
-      || (shopState && shopState.lastSuccessAt)
-      || fallbackUpdatedAt
-    );
-
-    return timeText ? `${timeText} ${logText}` : logText;
-  }
-
-  return logText;
+  return buildTimedStatusText(logText, timeText);
 }
 
 function resolveShopLastUpdatedAt(shopState, snapshotUpdatedAt) {
@@ -250,6 +264,7 @@ export function buildPromotionMonitorRows({
         status,
         statusLabel: getStatusLabel(status, enabled),
         statusTone: getStatusTone(status, enabled),
+        statusTimeText: resolveShopStatusTimeText(shopState, snapshotUpdatedAt),
         logText: buildLogText(shopState, snapshotUpdatedAt),
         lastUpdatedAt: resolveShopLastUpdatedAt(shopState, snapshotUpdatedAt),
         lastSuccessAt: normalizeText(shopState.lastSuccessAt),

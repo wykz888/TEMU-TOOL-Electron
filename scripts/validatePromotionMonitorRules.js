@@ -14,7 +14,9 @@ const {
 } = require('../src/services/featureCenter/promotionMonitorOperationRules');
 const {
   resolvePauseSequenceExecution,
+  resolvePauseThenResumeCheckDueAt,
   resolvePauseThenResumeDueAtFromPausedAt,
+  shouldSkipUntrackedPausedSequenceItem,
   PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES
 } = require('../src/services/featureCenter/promotionMonitorPauseSequenceRules');
 const {
@@ -77,6 +79,11 @@ function validateAdsDetailPagingRules() {
 
 async function validateAdsDetailPagedCollection() {
   const requestedPages = [];
+  const requestPayload = {
+    list_id: 'stable-list-id',
+    start_time: 1784304000000,
+    end_time: 1784390399999
+  };
   const firstResponse = {
     ok: true,
     success: true,
@@ -89,6 +96,7 @@ async function validateAdsDetailPagedCollection() {
   };
   const items = await fetchAdsDetailItemsBySortForRegion('shop-a', 'us', {
     firstResponse,
+    requestPayload,
     pageSize: 1,
     postWithRegionCookie: async (shopId, regionId, url, payload) => {
       requestedPages.push({
@@ -96,7 +104,9 @@ async function validateAdsDetailPagedCollection() {
         regionId,
         url,
         pageNumber: payload.page_number,
-        listId: payload.list_id
+        listId: payload.list_id,
+        startTime: payload.start_time,
+        endTime: payload.end_time
       });
 
       return {
@@ -119,7 +129,17 @@ async function validateAdsDetailPagedCollection() {
   assert.equal(requestedPages[0].shopId, 'shop-a');
   assert.equal(requestedPages[0].regionId, 'us');
   assert.equal(requestedPages[0].pageNumber, 2);
-  assert.ok(requestedPages[0].listId, 'Paged ads_detail requests should carry a list_id.');
+  assert.equal(requestedPages[0].listId, requestPayload.list_id);
+  assert.equal(requestedPages[0].startTime, requestPayload.start_time);
+  assert.equal(requestedPages[0].endTime, requestPayload.end_time);
+  await assert.rejects(
+    () => fetchAdsDetailItemsBySortForRegion('shop-a', 'us', {
+      firstResponse,
+      requestPayload,
+      pageSize: 1
+    }),
+    /pagination unavailable/
+  );
 }
 
 function validateAutoOperationRules() {
@@ -159,6 +179,71 @@ function validatePauseSequenceRules() {
   assert.equal(
     resolvePauseThenResumeDueAtFromPausedAt(Date.parse('2026-07-18T10:00:00+08:00'), PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES),
     new Date(2026, 6, 19).getTime()
+  );
+  assert.deepEqual(
+    resolvePauseSequenceExecution(
+      { knownPausedState: true },
+      { isPaused: true, targetRoasRaw: 120000 },
+      { actionType: 'pause_then_modify_resume', resumeIntervalMinutes: PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES, targetRoas: 12 }
+    ),
+    {
+      executionActionType: '',
+      skipReason: 'resume_waiting',
+      shouldEvaluateConditions: false
+    }
+  );
+  assert.equal(
+    resolvePauseThenResumeCheckDueAt(
+      { knownPausedState: true },
+      { actionType: 'pause_then_modify_resume', resumeIntervalMinutes: PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES, targetRoas: 12 }
+    ),
+    Number.MAX_SAFE_INTEGER
+  );
+  assert.equal(
+    resolvePauseSequenceExecution(
+      {
+        knownPausedState: true,
+        pauseStateUpdatedAt: new Date(Date.now() - (2 * 60 * 1000)).toISOString()
+      },
+      { isPaused: true, targetRoasRaw: 80000 },
+      { actionType: 'pause_then_modify_resume', resumeIntervalMinutes: 1, targetRoas: 8 }
+    ).executionActionType,
+    'resume_plan'
+  );
+  assert.equal(
+    shouldSkipUntrackedPausedSequenceItem(
+      null,
+      { isPaused: true, targetRoasRaw: 150000 },
+      { actionType: 'pause_then_modify_resume', resumeIntervalMinutes: PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES, targetRoas: 12 }
+    ),
+    true
+  );
+  assert.equal(
+    shouldSkipUntrackedPausedSequenceItem(
+      { knownPausedState: true, pausedAt },
+      { isPaused: true, targetRoasRaw: 150000 },
+      { actionType: 'pause_then_modify_resume', resumeIntervalMinutes: PAUSE_THEN_RESUME_NEXT_DAY_START_MINUTES, targetRoas: 12 }
+    ),
+    false
+  );
+  assert.deepEqual(
+    resolvePauseSequenceExecution(
+      { knownPausedState: true, pausedAt },
+      { isPaused: true, targetRoasRaw: 80000 },
+      { actionType: 'pause_then_modify', targetRoas: 8 }
+    ),
+    {
+      executionActionType: '',
+      skipReason: 'action_payload'
+    }
+  );
+  assert.equal(
+    resolvePauseSequenceExecution(
+      { knownPausedState: true, pausedAt },
+      { isPaused: true, targetRoasRaw: 70000 },
+      { actionType: 'pause_then_modify', targetRoas: 8 }
+    ).executionActionType,
+    'update_roas'
   );
 }
 
@@ -204,6 +289,30 @@ function validateModifyPayloads() {
         roas_type: 1
       }]
     }
+  );
+  assert.equal(
+    buildModifyAdsPayload(
+      'update_roas',
+      { goodsId: '607', adId: '100', targetRoasRaw: 80000 },
+      { targetRoas: 8 }
+    ),
+    null
+  );
+  assert.equal(
+    buildModifyAdsPayload(
+      'increase_roas',
+      { goodsId: '607', adId: '100', targetRoasRaw: null },
+      { targetRoas: 1.5 }
+    ),
+    null
+  );
+  assert.equal(
+    buildModifyAdsPayload(
+      'update_roas',
+      { goodsId: '607', targetRoasRaw: 50000 },
+      { targetRoas: 8 }
+    ),
+    null
   );
 }
 
