@@ -20,6 +20,12 @@ const {
   createPromotionManagerNewGoodsService
 } = require('./services/featureCenter/promotionManagerNewGoodsService');
 const {
+  createPromotionManagerNewDetailService
+} = require('./services/featureCenter/promotionManagerNewDetailService');
+const {
+  createPromotionManagerNewDetailActionService
+} = require('./services/featureCenter/promotionManagerNewDetailActionService');
+const {
   createPromotionManagerNewAdsCreateService
 } = require('./services/featureCenter/promotionManagerNewAdsCreateService');
 const {
@@ -175,6 +181,8 @@ let shopWindowBrowserStorageSyncService = null;
 let shopManagementService = null;
 let promotionAdsSessionService = null;
 let promotionManagerNewGoodsService = null;
+let promotionManagerNewDetailService = null;
+let promotionManagerNewDetailActionService = null;
 let promotionManagerNewAdsCreateService = null;
 let promotionMonitorService = null;
 let operationsProductCategoryService = null;
@@ -1654,6 +1662,15 @@ app.whenReady().then(() => {
     promotionAdsSessionService,
     runtimeLogger
   });
+  promotionManagerNewDetailService = createPromotionManagerNewDetailService({
+    shopManagementService,
+    promotionAdsSessionService,
+    runtimeLogger
+  });
+  promotionManagerNewDetailActionService = createPromotionManagerNewDetailActionService({
+    promotionAdsSessionService,
+    runtimeLogger
+  });
   promotionManagerNewAdsCreateService = createPromotionManagerNewAdsCreateService({
     promotionAdsSessionService,
     runtimeLogger
@@ -3065,6 +3082,73 @@ app.whenReady().then(() => {
           canceled: false,
           taskId: '',
           message: '\u5546\u54c1\u67e5\u8be2\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+        }
+    ),
+    queryPromotionManagerNewDetails: (payload) => (
+      promotionManagerNewDetailService
+        ? promotionManagerNewDetailService.queryDetails(payload)
+        : {
+          taskId: '',
+          canceled: false,
+          updatedAt: '',
+          request: {},
+          rows: [],
+          regions: [],
+          errors: [{
+            shopId: '',
+            shopName: '',
+            regionId: '',
+            regionLabel: '',
+            message: '\u63a8\u5e7f\u660e\u7ec6\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+          }],
+          warnings: [],
+          totalCount: 0,
+          successCount: 0,
+          failedCount: 1
+        }
+    ),
+    cancelPromotionManagerNewDetailsQuery: (payload) => (
+      promotionManagerNewDetailService
+        ? promotionManagerNewDetailService.cancelQueryDetails(payload)
+        : {
+          canceled: false,
+          taskId: '',
+          message: '\u63a8\u5e7f\u660e\u7ec6\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+        }
+    ),
+    executePromotionManagerNewDetailActions: (payload) => (
+      promotionManagerNewDetailActionService
+        ? promotionManagerNewDetailActionService.executeDetailActions(payload)
+        : {
+          taskId: '',
+          canceled: false,
+          updatedAt: '',
+          request: {},
+          groups: [],
+          rowResults: [],
+          errors: [{
+            shopId: '',
+            shopName: '',
+            regionId: '',
+            regionLabel: '',
+            message: '\u63a8\u5e7f\u64cd\u4f5c\u670d\u52a1\u672a\u52a0\u8f7d'
+          }],
+          warnings: [],
+          totalCount: 0,
+          successCount: 0,
+          failedCount: 1,
+          skippedCount: 0,
+          canceledCount: 0,
+          warningCount: 0
+        }
+    ),
+    cancelPromotionManagerNewDetailActions: (payload) => (
+      promotionManagerNewDetailActionService
+        ? promotionManagerNewDetailActionService.cancelDetailActions(payload)
+        : {
+          canceled: false,
+          taskId: '',
+          message: '\u63a8\u5e7f\u64cd\u4f5c\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
         }
     ),
     createPromotionManagerNewAds: (payload) => (

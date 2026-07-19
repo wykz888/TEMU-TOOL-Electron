@@ -412,9 +412,9 @@ function resolveAdsDetailTargetRoasText(item) {
     'targetRoasValue',
     'expect_roas',
     'expectRoas',
-    'roas',
     'roas_str',
-    'roasStr'
+    'roasStr',
+    'roas'
   ]) || findValueByAlias(item, ADS_DETAIL_TARGET_ROAS_ALIASES);
 }
 

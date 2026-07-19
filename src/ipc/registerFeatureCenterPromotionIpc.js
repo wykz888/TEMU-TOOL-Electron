@@ -13,6 +13,10 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     savePromotionManagerNewMonitorSettings,
     queryPromotionManagerNewGoods,
     cancelPromotionManagerNewGoodsQuery,
+    queryPromotionManagerNewDetails,
+    cancelPromotionManagerNewDetailsQuery,
+    executePromotionManagerNewDetailActions,
+    cancelPromotionManagerNewDetailActions,
     createPromotionManagerNewAds,
     cancelPromotionManagerNewAdsCreate,
     getRuntimeLogEntries
@@ -118,6 +122,85 @@ function registerFeatureCenterPromotionIpc(options = {}) {
     }
 
     return cancelPromotionManagerNewGoodsQuery(payload);
+  });
+
+  handle(FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_DETAILS, async (_event, payload) => {
+    if (typeof queryPromotionManagerNewDetails !== 'function') {
+      return {
+        taskId: '',
+        canceled: false,
+        updatedAt: new Date().toISOString(),
+        request: {},
+        rows: [],
+        regions: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u63a8\u5e7f\u660e\u7ec6\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+        }],
+        warnings: [],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1
+      };
+    }
+
+    return queryPromotionManagerNewDetails(payload);
+  });
+
+  handle(FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_DETAILS_QUERY, async (_event, payload) => {
+    if (typeof cancelPromotionManagerNewDetailsQuery !== 'function') {
+      return {
+        canceled: false,
+        taskId: '',
+        message: '\u63a8\u5e7f\u660e\u7ec6\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+      };
+    }
+
+    return cancelPromotionManagerNewDetailsQuery(payload);
+  });
+
+  handle(FEATURE_CHANNELS.EXECUTE_PROMOTION_MANAGER_NEW_DETAIL_ACTIONS, async (_event, payload) => {
+    if (typeof executePromotionManagerNewDetailActions !== 'function') {
+      return {
+        taskId: '',
+        canceled: false,
+        updatedAt: new Date().toISOString(),
+        request: {},
+        groups: [],
+        rowResults: [],
+        errors: [{
+          shopId: '',
+          shopName: '',
+          regionId: '',
+          regionLabel: '',
+          message: '\u63a8\u5e7f\u64cd\u4f5c\u670d\u52a1\u672a\u52a0\u8f7d'
+        }],
+        warnings: [],
+        totalCount: 0,
+        successCount: 0,
+        failedCount: 1,
+        skippedCount: 0,
+        canceledCount: 0,
+        warningCount: 0
+      };
+    }
+
+    return executePromotionManagerNewDetailActions(payload);
+  });
+
+  handle(FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_DETAIL_ACTIONS, async (_event, payload) => {
+    if (typeof cancelPromotionManagerNewDetailActions !== 'function') {
+      return {
+        canceled: false,
+        taskId: '',
+        message: '\u63a8\u5e7f\u64cd\u4f5c\u505c\u6b62\u670d\u52a1\u672a\u52a0\u8f7d'
+      };
+    }
+
+    return cancelPromotionManagerNewDetailActions(payload);
   });
 
   handle(FEATURE_CHANNELS.CREATE_PROMOTION_MANAGER_NEW_ADS, async (_event, payload) => {

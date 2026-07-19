@@ -54,7 +54,11 @@
             class="pm-new-toolbar-date-range"
             popup-container="body"
             size="small"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
             :placeholder="dateRangePlaceholder"
+            :shortcuts="dateShortcuts"
+            shortcuts-position="bottom"
             :trigger-props="stableSelectTriggerProps"
             @update:model-value="emitQueryDateRange"
           />
@@ -214,6 +218,32 @@
           class="pm-new-toolbar-field pm-new-toolbar-range-field"
           role="group"
         >
+          <span class="pm-new-toolbar-inline-label">{{ targetRoasRangeLabel }}</span>
+          <a-input-number
+            :model-value="filterValues.targetRoasMin"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="2"
+            :placeholder="minNumberPlaceholder"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ targetRoasMin: value })"
+          />
+          <span class="pm-new-toolbar-range-separator">~</span>
+          <a-input-number
+            :model-value="filterValues.targetRoasMax"
+            class="pm-new-toolbar-number-input"
+            size="small"
+            :precision="2"
+            :placeholder="maxNumberPlaceholder"
+            model-event="input"
+            @update:model-value="(value) => patchFilterValues({ targetRoasMax: value })"
+          />
+        </div>
+
+        <div
+          class="pm-new-toolbar-field pm-new-toolbar-range-field"
+          role="group"
+        >
           <span class="pm-new-toolbar-inline-label">{{ orderRangeLabel }}</span>
           <a-input-number
             :model-value="filterValues.orderMin"
@@ -326,18 +356,22 @@
         <a-button
           class="pm-new-toolbar-submit-button"
           type="primary"
-          :disabled="executeAllDisabled"
+          :status="getExecuteButtonStatus(executeScopeAll)"
+          :loading="isExecuteButtonLoading(executeScopeAll)"
+          :disabled="isExecuteButtonDisabled(executeScopeAll, executeAllDisabled)"
           @click="$emit('execute-all')"
         >
-          {{ executeAllLabel }}
+          {{ getExecuteAllButtonLabel() }}
         </a-button>
         <a-button
           class="pm-new-toolbar-submit-button"
           type="outline"
-          :disabled="executeSelectedDisabled"
+          :status="getExecuteButtonStatus(executeScopeSelected)"
+          :loading="isExecuteButtonLoading(executeScopeSelected)"
+          :disabled="isExecuteButtonDisabled(executeScopeSelected, executeSelectedDisabled)"
           @click="$emit('execute-selected')"
         >
-          {{ executeSelectedLabel }}
+          {{ getExecuteSelectedButtonLabel() }}
         </a-button>
       </div>
     </section>
@@ -364,6 +398,10 @@ const props = defineProps({
     default: () => []
   },
   queryDateRange: {
+    type: Array,
+    default: () => []
+  },
+  dateShortcuts: {
     type: Array,
     default: () => []
   },
@@ -418,6 +456,18 @@ const props = defineProps({
   executeSelectedDisabled: {
     type: Boolean,
     default: false
+  },
+  executeLoading: {
+    type: Boolean,
+    default: false
+  },
+  executeStopping: {
+    type: Boolean,
+    default: false
+  },
+  executeScope: {
+    type: String,
+    default: ''
   }
 });
 
@@ -459,7 +509,8 @@ const identityPlaceholder = '\u8f93\u5165\u5546\u54c1ID/\u8ba1\u5212ID/SPUID';
 const statusPlaceholder = '\u9009\u62e9\u72b6\u6001';
 const sitePlaceholder = '\u9009\u62e9\u7ad9\u70b9';
 const spendRangeLabel = '\u82b1\u8d39\uff1a';
-const roasRangeLabel = 'ROAS\uff1a';
+const roasRangeLabel = '\u6210\u4ea4ROAS\uff1a';
+const targetRoasRangeLabel = '\u76ee\u6807ROAS\uff1a';
 const orderRangeLabel = '\u5b50\u8ba2\u5355\uff1a';
 const minNumberPlaceholder = '\u6700\u4f4e';
 const maxNumberPlaceholder = '\u6700\u9ad8';
@@ -473,6 +524,10 @@ const applySelectedLabel = '\u4e00\u952e\u8bbe\u7f6e\u5df2\u9009';
 const resetLabel = '\u91cd\u7f6e';
 const executeAllLabel = '\u6267\u884c\u5168\u90e8\u63a8\u5e7f';
 const executeSelectedLabel = '\u6267\u884c\u52fe\u9009\u63a8\u5e7f';
+const stopExecuteAllLabel = '\u505c\u6b62\u6267\u884c\u5168\u90e8\u63a8\u5e7f';
+const stopExecuteSelectedLabel = '\u505c\u6b62\u6267\u884c\u52fe\u9009\u63a8\u5e7f';
+const executeScopeAll = 'all';
+const executeScopeSelected = 'selected';
 const actionOptions = DETAIL_ACTION_OPTIONS;
 const stableSelectTriggerProps = Object.freeze({
   autoFitPopupMinWidth: true,
@@ -545,5 +600,32 @@ function patchFilterValues(patch) {
     ...(patch && typeof patch === 'object' ? patch : {})
   });
 }
-</script>
 
+function isActiveExecuteButton(scope) {
+  return props.executeLoading === true && props.executeScope === scope;
+}
+
+function getExecuteButtonStatus(scope) {
+  return isActiveExecuteButton(scope) ? 'danger' : undefined;
+}
+
+function isExecuteButtonLoading(scope) {
+  return isActiveExecuteButton(scope) && props.executeStopping === true;
+}
+
+function isExecuteButtonDisabled(scope, baseDisabled) {
+  if (props.executeLoading !== true) {
+    return baseDisabled;
+  }
+
+  return props.executeScope !== scope || props.executeStopping === true;
+}
+
+function getExecuteAllButtonLabel() {
+  return isActiveExecuteButton(executeScopeAll) ? stopExecuteAllLabel : executeAllLabel;
+}
+
+function getExecuteSelectedButtonLabel() {
+  return isActiveExecuteButton(executeScopeSelected) ? stopExecuteSelectedLabel : executeSelectedLabel;
+}
+</script>

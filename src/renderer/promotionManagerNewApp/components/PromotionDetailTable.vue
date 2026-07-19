@@ -172,13 +172,13 @@
               size="small"
               bordered
             >
-              {{ record.actionStatusLabel || pendingActionLabel }}
+              {{ getActionStatusRecord(record).label || pendingActionLabel }}
             </a-tag>
             <span
-              v-if="record.actionMessage"
-              :title="record.actionMessage"
+              v-if="getActionStatusRecord(record).message"
+              :title="getActionStatusRecord(record).message"
             >
-              {{ record.actionMessage }}
+              {{ getActionStatusRecord(record).message }}
             </span>
           </div>
         </template>
@@ -201,6 +201,9 @@ import {
   DETAIL_STATUS_PAUSED,
   DETAIL_STATUS_RUNNING
 } from '../view-models/promotionDetailRows.js';
+import {
+  getDetailActionStatusRecord
+} from '../view-models/promotionDetailActionStatus.js';
 
 const props = defineProps({
   rows: {
@@ -218,6 +221,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  rowActionStatuses: {
+    type: Object,
+    default: () => ({})
   }
 });
 
@@ -239,7 +246,7 @@ const roasTypeLabel = '\u63a8\u5e7f\u7c7b\u578b';
 const spendLabel = '\u603b\u82b1\u8d39';
 const netSpendLabel = '\u51c0\u603b\u82b1\u8d39';
 const salesAmountLabel = '\u7533\u62a5\u9500\u552e\u989d';
-const roasLabel = 'ROAS';
+const roasLabel = '\u6210\u4ea4ROAS';
 const costPerOrderLabel = '\u6bcf\u7b14\u6210\u4ea4\u82b1\u8d39';
 const orderCountLabel = '\u5b50\u8ba2\u5355';
 const exposureLabel = '\u66dd\u5149';
@@ -276,9 +283,7 @@ const virtualListProps = Object.freeze({
 
 const tableRows = computed(() => (Array.isArray(props.rows) ? props.rows : []));
 
-const tableScroll = computed(() => (
-  tableRows.value.length > 0 ? dataTableScroll : undefined
-));
+const tableScroll = computed(() => dataTableScroll);
 
 const tableVirtualListProps = computed(() => (
   tableRows.value.length >= virtualListThreshold ? virtualListProps : undefined
@@ -311,7 +316,7 @@ function getStatusClass(record) {
 }
 
 function getActionStatusClass(record) {
-  const statusValue = record && record.actionStatusValue;
+  const statusValue = getActionStatusRecord(record).status;
 
   if (statusValue === 'success') {
     return 'is-success';
@@ -321,11 +326,18 @@ function getActionStatusClass(record) {
     return 'is-error';
   }
 
+  if (statusValue === 'warning' || statusValue === 'skipped' || statusValue === 'canceled') {
+    return 'is-warning';
+  }
+
   if (statusValue === 'running') {
     return 'is-info';
   }
 
   return 'is-pending';
 }
-</script>
 
+function getActionStatusRecord(record) {
+  return getDetailActionStatusRecord(props.rowActionStatuses, record);
+}
+</script>

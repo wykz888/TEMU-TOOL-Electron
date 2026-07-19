@@ -168,6 +168,14 @@ function validateModifyPayloads() {
     { modify_ad_dtos: [{ goods_id: '607', status: 2 }] }
   );
   assert.deepEqual(
+    buildModifyAdsPayload('resume_plan', { goodsId: '607' }, {}),
+    { modify_ad_dtos: [{ goods_id: '607', status: 0 }] }
+  );
+  assert.deepEqual(
+    buildModifyAdsPayload('delete_plan', { goodsId: '607' }, {}),
+    { modify_ad_dtos: [{ goods_id: '607', status: 3 }] }
+  );
+  assert.deepEqual(
     buildModifyAdsPayload(
       'update_roas',
       { goodsId: '607', adId: '100', targetRoasRaw: 50000 },
@@ -177,6 +185,21 @@ function validateModifyPayloads() {
       modify_ad_dtos: [{
         ad_id: '100',
         roas: 80000,
+        goods_id: '607',
+        roas_type: 1
+      }]
+    }
+  );
+  assert.deepEqual(
+    buildModifyAdsPayload(
+      'increase_roas',
+      { goodsId: '607', adId: '100', targetRoasRaw: 50000 },
+      { targetRoas: 1.5 }
+    ),
+    {
+      modify_ad_dtos: [{
+        ad_id: '100',
+        roas: 65000,
         goods_id: '607',
         roas_type: 1
       }]

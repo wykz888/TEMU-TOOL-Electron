@@ -103,6 +103,12 @@ function normalizePositiveInteger(value, fallback, options = {}) {
   return Math.min(parsedValue, maximum);
 }
 
+function normalizeTimestamp(value, fallback) {
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
 function normalizeAdsDetailSortBy(value, fallback = ADS_DETAIL_SORT_BY_CHILD_ORDER_COUNT) {
   const parsedValue = Number(value);
 
@@ -126,6 +132,10 @@ function buildAdsDetailPayload(options = {}) {
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const pageNumber = Math.max(1, Number(options.pageNumber || options.page_number) || 1);
   const pageSize = normalizePositiveInteger(options.pageSize || options.page_size, ADS_DETAIL_PAGE_SIZE);
+  const rawStartTime = normalizeTimestamp(options.startTime || options.start_time, startOfDay.getTime());
+  const rawEndTime = normalizeTimestamp(options.endTime || options.end_time, now.getTime());
+  const startTime = Math.min(rawStartTime, rawEndTime);
+  const endTime = Math.max(rawStartTime, rawEndTime);
 
   return {
     ad_status: normalizeIntegerList(options.adStatus),
@@ -135,8 +145,8 @@ function buildAdsDetailPayload(options = {}) {
     specific_query_info: '',
     sort_by: normalizeAdsDetailSortBy(options.sortBy),
     sort_type: 'desc',
-    start_time: startOfDay.getTime(),
-    end_time: now.getTime(),
+    start_time: startTime,
+    end_time: endTime,
     need_calculate_goods_summary: true,
     list_id: normalizeText(options.listId || options.list_id) || createListId(),
     columns_type: normalizePositiveInteger(options.columnsType || options.columns_type, ADS_DETAIL_COLUMNS_TYPE),

@@ -40,6 +40,8 @@ export const EMPTY_DETAIL_FILTER_STATE = Object.freeze({
   spendMax: null,
   roasMin: null,
   roasMax: null,
+  targetRoasMin: null,
+  targetRoasMax: null,
   orderMin: null,
   orderMax: null
 });
@@ -170,6 +172,7 @@ export function normalizePromotionDetailFilterState(filters) {
     siteValues: normalizeTextList(source.siteValues),
     ...normalizeFilterRangeFields('spend', source.spendMin, source.spendMax),
     ...normalizeFilterRangeFields('roas', source.roasMin, source.roasMax),
+    ...normalizeFilterRangeFields('targetRoas', source.targetRoasMin, source.targetRoasMax),
     ...normalizeFilterRangeFields('order', source.orderMin, source.orderMax)
   };
 }
@@ -184,6 +187,8 @@ function hasNormalizedFilterValues(filters) {
     || filters.spendMax !== null
     || filters.roasMin !== null
     || filters.roasMax !== null
+    || filters.targetRoasMin !== null
+    || filters.targetRoasMax !== null
     || filters.orderMin !== null
     || filters.orderMax !== null
   );
@@ -270,6 +275,7 @@ export function filterPromotionDetailRows(rows, filters) {
   const selectedSiteValues = Array.from(createTextLookup(normalizedFilters.siteValues));
   const spendRange = normalizeRangeNumbers(normalizedFilters.spendMin, normalizedFilters.spendMax);
   const roasRange = normalizeRangeNumbers(normalizedFilters.roasMin, normalizedFilters.roasMax);
+  const targetRoasRange = normalizeRangeNumbers(normalizedFilters.targetRoasMin, normalizedFilters.targetRoasMax);
   const orderRange = normalizeRangeNumbers(normalizedFilters.orderMin, normalizedFilters.orderMax);
 
   return sourceRows.filter((row) => {
@@ -309,6 +315,7 @@ export function filterPromotionDetailRows(rows, filters) {
     return (
       isNumberInRange(row && row.spendValue, spendRange)
       && isNumberInRange(row && row.roasValue, roasRange)
+      && isNumberInRange(row && row.targetRoasValue, targetRoasRange)
       && isNumberInRange(row && row.orderCount, orderRange)
     );
   });
@@ -325,4 +332,3 @@ export function getPromotionDetailRowKey(row) {
     ].map(normalizeText).filter(Boolean).join(':')
   );
 }
-

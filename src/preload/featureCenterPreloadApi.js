@@ -138,6 +138,30 @@ function createFeatureCenterPreloadApi({
         toCloneablePayload(payload)
       );
     },
+    queryPromotionManagerNewDetails(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.QUERY_PROMOTION_MANAGER_NEW_DETAILS,
+        toCloneablePayload(payload)
+      );
+    },
+    cancelPromotionManagerNewDetailsQuery(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_DETAILS_QUERY,
+        toCloneablePayload(payload)
+      );
+    },
+    executePromotionManagerNewDetailActions(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.EXECUTE_PROMOTION_MANAGER_NEW_DETAIL_ACTIONS,
+        toCloneablePayload(payload)
+      );
+    },
+    cancelPromotionManagerNewDetailActions(payload) {
+      return ipcRenderer.invoke(
+        FEATURE_CHANNELS.CANCEL_PROMOTION_MANAGER_NEW_DETAIL_ACTIONS,
+        toCloneablePayload(payload)
+      );
+    },
     createPromotionManagerNewAds(payload) {
       return ipcRenderer.invoke(
         FEATURE_CHANNELS.CREATE_PROMOTION_MANAGER_NEW_ADS,
