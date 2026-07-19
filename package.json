@@ -1,6 +1,6 @@
 {
   "name": "temu-toolbox-electron",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "description": "TEMU 工具箱 Electron 应用。",
   "main": "src/main.js",
