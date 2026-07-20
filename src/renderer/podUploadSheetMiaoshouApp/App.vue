@@ -20,9 +20,11 @@
         :saving-template="savingTemplate"
         :deleting-template="deletingTemplate"
         :loading-categories="loadingCategories"
+        :syncing-categories="syncingCategories"
         :category-select-options="categorySelectOptions"
         :global-form="globalForm"
         :sync-global-to-products="syncGlobalToProducts"
+        :sync-categories="syncCategories"
         :apply-selected-template="applySelectedTemplate"
         :save-current-template="saveCurrentTemplate"
         :delete-selected-template="deleteSelectedTemplate"
@@ -386,12 +388,14 @@ const {
   selectedTemplateId,
   templateName,
   loadingCategories,
+  syncingCategories,
   loadingTemplates,
   savingTemplate,
   deletingTemplate,
   categorySelectOptions,
   formTemplateOptions,
   loadInitialData,
+  syncCategories,
   saveCurrentTemplate,
   applySelectedTemplate,
   deleteSelectedTemplate

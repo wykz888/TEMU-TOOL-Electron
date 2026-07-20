@@ -68,15 +68,33 @@
               <icon-question-circle class="pod-help-icon" />
             </a-tooltip>
           </span>
-          <a-select
-            v-model="globalForm.category"
-            allow-clear
-            allow-search
-            popup-container="body"
-            :loading="loadingCategories"
-            :options="categorySelectOptions"
-            @change="syncGlobalToProducts"
-          />
+          <div class="pod-category-control-row">
+            <a-select
+              v-model="globalForm.category"
+              class="pod-category-select"
+              allow-clear
+              allow-search
+              popup-container="body"
+              placeholder="&#x641C;&#x7D22;&#x7C7B;&#x76EE;ID&#x6216;&#x540D;&#x79F0;"
+              :loading="loadingCategories"
+              :options="categorySelectOptions"
+              :filter-option="filterCategoryOption"
+              :virtual-list-props="categoryVirtualListProps"
+              @change="syncGlobalToProducts"
+            />
+            <a-tooltip content="&#x4ECE;&#x4E91;&#x7AEF;&#x540C;&#x6B65;&#x6700;&#x65B0;&#x7C7B;&#x76EE;&#xFF0C;&#x5E73;&#x65F6;&#x4F18;&#x5148;&#x4F7F;&#x7528;&#x672C;&#x5730;&#x7F13;&#x5B58;&#x3002;">
+              <a-button
+                class="pod-category-sync-button"
+                size="small"
+                :loading="syncingCategories"
+                :disabled="loadingCategories || syncingCategories"
+                @click.stop="syncCategories"
+              >
+                <icon-refresh class="pod-action-icon" />
+                &#x540C;&#x6B65;&#x7C7B;&#x76EE;
+              </a-button>
+            </a-tooltip>
+          </div>
         </div>
       </div>
       <div class="pod-template-meta-row">
@@ -133,7 +151,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
+import { IconQuestionCircle, IconRefresh } from '@arco-design/web-vue/es/icon';
 import {
   customOptions,
   deliveryOptions,
@@ -161,6 +179,7 @@ const props = defineProps({
   savingTemplate: Boolean,
   deletingTemplate: Boolean,
   loadingCategories: Boolean,
+  syncingCategories: Boolean,
   categorySelectOptions: {
     type: Array,
     default: () => []
@@ -172,6 +191,10 @@ const props = defineProps({
   syncGlobalToProducts: {
     type: Function,
     required: true
+  },
+  syncCategories: {
+    type: Function,
+    default: () => undefined
   },
   applySelectedTemplate: {
     type: Function,
@@ -206,4 +229,29 @@ const templateNameProxy = computed({
     emit('update:template-name', value);
   }
 });
+
+const categoryVirtualListProps = {
+  height: 260,
+  threshold: 80
+};
+
+function normalizeSearchText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function filterCategoryOption(inputValue, option) {
+  const keyword = normalizeSearchText(inputValue);
+
+  if (!keyword) {
+    return true;
+  }
+
+  return [
+    option && option.searchText,
+    option && option.label,
+    option && option.value,
+    option && option.data && option.data.searchText,
+    option && option.raw && option.raw.searchText
+  ].some((value) => normalizeSearchText(value).includes(keyword));
+}
 </script>

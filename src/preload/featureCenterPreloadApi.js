@@ -195,6 +195,9 @@ function createFeatureCenterPreloadApi({
     getPodUploadSheetMiaoshouCategories() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES);
     },
+    syncPodUploadSheetMiaoshouCategories() {
+      return ipcRenderer.invoke(FEATURE_CHANNELS.SYNC_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES);
+    },
     getPodUploadSheetMiaoshouTemplateSnapshot() {
       return ipcRenderer.invoke(FEATURE_CHANNELS.GET_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATE_SNAPSHOT);
     },

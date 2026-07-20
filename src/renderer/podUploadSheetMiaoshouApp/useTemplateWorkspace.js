@@ -66,6 +66,7 @@ export function useTemplateWorkspace(options = {}) {
   const selectedTemplateId = ref('');
   const templateName = ref('');
   const loadingCategories = ref(false);
+  const syncingCategories = ref(false);
   const loadingTemplates = ref(false);
   const savingTemplate = ref(false);
   const deletingTemplate = ref(false);
@@ -73,7 +74,8 @@ export function useTemplateWorkspace(options = {}) {
   const categorySelectOptions = computed(() => {
     return categories.value.map((item) => ({
       value: item.id,
-      label: item.label ? `${item.id} - ${item.label}` : item.id
+      label: item.label ? `${item.id} - ${item.label}` : item.id,
+      searchText: [item.id, item.label].map((value) => normalizeText(value)).filter(Boolean).join(' ').toLowerCase()
     }));
   });
   const formTemplateOptions = computed(() => [
@@ -102,8 +104,38 @@ export function useTemplateWorkspace(options = {}) {
     try {
       const result = await bridge.getPodUploadSheetMiaoshouCategories();
       categories.value = Array.isArray(result && result.categories) ? result.categories : [];
+
+      if (!categories.value.length && normalizeText(result && result.errorMessage)) {
+        showMessage(messageApi, 'warning', normalizeText(result.errorMessage));
+      }
     } finally {
       loadingCategories.value = false;
+    }
+  }
+
+  async function syncCategories() {
+    const bridge = getBridge(featureBridge);
+
+    if (!bridge || typeof bridge.syncPodUploadSheetMiaoshouCategories !== 'function') return;
+
+    syncingCategories.value = true;
+
+    try {
+      const result = await bridge.syncPodUploadSheetMiaoshouCategories();
+      categories.value = Array.isArray(result && result.categories) ? result.categories : [];
+      showMessage(
+        messageApi,
+        'success',
+        '\u7c7b\u76ee\u5df2\u540c\u6b65\uff0c\u5171 ' + categories.value.length + ' \u6761'
+      );
+    } catch (error) {
+      showMessage(
+        messageApi,
+        'error',
+        '\u7c7b\u76ee\u540c\u6b65\u5931\u8d25\uff1a' + (normalizeText(error && error.message) || '\u8bf7\u91cd\u8bd5')
+      );
+    } finally {
+      syncingCategories.value = false;
     }
   }
 
@@ -301,6 +333,7 @@ export function useTemplateWorkspace(options = {}) {
     selectedTemplateId,
     templateName,
     loadingCategories,
+    syncingCategories,
     loadingTemplates,
     savingTemplate,
     deletingTemplate,
@@ -308,6 +341,7 @@ export function useTemplateWorkspace(options = {}) {
     formTemplateOptions,
     loadInitialData,
     loadCategories,
+    syncCategories,
     loadFormTemplates,
     loadWorkspaceState,
     buildTemplatePayload,

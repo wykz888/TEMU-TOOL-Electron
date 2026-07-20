@@ -100,6 +100,7 @@ const FEATURE_CHANNELS = Object.freeze({
   QUERY_PROMOTION_MANAGER_NEW_SHOP_DATA: 'feature-center:query-promotion-manager-new-shop-data',
   GET_RUNTIME_LOG_ENTRIES: 'feature-center:get-runtime-log-entries',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES: 'feature-center:get-pod-upload-sheet-miaoshou-categories',
+  SYNC_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES: 'feature-center:sync-pod-upload-sheet-miaoshou-categories',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATE_SNAPSHOT: 'feature-center:get-pod-upload-sheet-miaoshou-template-snapshot',
   SYNC_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATES: 'feature-center:sync-pod-upload-sheet-miaoshou-templates',
   GET_POD_UPLOAD_SHEET_MIAOSHOU_FORM_TEMPLATES: 'feature-center:get-pod-upload-sheet-miaoshou-form-templates',

@@ -1835,7 +1835,8 @@ app.whenReady().then(() => {
     });
   });
   podUploadSheetMiaoshouCategoryService = createPodUploadSheetMiaoshouCategoryService({
-    runtimeLogger
+    runtimeLogger,
+    featureCenterProfileService
   });
   podUploadSheetMiaoshouFormTemplateService = createAppLazyService('pod-upload-sheet-miaoshou-form-template', () => {
     const {
@@ -3227,6 +3228,11 @@ app.whenReady().then(() => {
     getPodUploadSheetMiaoshouCategories: () => (
       podUploadSheetMiaoshouCategoryService
         ? podUploadSheetMiaoshouCategoryService.getSnapshot()
+        : { updatedAt: '', sourceUrl: '', categories: [] }
+    ),
+    syncPodUploadSheetMiaoshouCategories: () => (
+      podUploadSheetMiaoshouCategoryService
+        ? podUploadSheetMiaoshouCategoryService.syncNow()
         : { updatedAt: '', sourceUrl: '', categories: [] }
     ),
     getPodUploadSheetMiaoshouTemplateSnapshot: () => (

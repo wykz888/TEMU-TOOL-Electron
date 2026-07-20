@@ -3,6 +3,7 @@ function registerFeatureCenterPodUploadIpc(options = {}) {
     FEATURE_CHANNELS,
     handle,
     getPodUploadSheetMiaoshouCategories,
+    syncPodUploadSheetMiaoshouCategories,
     getPodUploadSheetMiaoshouTemplateSnapshot,
     syncPodUploadSheetMiaoshouTemplates,
     getPodUploadSheetMiaoshouFormTemplates,
@@ -50,6 +51,11 @@ function registerFeatureCenterPodUploadIpc(options = {}) {
   handle(FEATURE_CHANNELS.GET_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES, async () => {
     if (typeof getPodUploadSheetMiaoshouCategories !== 'function') return fb_categories();
     return getPodUploadSheetMiaoshouCategories();
+  });
+
+  handle(FEATURE_CHANNELS.SYNC_POD_UPLOAD_SHEET_MIAOSHOU_CATEGORIES, async () => {
+    if (typeof syncPodUploadSheetMiaoshouCategories !== 'function') return fb_categories();
+    return syncPodUploadSheetMiaoshouCategories();
   });
 
   handle(FEATURE_CHANNELS.GET_POD_UPLOAD_SHEET_MIAOSHOU_TEMPLATE_SNAPSHOT, async () => {

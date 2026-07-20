@@ -449,6 +449,35 @@ body.dark-theme .pod-panel {
   grid-column: span 2;
 }
 
+.pod-category-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pod-category-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pod-category-sync-button.arco-btn {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 10px;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.36);
+  background: #ffffff;
+  color: var(--theme-primary-color, #b97800);
+  font-weight: 700;
+}
+
+.pod-category-sync-button.arco-btn:hover,
+.pod-category-sync-button.arco-btn:focus {
+  border-color: var(--theme-primary-color, #f4bf22) !important;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08) !important;
+  color: var(--theme-primary-color, #9a5f00) !important;
+}
+
 .pod-field-label {
   display: inline-flex;
   align-items: center;
@@ -793,7 +822,7 @@ body.dark-theme .pod-field-label {
   filter: none;
 }
 
-.pod-miaoshou-app-shell .arco-btn:not(.pod-theme-button):not(.pod-blue-button):not(.pod-red-button):not(.pod-stop-button):not(.pod-danger-button):not(.pod-progress-retry-button):not(.arco-btn-disabled):hover {
+.pod-miaoshou-app-shell .arco-btn:not(.pod-theme-button):not(.pod-blue-button):not(.pod-red-button):not(.pod-stop-button):not(.pod-danger-button):not(.pod-progress-retry-button):not(.pod-category-sync-button):not(.arco-btn-disabled):hover {
   border-color: var(--pod-border-strong) !important;
   background: var(--pod-hover) !important;
   color: var(--pod-text-strong) !important;
