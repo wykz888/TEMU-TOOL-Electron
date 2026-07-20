@@ -32,6 +32,7 @@
         :sku-config-map="skuConfigMap"
         :sku-image-options="skuImageOptions"
         :sync-sku-config-to-products="syncSkuConfigToProducts"
+        :sync-global-to-products="syncGlobalToProducts"
         :handle-sku-spec-change="handleSkuSpecChange"
       />
 
@@ -203,21 +204,29 @@ const BATCH_AI_TITLE_EMPTY_TEXT_KEYS = Object.freeze([
   'outputLanguage'
 ]);
 
-const DEFAULT_PRODUCT_FIELDS = Object.freeze({
-  localName: '',
-  mainNumber: '',
-  sourceFolder: '',
+const DEFAULT_GLOBAL_FORM_FIELDS = Object.freeze({
   sourceCategory: '',
   customAttributes: '',
   mainVideo: '',
   certificate: '',
   sizeChart: '',
   description: '',
+  specNameOne: '',
+  specNameTwo: '',
+  specValueOne: '',
+  specValueTwo: ''
+});
+const GLOBAL_FORM_FIELD_NAMES = Object.freeze(Object.keys(DEFAULT_GLOBAL_FORM_FIELDS));
+const SKU_VALUE_FIELD_NAMES = Object.freeze(['specValueOne', 'specValueTwo']);
+
+const DEFAULT_PRODUCT_FIELDS = Object.freeze({
+  localName: '',
+  mainNumber: '',
+  sourceFolder: '',
+  ...DEFAULT_GLOBAL_FORM_FIELDS,
   descriptionImageOrders: '',
   descriptionImageNames: '',
   title: '',
-  specValueOne: '',
-  specValueTwo: '',
   aiTitleZh: '',
   aiTitleEn: '',
   aiTitleStatus: '',
@@ -264,14 +273,7 @@ const aiProgress = reactive({ total: 0, completed: 0, success: 0, failed: 0, can
 const uploadRunId = ref('');
 const aiTitleRunId = ref('');
 const globalForm = reactive({
-  sourceCategory: '',
-  customAttributes: '',
-  mainVideo: '',
-  certificate: '',
-  sizeChart: '',
-  description: '',
-  specValueOne: '',
-  specValueTwo: ''
+  ...DEFAULT_GLOBAL_FORM_FIELDS
 });
 const skuConfigMap = reactive({});
 
@@ -767,6 +769,24 @@ function buildProductsFromFiles(files) {
 
 function getSkuValues(value) {
   return splitLines(value);
+}
+
+function normalizeGlobalFormFields(source = {}) {
+  const input = source && typeof source === 'object' ? source : {};
+
+  return GLOBAL_FORM_FIELD_NAMES.reduce((result, fieldName) => {
+    result[fieldName] = SKU_VALUE_FIELD_NAMES.includes(fieldName)
+      ? splitLines(input[fieldName]).join('\n')
+      : normalizeText(input[fieldName]);
+    return result;
+  }, {});
+}
+
+function resetGlobalForm(source = {}) {
+  Object.assign(globalForm, {
+    ...DEFAULT_GLOBAL_FORM_FIELDS,
+    ...normalizeGlobalFormFields(source)
+  });
 }
 
 function buildSkuKey(left, right) {
@@ -1373,9 +1393,13 @@ async function loadWorkspaceState() {
   const workspaceBatchAiTitleConfig = workspace.batchAiTitleConfig && typeof workspace.batchAiTitleConfig === 'object'
     ? workspace.batchAiTitleConfig
     : workspace;
+  const workspaceGlobalForm = workspace.globalForm && typeof workspace.globalForm === 'object'
+    ? workspace.globalForm
+    : workspace;
 
   selectedTemplateId.value = normalizeText(workspace.selectedTemplateId || workspace.templateId);
   templateName.value = normalizeText(workspace.templateName || workspace.selectedTemplateName);
+  resetGlobalForm(workspaceGlobalForm);
   imageUploadMode.value = normalizeText(workspaceImageUploadConfig.imageUploadMode || workspace.imageUploadMode) || 'original';
   lastImportDirectoryPath.value = normalizeText(workspace.lastImportDirectoryPath);
   lastExportDirectoryPath.value = normalizeText(workspace.lastExportDirectoryPath);
@@ -1471,17 +1495,7 @@ function applySelectedTemplate(value) {
   if (!template) return;
   selectedTemplateId.value = template.id;
   templateName.value = template.name;
-  Object.assign(globalForm, {
-    sourceCategory: '',
-    customAttributes: '',
-    mainVideo: '',
-    certificate: '',
-    sizeChart: '',
-    description: '',
-    specValueOne: '',
-    specValueTwo: '',
-    ...(template.fields || {})
-  });
+  resetGlobalForm(template.fields || {});
   Object.keys(skuConfigMap).forEach((key) => delete skuConfigMap[key]);
   Object.assign(skuConfigMap, cloneSkuMap(template.skuConfigMap));
   if (template.batchPreset) {
@@ -1531,6 +1545,7 @@ function scheduleStateSave() {
         imageUploadMode: imageUploadPreferences.imageUploadMode,
         selectedTemplateId: selectedTemplateId.value,
         templateName: templateName.value,
+        globalForm: normalizeGlobalFormFields(globalForm),
         imageUploadConfig: {
           storageProvider: imageUploadPreferences.storageProvider,
           imageUploadMode: imageUploadPreferences.imageUploadMode,

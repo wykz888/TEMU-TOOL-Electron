@@ -18,6 +18,40 @@
   grid-template-columns: repeat(2, minmax(320px, 1fr));
 }
 
+.pod-universal-sku-panel .pod-sku-field-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pod-universal-sku-panel .pod-sku-field-header .pod-field-label {
+  flex: 0 0 auto;
+}
+
+.pod-universal-sku-panel .pod-sku-name-button.arco-btn {
+  height: 24px;
+  padding: 0 8px;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  color: var(--theme-primary-ink, #7a4a00);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+}
+
+.pod-universal-sku-panel .pod-sku-name-button.arco-btn:hover {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.54);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+}
+
+.pod-universal-sku-panel .pod-sku-name-tag.arco-tag {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.22);
+  background: var(--pod-primary-soft);
+  color: var(--theme-primary-ink, #7a4a00);
+}
+
 @media (max-width: 1100px) {
   .pod-universal-template-panel .pod-universal-main-row,
   .pod-universal-template-panel .pod-universal-media-row {

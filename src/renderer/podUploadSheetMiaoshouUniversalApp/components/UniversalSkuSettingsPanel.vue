@@ -8,24 +8,38 @@
       <a-tag class="pod-miaoshou-theme-tag" bordered>{{ skuRows.length }} SKU</a-tag>
     </div>
     <div class="pod-sku-layout">
-      <label class="pod-field">
-        <span class="pod-field-label">
-          SKU&#x89C4;&#x683C;1
-          <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x7528;&#x4E8E;&#x751F;&#x6210; SKU &#x884C;&#x3002;">
-            <icon-question-circle class="pod-help-icon" />
-          </a-tooltip>
-        </span>
+      <div class="pod-field">
+        <div class="pod-sku-field-header">
+          <span class="pod-field-label">
+            SKU&#x89C4;&#x683C;1
+            <a-tooltip content="&#x591A;&#x4E2A;&#x89C4;&#x683C;&#x503C;&#x53EF;&#x6362;&#x884C;&#x586B;&#x5199;&#xFF0C;&#x7528;&#x4E8E;&#x751F;&#x6210; SKU &#x884C;&#x3002;">
+              <icon-question-circle class="pod-help-icon" />
+            </a-tooltip>
+          </span>
+          <a-button class="pod-sku-name-button" size="mini" type="outline" @click="openSkuNameDialog('one')">
+            <template #icon><icon-edit /></template>
+            &#x8BBE;&#x7F6E;SKU&#x540D;&#x79F0;
+          </a-button>
+          <a-tag v-if="globalForm.specNameOne" class="pod-sku-name-tag" size="small" bordered>{{ globalForm.specNameOne }}</a-tag>
+        </div>
         <a-textarea v-model="globalForm.specValueOne" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
-      </label>
-      <label class="pod-field">
-        <span class="pod-field-label">
-          SKU&#x89C4;&#x683C;2
-          <a-tooltip content="&#x7B2C;&#x4E8C;&#x7EC4; SKU &#x89C4;&#x683C;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
-            <icon-question-circle class="pod-help-icon" />
-          </a-tooltip>
-        </span>
+      </div>
+      <div class="pod-field">
+        <div class="pod-sku-field-header">
+          <span class="pod-field-label">
+            SKU&#x89C4;&#x683C;2
+            <a-tooltip content="&#x7B2C;&#x4E8C;&#x7EC4; SKU &#x89C4;&#x683C;&#xFF0C;&#x6CA1;&#x6709;&#x53EF;&#x7559;&#x7A7A;&#x3002;">
+              <icon-question-circle class="pod-help-icon" />
+            </a-tooltip>
+          </span>
+          <a-button class="pod-sku-name-button" size="mini" type="outline" @click="openSkuNameDialog('two')">
+            <template #icon><icon-edit /></template>
+            &#x8BBE;&#x7F6E;SKU&#x540D;&#x79F0;
+          </a-button>
+          <a-tag v-if="globalForm.specNameTwo" class="pod-sku-name-tag" size="small" bordered>{{ globalForm.specNameTwo }}</a-tag>
+        </div>
         <a-textarea v-model="globalForm.specValueTwo" :auto-size="{ minRows: 2, maxRows: 3 }" @change="handleSkuSpecChange" />
-      </label>
+      </div>
     </div>
     <a-table class="pod-sku-table" row-key="key" :data="skuRows" :pagination="false" :scroll="skuTableScroll">
       <template #columns>
@@ -77,12 +91,45 @@
         </a-table-column>
       </template>
     </a-table>
+    <a-modal
+      v-model:visible="skuNameModalVisible"
+      :title="skuNameModalTitle"
+      :mask-closable="false"
+      :esc-to-close="false"
+      ok-text="&#x786E;&#x5B9A;"
+      cancel-text="&#x53D6;&#x6D88;"
+      @ok="confirmSkuNameDialog"
+    >
+      <div class="pod-field">
+        <span class="pod-field-label">{{ skuNameModalFieldLabel }}</span>
+        <a-input
+          v-model="skuNameDraft"
+          allow-clear
+          :max-length="32"
+          placeholder="&#x5982;&#xFF1A;&#x989C;&#x8272;&#x3001;&#x5C3A;&#x7801;&#x3001;&#x6B3E;&#x5F0F;"
+          @press-enter="confirmSkuNameDialog"
+        />
+      </div>
+    </a-modal>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { IconQuestionCircle } from '@arco-design/web-vue/es/icon';
+import { computed, ref } from 'vue';
+import { IconEdit, IconQuestionCircle } from '@arco-design/web-vue/es/icon';
+
+const SKU_NAME_FIELDS = Object.freeze({
+  one: {
+    fieldName: 'specNameOne',
+    title: '\u8bbe\u7f6eSKU\u89c4\u683c1\u540d\u79f0',
+    fieldLabel: 'SKU\u89c4\u683c1\u540d\u79f0'
+  },
+  two: {
+    fieldName: 'specNameTwo',
+    title: '\u8bbe\u7f6eSKU\u89c4\u683c2\u540d\u79f0',
+    fieldLabel: 'SKU\u89c4\u683c2\u540d\u79f0'
+  }
+});
 
 const props = defineProps({
   globalForm: {
@@ -105,11 +152,41 @@ const props = defineProps({
     type: Function,
     required: true
   },
+  syncGlobalToProducts: {
+    type: Function,
+    required: true
+  },
   handleSkuSpecChange: {
     type: Function,
     required: true
   }
 });
+
+const skuNameModalVisible = ref(false);
+const skuNameFieldKey = ref('one');
+const skuNameDraft = ref('');
+
+const activeSkuNameField = computed(() => SKU_NAME_FIELDS[skuNameFieldKey.value] || SKU_NAME_FIELDS.one);
+const skuNameModalTitle = computed(() => activeSkuNameField.value.title);
+const skuNameModalFieldLabel = computed(() => activeSkuNameField.value.fieldLabel);
+
+function normalizeSkuName(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function openSkuNameDialog(fieldKey) {
+  const nextField = SKU_NAME_FIELDS[fieldKey] ? fieldKey : 'one';
+  skuNameFieldKey.value = nextField;
+  skuNameDraft.value = normalizeSkuName(props.globalForm[SKU_NAME_FIELDS[nextField].fieldName]);
+  skuNameModalVisible.value = true;
+}
+
+function confirmSkuNameDialog() {
+  const fieldName = activeSkuNameField.value.fieldName;
+  props.globalForm[fieldName] = normalizeSkuName(skuNameDraft.value);
+  skuNameModalVisible.value = false;
+  props.syncGlobalToProducts();
+}
 
 const skuTableScroll = computed(() => {
   const rowCount = props.skuRows.length;

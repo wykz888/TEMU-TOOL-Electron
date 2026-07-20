@@ -13,6 +13,7 @@
     :virtual-list-props="tableVirtualListProps"
     :loading="loading"
     size="small"
+    @sorter-change="handleSorterChange"
   >
     <template #columns>
       <a-table-column
@@ -190,10 +191,14 @@ const props = defineProps({
   togglingShopIds: {
     type: Array,
     default: () => []
+  },
+  sortState: {
+    type: Object,
+    default: () => ({})
   }
 });
 
-defineEmits(['toggle-shop', 'open-shop-config']);
+const emit = defineEmits(['toggle-shop', 'open-shop-config', 'sorter-change']);
 
 const statusColumnLabel = '\u76d1\u63a7\u72b6\u6001';
 const logColumnLabel = '\u76d1\u63a7\u65e5\u5fd7';
@@ -210,9 +215,7 @@ const shopColumnWidth = 218;
 const metricColumnWidth = 128;
 const baseTableWidth = statusColumnWidth + logColumnWidth + shopColumnWidth;
 const virtualListThreshold = 120;
-const statusColumnSortable = monitorStatusColumnSortable;
-const logColumnSortable = monitorLogColumnSortable;
-const shopColumnSortable = monitorShopColumnSortable;
+const noopTableSorter = () => 0;
 const defaultMetricRows = Object.freeze([
   {
     regionId: 'us',
@@ -245,11 +248,14 @@ const defaultColumnSummary = Object.freeze({
 const tableRows = computed(() => (Array.isArray(props.rows) ? props.rows : []));
 const togglingShopIdSet = computed(() => new Set(props.togglingShopIds));
 const columnSummaryById = computed(() => buildMonitorColumnSummaries(tableRows.value));
+const statusColumnSortable = computed(() => buildControlledTableSortable(monitorStatusColumnSortable, 'status'));
+const logColumnSortable = computed(() => buildControlledTableSortable(monitorLogColumnSortable, 'logText'));
+const shopColumnSortable = computed(() => buildControlledTableSortable(monitorShopColumnSortable, 'shopName'));
 const metricColumnSortableById = computed(() => (
   new Map(
     props.visibleColumns.map((column) => [
       column.id,
-      createMonitorMetricColumnSortable(column.id)
+      buildControlledTableSortable(createMonitorMetricColumnSortable(column.id), column.id)
     ])
   )
 ));
@@ -301,5 +307,25 @@ function getMetricColumnSortable(columnId) {
 
 function isShopToggling(row) {
   return togglingShopIdSet.value.has(row && row.shopId);
+}
+
+function getColumnSortOrder(field) {
+  return props.sortState && props.sortState.field === field
+    ? props.sortState.direction || ''
+    : '';
+}
+
+function buildControlledTableSortable(sortable, field) {
+  const source = sortable && typeof sortable === 'object' ? sortable : {};
+
+  return {
+    ...source,
+    sorter: noopTableSorter,
+    sortOrder: getColumnSortOrder(field)
+  };
+}
+
+function handleSorterChange(field, direction) {
+  emit('sorter-change', { field, direction });
 }
 </script>

@@ -25,9 +25,14 @@ const AVERAGE_METRIC_COLUMN_IDS = new Set([
   'ctr_label',
   'cvr_label'
 ]);
+const CORE_SORT_FIELD_SET = new Set(['status', 'logText', 'shopName']);
 
 function normalizeSortDirection(direction) {
   return direction === 'descend' ? 'descend' : 'ascend';
+}
+
+function normalizeActiveSortDirection(direction) {
+  return direction === 'ascend' || direction === 'descend' ? direction : '';
 }
 
 function applyDirection(result, direction) {
@@ -143,6 +148,23 @@ function buildSortable(sorter) {
   });
 }
 
+function getMonitorRowSortId(row) {
+  return normalizeText(row && (row.id || row.shopId));
+}
+
+function isMetricSortField(field) {
+  return Boolean(normalizeText(field)) && !CORE_SORT_FIELD_SET.has(normalizeText(field));
+}
+
+export function normalizeMonitorSortState(source) {
+  const field = normalizeText(source && source.field);
+  const direction = normalizeActiveSortDirection(source && source.direction);
+
+  return field && direction
+    ? { field, direction }
+    : { field: '', direction: '' };
+}
+
 export const monitorStatusColumnSortable = buildSortable((leftRow, rightRow, extra = {}) => {
   const direction = normalizeSortDirection(extra.direction);
   const leftStatus = leftRow && leftRow.monitorEnabled === true
@@ -184,4 +206,93 @@ export function createMonitorMetricColumnSortable(columnId) {
     )
     || compareRowIdentity(leftRow, rightRow)
   ));
+}
+
+export function comparePromotionMonitorRows(leftRow, rightRow, sortState) {
+  const normalizedSortState = normalizeMonitorSortState(sortState);
+
+  if (!normalizedSortState.field || !normalizedSortState.direction) {
+    return compareRowIdentity(leftRow, rightRow);
+  }
+
+  if (normalizedSortState.field === 'status') {
+    return monitorStatusColumnSortable.sorter(leftRow, rightRow, {
+      direction: normalizedSortState.direction
+    });
+  }
+
+  if (normalizedSortState.field === 'logText') {
+    return monitorLogColumnSortable.sorter(leftRow, rightRow, {
+      direction: normalizedSortState.direction
+    });
+  }
+
+  if (normalizedSortState.field === 'shopName') {
+    return monitorShopColumnSortable.sorter(leftRow, rightRow, {
+      direction: normalizedSortState.direction
+    });
+  }
+
+  if (isMetricSortField(normalizedSortState.field)) {
+    return createMonitorMetricColumnSortable(normalizedSortState.field).sorter(leftRow, rightRow, {
+      direction: normalizedSortState.direction
+    });
+  }
+
+  return compareRowIdentity(leftRow, rightRow);
+}
+
+export function sortPromotionMonitorRows(rows, sortState) {
+  const normalizedSortState = normalizeMonitorSortState(sortState);
+  const sourceRows = Array.isArray(rows) ? rows.slice() : [];
+
+  if (!normalizedSortState.field || !normalizedSortState.direction) {
+    return sourceRows;
+  }
+
+  return sourceRows.sort((leftRow, rightRow) => comparePromotionMonitorRows(
+    leftRow,
+    rightRow,
+    normalizedSortState
+  ));
+}
+
+export function buildPromotionMonitorSortedRowIds(rows, sortState) {
+  return sortPromotionMonitorRows(rows, sortState)
+    .map(getMonitorRowSortId)
+    .filter(Boolean);
+}
+
+export function applyPromotionMonitorLockedRowOrder(rows, sortedRowIds, sortState) {
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  const rowById = new Map();
+
+  sourceRows.forEach((row) => {
+    const rowId = getMonitorRowSortId(row);
+
+    if (rowId && !rowById.has(rowId)) {
+      rowById.set(rowId, row);
+    }
+  });
+
+  const usedRowIds = new Set();
+  const lockedRows = (Array.isArray(sortedRowIds) ? sortedRowIds : [])
+    .map((rowId) => normalizeText(rowId))
+    .filter((rowId) => {
+      if (!rowId || usedRowIds.has(rowId) || !rowById.has(rowId)) {
+        return false;
+      }
+
+      usedRowIds.add(rowId);
+      return true;
+    })
+    .map((rowId) => rowById.get(rowId));
+  const newRows = sourceRows.filter((row) => {
+    const rowId = getMonitorRowSortId(row);
+
+    return !rowId || !usedRowIds.has(rowId);
+  });
+  const sortedNewRows = sortPromotionMonitorRows(newRows, sortState);
+
+  return lockedRows.concat(sortedNewRows);
 }

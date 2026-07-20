@@ -98,8 +98,10 @@
         :visible-columns="visibleColumns"
         :loading="loading"
         :toggling-shop-ids="togglingShopIds"
+        :sort-state="monitorSortState"
         @toggle-shop="handleToggleShop"
         @open-shop-config="openShopConfigModal"
+        @sorter-change="handleMonitorSorterChange"
       />
     </section>
 
@@ -201,6 +203,11 @@ import {
   createDefaultPromotionMonitorSnapshot
 } from '../../view-models/promotionMonitorRows.js';
 import {
+  applyPromotionMonitorLockedRowOrder,
+  buildPromotionMonitorSortedRowIds,
+  normalizeMonitorSortState
+} from '../../view-models/promotionMonitorSorters.js';
+import {
   clearPromotionMonitorShopConfigSettings,
   clearPromotionMonitorRuntimeLogs,
   loadPromotionMonitorWorkspaceData,
@@ -220,6 +227,8 @@ const monitorConfig = ref(createDefaultPromotionMonitorConfig());
 const monitorShopConfigs = shallowRef({});
 const selectedColumnIds = ref([...DEFAULT_MONITOR_COLUMN_IDS]);
 const activeFilter = ref('all');
+const monitorSortState = ref(normalizeMonitorSortState());
+const lockedMonitorRowIds = ref([]);
 const snapshot = shallowRef(createDefaultPromotionMonitorSnapshot());
 const shopState = shallowRef({ shops: [] });
 const loading = ref(false);
@@ -265,12 +274,17 @@ const runtimeLogClearFailedText = '\u63a8\u5e7f\u76d1\u63a7\u8fd0\u884c\u65e5\u5
 const filterOptions = MONITOR_FILTER_OPTIONS;
 const regionOptions = MONITOR_REGION_OPTIONS;
 
-const monitorRows = computed(() => buildPromotionMonitorRows({
+const rawMonitorRows = computed(() => buildPromotionMonitorRows({
   snapshot: snapshot.value,
   shopRows: shopState.value && Array.isArray(shopState.value.shops) ? shopState.value.shops : [],
   selectedRegionIds: monitorConfig.value.regionIds,
   monitorShopConfigs: monitorShopConfigs.value
 }));
+const monitorRows = computed(() => applyPromotionMonitorLockedRowOrder(
+  rawMonitorRows.value,
+  lockedMonitorRowIds.value,
+  monitorSortState.value
+));
 
 const visibleColumns = computed(() => resolveVisibleMonitorColumns(
   selectedColumnIds.value,
@@ -508,6 +522,15 @@ function openCustomizeModal() {
 function handleApplyColumns(columnIds) {
   selectedColumnIds.value = normalizeMonitorColumnIds(columnIds);
   void persistViewSettings();
+}
+
+function handleMonitorSorterChange(payload) {
+  const nextSortState = normalizeMonitorSortState(payload);
+
+  monitorSortState.value = nextSortState;
+  lockedMonitorRowIds.value = nextSortState.field && nextSortState.direction
+    ? buildPromotionMonitorSortedRowIds(rawMonitorRows.value, nextSortState)
+    : [];
 }
 
 function openGlobalConfigModal() {
