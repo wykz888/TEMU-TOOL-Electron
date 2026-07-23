@@ -159,6 +159,7 @@ const SELLER_CENTER_GLOBAL_SESSION_READY_TIMEOUT_MS = 90000;
 const SELLER_CENTER_GLOBAL_SESSION_POLL_INTERVAL_MS = 1500;
 const BACKGROUND_BROWSER_STORAGE_RESTORE_RETRY_COOLDOWN_MS = 60000;
 const SHOP_ENVIRONMENT_APPLY_SLOW_LOG_THRESHOLD_MS = 300;
+const SHOP_RUNTIME_PROFILE_RECHECK_INTERVAL_MS = 5000;
 const VIEW_LOAD_RETRYABLE_ERROR_CODES = new Set([
   -2,
   -7,
@@ -240,6 +241,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
   let activeDescriptor = null;
   let workspaceUpdateToken = 0;
   let workspaceSyncTimer = 0;
+  let forceWorkspaceSyncPending = false;
   const runtimeLogger = options.runtimeLogger || null;
   const loadShopRuntimeProfile =
     typeof options.loadShopRuntimeProfile === 'function'
@@ -344,16 +346,24 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     workspaceSyncTimer = 0;
   }
 
-  function requestRendererWorkspaceSync(reason = 'window-layout-change') {
+  function requestRendererWorkspaceSync(reason = 'window-layout-change', options = {}) {
+    if (options.force === true) {
+      forceWorkspaceSyncPending = true;
+    }
+
     if (!isWindowAlive() || mainWindow.isMinimized() === true || mainWindow.isVisible() === false) {
       return;
     }
 
     clearWorkspaceSyncTimer();
     workspaceSyncTimer = setTimeout(() => {
+      const force = forceWorkspaceSyncPending === true;
+
+      forceWorkspaceSyncPending = false;
       workspaceSyncTimer = 0;
       notifyRenderer(SHOP_WINDOW_CHANNELS.REQUEST_WORKSPACE_SYNC, {
-        reason
+        reason,
+        force
       });
     }, WINDOW_WORKSPACE_SYNC_DELAY_MS);
   }
@@ -3289,6 +3299,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
         shopName: '',
         runtimeProfile: null,
         runtimeProfileVersion: '',
+        runtimeProfileValidatedAt: 0,
         lastSellerAuthSessionSnapshot: null,
         lastResolvedPlatformShopId: '',
         lastResolvedPlatformShopIdentityKey: '',
@@ -6251,12 +6262,18 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     const nextRuntimeProfileVersion = normalizeText(payload && payload.shopUpdatedAt);
     const forceRefresh = payload && payload.forceRefreshRuntimeProfile === true;
     const runtimeEnvironmentPayloadChanged = isRuntimeEnvironmentPayloadChanged(shopEntry, payload);
+    const runtimeProfileValidatedAt = Number(shopEntry && shopEntry.runtimeProfileValidatedAt) || 0;
+    const runtimeProfileStale = Boolean(
+      runtimeProfileValidatedAt <= 0
+      || Date.now() - runtimeProfileValidatedAt >= SHOP_RUNTIME_PROFILE_RECHECK_INTERVAL_MS
+    );
 
     if (
       !loadShopRuntimeProfile
       || (
         !forceRefresh
         && !runtimeEnvironmentPayloadChanged
+        && !runtimeProfileStale
         && (
           (
             !shopEntry.runtimeProfile
@@ -6285,6 +6302,8 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
       logError('shop_runtime_profile_load_failed', error, {
         shopId: shopEntry.shopId
       });
+    } finally {
+      shopEntry.runtimeProfileValidatedAt = Date.now();
     }
 
     shopEntry.runtimeProfileVersion =
@@ -6689,6 +6708,58 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     });
 
     await shopEntry.environmentApplyPromise;
+  }
+
+  async function refreshShopRuntimeEnvironment(payload = {}) {
+    const shopId = normalizeText(payload && payload.shopId);
+    const shopEntry = shopEntriesById.get(shopId);
+
+    if (!shopId || !shopEntry) {
+      return {
+        refreshed: false,
+        changed: false,
+        shopId
+      };
+    }
+
+    const previousPartition = normalizeText(shopEntry.partition);
+    const previousSignature = normalizeText(shopEntry.environmentSignature);
+    const refreshedEntry = await ensureShopEnvironment({
+      shopId,
+      shopUpdatedAt: normalizeText(payload && payload.shopUpdatedAt),
+      forceRefreshRuntimeProfile: true
+    });
+
+    await ensureEnvironmentApplied(refreshedEntry);
+
+    const changed = (
+      previousPartition !== normalizeText(refreshedEntry.partition)
+      || previousSignature !== normalizeText(refreshedEntry.environmentSignature)
+    );
+
+    if (changed) {
+      if (activeDescriptor && activeDescriptor.shopId === shopId) {
+        activeDescriptor = null;
+      }
+
+      requestRendererWorkspaceSync(
+        normalizeText(payload && payload.reason) || 'shop-runtime-environment-refreshed',
+        { force: true }
+      );
+      log('shop_runtime_environment_refreshed', {
+        shopId,
+        changed,
+        previousPartition,
+        nextPartition: normalizeText(refreshedEntry.partition)
+      });
+    }
+
+    return {
+      refreshed: true,
+      changed,
+      shopId,
+      partition: normalizeText(refreshedEntry.partition)
+    };
   }
 
   function createTabView(shopEntry, pageType, tabEntry, initialUrl) {
@@ -7532,6 +7603,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
 
   function destroy() {
     clearWorkspaceSyncTimer();
+    forceWorkspaceSyncPending = false;
     if (isWindowAlive()) {
       mainWindow.removeListener('resize', handleMainWindowLayoutChange);
       mainWindow.removeListener('maximize', handleMainWindowLayoutChange);
@@ -7571,6 +7643,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     closeBrowserTab,
     openBrowserUrlInNewTab,
     ensureShopEnvironmentReady,
+    refreshShopRuntimeEnvironment,
     ensureBackgroundProductPromotionMonitorSession,
     beginBackgroundProductPromotionMonitorRelogin,
     loadBackgroundProductPromotionMonitorHome,

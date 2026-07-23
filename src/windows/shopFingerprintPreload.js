@@ -1,6 +1,7 @@
 (() => {
   const crypto = require('node:crypto');
   const { buildUserAgentMetadata } = require('./fingerprintRuntimeUtils');
+  const { createFingerprintNativeMasker } = require('./fingerprintNativeMasker');
 
   const FINGERPRINT_ARGUMENT_PREFIX = '--temu-shop-fingerprint=';
   const AUTH_ARGUMENT_PREFIX = '--temu-shop-auth=';
@@ -145,6 +146,68 @@
     /\u5927\u9646/u
   ];
   const sellerLoginAutoSubmitAttempts = new Map();
+  const nativeMasker = createFingerprintNativeMasker(window);
+
+  function maskNativeFunction(fn, nativeName) {
+    return nativeMasker.maskNativeFunction(fn, nativeName);
+  }
+
+  function resolveDescriptorOwner(target, propertyName) {
+    let currentTarget = target;
+
+    while (currentTarget) {
+      const descriptor = Object.getOwnPropertyDescriptor(currentTarget, propertyName);
+
+      if (descriptor) {
+        return {
+          owner: currentTarget,
+          descriptor
+        };
+      }
+
+      currentTarget = Object.getPrototypeOf(currentTarget);
+    }
+
+    return null;
+  }
+
+  function defineNativeMethod(target, propertyName, method, options = {}) {
+    if (!target || typeof method !== 'function') {
+      return;
+    }
+
+    const maskedMethod = maskNativeFunction(
+      method,
+      normalizeText(options.nativeName) || propertyName
+    );
+    const descriptorOwner = resolveDescriptorOwner(target, propertyName);
+    const owner =
+      descriptorOwner && descriptorOwner.descriptor && descriptorOwner.descriptor.configurable !== false
+        ? descriptorOwner.owner
+        : target;
+    const sourceDescriptor =
+      descriptorOwner && descriptorOwner.descriptor
+        ? descriptorOwner.descriptor
+        : (Object.getOwnPropertyDescriptor(target, propertyName) || {});
+
+    try {
+      Object.defineProperty(owner, propertyName, {
+        configurable: sourceDescriptor.configurable !== false,
+        enumerable: sourceDescriptor.enumerable === true,
+        writable: sourceDescriptor.writable !== false,
+        value: maskedMethod
+      });
+      return;
+    } catch (_error) {
+      // Fall back to assignment for host objects that reject descriptor replacement.
+    }
+
+    try {
+      owner[propertyName] = maskedMethod;
+    } catch (_error) {
+      // Ignore replacement failures on locked browser objects.
+    }
+  }
 
   function parseArgumentPayload(prefix) {
     const argument = process.argv.find((item) => item.startsWith(prefix));
@@ -246,13 +309,40 @@
   }
 
   function overrideGetter(target, propertyName, getter) {
+    const maskedGetter = maskNativeFunction(getter, `get ${propertyName}`);
+    const descriptorOwner = resolveDescriptorOwner(target, propertyName);
+
+    if (
+      descriptorOwner
+      && descriptorOwner.descriptor
+      && descriptorOwner.descriptor.configurable !== false
+    ) {
+      try {
+        const nextDescriptor = {
+          configurable: true,
+          enumerable: descriptorOwner.descriptor.enumerable === true,
+          get: maskedGetter
+        };
+
+        if (typeof descriptorOwner.descriptor.set === 'function') {
+          nextDescriptor.set = descriptorOwner.descriptor.set;
+        }
+
+        Object.defineProperty(descriptorOwner.owner, propertyName, nextDescriptor);
+        return;
+      } catch (_error) {
+        // Ignore override failures and try direct owner replacement below.
+      }
+    }
+
     const targetChain = [target, Object.getPrototypeOf(target)].filter(Boolean);
 
     for (const currentTarget of targetChain) {
       try {
         Object.defineProperty(currentTarget, propertyName, {
           configurable: true,
-          get: getter
+          enumerable: false,
+          get: maskedGetter
         });
         return;
       } catch (_error) {
@@ -335,32 +425,180 @@
       }
     });
 
-    orientation.lock = () => Promise.resolve();
-    orientation.unlock = () => {};
+    defineNativeMethod(orientation, 'lock', function lock() {
+      return Promise.resolve();
+    });
+    defineNativeMethod(orientation, 'unlock', function unlock() {});
 
     return orientation;
   }
 
-  function createArrayLike(entries, nameField) {
-    const list = entries.slice();
+  function trySetPrototype(target, prototype) {
+    if (!target || !prototype) {
+      return;
+    }
 
-    Object.defineProperty(list, 'item', {
-      configurable: true,
-      enumerable: false,
-      value(index) {
-        return list[index] || null;
-      }
+    try {
+      Object.setPrototypeOf(target, prototype);
+    } catch (_error) {
+      // Ignore prototype replacement failures on locked browser objects.
+    }
+  }
+
+  function defineToStringTag(target, tagName) {
+    if (!target || typeof Symbol !== 'function' || !Symbol.toStringTag) {
+      return;
+    }
+
+    try {
+      Object.defineProperty(target, Symbol.toStringTag, {
+        configurable: true,
+        enumerable: false,
+        value: tagName
+      });
+    } catch (_error) {
+      // Ignore toStringTag failures.
+    }
+  }
+
+  function createArrayLike(entries, nameField, options = {}) {
+    const list = {};
+    const sourceEntries = entries.slice();
+
+    sourceEntries.forEach((entry, index) => {
+      Object.defineProperty(list, index, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return sourceEntries[index] || null;
+        }
+      });
     });
 
-    Object.defineProperty(list, 'namedItem', {
+    Object.defineProperty(list, 'length', {
       configurable: true,
       enumerable: false,
-      value(name) {
-        return list.find((entry) => normalizeText(entry && entry[nameField]) === normalizeText(name)) || null;
-      }
+      get: maskNativeFunction(function getLength() {
+        return sourceEntries.length;
+      }, 'get length')
     });
+
+    defineNativeMethod(list, 'item', function item(index) {
+      return sourceEntries[index] || null;
+    });
+
+    defineNativeMethod(list, 'namedItem', function namedItem(name) {
+      return sourceEntries.find((entry) => (
+        normalizeText(entry && entry[nameField]) === normalizeText(name)
+      )) || null;
+    });
+
+    defineToStringTag(list, options.toStringTag);
+    trySetPrototype(list, options.prototype);
 
     return list;
+  }
+
+  function createPluginObject(plugin, pluginMimeTypes, mimeTypeEntries) {
+    const pluginObject = {};
+    const mimeTypeObjects = pluginMimeTypes.map((mimeType) => {
+      const mimeTypeObject = {};
+
+      Object.defineProperty(mimeTypeObject, 'type', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return normalizeText(mimeType && mimeType.type);
+        }
+      });
+      Object.defineProperty(mimeTypeObject, 'suffixes', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return normalizeText(mimeType && mimeType.suffixes);
+        }
+      });
+      Object.defineProperty(mimeTypeObject, 'description', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return normalizeText(mimeType && mimeType.description);
+        }
+      });
+      Object.defineProperty(mimeTypeObject, 'enabledPlugin', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return pluginObject;
+        }
+      });
+
+      defineToStringTag(mimeTypeObject, 'MimeType');
+      trySetPrototype(
+        mimeTypeObject,
+        typeof window.MimeType === 'function' ? window.MimeType.prototype : null
+      );
+      mimeTypeEntries.push(mimeTypeObject);
+      return mimeTypeObject;
+    });
+
+    Object.defineProperty(pluginObject, 'name', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return normalizeText(plugin && plugin.name);
+      }
+    });
+    Object.defineProperty(pluginObject, 'filename', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return normalizeText(plugin && plugin.filename);
+      }
+    });
+    Object.defineProperty(pluginObject, 'description', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return normalizeText(plugin && plugin.description);
+      }
+    });
+
+    mimeTypeObjects.forEach((mimeTypeObject, index) => {
+      Object.defineProperty(pluginObject, index, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return mimeTypeObject;
+        }
+      });
+    });
+
+    Object.defineProperty(pluginObject, 'length', {
+      configurable: true,
+      enumerable: false,
+      get: maskNativeFunction(function getLength() {
+        return mimeTypeObjects.length;
+      }, 'get length')
+    });
+
+    defineNativeMethod(pluginObject, 'item', function item(index) {
+      return mimeTypeObjects[index] || null;
+    });
+
+    defineNativeMethod(pluginObject, 'namedItem', function namedItem(name) {
+      return mimeTypeObjects.find((item) => (
+        normalizeText(item && item.type) === normalizeText(name)
+      )) || null;
+    });
+
+    defineToStringTag(pluginObject, 'Plugin');
+    trySetPrototype(
+      pluginObject,
+      typeof window.Plugin === 'function' ? window.Plugin.prototype : null
+    );
+
+    return pluginObject;
   }
 
   function buildPluginCollections(fingerprintConfig) {
@@ -369,83 +607,20 @@
       ? fingerprintConfig.plugins
       : [])
       .map((plugin) => {
-        const pluginObject = [];
         const pluginMimeTypes = Array.isArray(plugin && plugin.mimeTypes) ? plugin.mimeTypes : [];
-
-        Object.defineProperty(pluginObject, 'name', {
-          configurable: true,
-          enumerable: true,
-          get() {
-            return normalizeText(plugin && plugin.name);
-          }
-        });
-
-        Object.defineProperty(pluginObject, 'filename', {
-          configurable: true,
-          enumerable: true,
-          get() {
-            return normalizeText(plugin && plugin.filename);
-          }
-        });
-
-        Object.defineProperty(pluginObject, 'description', {
-          configurable: true,
-          enumerable: true,
-          get() {
-            return normalizeText(plugin && plugin.description);
-          }
-        });
-
-        pluginMimeTypes.forEach((mimeType, index) => {
-          const mimeTypeObject = {
-            type: normalizeText(mimeType && mimeType.type),
-            suffixes: normalizeText(mimeType && mimeType.suffixes),
-            description: normalizeText(mimeType && mimeType.description),
-            enabledPlugin: pluginObject
-          };
-
-          pluginObject[index] = mimeTypeObject;
-          mimeTypeEntries.push(mimeTypeObject);
-        });
-
-        Object.defineProperty(pluginObject, 'length', {
-          configurable: true,
-          enumerable: true,
-          get() {
-            return pluginMimeTypes.length;
-          }
-        });
-
-        Object.defineProperty(pluginObject, 'item', {
-          configurable: true,
-          enumerable: false,
-          value(index) {
-            return pluginObject[index] || null;
-          }
-        });
-
-        Object.defineProperty(pluginObject, 'namedItem', {
-          configurable: true,
-          enumerable: false,
-          value(name) {
-            return (
-              pluginObject.find((item) => normalizeText(item && item.type) === normalizeText(name))
-              || null
-            );
-          }
-        });
-
-        return pluginObject;
+        return createPluginObject(plugin, pluginMimeTypes, mimeTypeEntries);
       });
 
-    const plugins = createArrayLike(pluginEntries, 'name');
-    const mimeTypes = createArrayLike(mimeTypeEntries, 'type');
-
-    Object.defineProperty(plugins, 'refresh', {
-      configurable: true,
-      enumerable: false,
-      value() {}
+    const plugins = createArrayLike(pluginEntries, 'name', {
+      prototype: typeof window.PluginArray === 'function' ? window.PluginArray.prototype : null,
+      toStringTag: 'PluginArray'
     });
+    const mimeTypes = createArrayLike(mimeTypeEntries, 'type', {
+      prototype: typeof window.MimeTypeArray === 'function' ? window.MimeTypeArray.prototype : null,
+      toStringTag: 'MimeTypeArray'
+    });
+
+    defineNativeMethod(plugins, 'refresh', function refresh() {});
 
     return {
       plugins,
@@ -514,7 +689,7 @@
     const nativeGetImageData = CanvasRenderingContext2D.prototype.getImageData;
 
     if (typeof nativeDrawImage === 'function') {
-      CanvasRenderingContext2D.prototype.drawImage = function drawImage(image) {
+      defineNativeMethod(CanvasRenderingContext2D.prototype, 'drawImage', function drawImage(image) {
         if (
           image instanceof HTMLImageElement
           && this.canvas instanceof HTMLCanvasElement
@@ -525,7 +700,7 @@
         }
 
         return nativeDrawImage.apply(this, arguments);
-      };
+      });
     }
 
     function isCanvasNoiseCandidate(canvas) {
@@ -535,7 +710,7 @@
         && suspectedCaptchaCanvases.has(canvas));
     }
 
-    CanvasRenderingContext2D.prototype.getImageData = function getImageData() {
+    defineNativeMethod(CanvasRenderingContext2D.prototype, 'getImageData', function getImageData() {
       const imageData = nativeGetImageData.apply(this, arguments);
 
       if (!canMutateCanvas(imageData && imageData.width, imageData && imageData.height)) {
@@ -547,9 +722,9 @@
       }
 
       return applyCanvasNoise(imageData, fingerprintConfig, 'getImageData');
-    };
+    });
 
-    HTMLCanvasElement.prototype.toDataURL = function toDataURL() {
+    defineNativeMethod(HTMLCanvasElement.prototype, 'toDataURL', function toDataURL() {
       if (!canMutateCanvas(this.width, this.height)) {
         return nativeToDataURL.apply(this, arguments);
       }
@@ -583,10 +758,10 @@
       } catch (_error) {
         return nativeToDataURL.apply(this, arguments);
       }
-    };
+    });
 
     if (typeof nativeToBlob === 'function') {
-      HTMLCanvasElement.prototype.toBlob = function toBlob(callback, type, quality) {
+      defineNativeMethod(HTMLCanvasElement.prototype, 'toBlob', function toBlob(callback, type, quality) {
         if (!canMutateCanvas(this.width, this.height)) {
           return nativeToBlob.call(this, callback, type, quality);
         }
@@ -620,7 +795,7 @@
         } catch (_error) {
           return nativeToBlob.call(this, callback, type, quality);
         }
-      };
+      });
     }
   }
 
@@ -658,7 +833,7 @@
     if (OfflineContext && typeof OfflineContext.prototype.startRendering === 'function') {
       const nativeStartRendering = OfflineContext.prototype.startRendering;
 
-      OfflineContext.prototype.startRendering = function startRendering() {
+      defineNativeMethod(OfflineContext.prototype, 'startRendering', function startRendering() {
         const result = nativeStartRendering.apply(this, arguments);
 
         if (!result || typeof result.then !== 'function') {
@@ -676,23 +851,23 @@
 
           return audioBuffer;
         });
-      };
+      });
     }
 
     if (typeof AnalyserNode === 'function' && typeof AnalyserNode.prototype.getFloatFrequencyData === 'function') {
       const nativeGetFloatFrequencyData = AnalyserNode.prototype.getFloatFrequencyData;
 
-      AnalyserNode.prototype.getFloatFrequencyData = function getFloatFrequencyData(array) {
+      defineNativeMethod(AnalyserNode.prototype, 'getFloatFrequencyData', function getFloatFrequencyData(array) {
         nativeGetFloatFrequencyData.apply(this, arguments);
         applyAudioNoise(array, fingerprintConfig, 'analyser-frequency');
-      };
+      });
     }
   }
 
   function buildUserAgentData(fingerprintConfig) {
     const metadata = buildUserAgentMetadata(fingerprintConfig);
 
-    return {
+    const userAgentData = {
       brands: metadata.brands,
       mobile: metadata.mobile,
       platform: metadata.platform,
@@ -752,6 +927,12 @@
         };
       }
     };
+
+    maskNativeFunction(userAgentData.getHighEntropyValues, 'getHighEntropyValues');
+    maskNativeFunction(userAgentData.toJSON, 'toJSON');
+    defineToStringTag(userAgentData, 'NavigatorUAData');
+
+    return userAgentData;
   }
 
   function patchNavigator(fingerprintConfig) {
@@ -850,18 +1031,31 @@
 
     PatchedDateTimeFormat.prototype = NativeDateTimeFormat.prototype;
     Object.setPrototypeOf(PatchedDateTimeFormat, NativeDateTimeFormat);
+    try {
+      Object.defineProperty(PatchedDateTimeFormat.prototype, 'constructor', {
+        configurable: true,
+        writable: true,
+        value: PatchedDateTimeFormat
+      });
+    } catch (_error) {
+      // Ignore constructor alignment failures.
+    }
     PatchedDateTimeFormat.supportedLocalesOf =
-      NativeDateTimeFormat.supportedLocalesOf.bind(NativeDateTimeFormat);
+      maskNativeFunction(
+        NativeDateTimeFormat.supportedLocalesOf.bind(NativeDateTimeFormat),
+        'supportedLocalesOf'
+      );
+    maskNativeFunction(PatchedDateTimeFormat, 'DateTimeFormat');
 
     Intl.DateTimeFormat = PatchedDateTimeFormat;
-    NativeDateTimeFormat.prototype.resolvedOptions = function resolvedOptions() {
+    defineNativeMethod(NativeDateTimeFormat.prototype, 'resolvedOptions', function resolvedOptions() {
       const result = nativeResolvedOptions.apply(this, arguments);
       result.timeZone = timeZone;
       return result;
-    };
-    Date.prototype.getTimezoneOffset = function getTimezoneOffset() {
+    });
+    defineNativeMethod(Date.prototype, 'getTimezoneOffset', function getTimezoneOffset() {
       return fixedTimezoneOffset;
-    };
+    });
   }
 
   function createDomRectLike(x, y, width, height) {
@@ -869,7 +1063,7 @@
       return new DOMRect(x, y, width, height);
     }
 
-    return {
+    const rectLike = {
       x,
       y,
       width,
@@ -891,6 +1085,9 @@
         };
       }
     };
+
+    maskNativeFunction(rectLike.toJSON, 'toJSON');
+    return rectLike;
   }
 
   function cloneClientRectList(rects) {
@@ -978,7 +1175,7 @@
       && typeof CanvasRenderingContext2D.prototype.measureText === 'function') {
       const nativeMeasureText = CanvasRenderingContext2D.prototype.measureText;
 
-      CanvasRenderingContext2D.prototype.measureText = function measureText(text) {
+      defineNativeMethod(CanvasRenderingContext2D.prototype, 'measureText', function measureText(text) {
         const nativeMetrics = nativeMeasureText.apply(this, arguments);
         const seed =
           normalizeText(fingerprintConfig && fingerprintConfig.domProfile && fingerprintConfig.domProfile.textSeed)
@@ -991,7 +1188,7 @@
         ) / 100;
 
         return cloneTextMetrics(nativeMetrics, delta);
-      };
+      });
     }
 
     function patchRectMethods(TargetClass, label) {
@@ -1002,23 +1199,23 @@
       if (typeof TargetClass.prototype.getBoundingClientRect === 'function') {
         const nativeGetBoundingClientRect = TargetClass.prototype.getBoundingClientRect;
 
-        TargetClass.prototype.getBoundingClientRect = function getBoundingClientRect() {
+        defineNativeMethod(TargetClass.prototype, 'getBoundingClientRect', function getBoundingClientRect() {
           const rect = nativeGetBoundingClientRect.apply(this, arguments);
           return applyRectNoise(rect, fingerprintConfig, `${label}|single`);
-        };
+        });
       }
 
       if (typeof TargetClass.prototype.getClientRects === 'function') {
         const nativeGetClientRects = TargetClass.prototype.getClientRects;
 
-        TargetClass.prototype.getClientRects = function getClientRects() {
+        defineNativeMethod(TargetClass.prototype, 'getClientRects', function getClientRects() {
           const nativeRects = Array.from(nativeGetClientRects.apply(this, arguments) || []);
           const nextRects = nativeRects.map((rect, index) => (
             applyRectNoise(rect, fingerprintConfig, `${label}|list|${index}`)
           ));
 
           return cloneClientRectList(nextRects);
-        };
+        });
       }
     }
 
@@ -1034,7 +1231,7 @@
     if (document.fonts && typeof document.fonts.check === 'function') {
       const nativeCheck = document.fonts.check.bind(document.fonts);
 
-      document.fonts.check = function check(fontValue) {
+      defineNativeMethod(document.fonts, 'check', function check(fontValue) {
         const normalizedFont = normalizeText(fontValue).toLowerCase();
 
         if (fontFamilies.some((fontName) => normalizedFont.includes(fontName))) {
@@ -1042,11 +1239,11 @@
         }
 
         return nativeCheck.apply(document.fonts, arguments);
-      };
+      });
     }
 
     if (typeof window.queryLocalFonts === 'function') {
-      window.queryLocalFonts = function queryLocalFonts() {
+      defineNativeMethod(window, 'queryLocalFonts', function queryLocalFonts() {
         return Promise.resolve(
           fontFamilies.map((fontName) => ({
             family: fontName,
@@ -1054,7 +1251,7 @@
             postscriptName: fontName.replace(/\s+/g, '-')
           }))
         );
-      };
+      });
     }
   }
 
@@ -1142,7 +1339,7 @@
     if (window.navigator.permissions && typeof window.navigator.permissions.query === 'function') {
       const nativeQuery = window.navigator.permissions.query.bind(window.navigator.permissions);
 
-      window.navigator.permissions.query = function query(permissionDescriptor) {
+      defineNativeMethod(window.navigator.permissions, 'query', function query(permissionDescriptor) {
         const permissionName = normalizeText(permissionDescriptor && permissionDescriptor.name).toLowerCase();
 
         if (!permissionName || !Object.prototype.hasOwnProperty.call(permissionStates, permissionName)) {
@@ -1150,7 +1347,7 @@
         }
 
         return Promise.resolve(createPermissionStatus(permissionStates[permissionName]));
-      };
+      });
     }
 
     if (typeof window.Notification === 'function') {
@@ -1191,13 +1388,13 @@
       : [];
 
     if (typeof window.navigator.mediaDevices.enumerateDevices === 'function') {
-      window.navigator.mediaDevices.enumerateDevices = function enumerateDevices() {
+      defineNativeMethod(window.navigator.mediaDevices, 'enumerateDevices', function enumerateDevices() {
         return Promise.resolve(deviceList.slice());
-      };
+      });
     }
 
     if (typeof window.navigator.mediaDevices.getSupportedConstraints === 'function') {
-      window.navigator.mediaDevices.getSupportedConstraints = function getSupportedConstraints() {
+      defineNativeMethod(window.navigator.mediaDevices, 'getSupportedConstraints', function getSupportedConstraints() {
         return {
           width: true,
           height: true,
@@ -1214,13 +1411,13 @@
           deviceId: true,
           groupId: true
         };
-      };
+      });
     }
 
     if (typeof window.navigator.mediaDevices.getUserMedia === 'function') {
-      window.navigator.mediaDevices.getUserMedia = function getUserMedia() {
+      defineNativeMethod(window.navigator.mediaDevices, 'getUserMedia', function getUserMedia() {
         return Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
-      };
+      });
     }
   }
 
@@ -1319,7 +1516,7 @@
         ));
       }
 
-      window.navigator.mediaCapabilities.decodingInfo = function decodingInfo(configuration) {
+      defineNativeMethod(window.navigator.mediaCapabilities, 'decodingInfo', function decodingInfo(configuration) {
         const mediaConfig = configuration && configuration.video
           ? configuration.video
           : (configuration && configuration.audio ? configuration.audio : {});
@@ -1332,9 +1529,9 @@
           smooth: mediaCapabilitiesProfile.smooth !== false,
           powerEfficient: mediaCapabilitiesProfile.powerEfficient !== false
         });
-      };
+      });
 
-      window.navigator.mediaCapabilities.encodingInfo = function encodingInfo(configuration) {
+      defineNativeMethod(window.navigator.mediaCapabilities, 'encodingInfo', function encodingInfo(configuration) {
         const mediaConfig = configuration && configuration.video
           ? configuration.video
           : (configuration && configuration.audio ? configuration.audio : {});
@@ -1347,11 +1544,11 @@
           smooth: mediaCapabilitiesProfile.smooth !== false,
           powerEfficient: mediaCapabilitiesProfile.powerEfficient !== false
         });
-      };
+      });
     }
 
     if (typeof window.MediaRecorder === 'function' && typeof window.MediaRecorder.isTypeSupported === 'function') {
-      window.MediaRecorder.isTypeSupported = function isTypeSupported(contentType) {
+      defineNativeMethod(window.MediaRecorder, 'isTypeSupported', function isTypeSupported(contentType) {
         const normalizedContentType = normalizeText(contentType).toLowerCase();
 
         return (
@@ -1360,11 +1557,11 @@
           || (Array.isArray(mediaCapabilitiesProfile.audioCodecs)
             && mediaCapabilitiesProfile.audioCodecs.some((codec) => normalizedContentType.includes(normalizeText(codec).toLowerCase())))
         );
-      };
+      });
     }
 
     if (typeof window.HTMLMediaElement === 'function' && typeof window.HTMLMediaElement.prototype.canPlayType === 'function') {
-      window.HTMLMediaElement.prototype.canPlayType = function canPlayType(contentType) {
+      defineNativeMethod(window.HTMLMediaElement.prototype, 'canPlayType', function canPlayType(contentType) {
         const normalizedContentType = normalizeText(contentType).toLowerCase();
         const isSupported =
           (Array.isArray(mediaCapabilitiesProfile.videoCodecs)
@@ -1373,13 +1570,13 @@
             && mediaCapabilitiesProfile.audioCodecs.some((codec) => normalizedContentType.includes(normalizeText(codec).toLowerCase())));
 
         return isSupported ? 'probably' : '';
-      };
+      });
     }
 
     if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'function') {
-      window.speechSynthesis.getVoices = function getVoices() {
+      defineNativeMethod(window.speechSynthesis, 'getVoices', function getVoices() {
         return speechVoices.slice();
-      };
+      });
 
       setTimeout(() => {
         try {
@@ -1443,40 +1640,40 @@
       const nativeGetSupportedExtensions = ContextClass.prototype.getSupportedExtensions;
       const nativeGetShaderPrecisionFormat = ContextClass.prototype.getShaderPrecisionFormat;
 
-      ContextClass.prototype.getParameter = function getParameter(parameter) {
+      defineNativeMethod(ContextClass.prototype, 'getParameter', function getParameter(parameter) {
         if (Object.prototype.hasOwnProperty.call(parameterMap, parameter)) {
           return parameterMap[parameter];
         }
 
         return nativeGetParameter.apply(this, arguments);
-      };
+      });
 
-      ContextClass.prototype.getExtension = function getExtension(name) {
+      defineNativeMethod(ContextClass.prototype, 'getExtension', function getExtension(name) {
         if (String(name || '').toLowerCase() === 'webgl_debug_renderer_info') {
           return fakeDebugRendererInfo;
         }
 
         return nativeGetExtension.apply(this, arguments);
-      };
+      });
 
       if (typeof nativeGetSupportedExtensions === 'function') {
-        ContextClass.prototype.getSupportedExtensions = function getSupportedExtensions() {
+        defineNativeMethod(ContextClass.prototype, 'getSupportedExtensions', function getSupportedExtensions() {
           if (Array.isArray(webglConfig.extensions) && webglConfig.extensions.length > 0) {
             return webglConfig.extensions.slice();
           }
 
           return nativeGetSupportedExtensions.apply(this, arguments);
-        };
+        });
       }
 
       if (typeof nativeGetShaderPrecisionFormat === 'function') {
-        ContextClass.prototype.getShaderPrecisionFormat = function getShaderPrecisionFormat() {
+        defineNativeMethod(ContextClass.prototype, 'getShaderPrecisionFormat', function getShaderPrecisionFormat() {
           return {
             rangeMin: Number(webglConfig.shaderPrecision && webglConfig.shaderPrecision.rangeMin) || 127,
             rangeMax: Number(webglConfig.shaderPrecision && webglConfig.shaderPrecision.rangeMax) || 127,
             precision: Number(webglConfig.shaderPrecision && webglConfig.shaderPrecision.precision) || 23
           };
-        };
+        });
       }
     }
 
@@ -1571,7 +1768,7 @@
         return listenerMap.get(listener);
       }
 
-      const wrappedListener = function wrappedIceListener(event) {
+      const wrappedListener = maskNativeFunction(function wrappedIceListener(event) {
         if (!event || !event.candidate) {
           listener.call(this, event);
           return;
@@ -1599,7 +1796,7 @@
         });
 
         listener.call(this, nextEvent);
-      };
+      }, 'wrappedIceListener');
 
       listenerMap.set(listener, wrappedListener);
       return wrappedListener;
@@ -1608,13 +1805,13 @@
     if (typeof NativePeerConnection.prototype.addEventListener === 'function') {
       const nativeAddEventListener = NativePeerConnection.prototype.addEventListener;
 
-      NativePeerConnection.prototype.addEventListener = function addEventListener(type, listener, options) {
+      defineNativeMethod(NativePeerConnection.prototype, 'addEventListener', function addEventListener(type, listener, options) {
         if (String(type || '').toLowerCase() === 'icecandidate') {
           return nativeAddEventListener.call(this, type, wrapIceListener(listener), options);
         }
 
         return nativeAddEventListener.call(this, type, listener, options);
-      };
+      });
     }
 
     const nativeOnIceCandidateDescriptor =
@@ -1623,22 +1820,22 @@
     Object.defineProperty(NativePeerConnection.prototype, 'onicecandidate', {
       configurable: true,
       enumerable: true,
-      get() {
+      get: maskNativeFunction(function getOnIceCandidate() {
         return this[onIceCandidateHandlerSymbol] || null;
-      },
-      set(listener) {
+      }, 'get onicecandidate'),
+      set: maskNativeFunction(function setOnIceCandidate(listener) {
         this[onIceCandidateHandlerSymbol] = listener;
 
         if (nativeOnIceCandidateDescriptor && typeof nativeOnIceCandidateDescriptor.set === 'function') {
           nativeOnIceCandidateDescriptor.set.call(this, wrapIceListener(listener));
         }
-      }
+      }, 'set onicecandidate')
     });
 
     if (typeof NativePeerConnection.prototype.createOffer === 'function') {
       const nativeCreateOffer = NativePeerConnection.prototype.createOffer;
 
-      NativePeerConnection.prototype.createOffer = function createOffer() {
+      defineNativeMethod(NativePeerConnection.prototype, 'createOffer', function createOffer() {
         const result = nativeCreateOffer.apply(this, arguments);
 
         if (!result || typeof result.then !== 'function') {
@@ -1655,13 +1852,13 @@
             sdp: sanitizeSdp(description.sdp)
           };
         });
-      };
+      });
     }
 
     if (typeof NativePeerConnection.prototype.createAnswer === 'function') {
       const nativeCreateAnswer = NativePeerConnection.prototype.createAnswer;
 
-      NativePeerConnection.prototype.createAnswer = function createAnswer() {
+      defineNativeMethod(NativePeerConnection.prototype, 'createAnswer', function createAnswer() {
         const result = nativeCreateAnswer.apply(this, arguments);
 
         if (!result || typeof result.then !== 'function') {
@@ -1678,13 +1875,13 @@
             sdp: sanitizeSdp(description.sdp)
           };
         });
-      };
+      });
     }
 
     if (typeof NativePeerConnection.prototype.setLocalDescription === 'function') {
       const nativeSetLocalDescription = NativePeerConnection.prototype.setLocalDescription;
 
-      NativePeerConnection.prototype.setLocalDescription = function setLocalDescription(description) {
+      defineNativeMethod(NativePeerConnection.prototype, 'setLocalDescription', function setLocalDescription(description) {
         if (description && description.sdp) {
           return nativeSetLocalDescription.call(this, {
             ...description,
@@ -1693,7 +1890,7 @@
         }
 
         return nativeSetLocalDescription.apply(this, arguments);
-      };
+      });
     }
   }
 

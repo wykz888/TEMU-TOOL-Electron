@@ -1802,7 +1802,10 @@
       getBridge().onBrowserUrlInputRequested((payload) => {
         handleBrowserUrlInputRequested(payload);
       }),
-      getBridge().onWorkspaceSyncRequested(() => {
+      getBridge().onWorkspaceSyncRequested((payload) => {
+        if (payload && payload.force === true) {
+          lastDispatchedWorkspacePayload = null;
+        }
         scheduleWorkspaceSync();
         scheduleDeferredWorkspaceSync();
       })
@@ -1815,6 +1818,8 @@
 
     window.addEventListener('shop-management:state-changed', (event) => {
       applyState(event.detail);
+      lastDispatchedWorkspacePayload = null;
+      scheduleWorkspaceSync();
     });
 
     window.addEventListener('app:section-changed', (event) => {

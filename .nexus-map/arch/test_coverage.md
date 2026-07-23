@@ -9,6 +9,7 @@
 - `npm run validate`
 - `npm run validate:feature-catalog`
 - `npm run validate:preload-ipc`
+- `npm run validate:shop-runtime-proxy`
 - `npm run validate:promotion-monitor`
 - `npm run validate:operations-feature-chains`
 - `npm run validate:operations-pricing`
@@ -20,6 +21,7 @@
 
 - Feature and creation catalog shape, uniqueness, storage key boundaries, and code path existence: `scripts/validateFeatureCatalog.js`.
 - Preload to IPC channel surface for feature center, creation center, POD suite tool, shop management, global config, and updater: `scripts/validatePreloadIpcSurface.js`.
+- Shop browser runtime proxy merge rules: `scripts/validateShopRuntimeProxyRules.js`.
 - Promotion monitor `ads_detail` parsing/paging, automatic pause predicates, pause/resume sequence decisions, and `modify_ads` payload shape: `scripts/validatePromotionMonitorRules.js`.
 - Operations activity management, traffic boost, and new product lifecycle open/preload/IPC/main/service chain coverage: `scripts/validateOperationsFeatureChains.js`.
 - Operations pricing and submit payload calculations for traffic boost and price declaration: `scripts/validateOperationsPricingLogic.js`.

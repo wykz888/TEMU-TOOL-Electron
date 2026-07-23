@@ -28,12 +28,13 @@
     "validate:auth-bridge": "node scripts/validateAuthBridgeRunner.js",
     "validate:feature-catalog": "node scripts/validateFeatureCatalog.js",
     "validate:preload-ipc": "node scripts/validatePreloadIpcSurface.js",
+    "validate:shop-runtime-proxy": "node scripts/validateShopRuntimeProxyRules.js",
     "validate:promotion-monitor": "node scripts/validatePromotionMonitorRules.js",
     "validate:operations-feature-chains": "node scripts/validateOperationsFeatureChains.js",
     "validate:operations-pricing": "node scripts/validateOperationsPricingLogic.js",
     "validate:pod-upload-sheet-miaoshou": "node scripts/validatePodUploadSheetMiaoshouMaterialRules.js",
     "validate:pod-suite-tool": "node scripts/validatePodSuiteToolService.js",
-    "validate": "npm run validate:feature-catalog && npm run validate:preload-ipc && npm run validate:promotion-monitor && npm run validate:operations-feature-chains && npm run validate:operations-pricing && npm run validate:pod-upload-sheet-miaoshou && npm run validate:pod-suite-tool && npm run validate:auth-bridge"
+    "validate": "npm run validate:feature-catalog && npm run validate:preload-ipc && npm run validate:shop-runtime-proxy && npm run validate:promotion-monitor && npm run validate:operations-feature-chains && npm run validate:operations-pricing && npm run validate:pod-upload-sheet-miaoshou && npm run validate:pod-suite-tool && npm run validate:auth-bridge"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",

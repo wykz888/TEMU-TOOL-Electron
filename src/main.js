@@ -127,6 +127,7 @@ if (app.isPackaged !== true) {
 }
 
 app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'disable_non_proxied_udp');
+app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 
 const sessionStore = createSessionStore();
 const loginAccountCache = createLoginAccountCache({ app, safeStorage });

@@ -26,6 +26,10 @@ const { createShopCloudStore } = require('./cloudStore');
 const { validateProxyAvailability } = require('./proxyValidator');
 const { buildFingerprintConfig, normalizeFingerprintConfig } = require('./fingerprintProfile');
 const { getRuntimeFingerprintContext } = require('./runtimeFingerprintContext');
+const {
+  buildFingerprintProxyContext,
+  resolveShopDetailProxyConfig
+} = require('./shopDetailProxyConfig');
 
 const REMOTE_INDEX_CACHE_TTL_MS = 60000;
 
@@ -721,7 +725,10 @@ function createShopManagementService({ app, sessionStore, getShopWindowBrowserCo
       phoneNumber: accountValue,
       shopName
     };
-    const rawProxyConfig = normalizedRawShopDetail.proxyConfig || {};
+    const resolvedProxyConfig = resolveShopDetailProxyConfig(
+      normalizedRawShopDetail.proxyConfig,
+      fallbackShopDetail.proxyConfig
+    );
 
     return {
       id: normalizeText(shopSummary && shopSummary.id),
@@ -740,29 +747,13 @@ function createShopManagementService({ app, sessionStore, getShopWindowBrowserCo
       note: normalizeText(normalizedRawShopDetail.note || fallbackShopDetail.note),
       groupId: normalizeText(normalizedRawShopDetail.groupId || fallbackShopDetail.groupId),
       groupName: normalizeText(normalizedRawShopDetail.groupName || fallbackShopDetail.groupName) || FALLBACK_GROUP_NAME,
-      proxyConfig: {
-        type: normalizeProxyType(rawProxyConfig.type || fallbackShopDetail.proxyConfig.type),
-        host: normalizeText(rawProxyConfig.host || fallbackShopDetail.proxyConfig.host),
-        port: normalizeText(rawProxyConfig.port || fallbackShopDetail.proxyConfig.port),
-        username: normalizeText(rawProxyConfig.username || fallbackShopDetail.proxyConfig.username),
-        password: normalizeText(rawProxyConfig.password || fallbackShopDetail.proxyConfig.password),
-        bypassRules: normalizeProxyBypassRules(
-          rawProxyConfig.bypassRules || fallbackShopDetail.proxyConfig.bypassRules
-        ),
-        directResourceTypes: normalizeProxyDirectResourceTypes(
-          rawProxyConfig.directResourceTypes || fallbackShopDetail.proxyConfig.directResourceTypes
-        )
-      },
+      proxyConfig: resolvedProxyConfig,
       fingerprintConfig: normalizeFingerprintConfig(
         normalizedRawShopDetail.fingerprintConfig || fallbackShopDetail.fingerprintConfig,
         fingerprintIdentity,
         {
           ...runtimeFingerprintContext,
-          proxyConfig: {
-            type: normalizeProxyType(rawProxyConfig.type || fallbackShopDetail.proxyConfig.type),
-            host: normalizeText(rawProxyConfig.host || fallbackShopDetail.proxyConfig.host),
-            username: normalizeText(rawProxyConfig.username || fallbackShopDetail.proxyConfig.username)
-          }
+          proxyConfig: buildFingerprintProxyContext(resolvedProxyConfig)
         }
       ),
       isVisible: isShopParticipating(
@@ -1071,6 +1062,21 @@ function createShopManagementService({ app, sessionStore, getShopWindowBrowserCo
     }
 
     return fallbackEnvelope;
+  }
+
+  async function refreshShopWindowRuntimeEnvironment(payload = {}) {
+    const controller = getShopWindowBrowserControllerSafe();
+
+    if (!controller || typeof controller.refreshShopRuntimeEnvironment !== 'function') {
+      return null;
+    }
+
+    try {
+      return await controller.refreshShopRuntimeEnvironment(payload);
+    } catch (error) {
+      console.error('Failed to refresh shop browser runtime environment:', error);
+      return null;
+    }
   }
 
   return {
@@ -1496,6 +1502,11 @@ function createShopManagementService({ app, sessionStore, getShopWindowBrowserCo
       await persistCloudIndex(owner, nextIndex);
       await persistLocalShopRecord(owner, recordKey, nextShopRecordEnvelope);
       await persistLocalIndex(owner, nextIndex);
+      await refreshShopWindowRuntimeEnvironment({
+        shopId,
+        shopUpdatedAt: timestamp,
+        reason: 'shop-updated'
+      });
 
       return {
         shop: toRendererState({
