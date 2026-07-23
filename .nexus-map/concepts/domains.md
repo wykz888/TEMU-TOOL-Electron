@@ -10,11 +10,11 @@ Session state is held in `src/state/sessionStore.js`, remembered software-login 
 
 ## Shop Management
 
-Shop records, groups, fingerprint profiles, visibility, and shop detail services live under `src/services/shopManagement/`. Renderer state is exposed through `src/renderer/shopManagementApp/` and older helpers such as `src/renderer/shopManagementStore.js`.
+Shop records, groups, fingerprint profiles, visibility, and shop detail services live under `src/services/shopManagement/`. Renderer state is exposed through `src/renderer/shopManagementApp/` and older helpers such as `src/renderer/shopManagementStore.js`. The Vue renderer entry is split into focused toolbar/table/modal components, group and shop-form action composables under `state/`, and `styles/shop-management-app.css`; keep new shop-management UI work inside these boundaries instead of growing `App.vue`.
 
 ## Shop Window And TEMU Browser Automation
 
-The shop browser workspace is controlled by `src/windows/shopWindowBrowserController.js` with helpers for login autofill, seller-center landing, mall switching, region context requests, seller session probes, popup messages, and storage sync. Docs record login and automation performance rules.
+The shop browser workspace is controlled by `src/windows/shopWindowBrowserController.js` with helpers for login autofill, seller-center landing, mall switching, region context requests, seller session probes, popup messages, and storage sync. Browser load-error page rendering is isolated in `src/windows/shopWindowViewLoadErrorPage.js`, and partition identity/path calculation is isolated in `src/windows/shopWindowPartitionIdentity.js`. Renderer-side direct-script helpers such as workspace payload normalization live in `src/renderer/shopWindowRuntime.js`, loaded before `shopWindowView.js`. Docs record login and automation performance rules.
 
 ## Feature Center
 

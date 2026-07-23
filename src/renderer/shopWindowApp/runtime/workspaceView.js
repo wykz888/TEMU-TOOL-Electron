@@ -212,15 +212,12 @@ export function createWorkspaceView() {
 
     if (isProgress) {
       return {
-        badgeText: '\u6B63\u5728\u6062\u590D',
-        bodyText:
-          '\u6B65\u9AA4 1/2 \u68C0\u67E5\u5F53\u524D\u767B\u5F55\u72B6\u6001\uFF0C'
-          + '\u6B65\u9AA4 2/2 \u6309\u9700\u6062\u590D Cookies\u3001Local Storage \u548C IndexedDB\u3002'
-          + '\u5B8C\u6210\u540E\u4F1A\u81EA\u52A8\u6253\u5F00\u5DE5\u4F5C\u533A\u3002',
+        badgeText: '\u51C6\u5907\u4E2D',
+        bodyText: '\u6B63\u5728\u51C6\u5907\u767B\u5F55\u72B6\u6001\uFF0C\u5B8C\u6210\u540E\u4F1A\u81EA\u52A8\u6253\u5F00\u3002',
         canOpen: false,
         isProgress: true,
         isStandby: true,
-        titleText: `\u6B63\u5728\u4E3A ${shopName} \u51C6\u5907${workspaceLabel}`
+        titleText: `\u6B63\u5728\u51C6\u5907 ${shopName}`
       };
     }
 

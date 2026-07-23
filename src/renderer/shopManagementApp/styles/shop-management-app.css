@@ -1,0 +1,563 @@
+.shop-mgmt-app-shell {
+  display: grid;
+  min-height: 100%;
+  height: auto;
+}
+
+.shop-mgmt-card {
+  display: block;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: visible;
+}
+
+.shop-mgmt-card .arco-card-body {
+  padding: 20px;
+}
+
+.shop-mgmt-card .arco-btn {
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.shop-mgmt-card .arco-btn-secondary {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: #f8fafc;
+  color: #334155;
+}
+
+.shop-mgmt-card .arco-btn-primary {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.72);
+  background: linear-gradient(180deg, var(--theme-primary-color), var(--theme-primary-color-deep));
+  color: var(--theme-primary-contrast, #ffffff);
+  box-shadow: 0 8px 16px rgba(var(--theme-primary-rgb-8, 193, 141, 0), 0.14);
+}
+
+.shop-mgmt-card .arco-btn-primary:hover {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.82);
+  background: linear-gradient(180deg, var(--theme-primary-color), var(--theme-primary-color-deep));
+  color: var(--theme-primary-contrast, #ffffff);
+}
+
+.shop-mgmt-card .arco-btn-status-danger.arco-btn-outline,
+.shop-mgmt-card .arco-btn-status-danger.arco-btn-secondary {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: #b42318;
+}
+
+.shop-mgmt-card .arco-alert {
+  border-radius: 12px;
+}
+
+.shop-mgmt-card .arco-table {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: #ffffff;
+}
+
+.shop-mgmt-card .arco-table-th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.shop-mgmt-card .arco-table-td {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.shop-mgmt-card .arco-table-tr:hover .arco-table-td {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.025);
+}
+
+.shop-mgmt-card .arco-table-cell-fixed-right {
+  background: inherit;
+}
+
+.shop-mgmt-card .arco-empty {
+  padding: 24px 0;
+}
+
+.shop-mgmt-card .arco-spin {
+  color: var(--theme-primary-ink, #445468);
+}
+
+.shop-mgmt-toolbar {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.shop-mgmt-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.shop-mgmt-head > div:first-child {
+  min-width: 0;
+}
+
+.shop-mgmt-head h3 {
+  margin: 0;
+  color: #132238;
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Bahnschrift", sans-serif;
+  font-size: 32px;
+  line-height: 1.26;
+}
+
+.shop-mgmt-head p,
+.shop-mgmt-card-copy {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.72;
+}
+
+.shop-mgmt-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.shop-mgmt-head-actions .arco-btn {
+  min-height: 36px;
+  padding-inline: 14px;
+  line-height: 1.35;
+}
+
+.shop-mgmt-count-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding-inline: 12px;
+  color: var(--theme-primary-ink, #445468);
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16);
+  line-height: 1.2;
+}
+
+.shop-mgmt-status,
+.shop-mgmt-inline-status {
+  margin-bottom: 14px;
+  border-radius: 14px;
+}
+
+.shop-mgmt-loading {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+}
+
+.shop-mgmt-table-shell {
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.shop-mgmt-cell-title {
+  color: #132238;
+  font-weight: 700;
+}
+
+.shop-mgmt-cell-mono {
+  font-family: "Consolas", "Bahnschrift", sans-serif;
+}
+
+.shop-mgmt-cell-note,
+.shop-mgmt-proxy-cell {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.shop-mgmt-visibility-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.shop-mgmt-visibility-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.shop-mgmt-visibility-text.is-active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.shop-mgmt-visibility-text.is-muted {
+  background: rgba(148, 163, 184, 0.14);
+  color: #475569;
+}
+
+.shop-mgmt-edit-button {
+  min-width: 58px;
+}
+
+.shop-mgmt-group-layout {
+  display: block;
+}
+
+.shop-mgmt-group-panel,
+.shop-mgmt-form-card {
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.shop-mgmt-group-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)),
+    #ffffff;
+}
+
+.shop-mgmt-group-create-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 16px;
+  align-items: end;
+  padding: 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.shop-mgmt-group-create-copy strong,
+.shop-mgmt-group-list-head strong {
+  display: block;
+  color: #132238;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.shop-mgmt-group-create-copy span,
+.shop-mgmt-group-list-head span {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.shop-mgmt-group-create-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.shop-mgmt-group-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 2px;
+}
+
+.shop-mgmt-group-list-body {
+  display: grid;
+  gap: 10px;
+  max-height: 430px;
+  overflow-y: auto;
+  padding: 2px 4px 2px 2px;
+}
+
+.shop-mgmt-group-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.shop-mgmt-group-row:hover {
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.34);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.shop-mgmt-group-row-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.12);
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: var(--theme-primary-ink, #445468);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.shop-mgmt-group-row-badge-num {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.shop-mgmt-group-row-badge-unit {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.shop-mgmt-group-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.shop-mgmt-group-row-main .arco-input-wrapper {
+  flex: 1;
+  max-width: 320px;
+}
+
+.shop-mgmt-group-row-count {
+  color: #94a3b8;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.shop-mgmt-group-row-actions,
+.shop-mgmt-modal-actions,
+.shop-mgmt-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.shop-mgmt-group-row-actions,
+.shop-mgmt-modal-actions {
+  justify-content: flex-end;
+}
+
+.shop-mgmt-group-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.shop-mgmt-form-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.shop-mgmt-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.shop-mgmt-span-2 {
+  grid-column: 1 / -1;
+}
+
+.shop-mgmt-toggle-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.shop-mgmt-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.shop-mgmt-toggle-card strong {
+  display: block;
+  color: #132238;
+  margin-bottom: 6px;
+}
+
+.shop-mgmt-toggle-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.shop-mgmt-fingerprint-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06);
+  border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.shop-mgmt-fingerprint-hint-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+body.dark-theme .shop-mgmt-fingerprint-hint {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.08);
+  border-color: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16);
+  color: #94a3b8;
+}
+
+body.dark-theme .shop-mgmt-head h3,
+body.dark-theme .shop-mgmt-cell-title,
+body.dark-theme .shop-mgmt-toggle-card strong,
+body.dark-theme .shop-mgmt-group-create-copy strong,
+body.dark-theme .shop-mgmt-group-list-head strong {
+  color: #e5eefc;
+}
+
+body.dark-theme .shop-mgmt-head p,
+body.dark-theme .shop-mgmt-card-copy,
+body.dark-theme .shop-mgmt-cell-note,
+body.dark-theme .shop-mgmt-proxy-cell,
+body.dark-theme .shop-mgmt-toggle-card p,
+body.dark-theme .shop-mgmt-group-create-copy span,
+body.dark-theme .shop-mgmt-group-list-head span,
+body.dark-theme .shop-mgmt-group-row-count {
+  color: #94a3b8;
+}
+
+body.dark-theme .shop-mgmt-group-panel,
+body.dark-theme .shop-mgmt-form-card,
+body.dark-theme .shop-mgmt-group-create-bar,
+body.dark-theme .shop-mgmt-group-row,
+body.dark-theme .shop-mgmt-toggle-card {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+body.dark-theme .shop-mgmt-group-panel {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.86)),
+    #0f172a;
+}
+
+body.dark-theme .shop-mgmt-group-row:hover {
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18);
+}
+
+body.dark-theme .shop-mgmt-group-row-badge {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.16);
+  color: #f8d673;
+}
+
+body.dark-theme .shop-mgmt-group-row-badge-unit {
+  color: #f8d673;
+}
+
+body.dark-theme .shop-mgmt-card .arco-btn-secondary {
+  border-color: rgba(71, 85, 105, 0.3);
+  background: rgba(15, 23, 42, 0.92);
+  color: #dbe7f5;
+}
+
+body.dark-theme .shop-mgmt-toolbar {
+  border-bottom-color: rgba(71, 85, 105, 0.26);
+}
+
+body.dark-theme .shop-mgmt-card .arco-table {
+  border-color: rgba(71, 85, 105, 0.28);
+  background: rgba(15, 23, 42, 0.88);
+}
+
+body.dark-theme .shop-mgmt-card .arco-table-th {
+  background: rgba(15, 23, 42, 0.96);
+  color: #94a3b8;
+  border-bottom-color: rgba(71, 85, 105, 0.28);
+}
+
+body.dark-theme .shop-mgmt-card .arco-table-td {
+  background: rgba(15, 23, 42, 0.88);
+  border-bottom-color: rgba(71, 85, 105, 0.18);
+}
+
+body.dark-theme .shop-mgmt-card .arco-table-tr:hover .arco-table-td {
+  background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06);
+}
+
+body.dark-theme .shop-mgmt-visibility-text.is-active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+}
+
+body.dark-theme .shop-mgmt-visibility-text.is-muted {
+  background: rgba(71, 85, 105, 0.26);
+  color: #cbd5e1;
+}
+
+@media (max-width: 980px) {
+  .shop-mgmt-group-create-bar,
+  .shop-mgmt-group-row,
+  .shop-mgmt-toggle-row {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-mgmt-group-row-badge {
+    flex-direction: row;
+    width: auto;
+    height: 36px;
+    justify-self: start;
+    padding: 0 12px;
+  }
+
+  .shop-mgmt-group-row-badge span {
+    margin-top: 0;
+    margin-left: 4px;
+  }
+}
+
+@media (max-width: 780px) {
+  .shop-mgmt-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-mgmt-head-actions {
+    justify-content: flex-start;
+  }
+
+  .shop-mgmt-group-create-form,
+  .shop-mgmt-group-row-main {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-mgmt-group-row-actions,
+  .shop-mgmt-modal-actions {
+    justify-content: flex-start;
+  }
+}

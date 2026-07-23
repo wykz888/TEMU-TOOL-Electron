@@ -15,6 +15,7 @@
 - Code: `src/windows/`
 - Key files: `create*Window.js`, `shopWindowBrowserController.js`, `shopWindowLoginAutofill.js`, `shopWindowSellerSessionProbe.js`, `shopWindowSellerCenterLanding.js`, `shopWindowBrowserEnvironment.js`.
 - Responsibility: BrowserWindow/WebContentsView creation, TEMU seller-center and ads workspace management, login automation, seller session probing, browser storage sync, popup handling, environment/proxy/fingerprint setup.
+- Current split: `shopWindowViewLoadErrorPage.js` owns browser load failure text/data-URL rendering, and `shopWindowPartitionIdentity.js` owns shop partition identity hashes and partition directory resolution. Keep future pure browser-controller rules in focused helpers before adding to `shopWindowBrowserController.js`.
 - Notes: this is main-process side product logic. Complex browser automation should stay here or in services, not inside renderer UI.
 
 ## IPC And Preload Bridge
@@ -29,6 +30,8 @@
 - Code: `src/renderer/`
 - Responsibility: user-facing UI. The main window shell uses `src/renderer/index.html` plus Vue bundles. Newer workbenches are independent Vue apps under `*App/`; older operations workbenches are large plain JS/CSS files.
 - Key shell files: `src/renderer/index.html`, `src/renderer/index.js`, `src/renderer/mainWindowApp/`, `src/renderer/mainWindowShellView.js`, `src/renderer/vueBundleViewLoader.js`.
+- Shop management renderer: `src/renderer/shopManagementApp/App.vue` composes `components/ShopManagementToolbar.vue`, `components/ShopTable.vue`, `components/GroupManageModal.vue`, `components/ShopFormModal.vue`, state modules under `state/`, and styles in `styles/shop-management-app.css`.
+- Shop window legacy bridge: `src/renderer/shopWindowRuntime.js` is loaded before `shopWindowView.js` and owns constants, storage sync empty-state factories, workspace bounds normalization, and workspace payload equality helpers for the direct-script coordinator.
 - Shared bundle loader: `src/renderer/vueBundleViewLoader.js` centralizes Vue app mounting, stylesheet loading, and fallback rendering for thin HTML/JS shells such as shop management, global config, confirm dialog, exit progress, global category sync, POD upload sheets, promotion manager, promotion manager new, PSD smart suite, and the shop window shell.
 - PSD smart suite renderer rules: `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteModels.js` owns mockup normalization and run-payload shaping; `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteProgress.js` owns progress event labels, log text, tone, and counters so `App.vue` remains focused on UI state wiring.
 - PSD smart suite local settings persistence lives in `src/renderer/psdSmartSuiteApp/utils/psdSmartSuiteSettings.js` so storage parsing and serialization stay separate from the Vue view entry.

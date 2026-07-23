@@ -4,7 +4,7 @@ export function createShopListView() {
   const state = reactive({
     autoLoginChecked: true,
     autoLoginDisabled: true,
-    currentShopMeta: '\u5DE6\u4FA7\u9009\u62E9\u5E97\u94FA\u540E\uFF0C\u5728\u8FD9\u91CC\u5207\u6362\u5DE5\u4F5C\u533A\u3002',
+    currentShopMeta: '\u8BF7\u5728\u5DE6\u4FA7\u9009\u62E9\u5E97\u94FA\u3002',
     currentShopName: '\u8BF7\u9009\u62E9\u5E97\u94FA',
     emptyMode: 'empty',
     emptyText: '\u8BF7\u5148\u5728\u5E97\u94FA\u7BA1\u7406\u91CC\u65B0\u589E\u5E97\u94FA\u3002',
@@ -17,6 +17,7 @@ export function createShopListView() {
         value: ''
       }
     ],
+    searchKeyword: '',
     selectedShopId: '',
     shops: []
   });
@@ -42,6 +43,7 @@ export function createShopListView() {
         allShops: [],
         groups: [],
         selectedGroupFilterId: '',
+        shopSearchKeyword: '',
         selectedShopId: '',
         shops: []
       };
@@ -115,6 +117,32 @@ export function createShopListView() {
     return groupId === viewState.selectedGroupFilterId;
   }
 
+  function buildShopSearchText(shop) {
+    return [
+      shop && shop.shopName,
+      shop && shop.note,
+      shop && shop.groupName,
+      shop && shop.accountValue,
+      shop && shop.phoneNumber,
+      shop && shop.email,
+      shop && shop.accountType
+    ]
+      .map((value) => normalizeText(value).toLowerCase())
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function matchesShopSearch(shop) {
+    const viewState = getViewState();
+    const keyword = normalizeText(viewState.shopSearchKeyword).toLowerCase();
+
+    if (!keyword) {
+      return true;
+    }
+
+    return buildShopSearchText(shop).includes(keyword);
+  }
+
   function buildGroupFilterOptions() {
     const viewState = getViewState();
     const options = [
@@ -167,7 +195,8 @@ export function createShopListView() {
       viewState.selectedGroupFilterId = '';
     }
 
-    viewState.shops = getVisibleShops().filter((shop) => matchesSelectedGroupFilter(shop));
+    viewState.shops = getVisibleShops()
+      .filter((shop) => matchesSelectedGroupFilter(shop) && matchesShopSearch(shop));
     return viewState.shops;
   }
 
@@ -230,6 +259,13 @@ export function createShopListView() {
       return;
     }
 
+    if (normalizeText(viewState.shopSearchKeyword)) {
+      state.emptyMode = 'filtered';
+      state.emptyTitle = '\u6682\u65E0\u5339\u914D\u5E97\u94FA';
+      state.emptyText = '\u8BF7\u6362\u4E00\u4E2A\u5173\u952E\u8BCD\uFF0C\u6216\u6E05\u7A7A\u641C\u7D22\u540E\u518D\u8BD5\u3002';
+      return;
+    }
+
     if (viewState.selectedGroupFilterId) {
       state.emptyMode = 'filtered';
       state.emptyTitle = '\u5F53\u524D\u5206\u7EC4\u6682\u65E0\u5E97\u94FA';
@@ -261,6 +297,7 @@ export function createShopListView() {
     const viewState = getViewState();
 
     state.selectedShopId = normalizeText(viewState.selectedShopId);
+    state.searchKeyword = normalizeText(viewState.shopSearchKeyword);
     state.shops = buildShopItems();
     applyEmptyState();
   }
@@ -268,24 +305,23 @@ export function createShopListView() {
   function renderCurrentShop() {
     const viewState = getViewState();
     const selectedShop = getSelectedShop();
-    const workspaceLabel = runtime.tabLabels[viewState.activeWorkspaceTab] || runtime.tabLabels['seller-center'];
-
     if (!selectedShop) {
       state.currentShopName = '\u8BF7\u9009\u62E9\u5E97\u94FA';
       state.currentShopMeta =
-        '\u5DE6\u4FA7\u9009\u62E9\u5E97\u94FA\u540E\uFF0C\u5728\u8FD9\u91CC\u5207\u6362\u5DE5\u4F5C\u533A\u3002';
+        '\u8BF7\u5728\u5DE6\u4FA7\u9009\u62E9\u5E97\u94FA\u3002';
       state.autoLoginChecked = true;
       state.autoLoginDisabled = true;
       return;
     }
 
-    const pageState = runtime.ensureActiveBrowserTab(selectedShop.id, viewState.activeWorkspaceTab);
-    const activeBrowserTab = runtime.getBrowserTabById(pageState, pageState.activeBrowserTabId);
-    const tabTitle = activeBrowserTab ? activeBrowserTab.title : `${workspaceLabel} 1`;
+    runtime.ensureActiveBrowserTab(selectedShop.id, viewState.activeWorkspaceTab);
 
     state.currentShopName = normalizeText(selectedShop.shopName) || '\u672A\u547D\u540D\u5E97\u94FA';
-    state.currentShopMeta =
-      `${workspaceLabel} | ${tabTitle} | ${normalizeText(selectedShop.groupName) || '\u672A\u5206\u7EC4'}`;
+    const groupName = normalizeText(selectedShop.groupName) || '\u672A\u5206\u7EC4';
+    const noteText = normalizeText(selectedShop.note);
+    state.currentShopMeta = noteText
+      ? `\u5206\u7EC4\uFF1A${groupName} | \u5907\u6CE8\uFF1A${noteText}`
+      : `\u5206\u7EC4\uFF1A${groupName}`;
     state.autoLoginChecked = runtime.isAutoLoginEnabled(selectedShop.id, viewState.activeWorkspaceTab);
     state.autoLoginDisabled = false;
   }
@@ -338,6 +374,29 @@ export function createShopListView() {
     void runtime.kickOffAutoBrowserStorageSync('group-filter-changed');
   }
 
+  function handleShopSearchInput(input) {
+    const viewState = getViewState();
+    const previousShopId = normalizeText(viewState.selectedShopId);
+    const nextKeyword =
+      input && typeof input === 'object' && input.target
+        ? normalizeText(input.target.value)
+        : normalizeText(input);
+
+    if (normalizeText(viewState.shopSearchKeyword) === nextKeyword) {
+      return;
+    }
+
+    viewState.shopSearchKeyword = nextKeyword;
+    runtime.hideTabStatus();
+    syncFilteredShops();
+    runtime.render();
+
+    if (previousShopId !== normalizeText(viewState.selectedShopId)) {
+      clearTimersForShop(previousShopId);
+      void runtime.kickOffAutoBrowserStorageSync('shop-search-changed');
+    }
+  }
+
   function handleAutoLoginToggleChange(input) {
     const selectedShop = getSelectedShop();
 
@@ -360,8 +419,8 @@ export function createShopListView() {
     state.autoLoginChecked = enabled === true;
     runtime.showTabStatus({
       message: enabled
-        ? '\u5DF2\u5F00\u542F\u5F53\u524D\u5E97\u94FA\u4E0E\u5165\u53E3\u7684\u81EA\u52A8\u767B\u5F55\u3002'
-        : '\u5DF2\u5173\u95ED\u5F53\u524D\u5E97\u94FA\u4E0E\u5165\u53E3\u7684\u81EA\u52A8\u767B\u5F55\u3002',
+        ? '\u5DF2\u5F00\u542F\u81EA\u52A8\u767B\u5F55\u3002'
+        : '\u5DF2\u5173\u95ED\u81EA\u52A8\u767B\u5F55\u3002',
       durationMs: 2200
     });
     runtime.scheduleWorkspaceSync();
@@ -454,6 +513,7 @@ export function createShopListView() {
     getShopNoteText,
     handleAutoLoginToggleChange,
     handleGroupFilterChange,
+    handleShopSearchInput,
     handleShopListClick,
     isSelectedGroupFilterValid,
     matchesSelectedGroupFilter,

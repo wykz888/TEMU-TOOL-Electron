@@ -1,38 +1,40 @@
 ﻿(() => {
-  const TAB_LABELS = Object.freeze({
-    'seller-center': '\u5356\u5BB6\u4E2D\u5FC3',
-    'product-promotion': '\u5546\u54C1\u63A8\u5E7F'
-  });
+  const runtime = window.shopWindowRuntime;
 
-  const WORKSPACE_URLS = Object.freeze({
-    'seller-center': 'https://seller.kuajingmaihuo.com/',
-    'product-promotion': 'https://ads.temu.com/index.html?adAreaOverride=2&source=2&seller_source=11'
-  });
+  if (!runtime || !runtime.constants) {
+    throw new Error('\u5e97\u94fa\u7a97\u53e3\u8fd0\u884c\u65f6\u6a21\u5757\u52a0\u8f7d\u5931\u8d25\u3002');
+  }
 
-  const DEFAULT_BROWSER_TAB_ID = 'default';
-  const MAX_BROWSER_TABS = 10;
-  const STORAGE_TYPE_LABELS = Object.freeze({
-    cookies: 'Cookies',
-    localStorage: 'Local Storage',
-    indexedDb: 'IndexedDB'
-  });
-  const AUTO_STORAGE_SYNC_TYPES = Object.freeze(Object.keys(STORAGE_TYPE_LABELS));
-  const AUTO_STORAGE_SYNC_FULL_UPLOAD_TYPES = Object.freeze(AUTO_STORAGE_SYNC_TYPES.slice());
-  const AUTO_STORAGE_SYNC_UPLOAD_TYPES = Object.freeze(['cookies']);
-  const AUTO_STORAGE_SYNC_PREOPEN_RESTORE_TYPES = Object.freeze(['cookies']);
-  const AUTO_STORAGE_SYNC_DEFERRED_RESTORE_TYPES = Object.freeze(['localStorage', 'indexedDb']);
-  const AUTO_STORAGE_SYNC_UPLOAD_DELAY_MS = 18000;
-  const AUTO_STORAGE_SYNC_RETRY_DELAY_MS = 45000;
-  const AUTO_STORAGE_SYNC_DEFERRED_RESTORE_DELAY_MS = 1600;
-  const AUTO_STORAGE_SYNC_HEARTBEAT_MS = 30000;
-  const AUTO_STORAGE_SYNC_KICKOFF_DEBOUNCE_MS = 220;
-  const AUTO_STORAGE_SYNC_INTERVAL_MS = 1800000;
-  const AUTO_STORAGE_SYNC_MIN_UPLOAD_GAP_MS = 60000;
-  const BROWSER_STORAGE_SYNC_STATE_CACHE_TTL_MS = 10000;
-  const TAB_STATUS_MESSAGE_DEDUP_MS = 1200;
-  const FAST_SESSION_PERSIST_DEBOUNCE_MS = 4000;
-  const NO_CLOUD_SNAPSHOT_MESSAGE =
-    '\u4E91\u7AEF\u8FD8\u6CA1\u6709\u53EF\u6062\u590D\u7684\u6D4F\u89C8\u5668\u5B58\u50A8\u6570\u636E\u3002';
+  const {
+    TAB_LABELS,
+    WORKSPACE_URLS,
+    DEFAULT_BROWSER_TAB_ID,
+    MAX_BROWSER_TABS,
+    STORAGE_TYPE_LABELS,
+    AUTO_STORAGE_SYNC_TYPES,
+    AUTO_STORAGE_SYNC_FULL_UPLOAD_TYPES,
+    AUTO_STORAGE_SYNC_UPLOAD_TYPES,
+    AUTO_STORAGE_SYNC_PREOPEN_RESTORE_TYPES,
+    AUTO_STORAGE_SYNC_DEFERRED_RESTORE_TYPES,
+    AUTO_STORAGE_SYNC_UPLOAD_DELAY_MS,
+    AUTO_STORAGE_SYNC_RETRY_DELAY_MS,
+    AUTO_STORAGE_SYNC_DEFERRED_RESTORE_DELAY_MS,
+    AUTO_STORAGE_SYNC_HEARTBEAT_MS,
+    AUTO_STORAGE_SYNC_KICKOFF_DEBOUNCE_MS,
+    AUTO_STORAGE_SYNC_INTERVAL_MS,
+    AUTO_STORAGE_SYNC_MIN_UPLOAD_GAP_MS,
+    BROWSER_STORAGE_SYNC_STATE_CACHE_TTL_MS,
+    TAB_STATUS_MESSAGE_DEDUP_MS,
+    FAST_SESSION_PERSIST_DEBOUNCE_MS,
+    NO_CLOUD_SNAPSHOT_MESSAGE
+  } = runtime.constants;
+  const {
+    createEmptyBrowserStorageSyncState,
+    createEmptyBrowserStorageAutoSyncRuntime,
+    getWorkspaceBounds,
+    cloneWorkspacePayload,
+    areWorkspacePayloadsEqual
+  } = runtime;
 
   const viewState = {
     allShops: [],
@@ -151,35 +153,6 @@
     const second = String(date.getSeconds()).padStart(2, '0');
 
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-  }
-
-  function createEmptyBrowserStorageSyncState(shopId = '') {
-    return {
-      shopId: normalizeText(shopId),
-      origins: [],
-      storageTypes: Object.keys(STORAGE_TYPE_LABELS),
-      localSummary: null,
-      cloudSummary: null
-    };
-  }
-
-  function createEmptyBrowserStorageAutoSyncRuntime(shopId = '') {
-    return {
-      shopId: normalizeText(shopId),
-      uploadTimer: 0,
-      retryTimer: 0,
-      deferredRestoreTimer: 0,
-      restorePromise: null,
-      uploadPromise: null,
-      lastCookieRestoreRevision: '',
-      lastFullRestoreRevision: '',
-      lastRestoreAt: '',
-      lastUploadAt: '',
-      lastUploadAtMs: 0,
-      lastFastPersistAtMs: 0,
-      lastAutoError: '',
-      lastAutoErrorAt: ''
-    };
   }
 
   function getBrowserStorageAutoSyncRuntime(shopId = '') {
@@ -730,98 +703,6 @@
     }
   }
 
-  function getWorkspaceBounds(activeHost) {
-    const hostRect = activeHost.getBoundingClientRect();
-    const computedStyle = window.getComputedStyle(activeHost);
-    const insetLeft = (
-      parseFloat(computedStyle.borderLeftWidth || '0')
-      + parseFloat(computedStyle.paddingLeft || '0')
-    );
-    const insetTop = (
-      parseFloat(computedStyle.borderTopWidth || '0')
-      + parseFloat(computedStyle.paddingTop || '0')
-    );
-    const insetRight = (
-      parseFloat(computedStyle.borderRightWidth || '0')
-      + parseFloat(computedStyle.paddingRight || '0')
-    );
-    const insetBottom = (
-      parseFloat(computedStyle.borderBottomWidth || '0')
-      + parseFloat(computedStyle.paddingBottom || '0')
-    );
-    const width = Math.max(0, (Number(hostRect.width) || 0) - insetLeft - insetRight);
-    const height = Math.max(0, (Number(hostRect.height) || 0) - insetTop - insetBottom);
-
-    return {
-      x: Math.round((hostRect.left || 0) + insetLeft),
-      y: Math.round((hostRect.top || 0) + insetTop),
-      width: Math.round(width),
-      height: Math.round(height)
-    };
-  }
-
-  function cloneWorkspacePayload(payload) {
-    const bounds = payload && payload.bounds
-      ? {
-        x: Number(payload.bounds.x) || 0,
-        y: Number(payload.bounds.y) || 0,
-        width: Number(payload.bounds.width) || 0,
-        height: Number(payload.bounds.height) || 0
-      }
-      : null;
-
-    return {
-      visible: payload && payload.visible === true,
-      overlayOpen: payload && payload.overlayOpen === true,
-      shopId: String(payload && payload.shopId || '').trim(),
-      pageType: String(payload && payload.pageType || '').trim(),
-      browserTabId: String(payload && payload.browserTabId || '').trim(),
-      autoLoginEnabled: payload && payload.autoLoginEnabled !== false,
-      shopName: String(payload && payload.shopName || '').trim(),
-      phoneNumber: String(payload && payload.phoneNumber || '').trim(),
-      accountValue: String(payload && payload.accountValue || '').trim(),
-      email: String(payload && payload.email || '').trim(),
-      accountType: String(payload && payload.accountType || '').trim(),
-      shopUpdatedAt: String(payload && payload.shopUpdatedAt || '').trim(),
-      proxyConfig: payload && payload.proxyConfig ? { ...payload.proxyConfig } : {},
-      fingerprintConfig: payload && payload.fingerprintConfig ? { ...payload.fingerprintConfig } : {},
-      bounds
-    };
-  }
-
-  function areWorkspaceBoundsEqual(left, right) {
-    return Boolean(
-      left
-      && right
-      && left.x === right.x
-      && left.y === right.y
-      && left.width === right.width
-      && left.height === right.height
-    );
-  }
-
-  function areWorkspacePayloadsEqual(left, right) {
-    if (!left || !right) {
-      return false;
-    }
-
-    return (
-      left.visible === right.visible
-      && left.overlayOpen === right.overlayOpen
-      && left.shopId === right.shopId
-      && left.pageType === right.pageType
-      && left.browserTabId === right.browserTabId
-      && left.autoLoginEnabled === right.autoLoginEnabled
-      && left.shopName === right.shopName
-      && left.phoneNumber === right.phoneNumber
-      && left.accountValue === right.accountValue
-      && left.email === right.email
-      && left.accountType === right.accountType
-      && left.shopUpdatedAt === right.shopUpdatedAt
-      && areWorkspaceBoundsEqual(left.bounds, right.bounds)
-    );
-  }
-
   function dispatchWorkspaceUpdate(payload) {
     const normalizedPayload = cloneWorkspacePayload(payload);
 
@@ -1053,7 +934,7 @@
       .catch((error) => {
         if (showError) {
           showTabStatus({
-            message: error && error.message ? error.message : '\u6D4F\u89C8\u5668\u5B58\u50A8\u540C\u6B65\u72B6\u6001\u52A0\u8F7D\u5931\u8D25\u3002',
+            message: error && error.message ? error.message : '\u767B\u5F55\u72B6\u6001\u8BFB\u53D6\u5931\u8D25\u3002',
             persistent: true
           });
         }
@@ -1314,7 +1195,7 @@
     }
 
     showTabStatus({
-      message: '\u9996\u6b21\u6253\u5f00\u524d\u6b63\u5728\u51c6\u5907\u5de5\u4f5c\u533a\uff1a1/2 \u68c0\u67e5\u767b\u5f55\u72b6\u6001\uff0c2/2 \u6062\u590d\u6d4f\u89c8\u5668\u5b58\u50a8...',
+      message: '\u6B63\u5728\u51C6\u5907\u5DE5\u4F5C\u533A...',
       persistent: true
     });
 
@@ -1399,7 +1280,7 @@
 
       if (restoreResult && restoreResult.success === false) {
         showTabStatus({
-          message: '\u4E91\u7AEF\u6D4F\u89C8\u5668\u6570\u636E\u6062\u590d\u672A\u5B8C\u6574\u6210\u529F\uff0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002',
+          message: '\u51C6\u5907\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002',
           persistent: true
         });
         return {
@@ -1413,7 +1294,7 @@
     }
 
     showTabStatus({
-      message: '\u6B63\u5728\u7B49\u5F85\u4E91\u7AEF\u6D4F\u89C8\u5668\u6570\u636E\u5B8C\u6210\u6062\u590d\uff0C\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002',
+      message: '\u8FD8\u5728\u51C6\u5907\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002',
       persistent: true
     });
 
@@ -1467,7 +1348,7 @@
         }
 
         showTabStatus({
-          message: '\u4E91\u7AEF\u6D4F\u89C8\u5668\u6570\u636E\u6682\u65F6\u672A\u5B8C\u6574\u6062\u590D\uFF0C\u5C06\u5148\u6253\u5F00\u5DE5\u4F5C\u533A\uFF0C\u5269\u4F59\u6570\u636E\u540E\u53F0\u7EE7\u7EED\u6062\u590D\u3002',
+          message: '\u5DF2\u5148\u6253\u5F00\uFF0C\u540E\u53F0\u7EE7\u7EED\u540C\u6B65\u3002',
           durationMs: 3600,
           persistent: false
         });
@@ -1583,7 +1464,7 @@
       if (direction === 'restore') {
         if (isFullRestore) {
           showTabStatus({
-            message: '\u6d4f\u89c8\u5668\u767b\u5f55\u72b6\u6001\u4e0e\u672c\u5730\u5b58\u50a8\u5df2\u6062\u590d\u5b8c\u6210\u3002',
+            message: '\u767B\u5F55\u72B6\u6001\u5DF2\u6062\u590D\u3002',
             durationMs: 2200,
             persistent: false
           });
@@ -1614,7 +1495,7 @@
 
         if (isFullRestore) {
           showTabStatus({
-            message: '\u672A\u627E\u5230\u53EF\u6062\u590D\u7684\u4E91\u7AEF\u5FEB\u7167\uff0c\u5C06\u76F4\u63A5\u6253\u5F00\u5F53\u524D\u5DE5\u4F5C\u533A\u3002',
+            message: '\u672A\u627E\u5230\u4E91\u7AEF\u5907\u4EFD\uFF0C\u76F4\u63A5\u6253\u5F00\u3002',
             durationMs: 2600,
             persistent: false
           });
@@ -1630,7 +1511,7 @@
 
         if (isFullRestore) {
           showTabStatus({
-            message: '\u6d4f\u89c8\u5668\u73af\u5883\u8fd8\u5728\u51c6\u5907\uff0c\u6062\u590d\u4efb\u52a1\u5df2\u8f6c\u4e3a\u7a0d\u540e\u7ee7\u7eed\u3002',
+            message: '\u5DE5\u4F5C\u533A\u51C6\u5907\u4E2D\uFF0C\u7A0D\u540E\u7EE7\u7EED\u3002',
             durationMs: 2600,
             persistent: false
           });
@@ -1645,7 +1526,7 @@
         syncWorkspace: false
       });
       showTabStatus({
-        message: `\u81EA\u52A8\u540C\u6B65\u6682\u65F6\u672A\u6210\u529F\uFF1A${runtime.lastAutoError}`,
+        message: `\u540C\u6B65\u5931\u8D25\uFF1A${runtime.lastAutoError}`,
         durationMs: 4200,
         persistent: false
       });

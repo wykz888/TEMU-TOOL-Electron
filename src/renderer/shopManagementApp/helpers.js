@@ -128,7 +128,7 @@ export function formatProxySummary(proxyConfig) {
 
   return {
     title: `${label} ${host}:${port}`,
-    note: noteParts.join(' · ')
+    note: noteParts.join(' \u00b7 ')
   };
 }
 

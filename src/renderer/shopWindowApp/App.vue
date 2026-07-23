@@ -10,24 +10,37 @@
               <h2 class="shop-window-sidebar-title">&#x5E97;&#x94FA;&#x5217;&#x8868;</h2>
             </div>
           </div>
-          <label class="shop-window-group-filter-shell" for="shopWindowGroupFilter">
-            <span class="shop-window-group-filter-label">&#x5206;&#x7EC4;&#x7B5B;&#x9009;</span>
-            <select
-              id="shopWindowGroupFilter"
-              class="shop-window-group-filter"
-              :disabled="shopList.state.groupFilterDisabled"
-              :value="shopList.state.groupFilterValue"
-              @change="handleGroupFilterChange($event.target.value)"
-            >
-              <option
-                v-for="option in shopList.state.groupOptions"
-                :key="option.value || 'all'"
-                :value="option.value"
+          <div class="shop-window-sidebar-filter-row">
+            <div class="shop-window-group-filter-shell">
+              <select
+                id="shopWindowGroupFilter"
+                class="shop-window-group-filter"
+                aria-label="&#x5206;&#x7EC4;&#x7B5B;&#x9009;"
+                :disabled="shopList.state.groupFilterDisabled"
+                :value="shopList.state.groupFilterValue"
+                @change="handleGroupFilterChange($event.target.value)"
               >
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+                <option
+                  v-for="option in shopList.state.groupOptions"
+                  :key="option.value || 'all'"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div class="shop-window-shop-search-shell">
+              <input
+                id="shopWindowShopSearch"
+                class="shop-window-shop-search-input"
+                type="search"
+                aria-label="&#x641C;&#x7D22;&#x5E97;&#x94FA;"
+                placeholder="&#x641C;&#x7D22;&#x5E97;&#x94FA;/&#x5907;&#x6CE8;"
+                :value="shopList.state.searchKeyword"
+                @input="handleShopSearchInput($event.target.value)"
+              />
+            </div>
+          </div>
         </div>
 
         <div id="shopWindowList" class="shop-window-list">
@@ -57,9 +70,13 @@
 
       <section class="shop-window-main">
         <div class="shop-window-toolbar">
-          <div class="shop-window-toolbar-copy">
-            <p class="shop-window-toolbar-label">&#x6D4F;&#x89C8;&#x5668;&#x5165;&#x53E3;</p>
-            <strong>&#x5E97;&#x94FA;&#x7A97;&#x53E3;</strong>
+          <div class="shop-window-workspace-details">
+            <h3 id="shopWindowCurrentShopName" class="shop-window-workspace-title">
+              {{ shopList.state.currentShopName }}
+            </h3>
+            <p id="shopWindowCurrentShopMeta" class="shop-window-workspace-text">
+              {{ shopList.state.currentShopMeta }}
+            </p>
           </div>
           <div class="shop-window-tab-group">
             <button
@@ -75,72 +92,66 @@
               {{ tab.label }}
             </button>
           </div>
+          <div class="shop-window-workspace-actions">
+            <div
+              id="shopWindowStorageSyncShell"
+              class="shop-window-storage-sync-shell"
+              :class="storageSyncStatus.state.shellClassName"
+              :title="storageSyncStatus.state.summaryTitle || storageSyncStatus.state.summaryText"
+            >
+              <span
+                id="shopWindowStorageSyncBadge"
+                class="shop-window-storage-sync-badge"
+              >
+                {{ storageSyncStatus.state.badgeText }}
+              </span>
+              <span
+                id="shopWindowStorageSyncHint"
+                class="shop-window-storage-sync-hint"
+              >
+                {{ storageSyncStatus.state.hintText }}
+              </span>
+            </div>
+            <label
+              class="shop-window-auto-login-toggle"
+              title="&#x4EC5;&#x5BF9;&#x5F53;&#x524D;&#x5E97;&#x94FA;&#x4E0E;&#x5F53;&#x524D;&#x5165;&#x53E3;&#x672C;&#x5730;&#x751F;&#x6548;"
+            >
+              <input
+                id="shopWindowAutoLoginCheckbox"
+                class="shop-window-auto-login-checkbox"
+                type="checkbox"
+                :checked="shopList.state.autoLoginChecked"
+                :disabled="shopList.state.autoLoginDisabled"
+                @change="handleAutoLoginToggleChange($event.target.checked)"
+              />
+              <span class="shop-window-auto-login-text">
+                &#x81EA;&#x52A8;&#x767B;&#x5F55;
+              </span>
+            </label>
+            <p
+              id="shopWindowTabStatus"
+              class="shop-window-inline-status"
+              :class="{ 'is-empty': tabStatus.state.isEmpty }"
+              :aria-hidden="tabStatus.state.ariaHidden"
+              :title="tabStatus.state.title"
+            >
+              {{ tabStatus.state.message }}
+            </p>
+          </div>
         </div>
 
         <div class="shop-window-workspace">
-          <div class="shop-window-workspace-header">
-            <div class="shop-window-workspace-details">
-              <h3 id="shopWindowCurrentShopName" class="shop-window-workspace-title">
-                {{ shopList.state.currentShopName }}
-              </h3>
-              <p id="shopWindowCurrentShopMeta" class="shop-window-workspace-text">
-                {{ shopList.state.currentShopMeta }}
-              </p>
-            </div>
-            <div class="shop-window-workspace-actions">
-              <div
-                id="shopWindowStorageSyncShell"
-                class="shop-window-storage-sync-shell"
-                :class="storageSyncStatus.state.shellClassName"
-              >
-                <span
-                  id="shopWindowStorageSyncBadge"
-                  class="shop-window-storage-sync-badge"
-                >
-                  {{ storageSyncStatus.state.badgeText }}
-                </span>
-                <span
-                  id="shopWindowStorageSyncHint"
-                  class="shop-window-storage-sync-hint"
-                >
-                  {{ storageSyncStatus.state.hintText }}
-                </span>
-              </div>
-              <label
-                class="shop-window-auto-login-toggle"
-                title="&#x4EC5;&#x5BF9;&#x5F53;&#x524D;&#x5E97;&#x94FA;&#x4E0E;&#x5F53;&#x524D;&#x5165;&#x53E3;&#x672C;&#x5730;&#x751F;&#x6548;"
-              >
-                <input
-                  id="shopWindowAutoLoginCheckbox"
-                  class="shop-window-auto-login-checkbox"
-                  type="checkbox"
-                  :checked="shopList.state.autoLoginChecked"
-                  :disabled="shopList.state.autoLoginDisabled"
-                  @change="handleAutoLoginToggleChange($event.target.checked)"
-                />
-                <span class="shop-window-auto-login-text">
-                  &#x81EA;&#x52A8;&#x767B;&#x5F55;
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div id="shopWindowStatusRow" class="shop-window-status-row">
+          <div
+            id="shopWindowStatusRow"
+            class="shop-window-status-row"
+            aria-hidden="true"
+          >
             <p
               id="shopWindowStorageSyncSummary"
               class="shop-window-storage-sync-summary"
               :title="storageSyncStatus.state.summaryTitle"
             >
               {{ storageSyncStatus.state.summaryText }}
-            </p>
-            <p
-              id="shopWindowTabStatus"
-              class="shop-window-tab-status"
-              :class="{ 'is-empty': tabStatus.state.isEmpty }"
-              :aria-hidden="tabStatus.state.ariaHidden"
-              :title="tabStatus.state.title"
-            >
-              {{ tabStatus.state.message }}
             </p>
           </div>
 
@@ -459,6 +470,10 @@ function handleGroupFilterChange(value) {
   shopList.handleGroupFilterChange(value);
 }
 
+function handleShopSearchInput(value) {
+  shopList.handleShopSearchInput(value);
+}
+
 function handleAutoLoginToggleChange(checked) {
   shopList.handleAutoLoginToggleChange(checked);
 }
@@ -510,6 +525,7 @@ defineExpose({
   handleBrowserTabReset,
   handleBrowserTabUpdated,
   handleGroupFilterChange,
+  handleShopSearchInput,
   handleShopListClick,
   handleWorkspaceTabClick,
   handleWorkspaceTabDoubleClick,
