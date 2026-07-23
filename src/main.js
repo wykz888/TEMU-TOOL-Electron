@@ -2863,7 +2863,7 @@ app.whenReady().then(() => {
       operationsNewProductLifecycleService
         && typeof operationsNewProductLifecycleService.previewBatchAdjust === 'function'
         ? operationsNewProductLifecycleService.previewBatchAdjust(payload, {
-          emitProgress: createProgressEmitter(context, FEATURE_CHANNELS.OPERATIONS_PRICE_DECLARATION_PROGRESS, runtimeLogger),
+          emitProgress: createProgressEmitter(context, FEATURE_CHANNELS.OPERATIONS_NEW_PRODUCT_LIFECYCLE_BATCH_ADJUST_PROGRESS, runtimeLogger),
           requesterKey: extractRequesterKey(context)
         })
         : {
@@ -2878,6 +2878,99 @@ app.whenReady().then(() => {
           canceledShops: 0,
           canceled: false,
           warning: '\u4ef7\u683c\u7533\u62a5\u67e5\u8be2\u670d\u52a1\u672a\u52a0\u8f7d'
+        }
+    ),
+    submitOperationsNewProductLifecycleBatchAdjust: (payload, context = {}) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.submitBatchAdjust === 'function'
+        ? operationsNewProductLifecycleService.submitBatchAdjust(payload, {
+          emitProgress: createProgressEmitter(context, FEATURE_CHANNELS.OPERATIONS_NEW_PRODUCT_LIFECYCLE_BATCH_ADJUST_PROGRESS, runtimeLogger),
+          requesterKey: extractRequesterKey(context)
+        })
+        : {
+          updatedAt: '',
+          runId: String(payload && payload.runId || '').trim(),
+          success: false,
+          message: '\u6279\u91cf\u8c03\u4ef7\u63d0\u4ea4\u529f\u80fd\u4e0d\u53ef\u7528',
+          totalShops: 0,
+          successShops: 0,
+          failedShops: 0,
+          canceled: false,
+          results: []
+        }
+    ),
+    cancelOperationsNewProductLifecycleBatchAdjust: (payload) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.cancelBatchAdjust === 'function'
+        ? operationsNewProductLifecycleService.cancelBatchAdjust(payload)
+        : {
+          canceled: false,
+          runId: String(payload && payload.runId || '').trim()
+        }
+    ),
+    previewOperationsNewProductLifecycleBatchPriceDecl: (payload) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.previewBatchPriceDeclaration === 'function'
+        ? operationsNewProductLifecycleService.previewBatchPriceDeclaration(payload)
+        : {
+          success: false,
+          message: '\u6838\u4ef7\u9884\u89c8\u529f\u80fd\u4e0d\u53ef\u7528',
+          previewItems: [],
+          groupedRequests: [],
+          summary: {
+            total: 0,
+            approve: 0,
+            redeclare: 0,
+            void: 0,
+            skip: 0
+          },
+          resultsByShop: []
+        }
+    ),
+    submitOperationsNewProductLifecycleBatchPriceDecl: (payload, context = {}) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.submitBatchPriceDeclaration === 'function'
+        ? operationsNewProductLifecycleService.submitBatchPriceDeclaration(payload, {
+          emitProgress: createProgressEmitter(context, FEATURE_CHANNELS.OPERATIONS_NEW_PRODUCT_LIFECYCLE_PROGRESS, runtimeLogger),
+          requesterKey: extractRequesterKey(context)
+        })
+        : {
+          success: false,
+          message: '\u6838\u4ef7\u63d0\u4ea4\u529f\u80fd\u4e0d\u53ef\u7528',
+          totalShops: 0,
+          successShops: 0,
+          failedShops: 0,
+          results: [],
+          canceled: false
+        }
+    ),
+    cancelOperationsNewProductLifecycleBatchPriceDecl: (payload) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.cancelBatchPriceDeclaration === 'function'
+        ? operationsNewProductLifecycleService.cancelBatchPriceDeclaration(payload)
+        : {
+          canceled: false,
+          runId: String(payload && payload.runId || '').trim()
+        }
+    ),
+    getOperationsNewProductLifecyclePriceDeclSettings: () => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.getPriceDeclSettings === 'function'
+        ? operationsNewProductLifecycleService.getPriceDeclSettings()
+        : {
+          settings: {},
+          source: 'unavailable'
+        }
+    ),
+    saveOperationsNewProductLifecyclePriceDeclSettings: (payload) => (
+      operationsNewProductLifecycleService
+        && typeof operationsNewProductLifecycleService.savePriceDeclSettings === 'function'
+        ? operationsNewProductLifecycleService.savePriceDeclSettings(payload)
+        : {
+          settings: {},
+          source: 'unavailable',
+          cloudSynced: false,
+          warning: '\u6838\u4ef7\u914d\u7f6e\u670d\u52a1\u672a\u52a0\u8f7d'
         }
     ),
     cancelOperationsPriceDeclarationQuery: (payload, context = {}) => (

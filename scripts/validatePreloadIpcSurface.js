@@ -2,6 +2,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const rootDir = path.resolve(__dirname, '..');
+const mainProcessText = fs.readFileSync(
+  path.join(rootDir, 'src', 'main.js'),
+  'utf8'
+);
 const appPreloadText = fs.readFileSync(
   path.join(rootDir, 'src', 'preload', 'appPreload.js'),
   'utf8'
@@ -77,6 +81,17 @@ const EXPECTED_FEATURE_EVENTS = Object.freeze([
   ['onOperationsNewProductLifecycleProgress', 'OPERATIONS_NEW_PRODUCT_LIFECYCLE_PROGRESS'],
   ['onOperationsNewProductLifecycleBatchAdjustProgress', 'OPERATIONS_NEW_PRODUCT_LIFECYCLE_BATCH_ADJUST_PROGRESS'],
   ['onOperationsPriceDeclarationProgress', 'OPERATIONS_PRICE_DECLARATION_PROGRESS']
+]);
+
+const EXPECTED_FEATURE_MAIN_OPTIONS = Object.freeze([
+  'previewOperationsNewProductLifecycleBatchAdjust',
+  'submitOperationsNewProductLifecycleBatchAdjust',
+  'cancelOperationsNewProductLifecycleBatchAdjust',
+  'previewOperationsNewProductLifecycleBatchPriceDecl',
+  'submitOperationsNewProductLifecycleBatchPriceDecl',
+  'cancelOperationsNewProductLifecycleBatchPriceDecl',
+  'getOperationsNewProductLifecyclePriceDeclSettings',
+  'saveOperationsNewProductLifecyclePriceDeclSettings'
 ]);
 
 const EXPECTED_CREATION_INVOKES = Object.freeze([
@@ -167,6 +182,11 @@ function assertMethodInPreload(methodName) {
   assert(methodPattern.test(preloadSurfaceText), `preload method missing: ${methodName}`);
 }
 
+function assertFeatureMainOption(methodName) {
+  const optionPattern = new RegExp(`\\b${methodName}\\s*:`);
+  assert(optionPattern.test(mainProcessText), `main feature-center option missing: ${methodName}`);
+}
+
 function assertChannelUsage(channelNamespace, channelMap, channelKey, registerText, requireRegister) {
   assert(typeof channelMap[channelKey] === 'string' && channelMap[channelKey], `channel constant missing: ${channelKey}`);
   assert(
@@ -217,6 +237,7 @@ function main() {
     registerText: featureRegisterText,
     requireRegister: false
   });
+  EXPECTED_FEATURE_MAIN_OPTIONS.forEach(assertFeatureMainOption);
   validatePairs(EXPECTED_CREATION_INVOKES, {
     channelNamespace: 'CREATION_CHANNELS',
     channelMap: CREATION_CHANNELS,
