@@ -15,7 +15,7 @@
 - Code: `src/windows/`
 - Key files: `create*Window.js`, `shopWindowBrowserController.js`, `shopWindowLoginAutofill.js`, `shopWindowSellerSessionProbe.js`, `shopWindowSellerCenterLanding.js`, `shopWindowBrowserEnvironment.js`.
 - Responsibility: BrowserWindow/WebContentsView creation, TEMU seller-center and ads workspace management, login automation, seller session probing, browser storage sync, popup handling, environment/proxy/fingerprint setup.
-- Current split: `shopWindowViewLoadErrorPage.js` owns browser load failure text/data-URL rendering, and `shopWindowPartitionIdentity.js` owns shop partition identity hashes and partition directory resolution. Keep future pure browser-controller rules in focused helpers before adding to `shopWindowBrowserController.js`.
+- Current split: `shopWindowViewLoadErrorPage.js` owns browser load failure text/data-URL rendering, `shopWindowPartitionIdentity.js` owns shop partition identity hashes and partition directory resolution, and `shopWindowContextMenu.js` owns native right-click browser menu construction for shop WebContentsView pages. Keep future pure browser-controller rules in focused helpers before adding to `shopWindowBrowserController.js`.
 - Notes: this is main-process side product logic. Complex browser automation should stay here or in services, not inside renderer UI.
 
 ## IPC And Preload Bridge

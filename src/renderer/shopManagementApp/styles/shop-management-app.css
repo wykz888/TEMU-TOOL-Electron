@@ -365,13 +365,53 @@
 
 .shop-mgmt-form-layout {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+}
+
+.shop-mgmt-form-compact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.84fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.shop-mgmt-form-card {
+  min-width: 0;
+}
+
+.shop-mgmt-form-card .arco-card-header {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+.shop-mgmt-form-card .arco-card-header-title {
+  color: #132238;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.shop-mgmt-form-card .arco-card-body {
+  padding: 12px 14px 14px;
+}
+
+.shop-mgmt-form-card .arco-form-item {
+  margin-bottom: 10px;
+}
+
+.shop-mgmt-form-card .arco-form-item-label {
+  line-height: 1.25;
+  padding-bottom: 5px;
 }
 
 .shop-mgmt-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 14px;
+  gap: 0 12px;
+}
+
+.shop-mgmt-proxy-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(108px, 0.58fr);
 }
 
 .shop-mgmt-span-2 {
@@ -381,17 +421,18 @@
 .shop-mgmt-toggle-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 0;
 }
 
 .shop-mgmt-toggle-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border-radius: 14px;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: #ffffff;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
@@ -399,27 +440,36 @@
 .shop-mgmt-toggle-card strong {
   display: block;
   color: #132238;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .shop-mgmt-toggle-card p {
   margin: 0;
   color: #64748b;
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.35;
+}
+
+.shop-mgmt-form-bottom-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
 }
 
 .shop-mgmt-fingerprint-hint {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   background: rgba(var(--theme-primary-rgb, 247, 181, 0), 0.06);
   border: 1px solid rgba(var(--theme-primary-rgb, 247, 181, 0), 0.14);
   color: #64748b;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .shop-mgmt-fingerprint-hint-icon {
@@ -436,6 +486,7 @@ body.dark-theme .shop-mgmt-fingerprint-hint {
 
 body.dark-theme .shop-mgmt-head h3,
 body.dark-theme .shop-mgmt-cell-title,
+body.dark-theme .shop-mgmt-form-card .arco-card-header-title,
 body.dark-theme .shop-mgmt-toggle-card strong,
 body.dark-theme .shop-mgmt-group-create-copy strong,
 body.dark-theme .shop-mgmt-group-list-head strong {
@@ -466,6 +517,10 @@ body.dark-theme .shop-mgmt-group-panel {
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.86)),
     #0f172a;
+}
+
+body.dark-theme .shop-mgmt-form-card .arco-card-header {
+  border-bottom-color: rgba(148, 163, 184, 0.12);
 }
 
 body.dark-theme .shop-mgmt-group-row:hover {
@@ -523,6 +578,8 @@ body.dark-theme .shop-mgmt-visibility-text.is-muted {
 
 @media (max-width: 980px) {
   .shop-mgmt-group-create-bar,
+  .shop-mgmt-form-compact-grid,
+  .shop-mgmt-form-bottom-bar,
   .shop-mgmt-group-row,
   .shop-mgmt-toggle-row {
     grid-template-columns: 1fr;

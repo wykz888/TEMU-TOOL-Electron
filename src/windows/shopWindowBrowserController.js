@@ -49,6 +49,7 @@ const {
   getPartition,
   getPartitionDirectory
 } = require('./shopWindowPartitionIdentity');
+const { attachShopWindowContextMenu } = require('./shopWindowContextMenu');
 const { SHOP_WINDOW_CHANNELS } = require('../ipc/shopWindowChannels');
 const {
   normalizeText,
@@ -3415,7 +3416,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
         backgroundGroupKey: normalizedGroupKey,
         meta: {
           id: browserTabId,
-          title: `${getWorkspaceLabel(normalizedPageType)} 鍚庡彴`,
+          title: `${getWorkspaceLabel(normalizedPageType)} \u540e\u53f0`,
           url: initialUrl
         },
         view: null,
@@ -6715,6 +6716,17 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     installWebContentsDebugShortcuts(view);
     attachOpenHandler(view, context);
     attachNavigationListeners(view, context);
+    attachShopWindowContextMenu(view, context, {
+      window: mainWindow,
+      openUrlInNewTab: openBrowserUrlInNewTab,
+      onError(error) {
+        logError('shop_window_context_menu_action_failed', error, {
+          shopId: normalizeText(context && context.shopId),
+          pageType: normalizeText(context && context.pageType),
+          browserTabId: normalizeText(context && context.browserTabId)
+        });
+      }
+    });
     applyViewEnvironment(view, shopEntry.environment);
 
     if (context.suppressRendererNotifications === true && isWindowAlive()) {
