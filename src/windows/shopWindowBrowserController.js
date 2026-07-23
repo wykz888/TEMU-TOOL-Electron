@@ -50,6 +50,11 @@ const {
   getPartitionDirectory
 } = require('./shopWindowPartitionIdentity');
 const { attachShopWindowContextMenu } = require('./shopWindowContextMenu');
+const {
+  hasRuntimeEnvironmentPayload,
+  isRuntimeEnvironmentPayloadChanged,
+  resolveWorkspaceEnvironmentKey
+} = require('./shopWindowEnvironmentSignature');
 const { SHOP_WINDOW_CHANNELS } = require('../ipc/shopWindowChannels');
 const {
   normalizeText,
@@ -3521,11 +3526,12 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     return tabEntry && tabEntry.view ? tabEntry.view : null;
   }
 
-  function getReusableActiveTabEntry(targetDescriptor, shopUpdatedAt = '') {
+  function getReusableActiveTabEntry(targetDescriptor, shopUpdatedAt = '', workspaceEnvironmentKey = '') {
     if (
       !activeDescriptor
       || !isSameDescriptor(activeDescriptor, targetDescriptor)
       || normalizeText(activeDescriptor.shopUpdatedAt) !== normalizeText(shopUpdatedAt)
+      || normalizeText(activeDescriptor.workspaceEnvironmentKey) !== normalizeText(workspaceEnvironmentKey)
     ) {
       return null;
     }
@@ -6244,11 +6250,13 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
   async function ensureShopRuntimeProfile(shopEntry, payload) {
     const nextRuntimeProfileVersion = normalizeText(payload && payload.shopUpdatedAt);
     const forceRefresh = payload && payload.forceRefreshRuntimeProfile === true;
+    const runtimeEnvironmentPayloadChanged = isRuntimeEnvironmentPayloadChanged(shopEntry, payload);
 
     if (
       !loadShopRuntimeProfile
       || (
         !forceRefresh
+        && !runtimeEnvironmentPayloadChanged
         && (
           (
             !shopEntry.runtimeProfile
@@ -6561,12 +6569,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
 
   async function resolveShopEntry(payload) {
     const shopEntry = ensureShopEntry(payload);
-    const hasRuntimeEnvironment =
-      payload
-      && (
-        Object.prototype.hasOwnProperty.call(payload, 'proxyConfig')
-        || Object.prototype.hasOwnProperty.call(payload, 'fingerprintConfig')
-      );
+    const hasRuntimeEnvironment = hasRuntimeEnvironmentPayload(payload);
     const nextRuntimeProfileVersion = normalizeText(payload && payload.shopUpdatedAt);
     const forceRuntimeProfileRefresh = payload && payload.forceRefreshRuntimeProfile === true;
     const runtimeProfileVersionChanged = Boolean(
@@ -7321,6 +7324,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     const browserTabId =
       String((payload && payload.browserTabId) || DEFAULT_BROWSER_TAB_ID).trim() || DEFAULT_BROWSER_TAB_ID;
     const shopUpdatedAt = normalizeText(payload && payload.shopUpdatedAt);
+    const workspaceEnvironmentKey = resolveWorkspaceEnvironmentKey(payload);
     const bounds = normalizeBounds(payload && payload.bounds);
 
     if (!visible || !shopId || !pageType || bounds.width < 10 || bounds.height < 10) {
@@ -7349,7 +7353,11 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
       browserTabId
     };
     let view = null;
-    const reusableTabEntry = getReusableActiveTabEntry(targetDescriptor, shopUpdatedAt);
+    const reusableTabEntry = getReusableActiveTabEntry(
+      targetDescriptor,
+      shopUpdatedAt,
+      workspaceEnvironmentKey
+    );
 
     if (reusableTabEntry) {
       const existingShopEntry = shopEntriesById.get(shopId);
@@ -7398,6 +7406,7 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
       && isSameDescriptor(activeDescriptor, targetDescriptor)
       && areBoundsEqual(activeDescriptor.bounds, bounds)
       && normalizeText(activeDescriptor.shopUpdatedAt) === shopUpdatedAt
+      && normalizeText(activeDescriptor.workspaceEnvironmentKey) === workspaceEnvironmentKey
     );
 
     try {
@@ -7432,7 +7441,8 @@ function createShopWindowBrowserController(mainWindow, options = {}) {
     activeDescriptor = {
       ...targetDescriptor,
       bounds,
-      shopUpdatedAt
+      shopUpdatedAt,
+      workspaceEnvironmentKey
     };
     markTabEntryUsed(shopId, pageType, browserTabId);
     if (shouldLogActivation) {

@@ -10,6 +10,7 @@
 - `npm run validate:feature-catalog`
 - `npm run validate:preload-ipc`
 - `npm run validate:promotion-monitor`
+- `npm run validate:operations-feature-chains`
 - `npm run validate:operations-pricing`
 - `npm run validate:pod-upload-sheet-miaoshou`
 - `npm run validate:pod-suite-tool`
@@ -20,6 +21,7 @@
 - Feature and creation catalog shape, uniqueness, storage key boundaries, and code path existence: `scripts/validateFeatureCatalog.js`.
 - Preload to IPC channel surface for feature center, creation center, POD suite tool, shop management, global config, and updater: `scripts/validatePreloadIpcSurface.js`.
 - Promotion monitor `ads_detail` parsing/paging, automatic pause predicates, pause/resume sequence decisions, and `modify_ads` payload shape: `scripts/validatePromotionMonitorRules.js`.
+- Operations activity management, traffic boost, and new product lifecycle open/preload/IPC/main/service chain coverage: `scripts/validateOperationsFeatureChains.js`.
 - Operations pricing and submit payload calculations for traffic boost and price declaration: `scripts/validateOperationsPricingLogic.js`.
 - POD MiaoShou material sequence rules for TEMU and universal SKU image export: `scripts/validatePodUploadSheetMiaoshouMaterialRules.js`.
 - POD suite image rendering, PSD template handling, mask region detection, perspective transforms, and slice export: `scripts/validatePodSuiteToolService.js`.

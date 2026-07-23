@@ -47,6 +47,49 @@
     return value == null ? '' : String(value).trim();
   }
 
+  function normalizeWorkspaceComparableValue(value) {
+    if (Array.isArray(value)) {
+      return value.map((item) => normalizeWorkspaceComparableValue(item));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.keys(value).sort().reduce((result, key) => {
+        const normalizedValue = normalizeWorkspaceComparableValue(value[key]);
+
+        if (normalizedValue !== undefined) {
+          result[key] = normalizedValue;
+        }
+
+        return result;
+      }, {});
+    }
+
+    if (value === undefined || typeof value === 'function') {
+      return undefined;
+    }
+
+    if (value === null || typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : null;
+    }
+
+    return normalizeText(value);
+  }
+
+  function buildWorkspaceEnvironmentKey(payload) {
+    try {
+      return JSON.stringify(normalizeWorkspaceComparableValue({
+        proxyConfig: payload && payload.proxyConfig ? payload.proxyConfig : {},
+        fingerprintConfig: payload && payload.fingerprintConfig ? payload.fingerprintConfig : {}
+      }));
+    } catch (_error) {
+      return '';
+    }
+  }
+
   function createEmptyBrowserStorageSyncState(shopId = '') {
     return {
       shopId: normalizeText(shopId),
@@ -131,6 +174,9 @@
       shopUpdatedAt: normalizeText(payload && payload.shopUpdatedAt),
       proxyConfig: payload && payload.proxyConfig ? { ...payload.proxyConfig } : {},
       fingerprintConfig: payload && payload.fingerprintConfig ? { ...payload.fingerprintConfig } : {},
+      workspaceEnvironmentKey:
+        normalizeText(payload && payload.workspaceEnvironmentKey)
+        || buildWorkspaceEnvironmentKey(payload),
       bounds
     };
   }
@@ -164,6 +210,7 @@
       && left.email === right.email
       && left.accountType === right.accountType
       && left.shopUpdatedAt === right.shopUpdatedAt
+      && left.workspaceEnvironmentKey === right.workspaceEnvironmentKey
       && areWorkspaceBoundsEqual(left.bounds, right.bounds)
     );
   }

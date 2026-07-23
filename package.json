@@ -1,6 +1,6 @@
 {
   "name": "temu-toolbox-electron",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "private": true,
   "description": "TEMU 工具箱 Electron 应用。",
   "main": "src/main.js",
@@ -29,10 +29,11 @@
     "validate:feature-catalog": "node scripts/validateFeatureCatalog.js",
     "validate:preload-ipc": "node scripts/validatePreloadIpcSurface.js",
     "validate:promotion-monitor": "node scripts/validatePromotionMonitorRules.js",
+    "validate:operations-feature-chains": "node scripts/validateOperationsFeatureChains.js",
     "validate:operations-pricing": "node scripts/validateOperationsPricingLogic.js",
     "validate:pod-upload-sheet-miaoshou": "node scripts/validatePodUploadSheetMiaoshouMaterialRules.js",
     "validate:pod-suite-tool": "node scripts/validatePodSuiteToolService.js",
-    "validate": "npm run validate:feature-catalog && npm run validate:preload-ipc && npm run validate:promotion-monitor && npm run validate:operations-pricing && npm run validate:pod-upload-sheet-miaoshou && npm run validate:pod-suite-tool && npm run validate:auth-bridge"
+    "validate": "npm run validate:feature-catalog && npm run validate:preload-ipc && npm run validate:promotion-monitor && npm run validate:operations-feature-chains && npm run validate:operations-pricing && npm run validate:pod-upload-sheet-miaoshou && npm run validate:pod-suite-tool && npm run validate:auth-bridge"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
